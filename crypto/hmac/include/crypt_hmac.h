@@ -1,0 +1,46 @@
+/*---------------------------------------------------------------------------------------------
+ *  This file is part of the openHiTLS project.
+ *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
+ *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
+ *  for license information.
+ *---------------------------------------------------------------------------------------------
+ */
+#ifndef CRYPT_HMAC_H
+#define CRYPT_HMAC_H
+
+#include "hitls_build.h"
+#ifdef HITLS_CRYPTO_HMAC
+
+#include <stdint.h>
+#include "crypt_local_types.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
+#define HMAC_MAXBLOCKSIZE 144
+#define HMAC_MAXOUTSIZE   64
+
+typedef struct HMAC_Ctx {
+    const EAL_MdMethod *method;
+    void *mdCtx;            /* md ctx */
+    void *oCtx;             /* opad ctx */
+    void *iCtx;             /* ipad ctx */
+} CRYPT_HMAC_Ctx;
+
+int32_t CRYPT_HMAC_InitCtx(CRYPT_HMAC_Ctx *ctx, const EAL_MdMethod *m);
+void    CRYPT_HMAC_DeinitCtx(CRYPT_HMAC_Ctx *ctx);
+int32_t CRYPT_HMAC_Init(CRYPT_HMAC_Ctx *ctx, const uint8_t *key, uint32_t len);
+int32_t CRYPT_HMAC_Update(CRYPT_HMAC_Ctx *ctx, const uint8_t *in, uint32_t len);
+int32_t CRYPT_HMAC_Final(CRYPT_HMAC_Ctx *ctx, uint8_t *out, uint32_t *len);
+void    CRYPT_HMAC_Reinit(CRYPT_HMAC_Ctx *ctx);
+void    CRYPT_HMAC_Deinit(CRYPT_HMAC_Ctx *ctx);
+uint32_t  CRYPT_HMAC_GetMacLen(const CRYPT_HMAC_Ctx *ctx);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif // HITLS_CRYPTO_HMAC
+
+#endif // CRYPT_HMAC_H
