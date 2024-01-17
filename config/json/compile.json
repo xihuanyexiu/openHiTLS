@@ -9,14 +9,12 @@
             "-Werror",
             "-Wextra",
             "-Wall",
-            "-Wtrampolines",
             "-Wdate-time",
             "-Wfloat-equal",
             "-Wshadow",
             "-Wformat=2"
         ],
         "CC_LANGUAGE_FLAGS": [
-            "-std=gnu99",
             "-fsigned-char"
         ],
         "CC_CDG_FLAGS": ["-fno-common"],
@@ -43,8 +41,6 @@
             "-Wl,--build-id=none"
         ],
         "SHARED": [],
-        "EXE": [
-            "-pie"
-        ]
+        "EXE": []
     }
 }
