@@ -1,3 +1,0 @@
-# openHiTLS
-
-null
