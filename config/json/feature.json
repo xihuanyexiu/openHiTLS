@@ -458,11 +458,12 @@
             },
             "cert": {
                 ".features": ["all_tls"],
-                ".srcs": "tls/cert/cert_adapt/*.c",
+                ".srcs": "tls/cert/**/*.c",
                 ".deps": ["platform::Secure_C", "bsl::log", "bsl::sal"],
                 ".include": [
                     "include",
-                    "include/tls"
+                    "include/tls",
+                    "tls/cert/hitls_x509_adapt"
                 ]
             },
             "config": {
