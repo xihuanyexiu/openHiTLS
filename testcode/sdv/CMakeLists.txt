@@ -89,7 +89,12 @@ target_include_directories(${sdv_exe}
         ${openHiTLS_SRC}/testcode/framework/tls/resource/include
         ${openHiTLS_SRC}/testcode/framework/tls/rpc/include
         ${openHiTLS_SRC}/testcode/framework/tls/process/include
+        ${openHiTLS_SRC}/testcode/framework/tls/crypt/include
         ${openHiTLS_SRC}/testcode/framework/tls/transfer/include
+        ${openHiTLS_SRC}/testcode/framework/tls/frame/src
+        ${openHiTLS_SRC}/testcode/framework/tls/msg/include
+        ${openHiTLS_SRC}/testcode/framework/tls/io/include
+        ${openHiTLS_SRC}/testcode/framework/tls/io/src
         ${openHiTLS_SRC}/bsl/sal/include
         ${openHiTLS_SRC}/bsl/tlv/include
         ${openHiTLS_SRC}/include/bsl
