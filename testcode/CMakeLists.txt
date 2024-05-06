@@ -96,10 +96,10 @@ ExternalProject_Add(${PROCESS}
 ExternalProject_Add(${GEN_TESTCASE}
     SOURCE_DIR            ${openHiTLS_SRC}
     PREFIX                ""
-    BINARY_DIR            ${openHiTLS_SRC}/testcode/framework/gen_test/build/${TESTFILE}
+    BINARY_DIR            ${openHiTLS_SRC}/testcode/framework/gen_test/build
     INSTALL_DIR           ""
     UPDATE_COMMAND        ""
-    CONFIGURE_COMMAND     cmake -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -DPRINT_TO_TERMINAL=${ENABLE_PRINT} ../..
+    CONFIGURE_COMMAND     cmake -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -DPRINT_TO_TERMINAL=${ENABLE_PRINT} ..
     BUILD_COMMAND         make
     INSTALL_COMMAND       ""
     BUILD_ALWAYS          FALSE
@@ -119,7 +119,6 @@ ExternalProject_Add(${TESTCASE}
                                 -DGEN_TEST_FILES=${GEN_TEST_FILES} -DENABLE_UIO_SCTP=${ENABLE_UIO_SCTP} ../..
     BUILD_COMMAND         make
     INSTALL_COMMAND       ""
-    DEPENDS               ${GEN_TESTCASE}
     BUILD_ALWAYS          FALSE
     LOG_BUILD             TRUE
     LOG_DOWNLOAD          TRUE
