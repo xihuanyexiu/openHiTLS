@@ -83,6 +83,18 @@ enum BSL_ERROR {
     BSL_LIST_INVALID_LIST_CURRENT = 0x03060001, /**< Current node pointer is NULL */
     BSL_LIST_DATA_NOT_AVAILABLE,                /**< Data of current node is NULL */
     BSL_LIST_FULL,                              /**< Number of nodes has reached its limit */
+
+    /* The return value of the BASE64 submodule starts from 0x030a0001. */
+    BSL_BASE64_INVALID = 0x03070001,
+    BSL_BASE64_BUF_NOT_ENOUGH,
+    BSL_BASE64_DATA_NOT_ENOUGH,
+    BSL_BASE64_WRITE_FAILED,
+    BSL_BASE64_READ_FAILED,
+    BSL_BASE64_DATA_AFTER_PADDING,
+    BSL_BASE64_ILLEGALLY_MODIFIED,
+    BSL_BASE64_ENCODE_FAILED,
+    BSL_BASE64_DECODE_FAILED,
+    BSL_BASE64_HEADER,
 };
 
 #ifdef __cplusplus
