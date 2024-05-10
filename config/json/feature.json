@@ -6,6 +6,7 @@
                     "err": null,
                     "hash": null,
                     "init": {"deps": ["err"]},
+                    "base64": null,
                     "list": null,
                     "log": null,
                     "sal": null,
@@ -403,6 +404,11 @@
             "list": {
                 ".features": ["list"],
                 ".srcs": "bsl/list/src/*.c",
+                ".deps": ["platform::Secure_C", "bsl::sal"]
+            },
+            "base64": {
+                ".features": ["base64"],
+                ".srcs": "bsl/base64/src/*.c",
                 ".deps": ["platform::Secure_C", "bsl::sal"]
             },
             "hash": {
