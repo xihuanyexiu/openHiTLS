@@ -514,10 +514,10 @@ exit:
 * @title  An unexpected message is received when the server is in the TRY_RECV_FINISH state during the handshake.
 * @precon nan
 * @brief  1. Use the default configuration items to configure the client and server. Expected result 1.
-*         2. Construct a CLIENT_KEY_EXCHANGE message and send it to the server. Expected result 2.
+*         2. Modify the verify data in the finish and send it to the server. Expected result 2.
 * @expect 1. The initialization is successful.
-*         2. After receiving the CLIENT_KEY_EXCHANGE message, the server sends an ALERT message. The level is
-*            ALERT_Level_FATAL and the description is ALERT_UNEXPECTED_MESSAGE.
+*         2. After receive the modified finish message, the server returns the error code
+*         HITLS_MSG_HANDLE_VERIFY_FINISHED_FAIL
 @ */
 /* BEGIN_CASE */
 void UT_TLS_TLCP_CONSISTENCY_ERROR_FINISH_002(void)
