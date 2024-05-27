@@ -1381,3 +1381,17 @@ int32_t FRAME_PackMsg(FRAME_Type *frameType, const FRAME_Msg *msg, uint8_t *buff
     *usedLen = headerLen + bodyLen;
     return ret;
 }
+
+int32_t FRAME_GetTls13DisorderHsMsg(HS_MsgType type, uint8_t *buffer, uint32_t bufLen, uint32_t *usedLen)
+{
+    if (bufLen < 5) {
+        return HITLS_INTERNAL_EXCEPTION;
+    }
+    buffer[0] = type;
+    buffer[1] = 0;
+    buffer[2] = 0;
+    buffer[3] = 1;
+    buffer[4] = 0;
+    *usedLen = 5;
+    return HITLS_SUCCESS;
+}

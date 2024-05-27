@@ -370,6 +370,18 @@ typedef struct {
 int32_t FRAME_PackMsg(FRAME_Type *frameType, const FRAME_Msg *msg, uint8_t *buffer, uint32_t bufLen, uint32_t *usedLen);
 
 /**
+ * @brief   Generate tls13 handshake message according to type
+
+ * @param   type [IN] handshake message type
+ * @param   buffer [OUT] Returned handshake message
+ * @param   bufLen [IN] Input buffer size
+ * @param   usedLen [OUT] Returned message length
+ *
+ * @retval  HITLS_SUCCESS
+ */
+int32_t FRAME_GetTls13DisorderHsMsg(HS_MsgType type, uint8_t *buffer, uint32_t bufLen, uint32_t *usedLen);
+
+/**
  * @brief   Generate a TLS record body byte stream based on the specified parameter of frameType
  * and the field content of the msg structure and save the byte stream to the buffer.
  *
