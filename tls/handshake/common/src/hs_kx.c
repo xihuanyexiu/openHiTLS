@@ -287,7 +287,8 @@ int32_t HS_ProcessClientKxMsgRsa(TLS_Ctx *ctx, const ClientKeyExchangeMsg *clien
 
     for (uint32_t i = 0; i < MASTER_SECRET_LEN; i++) {
         uint32_t mask = valid & Uint32ConstTimeLt(i, secretLen);
-        keyExchCtx->keyExchParam.rsa.preMasterSecret[i] = Uint8ConstTimeSelect(mask, premasterSecret[i], premaster[i]);
+        keyExchCtx->keyExchParam.rsa.preMasterSecret[i] =
+            Uint8ConstTimeSelect(mask, premasterSecret[i & mask], premaster[i]);
     }
     BSL_SAL_CleanseData(premasterSecret, secretLen);
     BSL_SAL_FREE(premasterSecret);
