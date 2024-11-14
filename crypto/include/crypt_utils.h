@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #ifndef CRYPT_UTILS_H
@@ -319,37 +326,6 @@ static inline bool ParamIdIsValid(uint32_t id, const uint32_t *list, uint32_t nu
         }
     }
     return false;
-}
-
-static inline uint32_t Uint32ConstTimeMsb(uint32_t a)
-{
-    // 31 == (4 * 8 - 1)
-    return 0u - (a >> 31);
-}
-
-static inline uint32_t Uint32ConstTimeIsZero(uint32_t a)
-{
-    return Uint32ConstTimeMsb(~a & (a - 1));
-}
-
-static inline uint32_t Uint32ConstTimeEqual(uint32_t a, uint32_t b)
-{
-    return Uint32ConstTimeIsZero(a ^ b);
-}
-// (mask & a) | (~mask & b)
-static inline uint32_t Uint32ConstTimeSelect(uint32_t mask, uint32_t a, uint32_t b)
-{
-    return ((mask) & a) | ((~mask) & b);
-}
-
-static inline uint32_t Uint32ConstTimeLt(uint32_t a, uint32_t b)
-{
-    return Uint32ConstTimeMsb(a ^ ((a ^ b) | ((a - b) ^ a)));
-}
-
-static inline uint32_t Uint32ConstTimeGt(uint32_t a, uint32_t b)
-{
-    return ~Uint32ConstTimeLt(a, b);
 }
 
 void GetCpuInstrSupportState(void);

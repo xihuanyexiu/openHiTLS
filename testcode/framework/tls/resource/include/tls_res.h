@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #ifndef TLS_RES_H
@@ -20,7 +27,8 @@ typedef struct Res {
     void *tlsRes; // Indicates the CTX or SSL resource.
     int  ctxId; // This field is used only in sslList, indicating the ctx from which the SSL is generated.
     struct Res *next;
-    uint8_t id; // Indicates the sequence number of a resource, that is, the number of times that the resource is created. The value starts from 0.
+    uint8_t id; // Indicates the sequence number of a resource, that is, the number of times that the resource
+                // is created. The value starts from 0.
 } Res;
 
 typedef struct {

@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 #ifndef CERT_MGR_CTX_H
 #define CERT_MGR_CTX_H
@@ -26,8 +33,10 @@ struct CertVerifyParamInner {
 
 struct CertPairInner {
     HITLS_CERT_X509 *cert;      /* device certificate */
+#ifdef HITLS_TLS_PROTO_TLCP11
     /* encrypted device cert. Currently this field is used only when the peer-end encrypted certificate is stored. */
     HITLS_CERT_X509 *encCert;
+#endif
     HITLS_CERT_Key *privateKey; /* private key corresponding to the certificate */
     HITLS_CERT_Chain *chain;    /* certificate chain */
 };
@@ -48,8 +57,6 @@ struct CertMgrCtxInner {
 };
 
 CERT_Type CertKeyType2CertType(HITLS_CERT_KeyType keyType);
-
-HITLS_CERT_KeyType SignScheme2CertKeyType(HITLS_SignHashAlgo signScheme);
 
 int32_t CheckSignScheme(HITLS_Ctx *ctx, const uint16_t *signSchemeList, uint32_t signSchemeNum,
     HITLS_CERT_KeyType checkedKeyType, bool isNegotiateSignAlgo);

@@ -1,13 +1,21 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /* BEGIN_HEADER */
 /* INCLUDE_BASE test_suite_tls13_consistency_rfc8446 */
+
 #include <stdio.h>
 #include "stub_replace.h"
 #include "hitls.h"
@@ -49,7 +57,7 @@ typedef struct {
 
 static int32_t DoHandshake(ResumeTestInfo *testInfo)
 {
-    HITLS_CFG_SetCloseCheckKeyUsage(testInfo->config, false);
+    HITLS_CFG_SetCheckKeyUsage(testInfo->config, false);
 
     testInfo->client = FRAME_CreateLink(testInfo->config, testInfo->uioType);
     if (testInfo->client == NULL) {
@@ -1038,7 +1046,7 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_CERT_SIGNATURE_FUNC_TC001()
     ASSERT_TRUE(HITLS_CFG_SetSignature(config, signAlgs, sizeof(signAlgs) / sizeof(uint16_t))== HITLS_SUCCESS);
 
     FRAME_CertInfo certInfo = {
-        "rsa_sha/root.pem:rsa_sha/intca.pem",
+        "rsa_sha/ca-3072.der:rsa_sha/inter-3072.der",
         NULL, NULL, NULL, NULL, NULL,};
 
     client = FRAME_CreateLinkWithCert(config, BSL_UIO_TCP, &certInfo);
@@ -1080,11 +1088,11 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_CERT_SIGNATURE_FUNC_TC002()
     ASSERT_TRUE(HITLS_CFG_SetSignature(config, signAlgs, sizeof(signAlgs) / sizeof(uint16_t))== HITLS_SUCCESS);
 
     FRAME_CertInfo certInfo1 = {
-        "rsa_pss_rsae/rsa_root.crt:rsa_pss_rsae/rsa_intCa.crt",
+        "rsa_pss_rsae/rsa_root.der:rsa_pss_rsae/rsa_intCa.der",
         NULL, NULL, NULL, NULL, NULL,};
     FRAME_CertInfo certInfo2 = {
-        "rsa_pss_rsae/rsa_root.crt:rsa_pss_rsae/rsa_intCa.crt",
-        "rsa_pss_rsae/rsa_intCa.crt", "rsa_pss_rsae/rsa_dev.crt", NULL, "rsa_pss_rsae/rsa_dev.key", NULL,};
+        "rsa_pss_rsae/rsa_root.der:rsa_pss_rsae/rsa_intCa.der",
+        "rsa_pss_rsae/rsa_intCa.der", "rsa_pss_rsae/rsa_dev.der", NULL, "rsa_pss_rsae/rsa_dev.key.der", NULL,};
 
     client = FRAME_CreateLinkWithCert(config, BSL_UIO_TCP, &certInfo1);
     ASSERT_TRUE(client != NULL);
@@ -1125,7 +1133,7 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_CERT_SIGNATURE_FUNC_TC003()
     ASSERT_TRUE(HITLS_CFG_SetSignature(config, signAlgs, sizeof(signAlgs) / sizeof(uint16_t))== HITLS_SUCCESS);
 
     FRAME_CertInfo certInfo = {
-        "ecdsa/root.pem:ecdsa/intca.pem",
+        "ecdsa/ca-nist521.der:ecdsa/inter-nist521.der",
         NULL, NULL, NULL, NULL, NULL,};
 
     client = FRAME_CreateLinkWithCert(config, BSL_UIO_TCP, &certInfo);

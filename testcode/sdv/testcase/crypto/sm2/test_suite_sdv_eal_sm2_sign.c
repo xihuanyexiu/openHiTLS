@@ -1,13 +1,21 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
-
 /* INCLUDE_BASE test_suite_sdv_eal_sm2 */
+
 /* BEGIN_HEADER */
+
 #include "eal_pkey_local.h"
 
 #define SM2_SIGN_MAX_LEN 72
@@ -178,11 +186,14 @@ exit:
  *    1. Create the context of the sm2 algorithm, expected result 1
  *    2. Call the CRYPT_EAL_PkeySetPrv method to set private key:
  *       (1) prv.len is invalid (prvKey.len + 1),  expected result 2
- *       (2) private key is all 0x00,  expected result 3
- *       (3) private key is all 0xFF,  expected result 4
+ *       (2) private key is all 0x00,  expected result 2
+ *       (3) private key is all 0xFF,  expected result 2
+ *       (4) value of private key  == order(curve_sm2) - 1,  expected result 2
+ *       (5) ctx id is wrong,  expected result 3
  * @expect
  *    1. Success, and the context is not NULL.
- *    2-4. CRYPT_ECC_PKEY_ERR_INVALID_PRIVATE_KEY
+ *    2. CRYPT_ECC_PKEY_ERR_INVALID_PRIVATE_KEY
+ *    3. CRYPT_EAL_ERR_ALGID
  */
 /* BEGIN_CASE */
 void SDV_CRYPTO_SM2_SET_PRV_API_TC001(Hex *prvKey)
@@ -207,6 +218,11 @@ void SDV_CRYPTO_SM2_SET_PRV_API_TC001(Hex *prvKey)
     ASSERT_TRUE_AND_LOG("zero data key", CRYPT_EAL_PkeySetPrv(ctx, &prv) == CRYPT_ECC_PKEY_ERR_INVALID_PRIVATE_KEY);
     prv.key.eccPrv.data = fullF;
     ASSERT_TRUE_AND_LOG("full 1 key", CRYPT_EAL_PkeySetPrv(ctx, &prv) == CRYPT_ECC_PKEY_ERR_INVALID_PRIVATE_KEY);
+
+    prv.id = CRYPT_PKEY_SM2;
+    prv.key.eccPrv.data = prvKey->x;
+    prv.key.eccPrv.len = prvKey->len;
+    ASSERT_TRUE(CRYPT_EAL_PkeySetPrv(ctx, &prv) == CRYPT_ECC_PKEY_ERR_INVALID_PRIVATE_KEY);
 
     prv.id = CRYPT_PKEY_ED25519;
     prv.key.eccPrv.data = prvKey->x;
@@ -317,26 +333,24 @@ exit:
  *    4. Call the CRYPT_EAL_PkeySign method, where all parameters are valid, expected result 3.
  *    5. Free the context and create a new context of the SM2 algorithm, expected result 4.
  *    6. Call the CRYPT_EAL_PkeySetPrv method to set private key, expected result 5.
- *    7. Call the CRYPT_EAL_PkeySign method, where all parameters are valid, expected result 6.
- *    8. Call the CRYPT_EAL_PkeyCtrl method to set userId, expected result 7.
- *    9. Call the CRYPT_EAL_PkeySign method, where other parameters are valid, but:
- *        (1) signLen is not enough, expected result 8
- *        (2) sign = NULL, signLen != 0, expected result 9
- *        (3) msg = NULL, msgLen != 0, expected result 10
- *        (4) msg = NULL, msgLen = 0, expected result 11
- *        (5) mdId != CRYPT_MD_SM3, msg = NULL, msgLen = 0, expected result 12
+ *    7. Call the CRYPT_EAL_PkeyCtrl method to set userId, expected result 6.
+ *    8. Call the CRYPT_EAL_PkeySign method, where other parameters are valid, but:
+ *        (1) signLen is not enough, expected result 7
+ *        (2) sign = NULL, signLen != 0, expected result 8
+ *        (3) msg = NULL, msgLen != 0, expected result 9
+ *        (4) msg = NULL, msgLen = 0, expected result 10
+ *        (5) mdId != CRYPT_MD_SM3, msg = NULL, msgLen = 0, expected result 11
  * @expect
  *    1. Success, and context is not NULL.
  *    2. CRYPT_SUCCESS
  *    3. CRYPT_SM2_NO_PRVKEY
  *    4. Success, and context is not NULL.
  *    5. CRYPT_SUCCESS
- *    6. CRYPT_SM2_USERID_NOT_SET
- *    7. CRYPT_SUCCESS
- *    8. CRYPT_SM2_BUFF_LEN_NOT_ENOUGH
- *    9-10. CRYPT_NULL_INPUT
- *    11. CRYPT_SUCCESS
- *    12. CRYPT_EAL_ERR_ALGID
+ *    6. CRYPT_SUCCESS
+ *    7. CRYPT_SM2_BUFF_LEN_NOT_ENOUGH
+ *    8-9. CRYPT_NULL_INPUT
+ *    10. CRYPT_SUCCESS
+ *    11. CRYPT_EAL_ERR_ALGID
  */
 /* BEGIN_CASE */
 void SDV_CRYPTO_SM2_SIGN_API_TC001(Hex *prvKey)
@@ -361,7 +375,6 @@ void SDV_CRYPTO_SM2_SIGN_API_TC001(Hex *prvKey)
     ASSERT_TRUE(ctx != NULL);
 
     ASSERT_TRUE(CRYPT_EAL_PkeySetPrv(ctx, &prv) == CRYPT_SUCCESS);
-    ASSERT_TRUE(CRYPT_EAL_PkeySign(ctx, CRYPT_MD_SM3, msg, sizeof(msg), signBuf, &signLen) == CRYPT_SM2_USERID_NOT_SET);
 
     ASSERT_TRUE(CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_SM2_USER_ID, userId, sizeof(userId)) == CRYPT_SUCCESS);
     signLen -= 1;
@@ -482,26 +495,24 @@ exit:
  *    3. Call the CRYPT_EAL_PkeyVerify method, where all parameters are valid, expected result 3.
  *    4. Free the context and create a new context of the SM2 algorithm, expected result 4.
  *    5. Set public key, expected result 5.
- *    6. Call the CRYPT_EAL_PkeySign method, where all parameters are valid, expected result 6.
- *    7. Set userId, expected result 7.
- *    8. Call the CRYPT_EAL_PkeyVerify method:
- *        (1) signLen is invalid: sign->len - 1 or sign->len + 1, expected result 8
- *        (3) msg = NULL, msgLen != 0, expected result 9
- *        (2) sign = NULL, signLen != 0, expected result 10
- *        (4) all parameters are valid, expected result 11
- *        (5) mdId != CRYPT_MD_SM3, expected result 12
+ *    6. Set userId, expected result 6.
+ *    7. Call the CRYPT_EAL_PkeyVerify method:
+ *        (1) signLen is invalid: sign->len - 1 or sign->len + 1, expected result 7
+ *        (3) msg = NULL, msgLen != 0, expected result 8
+ *        (2) sign = NULL, signLen != 0, expected result 9
+ *        (4) all parameters are valid, expected result 10
+ *        (5) mdId != CRYPT_MD_SM3, expected result 11
  * @expect
  *    1. Success, and context is not NULL.
  *    2. CRYPT_SUCCESS
  *    3. CRYPT_SM2_NO_PUBKEY
  *    4. Success, and context is not NULL.
  *    5. CRYPT_SUCCESS
- *    6. CRYPT_SM2_USERID_NOT_SET
- *    7. CRYPT_SUCCESS
- *    8. CRYPT_DSA_DECODE_FAIL
- *    9-10. CRYPT_NULL_INPUT
- *    11. CRYPT_SUCCESS
- *    12. CRYPT_EAL_ERR_ALGID
+ *    6. CRYPT_SUCCESS
+ *    7. CRYPT_DSA_DECODE_FAIL
+ *    8-9. CRYPT_NULL_INPUT
+ *    10. CRYPT_SUCCESS
+ *    11. CRYPT_EAL_ERR_ALGID
  */
 /* BEGIN_CASE */
 void SDV_CRYPTO_SM2_VERIFY_API_TC001(Hex *pubKey, Hex *userId, Hex *msg, Hex *sign)
@@ -524,8 +535,6 @@ void SDV_CRYPTO_SM2_VERIFY_API_TC001(Hex *pubKey, Hex *userId, Hex *msg, Hex *si
     ASSERT_TRUE(memcpy_s(bigSign, SM2_SIGN_MAX_LEN + 1, sign->x, sign->len) == CRYPT_SUCCESS);
 
     ASSERT_TRUE(CRYPT_EAL_PkeySetPub(ctx, &pub) == CRYPT_SUCCESS);
-    ASSERT_TRUE(
-        CRYPT_EAL_PkeyVerify(ctx, CRYPT_MD_SM3, msg->x, msg->len, sign->x, sign->len) == CRYPT_SM2_USERID_NOT_SET);
 
     ASSERT_TRUE(CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_SM2_USER_ID, userId->x, userId->len) == CRYPT_SUCCESS);
     ASSERT_TRUE(
@@ -556,13 +565,11 @@ exit:
  *       (3) userId != null, idLen = 8192, and other parameters are valid, expected result 4
  *       (4) userId != null, idLen = 8191, and other parameters are valid, expected result 5
  *       (5) userId != null, idLen = 1, and other parameters are valid, expected result 6
- *    3. Call the CRYPT_EAL_PkeyCtrl, opt = CRYPT_CTRL_SET_ED448_CONTEXT, expected result 7
  * @expect
  *    1. Success, and context is not NULL.
  *    2. CRYPT_NULL_INPUT
  *    3-4. CRYPT_ECC_PKEY_ERR_CTRL_LEN
  *    5-6. CRYPT_SUCCESS
- *    7. CRYPT_ECC_PKEY_ERR_UNSUPPORTED_CTRL_OPTION
  */
 /* BEGIN_CASE */
 void SDV_CRYPTO_SM2_CTRL_API_TC001(void)
@@ -579,9 +586,6 @@ void SDV_CRYPTO_SM2_CTRL_API_TC001(void)
     ASSERT_TRUE(CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_SM2_USER_ID, userId, idLen + 1) == CRYPT_ECC_PKEY_ERR_CTRL_LEN);
     ASSERT_TRUE(CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_SM2_USER_ID, userId, idLen) == CRYPT_SUCCESS);
     ASSERT_TRUE(CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_SM2_USER_ID, userId, 1) == CRYPT_SUCCESS);
-    ASSERT_TRUE(
-        CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_ED448_CONTEXT, userId, 1) == CRYPT_ECC_PKEY_ERR_UNSUPPORTED_CTRL_OPTION);
-
 exit:
     CRYPT_EAL_PkeyFreeCtx(ctx);
 }

@@ -1,11 +1,19 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
-
+#include "hitls_build.h"
+#if defined(HITLS_TLS_PROTO_TLS13) && defined(HITLS_TLS_HOST_SERVER)
 #include <stdint.h>
 #include "tls_binlog_id.h"
 #include "bsl_log_internal.h"
@@ -16,8 +24,8 @@
 #include "tls.h"
 #include "hs_ctx.h"
 #include "hs_extensions.h"
+#include "pack_common.h"
 #include "pack_extensions.h"
-
 
 static int32_t PackEncryptedSupportedGroups(const TLS_Ctx *ctx, uint8_t *buf, uint32_t bufLen, uint32_t *usedLen)
 {
@@ -84,9 +92,16 @@ static int32_t PackEncryptedExs(const TLS_Ctx *ctx, uint8_t *buf, uint32_t bufLe
         {.exMsgType = HS_EX_TYPE_EARLY_DATA,    /* This field is available only in 0-rrt mode */
          .needPack = false,
          .packFunc = NULL},
+#ifdef HITLS_TLS_FEATURE_SNI
         {.exMsgType = HS_EX_TYPE_SERVER_NAME,    /* During extension, only empty SNI extensions are encapsulated. */
          .needPack = ctx->negotiatedInfo.isSniStateOK,
          .packFunc = NULL},
+#endif /* HITLS_TLS_FEATURE_SNI */
+#ifdef HITLS_TLS_FEATURE_ALPN
+        {.exMsgType = HS_EX_TYPE_APP_LAYER_PROTOCOLS,
+         .needPack = (ctx->negotiatedInfo.alpnSelected != NULL),
+         .packFunc = PackServerSelectAlpnProto},
+#endif /* HITLS_TLS_FEATURE_ALPN */
     };
 
     /* Calculate the number of extended types */
@@ -142,12 +157,9 @@ int32_t PackEncryptedExtensions(const TLS_Ctx *ctx, uint8_t *buf, uint32_t bufLe
     /* Obtain the message header length */
     headerLen = sizeof(uint16_t);
     /* If the length of the message structure is smaller than the length of the message header,
-     * return an error code */
+       an error code is returned */
     if (bufLen < headerLen) {
-        BSL_ERR_PUSH_ERROR(HITLS_PACK_NOT_ENOUGH_BUF_LENGTH);
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15851, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
-            "the buffer length of Encrypted_extensions extension message is not enough.", 0, 0, 0, 0);
-        return HITLS_PACK_NOT_ENOUGH_BUF_LENGTH;
+        return PackBufLenError(BINLOG_ID15851, BINGLOG_STR("Encrypted Extension"));
     }
 
     /* Pack the encrypted_extensions extension */
@@ -167,3 +179,4 @@ int32_t PackEncryptedExtensions(const TLS_Ctx *ctx, uint8_t *buf, uint32_t bufLe
 
     return HITLS_SUCCESS;
 }
+#endif /* HITLS_TLS_PROTO_TLS13 && HITLS_TLS_HOST_SERVER */

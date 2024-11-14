@@ -1,11 +1,17 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
-
 
 #include "securec.h"
 #include "bsl_bytes.h"
@@ -82,6 +88,7 @@ static int32_t ParseFieldArray8(const uint8_t *buffer, uint32_t bufLen, FRAME_Ar
     if (bufLen < fieldLen) {
         return HITLS_PARSE_INVALID_MSG_LEN;
     }
+    BSL_SAL_FREE(field->data);
     field->data = BSL_SAL_Dump(buffer, fieldLen);
     if (field->data == NULL) {
         return HITLS_MEMALLOC_FAIL;
@@ -645,7 +652,7 @@ static int32_t ParseServerKxDhMsg(FRAME_Type *frameType, const uint8_t *buffer, 
     return HITLS_SUCCESS;
 }
 
-static int32_t ParseServerKxEccMsg(FRAME_Type *frameType, const uint8_t *buffer, uint32_t bufLen,
+static int32_t ParseServerKxEccMsg(const uint8_t *buffer, uint32_t bufLen,
                                     FRAME_ServerEcdh *ecdh, uint32_t *parseLen)
 {
     uint32_t offset = 0;
@@ -664,7 +671,7 @@ static int32_t ParseServerKxMsg(FRAME_Type *frameType, const uint8_t *buffer, ui
         case HITLS_KEY_EXCH_DHE:
             return ParseServerKxDhMsg(frameType, buffer, bufLen, &serverKx->keyEx.dh, parseLen);
         case HITLS_KEY_EXCH_ECC:
-            return ParseServerKxEccMsg(frameType, buffer, bufLen, &serverKx->keyEx.ecdh, parseLen);
+            return ParseServerKxEccMsg(buffer, bufLen, &serverKx->keyEx.ecdh, parseLen);
         default:
             break;
     }
@@ -779,8 +786,8 @@ static int32_t ParseClientKxMsg(FRAME_Type *frameType, const uint8_t *buffer, ui
     uint32_t offset = 0;
     switch (frameType->keyExType) {
         case HITLS_KEY_EXCH_ECDHE:
-            /* Three bytes are added to the client key exchange. */
-#ifndef HITLS_NO_TLCP11
+            /* Compatible with OpenSSL. Three bytes are added to the client key exchange. */
+#ifdef HITLS_TLS_PROTO_TLCP11
             if (frameType->versionType == HITLS_VERSION_TLCP11) {
                 // Curve type + Curve ID + Public key length
                 uint8_t minLen = sizeof(uint8_t) + sizeof(uint16_t) + sizeof(uint8_t);

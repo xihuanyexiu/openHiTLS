@@ -1,12 +1,20 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /* BEGIN_HEADER */
+
 #include <unistd.h>
 #include <semaphore.h>
 #include "securec.h"
@@ -44,7 +52,7 @@ void SDV_TLS_TLCP_CIPHER_SUITE_TC01(char *cipherSuiteType)
     serverCtxConfig->needCheckKeyUsage = true;
 
     // The server listens on the TLS link.
-    serverRes = HLT_ProcessTlsAccept(localProcess, TLCP1_1, serverCtxConfig, NULL);
+    serverRes = HLT_ProcessTlsAccept(remoteProcess, TLCP1_1, serverCtxConfig, NULL);
     ASSERT_TRUE(serverRes != NULL);
 
     // Configure link information on the client.
@@ -53,15 +61,15 @@ void SDV_TLS_TLCP_CIPHER_SUITE_TC01(char *cipherSuiteType)
     HLT_SetCipherSuites(clientCtxConfig, cipherSuiteType);
 
     // Set up a TLCP link on the client.
-    clientRes = HLT_ProcessTlsConnect(remoteProcess, TLCP1_1, clientCtxConfig, NULL);
+    clientRes = HLT_ProcessTlsConnect(localProcess, TLCP1_1, clientCtxConfig, NULL);
     ASSERT_TRUE(clientRes != NULL);
 
     ASSERT_TRUE(HLT_GetTlsAcceptResult(serverRes) == 0);
-    ASSERT_TRUE(HLT_ProcessTlsWrite(localProcess, serverRes, (uint8_t *)"Hello World", strlen("Hello World")) == 0);
+    ASSERT_TRUE(HLT_ProcessTlsWrite(remoteProcess, serverRes, (uint8_t *)"Hello World", strlen("Hello World")) == 0);
 
     uint8_t readBuf[READ_BUF_LEN_18K] = {0};
     uint32_t readLen;
-    ASSERT_TRUE(HLT_ProcessTlsRead(remoteProcess, clientRes, readBuf, READ_BUF_LEN_18K, &readLen) == 0);
+    ASSERT_TRUE(HLT_ProcessTlsRead(localProcess, clientRes, readBuf, READ_BUF_LEN_18K, &readLen) == 0);
     ASSERT_TRUE(readLen == strlen("Hello World"));
     ASSERT_TRUE(memcmp("Hello World", readBuf, readLen) == 0);
 

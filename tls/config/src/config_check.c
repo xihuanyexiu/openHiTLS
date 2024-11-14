@@ -1,14 +1,21 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
-
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "hitls_build.h"
 #include "bsl_err_internal.h"
 #include "tls_binlog_id.h"
 #include "bsl_log_internal.h"
@@ -24,7 +31,7 @@
 static bool IsSignAlgValid(uint16_t signAlg, uint16_t version)
 {
     uint32_t listLen = 0;
-#ifndef HITLS_NO_TLCP11
+#ifdef HITLS_TLS_PROTO_TLCP11
     const SignSchemeInfo *signSchemeList = (version != HITLS_VERSION_TLCP11) ?
         CFG_GetSignSchemeList(&listLen) :
         CFG_GetSignSchemeListTlcp(&listLen);
@@ -32,7 +39,6 @@ static bool IsSignAlgValid(uint16_t signAlg, uint16_t version)
     (void)version;
     const SignSchemeInfo *signSchemeList = CFG_GetSignSchemeList(&listLen);
 #endif
-
     for (uint32_t i = 0; i < listLen; i++) {
         if (signSchemeList[i].scheme == signAlg) {
             return true;
@@ -70,7 +76,7 @@ static bool  HaveMatchSignAlg(HITLS_AuthAlgo authAlg, const uint16_t *signatureA
                 return true;
             }
 
-            if (((signAlg == HITLS_SIGN_ECDSA) || (signAlg == HITLS_SIGN_ED25519)) &&
+            if (((signAlg == HITLS_SIGN_ECDSA) || (signAlg == HITLS_SIGN_ED25519) || (signAlg == HITLS_SIGN_ED448)) &&
                 (authAlg == HITLS_AUTH_ECDSA)) {
                 return true;
             }
@@ -91,6 +97,8 @@ static bool  HaveMatchSignAlg(HITLS_AuthAlgo authAlg, const uint16_t *signatureA
 static int32_t CheckPointFormats(const TLS_Config *config)
 {
     if ((config->pointFormats == NULL) || (config->pointFormatsSize == 0)) {
+        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16561, BSL_LOG_LEVEL_INFO, BSL_LOG_BINLOG_TYPE_RUN,
+            "pointFormats null", 0, 0, 0, 0);
         BSL_ERR_PUSH_ERROR(HITLS_CONFIG_INVALID_SET);
         return HITLS_CONFIG_INVALID_SET;
     }
@@ -134,7 +142,7 @@ static int32_t CheckSign(const TLS_Config *config)
         }
     }
 
-    /**
+    /*
         In this case, only the 1.3 cipher suite is configured, or only TLS1.3 is supported.
         The authentication algorithm is not specified in the TLS 1.3 cipher suite and therefore does not need to be
        checked.
@@ -206,7 +214,7 @@ static int32_t CheckGroup(const TLS_Config *config)
     return HITLS_SUCCESS;
 }
 
-int32_t CFG_CheckVersion(uint16_t minVersion, uint16_t maxVersion)
+int32_t CheckVersion(uint16_t minVersion, uint16_t maxVersion)
 {
     if ((CFG_IsValidVersion(minVersion) == false) || (CFG_IsValidVersion(maxVersion) == false) ||
         (IS_DTLS_VERSION(minVersion) != IS_DTLS_VERSION(maxVersion))) {
@@ -229,10 +237,10 @@ int32_t CFG_CheckVersion(uint16_t minVersion, uint16_t maxVersion)
             "Config max version [0x%x] or min version [0x%x] is invalid.", maxVersion, minVersion, 0, 0);
         return HITLS_CONFIG_INVALID_VERSION;
     }
-#ifndef HITLS_NO_TLCP11
+#ifdef HITLS_TLS_PROTO_TLCP11
     if (minVersion == HITLS_VERSION_TLCP11 || maxVersion == HITLS_VERSION_TLCP11) {
         if (minVersion != maxVersion) {
-            BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15331, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
+            BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16233, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
                 "Config max version [0x%x] or min version [0x%x] is invalid.", maxVersion,
                 minVersion, 0, 0);
             return HITLS_CONFIG_INVALID_VERSION;
@@ -241,14 +249,19 @@ int32_t CFG_CheckVersion(uint16_t minVersion, uint16_t maxVersion)
 #endif
     return HITLS_SUCCESS;
 }
-
-int32_t CFG_CheckConfig(const TLS_Config *config)
+int32_t CheckConfig(const TLS_Config *config)
 {
     int32_t ret;
 
     /** The check of the cipher suite is checked during setting. The algorithm suite needs to be sorted and the memory
      * overhead increases. Therefore, the algorithm suite is still placed in the Set interface */
-    if (config->cipherSuitesSize == 0 && config->tls13cipherSuitesSize == 0) {
+    if (config->cipherSuitesSize == 0
+#ifdef HITLS_TLS_PROTO_TLS13
+    && config->tls13cipherSuitesSize == 0
+#endif
+    ) {
+        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16562, BSL_LOG_LEVEL_INFO, BSL_LOG_BINLOG_TYPE_RUN,
+            "cipherSuitesSize is 0", 0, 0, 0, 0);
         BSL_ERR_PUSH_ERROR(HITLS_CONFIG_INVALID_SET);
         return HITLS_CONFIG_INVALID_SET;
     }
@@ -270,6 +283,5 @@ int32_t CFG_CheckConfig(const TLS_Config *config)
     if (ret != HITLS_SUCCESS) {
         return ret;
     }
-
-    return HITLS_SUCCESS;
+    return ret;
 }

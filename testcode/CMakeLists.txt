@@ -1,10 +1,15 @@
-# ---------------------------------------------------------------------------------------------
-#  This file is part of the openHiTLS project.
-#  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
-#  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
-#  for license information.
-# ---------------------------------------------------------------------------------------------
-
+# This file is part of the openHiTLS project.
+#
+# openHiTLS is licensed under the Mulan PSL v2.
+# You can use this software according to the terms and conditions of the Mulan PSL v2.
+# You may obtain a copy of Mulan PSL v2 at:
+#
+#     http://license.coscl.org.cn/MulanPSL2
+#
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+# EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+# MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+# See the Mulan PSL v2 for more details.
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 PROJECT(openHiTLS_TEST)
@@ -19,7 +24,7 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
     option(__x86_64__ "x86" ON)
 endif()
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wformat=2 -Wno-format-nonliteral -Wno-deprecated-declarations -Wno-unused-but-set-variable -Wl,--wrap=REC_Read -Wl,--wrap=REC_Write")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror -Wformat=2 -Wno-format-nonliteral -Wno-deprecated-declarations -Wno-unused-but-set-variable -Wl,--wrap=REC_Read -Wl,--wrap=REC_Write")
 
 message(STATUS "System processor :${CMAKE_SYSTEM_PROCESSOR}")
 message(STATUS "Enable bsl uio sctp :${ENABLE_UIO_SCTP}")
@@ -57,7 +62,7 @@ if(OS_BIG_ENDIAN)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mbig-endian")
 endif()
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FILE_OFFSET_BITS=64 -D_POSIX_C_SOURCE=200809L")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FILE_OFFSET_BITS=64")
 
 include(ExternalProject)
 ExternalProject_Add(${LIB_TEST_TLS}
@@ -96,7 +101,7 @@ ExternalProject_Add(${PROCESS}
 ExternalProject_Add(${GEN_TESTCASE}
     SOURCE_DIR            ${openHiTLS_SRC}
     PREFIX                ""
-    BINARY_DIR            ${openHiTLS_SRC}/testcode/framework/gen_test/build
+    BINARY_DIR            ${openHiTLS_SRC}/testcode/framework/gen_test/build/
     INSTALL_DIR           ""
     UPDATE_COMMAND        ""
     CONFIGURE_COMMAND     cmake -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -DPRINT_TO_TERMINAL=${ENABLE_PRINT} ..
@@ -115,8 +120,10 @@ ExternalProject_Add(${TESTCASE}
     BINARY_DIR            ${openHiTLS_SRC}/testcode/sdv/build/${TESTFILE}
     INSTALL_DIR           ""
     UPDATE_COMMAND        ""
-    CONFIGURE_COMMAND     cmake -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -DENABLE_TLS=${ENABLE_TLS} -DENABLE_CRYPTO=${ENABLE_CRYPTO}
-                                -DGEN_TEST_FILES=${GEN_TEST_FILES} -DENABLE_UIO_SCTP=${ENABLE_UIO_SCTP} ../..
+    CONFIGURE_COMMAND     cmake -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -DENABLE_CRYPTO=${ENABLE_CRYPTO}
+                                -DENABLE_TLS=${ENABLE_TLS}
+                                -DENABLE_X509=${ENABLE_X509} -DGEN_TEST_FILES=${GEN_TEST_FILES}
+                                -DENABLE_UIO_SCTP=${ENABLE_UIO_SCTP} ../..
     BUILD_COMMAND         make
     INSTALL_COMMAND       ""
     BUILD_ALWAYS          FALSE

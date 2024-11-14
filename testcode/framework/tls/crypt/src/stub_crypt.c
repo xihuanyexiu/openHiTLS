@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include <stdint.h>
@@ -458,7 +465,7 @@ void STUB_CRYPT_HmacFreeCallback(HITLS_HMAC_Ctx *ctx)
  */
 int32_t STUB_CRYPT_HmacUpdateCallback(HITLS_HMAC_Ctx *ctx, const uint8_t *data, uint32_t len)
 {
-    if ((ctx == NULL) || (data == NULL)) {
+    if ((ctx == NULL) || (data == NULL) || len == 0) {
         return HITLS_INTERNAL_EXCEPTION;
     }
     return HITLS_SUCCESS;
@@ -510,7 +517,8 @@ int32_t STUB_CRYPT_HmacFinalCallback(HITLS_HMAC_Ctx *ctx, uint8_t *out, uint32_t
 int32_t STUB_CRYPT_HmacCallback(HITLS_HashAlgo hashAlgo, const uint8_t *key, uint32_t keyLen,
     const uint8_t *in, uint32_t inLen, uint8_t *out, uint32_t *outLen)
 {
-    if ((key == NULL) || (in == NULL) || (out == NULL) || (outLen == NULL)) {
+    if ((key == NULL) || (keyLen == 0) || (in == NULL) || (inLen == 0) ||
+        (out == NULL) || (outLen == NULL)) {
         return HITLS_INTERNAL_EXCEPTION;
     }
 

@@ -1,14 +1,23 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
+
 #ifndef APP_H
 #define APP_H
 
 #include <stdint.h>
+#include "hitls_build.h"
 #include "tls.h"
 
 #ifdef __cplusplus
@@ -17,25 +26,8 @@ extern "C" {
 
 /**
  * @ingroup app
- * @brief Initialize the app module.
- *
- * @param ctx [IN] TLS context
- * @retval HITLS_SUCCESS Initializition successful.
- * @retval HITLS_MEMALLOC_FAIL Failed to apply for memory.
- */
-int32_t APP_Init(TLS_Ctx *ctx);
-
-/**
- * @ingroup app
- * @brief Deinitialize the app module.
- * @param ctx [IN] TLS context
- */
-void APP_DeInit(TLS_Ctx *ctx);
-
-/**
- * @ingroup app
- * @brief TLS can read data of any length, rather than in the unit of record. DTLS can read data in the unit of record.
- * Reads num number of bytes from the CTX to the buffer. Support input of any num bytes (num must be greater than 0).
+ * @brief TLS can read data of any length, not in the unit of record. DTLS can read data in the unit of record.
+ * Reads num bytes from the CTX to the buffer. Users can transfer any num bytes (num must be greater than 0).
  *
  * @attention Reads only the application data decrypted by one record at a time.
  * HITLS copies the application data to the input cache.
@@ -73,33 +65,13 @@ int32_t APP_GetMaxWriteSize(const TLS_Ctx *ctx, uint32_t *len);
  * @param ctx [IN] TLS context
  * @param data [IN] Data to be written
  * @param dataLen [IN] Data length
+ * @param   writeLen [OUT] Length of Successful Writes
  *
  * @retval HITLS_SUCCESS Write successful.
  * @retval HITLS_APP_ERR_TOO_LONG_TO_WRITE The data to be written is too long.
  * @retval Other reuturn value referst to REC_Write.
  */
-int32_t APP_Write(TLS_Ctx *ctx, const uint8_t *data, uint32_t dataLen);
-
-/**
- * @ingroup app
- * @brief Processing of unexpected APP messages.
- * When receiving an APP message in the handshake, call this function to process the message.
- *
- * @param ctx [IN] TLS context
- * @param data [IN] Message body
- * @param len [IN] Message length
- *
- */
-void APP_RecvUnexpectedMsgProcess(TLS_Ctx *ctx, const uint8_t *data, uint32_t len);
-
-/**
- * @ingroup app
- * @brief Obtain the length of the remaining readable app messages in the current record.
- *
- * @param ctx [IN] TLS object
- * @retval Length of the remaining readable app message
- */
-uint32_t APP_GetReadPendingBytes(const TLS_Ctx *ctx);
+int32_t APP_Write(TLS_Ctx *ctx, const uint8_t *data, uint32_t dataLen, uint32_t *writeLen);
 
 #ifdef __cplusplus
 }

@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /**
@@ -319,22 +326,6 @@ enum CRYPT_ERROR {
     CRYPT_MD5_OUT_BUFF_LEN_NOT_ENOUGH,                /**< The length of the buffer that storing the
                                                            output result is insufficient. */
 
-    CRYPT_CURVE448_NO_PUBKEY = 0x011A0001,            /**< No public key. */
-    CRYPT_CURVE448_NO_PRVKEY,                         /**< No private key. */
-    CRYPT_CURVE448_KEYLEN_ERROR,                      /**< Incorrect key length. */
-    CRYPT_CURVE448_SIGNLEN_ERROR,                     /**< Incorrect signature length. */
-    CRYPT_CURVE448_VERIFY_FAIL,                       /**< Signature verification failed due to incorrect signature. */
-    CRYPT_CURVE448_NO_HASH_METHOD,                    /**< Hash method not set. */
-    CRYPT_CURVE448_UNSUPPORTED_CTRL_OPTION,           /**< Unsupported mode of operation. */
-    CRYPT_CURVE448_KEY_COMPUTE_FAILED,                /**< Failed to generate the shared key. */
-    CRYPT_CURVE448_INVALID_PUBKEY,                    /**< Invalid public key. */
-    CRYPT_CURVE448_CONTEXT_TOO_LONG,                  /**< Context over 255. */
-    CRYPT_CURVE448_NO_CONTEXT,                        /**< Ctx is not set. */
-    CRYPT_CURVE448_HASH_METH_ERROR,                   /**< Hash method is not SHAKE256. */
-    CRYPT_CURVE448_PUBKEY_NOT_EQUAL,                  /**< CURVE448 public keys are not equal. */
-    CRYPT_CURVE448_POINT_NOT_EQUAL,                   /**< CURVE448 points are not equal. */
-    CRYPT_CURVE448_FAIL,                              /**< CURVE448 parameter error. */
-
     CRYPT_SM2_BUFF_LEN_NOT_ENOUGH = 0x011B0001,       /**< Insufficient buffer length. */
     CRYPT_SM2_NO_PUBKEY,                              /**< SM2 the public key is not set. */
     CRYPT_SM2_NO_PRVKEY,                              /**< SM2 The private key is not set. */
@@ -355,7 +346,38 @@ enum CRYPT_ERROR {
     CRYPT_SM2_EXCH_VERIFY_FAIL,                       /**< Key Negotiation Failure. */
     CRYPT_SM2_DECODE_FAIL,                            /**< Data decoding fails, the data does not meet
                                                             the decoding requirements. */
+    CRYPT_SM2_ID_TOO_LARGE,                           /**< User id to large. */
     CRYPT_KDFTLS12_NOT_SUPPORTED = 0x011C0001,        /**< Unsupport the KDFTLS12 algorithm. */
+
+    CRYPT_DECODE_ASN1_BUFF_NUM_NOT_ENOUGH = 0x011D0001,  /**< The input number of BSL_ANS1_Buffer is not enough. */
+    CRYPT_DECODE_UNSUPPORTED_PUBKEY_TYPE,                /**< Unsupported pubkey type */
+    CRYPT_DECODE_UNSUPPORTED_PKCS8_TYPE,                 /**< Unsupported pkcs8 type */
+    CRYPT_DECODE_PKCS8_INVALID_ALGO_PARAM,               /**< pkcs8 has no valid algorithm parameters */
+    CRYPT_DECODE_UNKNOWN_OID,                            /**< Unknown OID */
+    CRYPT_DECODE_ASN1_BUFF_FAILED,                       /**< decode asn1 buffer failed. */
+    CRYPT_DECODE_NO_SUPPORT_TYPE,                        /**< decode no support key type. */
+    CRYPT_DECODE_NO_SUPPORT_FORMAT,                      /**< decode no support key format. */
+    CRYPT_DECODE_PKCS8_INVALID_ITER,                     /**< pkcs8 invalid iter num */
+    CRYPT_DECODE_PKCS8_INVALID_KEYLEN,                   /**< pkcs8 invalid keylen */
+    CRYPT_DECODE_ERR_RSSPSS_GET_ANY_TAG,                 /**< decode rsapss param failed. */
+    CRYPT_DECODE_ERR_RSSPSS,                             /**< decode rsapss param failed. */
+    CRYPT_DECODE_ERR_RSSPSS_MD,                          /**< rsapss md is invalid. */
+    CRYPT_DECODE_ERR_RSSPSS_MGF1MD,                      /**< rsapss mgf1md is invalid. */
+    CRYPT_DECODE_ERR_RSSPSS_TRAILER,                     /**< rsapss trailer field is invalid. */
+    CRYPT_DECODE_PKCS7_INVALIDE_ENCRYPTDATA_TYPE,        /**< Invaild pkcs7-encryptedData. */
+    CRYPT_DECODE_UNSUPPORTED_PKCS7_TYPE,                 /**< Unsupported pkcs7 type */
+    CRYPT_DECODE_UNSUPPORTED_ENCRYPT_TYPE,               /**< Unsupported encrypt type */
+
+    CRYPT_ENCODE_NO_SUPPORT_TYPE = 0x011E0001,           /**< encode no support key type. */
+    CRYPT_ENCODE_NO_SUPPORT_FORMAT,                      /**< encode no support key format. */
+    CRYPT_ENCODE_ERR_RSA_PAD,                            /**< rsa pad err. */
+    
+    CRYPT_PAILLIER_BUFF_LEN_NOT_ENOUGH = 0x011F0001, /**< The buffer length is insufficient. */
+    CRYPT_PAILLIER_NO_KEY_INFO,              /**< Lacks valid key information. */
+    CRYPT_PAILLIER_ERR_KEY_BITS,             /**< Incorrect key length. */
+    CRYPT_PAILLIER_ERR_ENC_BITS,             /**< Incorrect length of the encrypted plaintext of the public key. */
+    CRYPT_PAILLIER_ERR_DEC_BITS,             /**< Incorrect length of the decrypted ciphertext of the private key. */
+    CRYPT_PAILLIER_ERR_INPUT_VALUE,          /**< Some special values, which are used as input errors. */
 };
 
 #ifdef __cplusplus

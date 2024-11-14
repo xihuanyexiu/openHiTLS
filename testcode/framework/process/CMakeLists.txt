@@ -1,10 +1,15 @@
-# ---------------------------------------------------------------------------------------------
-#  This file is part of the openHiTLS project.
-#  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
-#  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
-#  for license information.
-# ---------------------------------------------------------------------------------------------
-
+# This file is part of the openHiTLS project.
+#
+# openHiTLS is licensed under the Mulan PSL v2.
+# You can use this software according to the terms and conditions of the Mulan PSL v2.
+# You may obtain a copy of Mulan PSL v2 at:
+#
+#     http://license.coscl.org.cn/MulanPSL2
+#
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+# EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+# MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+# See the Mulan PSL v2 for more details.
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 project(TLS_PROCESS)
@@ -48,13 +53,14 @@ target_link_directories(${PROCESS}
         ${HITLS_SRC}/platform/Secure_C/lib
 )
 target_link_libraries(${PROCESS}
-    -ltls_hlt    
-    -ltls_frame
-    -lhitls_tls
-    -lhitls_crypto
-    -lhitls_bsl
-    -lboundscheck
-    -lpthread
-    -lsctp
-    -lrec_wrapper
+    tls_hlt
+    tls_frame
+    hitls_tls
+    hitls_crypto
+    hitls_x509
+    hitls_bsl
+    boundscheck
+    pthread
+    sctp
+    rec_wrapper
 )

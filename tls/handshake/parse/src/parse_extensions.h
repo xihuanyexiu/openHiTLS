@@ -1,17 +1,25 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
-
+ 
 #ifndef PARSE_EXTENSIONS_H
 #define PARSE_EXTENSIONS_H
 
 #include <stdint.h>
 #include "tls.h"
 #include "hs_msg.h"
+#include "parse_common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -95,6 +103,35 @@ void CleanServerHelloExtension(ServerHelloMsg *msg);
  */
 int32_t ParseEmptyExtension(TLS_Ctx *ctx, uint16_t extMsgType, uint32_t extMsgLen, bool *haveExtension);
 
+int32_t ParseExCookie(const uint8_t *buf, uint32_t bufLen, uint8_t **cookie, uint16_t *cookieLen);
+
+int32_t ParseSecRenegoInfo(TLS_Ctx *ctx, const uint8_t *buf, uint32_t bufLen, uint8_t **secRenegoInfo,
+    uint8_t *secRenegoInfoSize);
+
+int32_t ParseServerSelectedAlpnProtocol(
+    ParsePacket *pkt, bool *haveSelectedAlpn, uint8_t **alpnSelected, uint16_t *alpnSelectedSize);
+
+/**
+ * @brief   Error process in duplicated extension
+ *
+ * @param   ctx [IN] TLS context
+ * @param   logId [IN] binlogid
+ * @param   format [IN] Message for log function
+
+ * @retval  HITLS_PARSE_DUPLICATE_EXTENDED_MSG
+ */
+int32_t ParseDupExtProcess(TLS_Ctx *ctx, uint32_t logId, const void *format);
+
+/**
+ * @brief   Parse extension length error
+ *
+ * @param   ctx [IN] TLS context
+ * @param   logId [IN] binlogid
+ * @param   format [IN] Message for log function
+
+ * @retval  HITLS_PARSE_INVALID_MSG_LEN
+ */
+int32_t ParseErrorExtLengthProcess(TLS_Ctx *ctx, uint32_t logId, const void *format);
 #ifdef __cplusplus
 }
 #endif /* end __cplusplus */

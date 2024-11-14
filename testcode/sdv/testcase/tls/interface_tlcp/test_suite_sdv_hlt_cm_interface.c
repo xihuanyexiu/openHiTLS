@@ -1,11 +1,20 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
+
 /* BEGIN_HEADER */
+
 #include <unistd.h>
 #include <semaphore.h>
 #include "securec.h"
@@ -30,12 +39,12 @@
 
 #define READ_BUF_SIZE 18432
 #define Port 7788
-#define ROOT_PEM "%s/root.pem:%s/intca.pem"
-#define INTCA_PEM "%s/intca.pem"
-#define SERVER_PEM "%s/server.pem"
-#define SERVER_KEY_PEM "%s/server.key.pem"
-#define CLIENT_PEM "%s/client.pem"
-#define CLIENT_KEY_PEM "%s/client.key.pem"
+#define ROOT_DER "%s/ca.der:%s/inter.der"
+#define INTCA_DER "%s/inter.der"
+#define SERVER_DER "%s/server.der"
+#define SERVER_KEY_DER "%s/server.key.der"
+#define CLIENT_DER "%s/client.der"
+#define CLIENT_KEY_DER "%s/client.key.der"
 #define BUF_SZIE 18432
 
 /* END_HEADER */
@@ -85,7 +94,8 @@ void SDV_HITLS_CM_HITLS_GetNegotiateGroup_FUNC_TC001(char *serverCipherSuite, ch
 
     localProcess = HLT_InitLocalProcess(HITLS);
     ASSERT_TRUE(localProcess != NULL);
-    remoteProcess = HLT_LinkRemoteProcess(HITLS, SCTP, g_uiPort, true);
+    HILT_TransportType connType = SCTP;
+    remoteProcess = HLT_LinkRemoteProcess(HITLS, connType, g_uiPort, true);
     ASSERT_TRUE(remoteProcess != NULL);
 
     HLT_Ctx_Config *serverCtxConfig = HLT_NewCtxConfig(NULL, "SERVER");
@@ -161,7 +171,8 @@ void SDV_HITLS_CM_HITLS_GetNegotiateGroup_FUNC_TC002(char *serverCipherSuite, ch
 
     localProcess = HLT_InitLocalProcess(HITLS);
     ASSERT_TRUE(localProcess != NULL);
-    remoteProcess = HLT_LinkRemoteProcess(HITLS, SCTP, g_uiPort, true);
+    HILT_TransportType connType = SCTP;
+    remoteProcess = HLT_LinkRemoteProcess(HITLS, connType, g_uiPort, true);
     ASSERT_TRUE(remoteProcess != NULL);
 
     HLT_Ctx_Config *serverCtxConfig = HLT_NewCtxConfig(NULL, "SERVER");
@@ -234,7 +245,8 @@ void SDV_HITLS_CM_HITLS_GetNegotiateGroup_FUNC_TC003(char *serverCipherSuite, ch
 
     localProcess = HLT_InitLocalProcess(HITLS);
     ASSERT_TRUE(localProcess != NULL);
-    remoteProcess = HLT_LinkRemoteProcess(HITLS, SCTP, g_uiPort, true);
+    HILT_TransportType connType = SCTP;
+    remoteProcess = HLT_LinkRemoteProcess(HITLS, connType, g_uiPort, true);
     ASSERT_TRUE(remoteProcess != NULL);
 
     HLT_Ctx_Config *serverCtxConfig = HLT_NewCtxConfig(NULL, "SERVER");
@@ -309,7 +321,8 @@ void SDV_HITLS_CM_HITLS_GetNegotiateGroup_FUNC_TC004(char *serverCipherSuite, ch
 
     localProcess = HLT_InitLocalProcess(HITLS);
     ASSERT_TRUE(localProcess != NULL);
-    remoteProcess = HLT_LinkRemoteProcess(HITLS, SCTP, g_uiPort, true);
+    HILT_TransportType connType = SCTP;
+    remoteProcess = HLT_LinkRemoteProcess(HITLS, connType, g_uiPort, true);
     ASSERT_TRUE(remoteProcess != NULL);
 
     HLT_Ctx_Config *serverCtxConfig = HLT_NewCtxConfig(NULL, "SERVER");
@@ -389,7 +402,8 @@ void SDV_TLS_CM_FRAGMENTATION_FUNC_TC001(void)
 
     localProcess = HLT_InitLocalProcess(HITLS);
     ASSERT_TRUE(localProcess != NULL);
-    remoteProcess = HLT_LinkRemoteProcess(HITLS, SCTP, Port, false);
+    HILT_TransportType connType = SCTP;
+    remoteProcess = HLT_LinkRemoteProcess(HITLS, connType, Port, false);
     ASSERT_TRUE(remoteProcess != NULL);
 
     serverConfig = HLT_NewCtxConfig(NULL, "SERVER");

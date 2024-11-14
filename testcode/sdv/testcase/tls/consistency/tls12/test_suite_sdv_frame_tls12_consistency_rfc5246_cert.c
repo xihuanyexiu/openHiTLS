@@ -1,13 +1,21 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /* BEGIN_HEADER */
 /* INCLUDE_BASE test_suite_tls12_consistency_rfc5246 */
+
 #include <stdio.h>
 #include "hitls.h"
 #include "hitls_config.h"
@@ -106,19 +114,19 @@ void UT_TLS_TLS12_RFC5246_CONSISTENCY_SIGNATION_NOT_SUITABLE_CERT_TC002(void)
     uint16_t cipherSuites[] = {HITLS_RSA_WITH_AES_128_GCM_SHA256};
     HITLS_CFG_SetCipherSuites(config, cipherSuites, sizeof(cipherSuites) / sizeof(uint16_t));
     FRAME_CertInfo certInfoServer = {
-        "ecdsa/root.pem",
-        "rsa_sha/intca.pem",
-        "rsa_sha/RSA2048SHA256.pem",
+        "ecdsa/ca-nist521.der",
+        "rsa_sha/inter-3072.der",
+        "rsa_sha/end-sha256.der",
         0,
-        "rsa_sha/RSA2048SHA256.key.pem",
+        "rsa_sha/end-sha256.key.der",
         0,
     };
     FRAME_CertInfo certInfoClient = {
-        "rsa_sha/root.pem",
-        "ecdsa/intca.pem",
-        "ecdsa/ec_app256SHA256.pem",
+        "rsa_sha/ca-3072.der",
+        "ecdsa/inter-nist521.der",
+        "ecdsa/end256-sha256.der",
         0,
-        "ecdsa/ec_app256SHA256.key.pem",
+        "ecdsa/end256-sha256.key.der",
         0,
     };
     FRAME_LinkObj *server = FRAME_CreateLinkWithCert(config, BSL_UIO_TCP, &certInfoServer);
@@ -151,19 +159,19 @@ void UT_TLS_TLS12_RFC5246_CONSISTENCY_CERTFICATE_VERITY_FAIL_TC003(void)
     HITLS_CFG_SetClientVerifySupport(config, true);
     // 1. Configure dual-ended authentication. Configure a correct terminal certificate and an incorrect intermediate certificate on the client. Configure a correct certificate chain on the server. Check whether the server fails the authentication.
     FRAME_CertInfo certInfoClient = {
-        "ecdsa/root.pem",
-        "rsa_sha/intca.pem",
-        "ecdsa/ec_app256SHA256.pem",
+        "ecdsa/ca-nist521.der",
+        "rsa_sha/inter-3072.der",
+        "ecdsa/end256-sha256.der",
         0,
-        "ecdsa/ec_app256SHA256.key.pem",
+        "ecdsa/end256-sha256.key.der",
         0,
     };
     FRAME_CertInfo certInfoServer = {
-        "ecdsa/root.pem",
-        "ecdsa/intca.pem",
-        "ecdsa/ec_app256SHA256.pem",
+        "ecdsa/ca-nist521.der",
+        "ecdsa/inter-nist521.der",
+        "ecdsa/end256-sha256.der",
         0,
-        "ecdsa/ec_app256SHA256.key.pem",
+        "ecdsa/end256-sha256.key.der",
         0,
     };
     FRAME_LinkObj *client = FRAME_CreateLinkWithCert(config, BSL_UIO_TCP, &certInfoClient);
@@ -196,11 +204,11 @@ void UT_TLS_TLS12_RFC5246_CONSISTENCY_NEGOTIATE_SIGNATION_FAIL_TC001(void)
     uint16_t signAlgs[] = {CERT_SIG_SCHEME_ECDSA_SECP256R1_SHA256};
     uint32_t signAlgsSize = sizeof(signAlgs) / sizeof(uint16_t);
     FRAME_CertInfo certInfo = {
-        "rsa_sha/root.pem:rsa_sha/intca.pem",
-        "rsa_sha/intca.pem",
-        "rsa_sha/RSA2048SHA256.pem",
+        "rsa_sha/ca-3072.der:rsa_sha/inter-3072.der",
+        "rsa_sha/inter-3072.der",
+        "rsa_sha/end-sha256.der",
         0,
-        "rsa_sha/RSA2048SHA256.key.pem",
+        "rsa_sha/end-sha256.key.der",
         0,
     };
     FRAME_LinkObj *client = FRAME_CreateLinkWithCert(config, BSL_UIO_TCP, &certInfo);
@@ -243,19 +251,19 @@ void UT_TLS_TLS12_RFC5246_CONSISTENCY_SIGNATION_NOT_SUITABLE_CERT_TC001(void)
     uint16_t cipherSuites[] = {HITLS_RSA_WITH_AES_128_GCM_SHA256};
     HITLS_CFG_SetCipherSuites(config, cipherSuites, sizeof(cipherSuites) / sizeof(uint16_t));
     FRAME_CertInfo certInfoClient = {
-        "ecdsa/root.pem",
-        "rsa_sha/intca.pem",
-        "rsa_sha/RSA2048SHA256.pem",
+        "ecdsa/ca-nist521.der",
+        "rsa_sha/inter-3072.der",
+        "rsa_sha/end-sha256.der",
         0,
-        "rsa_sha/RSA2048SHA256.key.pem",
+        "rsa_sha/end-sha256.key.der",
         0,
     };
     FRAME_CertInfo certInfoServer = {
-        "rsa_sha/root.pem",
-        "ecdsa/intca.pem",
-        "ecdsa/ec_app256SHA256.pem",
+        "rsa_sha/ca-3072.der",
+        "ecdsa/inter-nist521.der",
+        "ecdsa/end256-sha256.der",
         0,
-        "ecdsa/ec_app256SHA256.key.pem",
+        "ecdsa/end256-sha256.key.der",
         0,
     };
     FRAME_LinkObj *client = FRAME_CreateLinkWithCert(config, BSL_UIO_TCP, &certInfoClient);
@@ -440,7 +448,7 @@ void UT_TLS_TLS12_RFC5246_CONSISTENCY_RENEGOTIATION_UNSUPPORTED_TC001()
     ASSERT_TRUE(client != NULL);
     server = FRAME_CreateLink(config, BSL_UIO_TCP);
     ASSERT_TRUE(server != NULL);
-
+    HITLS_SetClientRenegotiateSupport(server->ssl, true);
     ASSERT_TRUE(FRAME_CreateConnection(client, server, false, HS_STATE_BUTT) == HITLS_SUCCESS);
     ASSERT_TRUE(server->ssl->state == CM_STATE_TRANSPORTING);
     ASSERT_TRUE(client->ssl->state == CM_STATE_TRANSPORTING);
@@ -456,82 +464,10 @@ void UT_TLS_TLS12_RFC5246_CONSISTENCY_RENEGOTIATION_UNSUPPORTED_TC001()
     uint8_t readBuf[READ_BUF_SIZE] = {0};
     uint32_t readLen = 0;
     ASSERT_EQ(HITLS_Read(server->ssl, readBuf, READ_BUF_SIZE, &readLen), HITLS_REC_NORMAL_RECV_BUF_EMPTY);
-    // Send a warning alert and ALERT_NO_RENEGOTIATION message. After receiving the message, the peer end changes the status to CM_STATE_TRANSPORTING.
+    // Send a warning alert and ALERT_NO_RENEGOTIATION message. After receiving the message, the peer send fatal alert.
     ASSERT_TRUE(FRAME_TrasferMsgBetweenLink(server, client) == HITLS_SUCCESS);
-    ASSERT_TRUE(HITLS_Connect(client->ssl) == HITLS_SUCCESS);
-    ASSERT_EQ(client->ssl->state, CM_STATE_TRANSPORTING);
-
-exit:
-    HITLS_CFG_FreeConfig(config);
-    FRAME_FreeLink(client);
-    FRAME_FreeLink(server);
-}
-/* END_CASE */
-
-int32_t RecParseInnerPlaintext(TLS_Ctx *ctx, const uint8_t *text, uint32_t *textLen, uint8_t *recType);
-
-int32_t STUB_RecParseInnerPlaintext(TLS_Ctx *ctx, const uint8_t *text, uint32_t *textLen, uint8_t *recType)
-{
-    (void)ctx;
-    (void)text;
-    (void)textLen;
-    *recType = (uint8_t)REC_TYPE_APP;
-
-    return HITLS_SUCCESS;
-}
-/* @
-* @test UT_TLS_TLS12_RFC5246_CONSISTENCY_RENEGOTIATION_UNSUPPORTED_TC002
-* @title Invoke the hitls_connect/hitls_accept/hitls_write interface to initiate renegotiation, and the peer end returns an app message.
-* @precon  nan
-* @brief    1. Invoke the hitls_renegotiate interface to initiate renegotiation. Expected result 1 is displayed.
-            2. Invoke the hitls_connect/hitls_accept/hitls_write interface to initiate renegotiation. The peer end replies with an app message. Expected result 2 is obtained.
-            3. The peer end continuously sends 51 app messages. Expected result 3 is obtained.
-            4. Read the stored app message. Expected result 4 is obtained.
-* @expect   1. The link enters the renegotiation state.
-            2. Received successfully.
-            3. Received successfully.
-            4. The 50th message can be read normally, and the 51st message is lost.
-@ */
-/* BEGIN_CASE */
-void UT_TLS_TLS12_RFC5246_CONSISTENCY_RENEGOTIATION_UNSUPPORTED_TC002()
-{
-    FRAME_Init();
-    HITLS_Config *config = HITLS_CFG_NewTLS12Config();
-    FRAME_LinkObj *client = NULL;
-    FRAME_LinkObj *server = NULL;
-    config->isSupportRenegotiation = true;
-
-    client = FRAME_CreateLink(config, BSL_UIO_TCP);
-    ASSERT_TRUE(client != NULL);
-    server = FRAME_CreateLink(config, BSL_UIO_TCP);
-    ASSERT_TRUE(server != NULL);
-
-    ASSERT_TRUE(FRAME_CreateConnection(client, server, false, HS_STATE_BUTT) == HITLS_SUCCESS);
-    // 1. Invoke the hitls_renegotiate interface to initiate renegotiation.
-    ASSERT_TRUE(HITLS_Renegotiate(client->ssl) == HITLS_SUCCESS);
-    // 2. Invoke the hitls_connect/hitls_accept/hitls_write interface to initiate renegotiation. The peer end replies with an app message.
-    ASSERT_TRUE(HITLS_Connect(client->ssl) == HITLS_REC_NORMAL_RECV_BUF_EMPTY);
-    ASSERT_TRUE(FRAME_TrasferMsgBetweenLink(client, server) == HITLS_SUCCESS);
-
-    uint8_t data[] = "Hello World";
-    int32_t count = 0;
-    while (count < 60) {
-        // 3. The peer end continuously sends 51 app messages.
-        int32_t ret = HITLS_Write(server->ssl, data, sizeof(data));
-        ASSERT_TRUE(ret == HITLS_SUCCESS);
-        ASSERT_TRUE(FRAME_TrasferMsgBetweenLink(server, client) == HITLS_SUCCESS);
-        ret = HITLS_Connect(client->ssl);
-        count++;
-        if (ret == HITLS_SUCCESS) {
-            // 4. Read the stored app message.
-            APP_Ctx *appCtx = client->ssl->appCtx;
-            if (count <= UNPROCESSED_APP_MSG_COUNT_MAX) {
-                ASSERT_TRUE(BSL_LIST_COUNT(appCtx->appList) == count);
-            } else {
-                ASSERT_TRUE(BSL_LIST_COUNT(appCtx->appList) == UNPROCESSED_APP_MSG_COUNT_MAX);
-            }
-        }
-    }
+    ASSERT_EQ(HITLS_Connect(client->ssl), HITLS_REC_NORMAL_RECV_UNEXPECT_MSG);
+    ASSERT_EQ(client->ssl->state, CM_STATE_ALERTED);
 
 exit:
     HITLS_CFG_FreeConfig(config);

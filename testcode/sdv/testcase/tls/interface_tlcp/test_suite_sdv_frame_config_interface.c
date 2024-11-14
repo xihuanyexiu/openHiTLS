@@ -1,11 +1,20 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
+
 /* BEGIN_HEADER */
+
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
@@ -20,6 +29,14 @@
 #include <sys/select.h>
 #include <sys/time.h>
 #include <linux/ioctl.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <time.h>
+#include <stddef.h>
+#include <sys/types.h>
+#include <regex.h>
+#include "securec.h"
 #include "bsl_sal.h"
 #include "sal_net.h"
 #include "hitls.h"
@@ -38,7 +55,6 @@
 #include "hs_ctx.h"
 #include "hlt.h"
 #include "stub_replace.h"
-#include "securec.h"
 #include "hitls_type.h"
 #include "frame_link.h"
 #include "session_type.h"
@@ -52,13 +68,6 @@
 #include "rec_wrapper.h"
 #include "cipher_suite.h"
 #include "alert.h"
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <time.h>
-#include <stddef.h>
-#include <sys/types.h>
-#include <regex.h>
 #include "conn_init.h"
 #include "pack.h"
 #include "send_process.h"
@@ -395,54 +404,6 @@ void UT_TLS_CFG_SET_CLIENTHELLOCB_API_TC001(int tlsVersion)
     ASSERT_TRUE(HITLS_CFG_SetClientHelloCb(config, NULL, &cbRetVal) == HITLS_NULL_INPUT);
 
     ASSERT_TRUE(HITLS_CFG_SetClientHelloCb(config, UT_ClientHelloCb, &cbRetVal) == HITLS_SUCCESS);
-
-exit:
-    HITLS_CFG_FreeConfig(config);
-}
-/* END_CASE */
-
-int32_t UT_NoSecRenegotiation(HITLS_Ctx *ctx)
-{
-    (void)ctx;
-    return HITLS_SUCCESS;
-}
-
-/** @
-* @test  UT_TLS_CFG_SET_NOSECRENEGOTIATIONCB_API_TC001
-* @titleTest the HITLS_CFG_SetNoSecRenegotiationCb interface.
-* @precon nan
-* @brief HITLS_CFG_SetNoSecRenegotiationCb
-* 1. Import empty configuration information. Expected result 1 is obtained.
-* 2. Transfer non-empty configuration information and leave callback empty. Expected result 1 is obtained.
-* 3. Transfer non-empty configuration information and set callback to a non-empty value. Expected result 2 is obtained.
-* @expect
-* 1. Returns HITLS_NULL_INPUT
-* 2. Returns HITLS_SUCCES
-@ */
-
-/* BEGIN_CASE */
-void UT_TLS_CFG_SET_NOSECRENEGOTIATIONCB_API_TC001(int tlsVersion)
-{
-    FRAME_Init();
-    HITLS_Config *config = NULL;
-
-    ASSERT_TRUE(HITLS_CFG_SetNoSecRenegotiationCb(config, UT_NoSecRenegotiation) == HITLS_NULL_INPUT);
-
-    switch (tlsVersion) {
-        case HITLS_VERSION_TLS12:
-            config = HITLS_CFG_NewTLS12Config();
-            break;
-        case HITLS_VERSION_TLS13:
-            config = HITLS_CFG_NewTLS13Config();
-            break;
-        default:
-            config = NULL;
-            break;
-    }
-
-    ASSERT_TRUE(HITLS_CFG_SetNoSecRenegotiationCb(config, NULL) == HITLS_NULL_INPUT);
-
-    ASSERT_TRUE(HITLS_CFG_SetNoSecRenegotiationCb(config, UT_NoSecRenegotiation) == HITLS_SUCCESS);
 
 exit:
     HITLS_CFG_FreeConfig(config);
@@ -1069,11 +1030,11 @@ void UT_TLS_CFG_SET_GROUPS_FUNC_TC001(int version)
         HITLS_CFG_SetCipherSuites(testInfo.config, cipherSuite, sizeof(cipherSuite) / sizeof(uint16_t));
     }
     FRAME_CertInfo certInfo = {
-        "rsa_sha/root.pem:rsa_sha/intca.pem",
-        "rsa_sha/intca.pem",
-        "rsa_sha/RSA2048SHA256.pem",
+        "rsa_sha/ca-3072.der:rsa_sha/inter-3072.der",
+        "rsa_sha/inter-3072.der",
+        "rsa_sha/end-sha256.der",
         NULL,
-        "rsa_sha/RSA2048SHA256.key.pem",
+        "rsa_sha/end-sha256.key.der",
         NULL,
     };
     testInfo.client = FRAME_CreateLinkWithCert(testInfo.config, BSL_UIO_TCP, &certInfo);
@@ -1387,7 +1348,6 @@ void UT_TLS_CFG_SET_GET_DHAUTOSUPPORT_FUNC_TC001(void)
     HITLS_Config *serverConfig = NULL;
     FRAME_LinkObj *client = NULL;
     FRAME_LinkObj *server = NULL;
-    HITLS_CRYPT_Key *key = NULL;
     uint16_t pfsCipherSuites[] = {HITLS_DHE_RSA_WITH_AES_128_GCM_SHA256};
 
     clientConfig = HITLS_CFG_NewTLS12Config();

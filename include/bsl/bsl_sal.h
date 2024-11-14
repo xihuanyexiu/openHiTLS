@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /**
@@ -504,6 +511,9 @@ void BSL_SAL_FileClose(bsl_sal_file_handle stream);
  * @brief   Read the file.
  *
  * Read the file.
+ * The actual memory of the interface is 1 more than the real length of the read file,
+ * which is used to add '\0' after the end of the read file content, and the outgoing parameter len is the real
+ * data length, excluding '\0'.
  *
  * @attention none
  * @param stream [IN] File handle
@@ -561,9 +571,6 @@ typedef struct {
     uint8_t  minute;    /**< Minute, the value range is [0, 59]. */
     uint16_t millSec;   /**< Millisecond, the value range is [0, 999]. */
     uint8_t  second;    /**< Second, the value range is [0, 59]. */
-    uint8_t  utcSign;   /**< Positive or negtive to UTC 0:positive 1:negtive. */
-    uint8_t  utcHour;   /**< Hour to UTC,the value domain is from 0~11. */
-    uint8_t  utcMinute; /**< Minutes to UTC, the value domain is from 0~59. */
     uint32_t microSec;  /**< Microseconds, the value range is [0, 999]. */
 } BSL_TIME;
 
@@ -611,7 +618,7 @@ void BSL_SAL_SysTimeFuncReg(BslTimeFunc func);
  * @retval  #BSL_TIME_DATE_BEFORE - The first date is before the second date.
  * @retval  #BSL_TIME_DATE_AFTER - The first date is after the second
  */
-uint32_t BSL_SAL_DateTimeCompare(const BSL_TIME *dateA, const BSL_TIME *dateB, int64_t *diffSec);
+int32_t BSL_SAL_DateTimeCompare(const BSL_TIME *dateA, const BSL_TIME *dateB, int64_t *diffSec);
 
 /**
  * @ingroup bsl_sal
@@ -625,7 +632,7 @@ uint32_t BSL_SAL_DateTimeCompare(const BSL_TIME *dateA, const BSL_TIME *dateB, i
  * @retval #BSL_SAL_ERR_BAD_PARAM, the value of cb is null.
  * @retval #BSL_INTERNAL_EXCEPTION, an exception occurred when obtaining the time.
  */
-uint32_t BSL_SAL_SysTimeGet(BSL_TIME *sysTime);
+int32_t BSL_SAL_SysTimeGet(BSL_TIME *sysTime);
 
 /**
  * @ingroup bsl_sal
@@ -649,7 +656,7 @@ BslUnixTime BSL_SAL_CurrentSysTimeGet(void);
  * @retval #BSL_SUCCESS, time is successfully converted.
  * @retval #BSL_INTERNAL_EXCEPTION, an exception occurred when obtaining the time.
  */
-uint32_t BSL_SAL_DateToUtcTimeConvert(const BSL_TIME *dateTime, int64_t *utcTime);
+int32_t BSL_SAL_DateToUtcTimeConvert(const BSL_TIME *dateTime, int64_t *utcTime);
 
 /**
  * @ingroup bsl_sal
@@ -663,7 +670,7 @@ uint32_t BSL_SAL_DateToUtcTimeConvert(const BSL_TIME *dateTime, int64_t *utcTime
  * @retval #BSL_SUCCESS, time is converted successfully
  * @retval #BSL_SAL_ERR_BAD_PARAM, the value of utcTime exceeds the upper limit or the value of sysTime is null.
  */
-uint32_t BSL_SAL_UtcTimeToDateConvert(int64_t utcTime, BSL_TIME *sysTime);
+int32_t BSL_SAL_UtcTimeToDateConvert(int64_t utcTime, BSL_TIME *sysTime);
 
 /**
  * @ingroup bsl_sal
@@ -680,7 +687,7 @@ uint32_t BSL_SAL_UtcTimeToDateConvert(int64_t utcTime, BSL_TIME *sysTime);
  * @retval #BSL_TIME_DATE_BEFORE - The first date is on the second
  * @retval #BSL_TIME_DATE_ AFTER - The first date is after the second
  */
-uint32_t BSL_SAL_DateTimeCompareByUs(const BSL_TIME *dateA, const BSL_TIME *dateB);
+int32_t BSL_SAL_DateTimeCompareByUs(const BSL_TIME *dateA, const BSL_TIME *dateB);
 
 /**
  * @ingroup bsl_sal
@@ -946,6 +953,284 @@ int32_t BSL_SAL_Atoi(const char *str);
  * Otherwise, the actual length of the string is returned.
  */
 uint32_t BSL_SAL_Strnlen(const char *string, uint32_t count);
+
+typedef enum {
+    BSL_SAL_NET_WRITE_CB_FUNC = 0x0300,
+    BSL_SAL_NET_READ_CB_FUNC,
+    BSL_SAL_NET_SOCKET_CB_FUNC,
+    BSL_SAL_NET_SOCKCLOSE_CB_FUNC,
+    BSL_SAL_NET_SETSOCKOPT_CB_FUNC,
+    BSL_SAL_NET_GETSOCKOPT_CB_FUNC,
+    BSL_SAL_NET_SOCKLISTEN_CB_FUNC,
+    BSL_SAL_NET_SOCKBIND_CB_FUNC,
+    BSL_SAL_NET_SOCKCONNECT_CB_FUNC,
+    BSL_SAL_NET_SOCKSEND_CB_FUNC,
+    BSL_SAL_NET_SOCKRECV_CB_FUNC,
+    BSL_SAL_NET_SELECT_CB_FUNC,
+    BSL_SAL_NET_IOCTLSOCKET_CB_FUNC,
+    BSL_SAL_NET_SOCKGETLASTSOCKETERROR_CB_FUNC,
+
+    BSL_SAL_TIME_GET_SYS_TIME_CB_FUNC = 0x0400,
+    BSL_SAL_TIME_DATE_TO_STR_CONVERT_CB_FUNC,
+    BSL_SAL_TIME_SYS_TIME_GET_CB_FUNC,
+    BSL_SAL_TIME_UTC_TIME_TO_DATE_CONVERT_CB_FUNC,
+    BSL_SAL_TIME_SLEEP_CB_FUNC,
+    BSL_SAL_TIME_TICK_CB_FUNC,
+    BSL_SAL_TIME_TICKS_PER_SEC_CB_FUNC,
+
+    BSL_SAL_FILE_OPEN_CB_FUNC = 0X0500,
+    BSL_SAL_FILE_CLOSE_CB_FUNC,
+    BSL_SAL_FILE_READ_CB_FUNC,
+    BSL_SAL_FILE_WRITE_CB_FUNC,
+    BSL_SAL_FILE_LENGTH_CB_FUNC,
+} BSL_SAL_CB_FUNC_TYPE;
+
+/**
+ * @ingroup bsl_sal
+ * @brief Open the file.
+ *
+ * @retval #BSL_SUCCESS: succeeded.
+ * @retval #BSL_SAL_ERR_FILE_OPEN: file open fails.
+ * @retval #BSL_NULL_INPUT: parameter error.
+ */
+typedef int32_t (*BslSalFileOpen)(bsl_sal_file_handle *stream, const char *path, const char *mode);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Read from the file.
+ *
+ * @retval #BSL_SUCCESS: succeeded.
+ * @retval #BSL_SAL_ERR_FILE_READ: file read fails.
+ * @retval #BSL_NULL_INPUT: parameter error.
+ */
+typedef int32_t (*BslSalFileRead)(bsl_sal_file_handle stream, void *buffer, size_t size, size_t num, size_t *len);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Write to the file.
+ *
+ * @retval #BSL_SUCCESS: succeeded.
+ * @retval #BSL_SAL_ERR_FILE_WRITE: file write fails.
+ * @retval #BSL_NULL_INPUT: parameter error.
+ */
+typedef int32_t (*BslSalFileWrite)(bsl_sal_file_handle stream, const void *buffer, size_t size, size_t num);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Close the file.
+ */
+typedef void (*BslSalFileClose)(bsl_sal_file_handle stream);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Get the length of the file.
+ *
+ * @retval #BSL_SUCCESS: succeeded.
+ * @retval #BSL_SAL_ERR_FILE_LENGTH: get file length fails.
+ * @retval #BSL_NULL_INPUT: parameter error.
+ */
+typedef int32_t (*BslSalFileLength)(const char *path, size_t *len);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Get the system time.
+ *
+ * @retval System time in int64_t format.
+ */
+typedef int64_t (*BslSalGetSysTime)(void);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Convert date to string.
+ *
+ * @retval #BSL_SUCCESS: succeeded.
+ * @retval #BSL_INTERNAL_EXCEPTION: conversion fails.
+ */
+typedef uint32_t (*BslSalDateToStrConvert)(const BSL_TIME *dateTime, char *timeStr, size_t len);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Get the system time.
+ *
+ * @retval #BSL_SUCCESS: succeeded.
+ * @retval #BSL_SAL_ERR_BAD_PARAM: parameter error.
+ * @retval #BSL_INTERNAL_EXCEPTION: an exception occurred when obtaining the time.
+ */
+typedef uint32_t (*BslSalSysTimeGet)(BSL_TIME *sysTime);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Convert UTC time to date.
+ *
+ * @retval #BSL_SUCCESS: succeeded.
+ * @retval #BSL_SAL_ERR_BAD_PARAM: parameter error.
+ */
+typedef uint32_t (*BslSalUtcTimeToDateConvert)(int64_t utcTime, BSL_TIME *sysTime);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Sleep for a specified time.
+ */
+typedef void (*BslSalSleep)(uint32_t time);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Get the system tick count.
+ *
+ * @retval System tick count.
+ */
+typedef long (*BslSalTick)(void);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Get the number of ticks per second.
+ *
+ * @retval Number of ticks per second.
+ */
+typedef long (*BslSalTicksPerSec)(void);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Write data.
+ *
+ * @retval Positive integer: number of bytes written.
+ * @retval Negative integer: write operation failed.
+ */
+typedef int32_t (*BslSalWrite)(int32_t fd, const void *buf, uint32_t len, int32_t *err);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Read data.
+ *
+ * @retval Positive integer: number of bytes read.
+ * @retval Negative integer: read operation failed.
+ */
+typedef int32_t (*BslSalRead)(int32_t fd, void *buf, uint32_t len, int32_t *err);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Create a socket.
+ *
+ * @retval Non-negative integer: socket file descriptor.
+ * @retval Negative integer: socket creation failed.
+ */
+typedef int32_t (*BslSalSocket)(int32_t af, int32_t type, int32_t protocol);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Close a socket.
+ *
+ * @retval #BSL_SUCCESS: succeeded.
+ * @retval #BSL_SAL_ERR_NET_SOCKCLOSE: socket close fails.
+ */
+typedef int32_t (*BslSalSockClose)(int32_t sockId);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Set socket options.
+ *
+ * @retval #BSL_SUCCESS: succeeded.
+ * @retval #BSL_SAL_ERR_NET_SETSOCKOPT: set socket option fails.
+ */
+typedef int32_t (*BslSalSetSockopt)(int32_t sockId, int32_t level, int32_t name, const void *val, uint32_t len);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Get socket options.
+ *
+ * @retval #BSL_SUCCESS: succeeded.
+ * @retval #BSL_SAL_ERR_NET_GETSOCKOPT: get socket option fails.
+ */
+typedef int32_t (*BslSalGetSockopt)(int32_t sockId, int32_t level, int32_t name, void *val, uint32_t *len);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Listen for socket connections.
+ *
+ * @retval #BSL_SUCCESS: succeeded.
+ * @retval #BSL_SAL_ERR_NET_LISTEN: socket listen fails.
+ */
+typedef int32_t (*BslSalSockListen)(int32_t sockId, int32_t backlog);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Bind a socket to an address.
+ *
+ * @retval #BSL_SUCCESS: succeeded.
+ * @retval #BSL_SAL_ERR_NET_BIND: socket bind fails.
+ */
+typedef int32_t (*BslSalSockBind)(int32_t sockId, BSL_SAL_SockAddr addr, size_t len);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Connect a socket to a remote address.
+ *
+ * @retval #BSL_SUCCESS: succeeded.
+ * @retval #BSL_SAL_ERR_NET_CONNECT: socket connect fails.
+ */
+typedef int32_t (*BslSalSockConnect)(int32_t sockId, BSL_SAL_SockAddr addr, size_t len);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Send data through a socket.
+ *
+ * @retval Positive integer: number of bytes sent.
+ * @retval Negative integer: send operation failed.
+ */
+typedef int32_t (*BslSalSockSend)(int32_t sockId, const void *msg, size_t len, int32_t flags);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Receive data from a socket.
+ *
+ * @retval Positive integer: number of bytes received.
+ * @retval Negative integer: receive operation failed.
+ */
+typedef int32_t (*BslSalSockRecv)(int32_t sockfd, void *buff, size_t len, int32_t flags);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Monitor multiple file descriptors for readiness.
+ *
+ * @retval Positive integer: number of ready descriptors.
+ * @retval 0: timeout occurred.
+ * @retval Negative integer: select operation failed.
+ */
+typedef int32_t (*BslSalSelect)(int32_t nfds, void *readfds, void *writefds, void *exceptfds, void *timeout);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Perform I/O control on a socket.
+ *
+ * @retval #BSL_SUCCESS: succeeded.
+ * @retval #BSL_SAL_ERR_NET_IOCTL: ioctl operation fails.
+ */
+typedef int32_t (*BslSalIoctlsocket)(int32_t sockId, long cmd, unsigned long *arg);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Get the last socket error.
+ *
+ * @retval Error code of the last socket operation.
+ */
+typedef int32_t (*BslSalSockGetLastSocketError)(void);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Control callback functions for SAL (System Abstraction Layer).
+ *
+ * This function is used to control and register callback functions for different SAL modules
+ * such as network, time, and file operations.
+ *
+ * @attention None
+ * @param funcType [IN] Type of the callback function to be controlled
+ * @param funcCb [IN] Pointer to the callback function
+ * @retval #BSL_SUCCESS Callback function controlled successfully
+ * @retval #BSL_SAL_ERR_BAD_PARAM Invalid function type or callback pointer
+ * @retval Other error codes specific to the SAL module
+ */
+int32_t BSL_SAL_CallBack_Ctrl(BSL_SAL_CB_FUNC_TYPE funcType, void *funcCb);
+
 
 #ifdef __cplusplus
 }

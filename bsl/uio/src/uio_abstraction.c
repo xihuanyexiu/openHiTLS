@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include "hitls_build.h"
@@ -19,7 +26,6 @@
 #include "bsl_uio.h"
 #include "uio_base.h"
 #include "uio_sctp.h"
-#include "uio_tcp.h"
 #include "uio_abstraction.h"
 
 BSL_UIO_Method *BSL_UIO_NewMethod(void)
@@ -261,6 +267,23 @@ int32_t BSL_UIO_GetTransportType(const BSL_UIO *uio)
         return BSL_NULL_INPUT;
     }
     return uio->method.type;
+}
+
+bool BSL_UIO_GetUioChainTransportType(BSL_UIO *uio, const BSL_UIO_TransportType uioType)
+{
+    if (uio == NULL) {
+        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID05069, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
+            "get uio type is NULL.", NULL, NULL, NULL, NULL);
+        return false;
+    }
+
+    while (uio != NULL) {
+        if (BSL_UIO_GetTransportType(uio) == (int32_t)uioType) {
+            return true;
+        }
+        uio = BSL_UIO_Next(uio);
+    }
+    return false;
 }
 
 int32_t BSL_UIO_SetUserData(BSL_UIO *uio, void *data)

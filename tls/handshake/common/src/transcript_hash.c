@@ -1,12 +1,20 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include <string.h>
+#include "hitls_build.h"
 #include "securec.h"
 #include "tls_binlog_id.h"
 #include "bsl_log_internal.h"
@@ -15,7 +23,6 @@
 #include "bsl_sal.h"
 #include "hitls_error.h"
 #include "transcript_hash.h"
-
 
 int32_t VERIFY_SetHash(VerifyCtx *ctx, HITLS_HashAlgo hashAlgo)
 {
@@ -47,7 +54,7 @@ int32_t VERIFY_SetHash(VerifyCtx *ctx, HITLS_HashAlgo hashAlgo)
     return HITLS_SUCCESS;
 }
 
-HsMsgCache *GetLastCache(HsMsgCache *dataBuf)
+static HsMsgCache *GetLastCache(HsMsgCache *dataBuf)
 {
     HsMsgCache *cacheBuf = dataBuf;
     while (cacheBuf->next != NULL) {
@@ -56,7 +63,7 @@ HsMsgCache *GetLastCache(HsMsgCache *dataBuf)
     return cacheBuf;
 }
 
-int32_t CacheMsgData(HsMsgCache *dataBuf, const uint8_t *data, uint32_t len)
+static int32_t CacheMsgData(HsMsgCache *dataBuf, const uint8_t *data, uint32_t len)
 {
     HsMsgCache *lastCache = GetLastCache(dataBuf);
 
@@ -68,6 +75,7 @@ int32_t CacheMsgData(HsMsgCache *dataBuf, const uint8_t *data, uint32_t len)
         return HITLS_MEMALLOC_FAIL;
     }
 
+    BSL_SAL_FREE(lastCache->data);
     lastCache->data = BSL_SAL_Dump(data, len);
     if (lastCache->data == NULL) {
         BSL_SAL_FREE(lastCache->next);
@@ -94,10 +102,7 @@ int32_t VERIFY_Append(VerifyCtx *ctx, const uint8_t *data, uint32_t len)
     }
 
     if (ctx->dataBuf != NULL) {
-        ret = CacheMsgData(ctx->dataBuf, data, len);
-        if (ret != HITLS_SUCCESS) {
-            return ret;
-        }
+        return CacheMsgData(ctx->dataBuf, data, len);
     }
     return HITLS_SUCCESS;
 }
@@ -120,7 +125,6 @@ int32_t VERIFY_CalcSessionHash(VerifyCtx *ctx, uint8_t *digest, uint32_t *digest
     if (ret != HITLS_SUCCESS) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15722, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "Verify data calculate error: digest final fail.", 0, 0, 0, 0);
-        return ret;
     }
 
     return ret;

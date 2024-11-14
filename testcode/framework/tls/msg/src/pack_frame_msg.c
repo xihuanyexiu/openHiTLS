@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include "securec.h"
@@ -23,7 +30,6 @@
 
 TLS_Ctx *NewFrameTlsCtx(void)
 {
-    int32_t ret = 0;
     TLS_Ctx *tlsCtx = (TLS_Ctx *)BSL_SAL_Calloc(1u, sizeof(HITLS_Ctx));
     if (tlsCtx == NULL) {
         return NULL;
@@ -131,7 +137,7 @@ int32_t PackClientHelloMsg(FRAME_Msg *msg)
         goto FREE_MEM;
     }
 
-    int32_t usedLen = 0;
+    uint32_t usedLen = 0;
     ret = HS_PackMsg(tlsCtx, CLIENT_HELLO, &msg->buffer[msg->len], REC_MAX_PLAIN_LENGTH, &usedLen);
     if (ret == HITLS_SUCCESS) {
         msg->len += usedLen;
@@ -170,7 +176,7 @@ int32_t PackServerHelloMsg(FRAME_Msg *msg)
     tlsCtx->negotiatedInfo.cipherSuiteInfo.cipherSuite = serverHello->cipherSuite;
     tlsCtx->negotiatedInfo.isExtendedMasterSecret = serverHello->haveExtendedMasterSecret;
 
-    int32_t usedLen = 0;
+    uint32_t usedLen = 0;
     ret = HS_PackMsg(tlsCtx, SERVER_HELLO, &msg->buffer[msg->len], REC_MAX_PLAIN_LENGTH, &usedLen);
     if (ret == HITLS_SUCCESS) {
         msg->len += usedLen;
@@ -314,7 +320,7 @@ int32_t PackFinishMsg(FRAME_Msg *msg)
         goto FREE_MEM;
     }
 
-    int32_t usedLen = 0;
+    uint32_t usedLen = 0;
     ret = HS_PackMsg(tlsCtx, FINISHED, &msg->buffer[msg->len], REC_MAX_PLAIN_LENGTH, &usedLen);
     if (ret == HITLS_SUCCESS) {
         msg->len += usedLen;
@@ -418,7 +424,7 @@ int32_t PackRecordHeader(FRAME_Msg *msg)
 int32_t PackFrameMsg(FRAME_Msg *msg)
 {
     // Apply for an 18 KB buffer for storing the current message.
-    msg->buffer = (char *)BSL_SAL_Calloc(1u, RECORD_BUF_LEN);
+    msg->buffer = (uint8_t *)BSL_SAL_Calloc(1u, RECORD_BUF_LEN);
     if (msg->buffer == NULL) {
         return HITLS_MEMALLOC_FAIL;
     }

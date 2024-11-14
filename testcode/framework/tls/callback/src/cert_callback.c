@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include <unistd.h>
@@ -18,7 +25,6 @@
 #include "hitls_config.h"
 #include "hitls_cert.h"
 #include "hitls_cert_init.h"
-#include "hlt_type.h"
 #include "bsl_sal.h"
 #include "bsl_log.h"
 #include "bsl_err.h"
@@ -26,7 +32,8 @@
 #include "tls_config.h"
 #include "tls.h"
 #include "bsl_list.h"
-#include "hitls_x509_adapter.h"
+#include "hitls_x509_adapt_local.h"
+#include "hitls_cert_init.h"
 
 #define SUCCESS 0
 #define ERROR (-1)
@@ -90,71 +97,10 @@ int32_t RegMemCallback(MemCallbackType type)
     return SUCCESS;
 }
 
-
-typedef struct _HITLS_X509_Cert {
-    bool isCopy;
-    uint8_t *rawData;
-    uint32_t rawDataLen;
-    BSL_SAL_RefCount references;
-} HITLS_X509_Cert;
-
-#define HITLS_X509_List BslList
-
-typedef struct _HITLS_X509_VerifyParam {
-    int32_t maxDepth;
-    uint64_t time;
-    uint64_t flags;
-} HITLS_X509_VerifyParam;
-
-typedef struct _HITLS_X509_StoreCtx {
-    HITLS_X509_List *store;
-    HITLS_X509_List *crls;
-    BSL_SAL_RefCount references;
-    HITLS_X509_VerifyParam verifyParam;
-} HITLS_X509_StoreCtx;
-
-int32_t HiTLS_X509_CertAddCert(HITLS_CERT_Store *store, HITLS_CERT_X509 *cert)
-{
-    if (store == NULL) {
-        return ERROR;
-    }
-    HITLS_X509_StoreCtx *tmpStore = (HITLS_X509_StoreCtx *)store;
-    if (tmpStore->store == NULL) {
-            tmpStore->store = BSL_LIST_New(sizeof(HITLS_X509_Cert));
-            if (tmpStore->store == NULL) {
-                return ERROR;
-            }
-        }
-    if (cert != NULL) {
-        if (BSL_LIST_AddElement(tmpStore->store, cert, BSL_LIST_POS_AFTER) != BSL_SUCCESS) {
-            HITLS_X509_Adapt_StoreFree(tmpStore);
-            return ERROR;
-        }
-    }
-    return SUCCESS;
-}
-
 HITLS_CERT_X509 *HiTLS_X509_LoadCertFile(const char *file)
 {
-    FILE *f = fopen(file, "r");
-    char fileContent[CERT_FILE_LEN] = {0};
-    int c;
-    if (f == NULL) {
-        LOG_ERROR("fopen Error");
-        return NULL;
-    }
-
-    for (int i = 0; i < CERT_FILE_LEN; i++) {
-        c = fgetc(f);
-        if (c != EOF) {
-            fileContent[i] = c;
-        } else {
-            break;
-        }
-    }
-    HITLS_CERT_X509 *cert = NULL; // load file content to cert
-    (void)fclose(f);
-    return cert;
+    return HITLS_X509_Adapt_CertParse(NULL, (const uint8_t *)file, strlen(file) + 1, TLS_PARSE_TYPE_FILE,
+        TLS_PARSE_FORMAT_ASN1);
 }
 
 void *HiTLS_X509_LoadCertListToStore(const char *fileList)
@@ -187,13 +133,19 @@ void *HiTLS_X509_LoadCertListToStore(const char *fileList)
         LOG_DEBUG("Load Cert Path is %s", certPath);
 
         HITLS_CERT_X509 *cert = HiTLS_X509_LoadCertFile(certPath);
-        if (HiTLS_X509_CertAddCert(store, cert) != SUCCESS) {
+        if (cert == NULL) {
+            HITLS_X509_Adapt_StoreFree(store);
+            return NULL;
+        }
+        ret = HITLS_X509_Adapt_StoreCtrl(NULL, store, CERT_STORE_CTRL_SHALLOW_COPY_ADD_CERT_LIST, cert, NULL);
+        if (ret != SUCCESS) {
             LOG_ERROR("X509_STORE_add_cert Error: path = %s.", certPath);
             HITLS_X509_Adapt_StoreFree(store);
             return NULL;
         }
         token = strtok_s(NULL, ":", &rest);
     } while (token != NULL);
+
     return store;
 }
 
@@ -227,9 +179,7 @@ int32_t HITLS_X509_LoadEECertList(HITLS_Config *tlsCfg, const char *eeFileList, 
             return ERROR;
         }
         if (isEnc == true) {
-#ifndef HITLS_NO_TLCP11
             ret = HITLS_CFG_SetTlcpCertificate(tlsCfg, cert, 0, isEnc);
-#endif
         } else {
             ret = HITLS_CFG_SetCertificate(tlsCfg, cert, 0);
         }
@@ -267,15 +217,14 @@ int32_t HITLS_X509_LoadPrivateKeyList(HITLS_Config *tlsCfg, const char *keyFileL
         }
         LOG_DEBUG("Load Cert Path is %s", filePath);
 
-        key = HITLS_X509_Adapt_KeyParse(tlsCfg, filePath, strlen(filePath), TLS_PARSE_TYPE_FILE, TLS_PARSE_FORMAT_PEM);
+        key = HITLS_X509_Adapt_KeyParse(tlsCfg, (const uint8_t *)filePath, strlen(filePath),
+            TLS_PARSE_TYPE_FILE, TLS_PARSE_FORMAT_ASN1);
         if (key == NULL) {
             LOG_ERROR("LoadCert Error: path = %s.", filePath);
             return ERROR;
         }
         if (isEnc == true) {
-#ifndef HITLS_NO_TLCP11
             ret = HITLS_CFG_SetTlcpPrivateKey(tlsCfg, key, 0, isEnc);
-#endif
         } else {
             ret = HITLS_CFG_SetPrivateKey(tlsCfg, key, 0);
         }
@@ -289,7 +238,7 @@ int32_t HITLS_X509_LoadPrivateKeyList(HITLS_Config *tlsCfg, const char *keyFileL
     return SUCCESS;
 }
 
-void HITLS_X509_FreeCert(HITLS_CERT_Store *caStore, HITLS_CERT_Store *chainStore)
+void FRAME_HITLS_X509_FreeCert(HITLS_CERT_Store *caStore, HITLS_CERT_Store *chainStore)
 {
     if (caStore != NULL) {
         HITLS_X509_Adapt_StoreFree(caStore);
@@ -336,12 +285,12 @@ int32_t HiTLS_X509_LoadCertAndKey(HITLS_Config *tlsCfg, const char *caFile, cons
         }
     }
 
-	if ((eeFile != NULL) && (strncmp(eeFile, "NULL", strlen(eeFile)) != 0)) {
-            ret = HITLS_X509_LoadEECertList(tlsCfg, eeFile, hasTlcpSignCert);
-            if (ret != SUCCESS) {
-                return ret;
-            }
-	}
+    if ((eeFile != NULL) && (strncmp(eeFile, "NULL", strlen(eeFile)) != 0)) {
+        ret = HITLS_X509_LoadEECertList(tlsCfg, eeFile, hasTlcpSignCert);
+        if (ret != SUCCESS) {
+            return ret;
+        }
+    }
 
     if ((signPrivateKeyFile != NULL) && (strncmp(signPrivateKeyFile, "NULL", strlen(signPrivateKeyFile)) != 0)) {
         ret = HITLS_X509_LoadPrivateKeyList(tlsCfg, signPrivateKeyFile, false);

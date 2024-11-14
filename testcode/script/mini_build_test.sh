@@ -1,12 +1,17 @@
 #!/bin/bash
 
-# ---------------------------------------------------------------------------------------------
-#  This file is part of the openHiTLS project.
-#  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
-#  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
-#  for license information.
-# ---------------------------------------------------------------------------------------------
-
+# This file is part of the openHiTLS project.
+#
+# openHiTLS is licensed under the Mulan PSL v2.
+# You can use this software according to the terms and conditions of the Mulan PSL v2.
+# You may obtain a copy of Mulan PSL v2 at:
+#
+#     http://license.coscl.org.cn/MulanPSL2
+#
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+# EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+# MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+# See the Mulan PSL v2 for more details.
 # Build different miniaturized targets and perform basic functional testing.
 
 set -eu
@@ -104,9 +109,6 @@ feature_testfiles=(
     ["dsa"]="test_suite_sdv_eal_dsa"
     ["ecdsa"]="test_suite_sdv_eal_ecdsa"
     ["ecdh"]="test_suite_sdv_eal_ecdh"
-    ["curve448"]="test_suite_sdv_eal_curve448"
-    ["x448"]="test_suite_sdv_eal_curve448"
-    ["ed448"]="test_suite_sdv_eal_curve448"
     ["curve25519"]="test_suite_sdv_eal_curve25519"
     ["x25519"]="test_suite_sdv_eal_curve25519"
     ["ed25519"]="test_suite_sdv_eal_curve25519"
@@ -158,7 +160,6 @@ testfile_testcases=(
     ["test_suite_sdv_eal_dsa"]="SDV_CRYPTO_DSA_SIGN_VERIFY_FUNC_TC001"
     ["test_suite_sdv_eal_ecdsa"]="SDV_CRYPTO_ECDSA_SIGN_VERIFY_FUNC_TC001 SDV_CRYPTO_ECDSA_SIGN_VERIFY_FUNC_TC002"
     ["test_suite_sdv_eal_ecdh"]="SDV_CRYPTO_ECDH_EXCH_FUNC_TC001"
-    ["test_suite_sdv_eal_curve448"]="SDV_CRYPTO_ED448_SIGN_VERIFY_FUNC_TC001 SDV_CRYPTO_ED448_SIGN_VERIFY_FUNC_TC002 SDV_CRYPTO_X448_EXCH_FUNC_TC001 SDV_CRYPTO_X448_GEN_EXCH_FUNC_TC001"
     ["test_suite_sdv_eal_curve25519"]="SDV_CRYPTO_X25519_EXCH_FUNC_TC001 SDV_CRYPTO_X25519_EXCH_FUNC_TC002 SDV_CRYPTO_ED25519_SIGN_VERIFY_FUNC_TC001"
     ["test_suite_sdv_eal_sm2_exchange"]="SDV_CRYPTO_SM2_EXCHANGE_FUNC_TC001 SDV_CRYPTO_SM2_EXCHANGE_FUNC_TC003"
     ["test_suite_sdv_eal_sm2_sign"]="SDV_CRYPTO_SM2_SIGN_FUNC_TC001 SDV_CRYPTO_SM2_VERIFY_FUNC_TC001 SDV_CRYPTO_SM2_SIGN_VERIFY_FUNC_TC001"
@@ -293,8 +294,8 @@ mini_config()
                 system="linux"
                 ;;
             "bn"|\
-            "rsa"|"dsa"|"dh"|"ecdsa"|"ecdh"|"curve448"|"x448"|"curve25519"|"x25519"|\
-            "ed448"|"ed25519"|"sm2"|"sm2_exch"|"sm2_sign"|"sm2_crypt")
+            "rsa"|"dsa"|"dh"|"ecdsa"|"ecdh"|"curve25519"|"x25519"|\
+            "ed25519"|"sm2"|"sm2_exch"|"sm2_sign"|"sm2_crypt")
                 # To enable bn, you need to specify the number of platform bits.
                 bits=64
                 ;;

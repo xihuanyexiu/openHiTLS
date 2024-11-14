@@ -1,12 +1,20 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /* BEGIN_HEADER */
+
 #include "securec.h"
 #include "hlt.h"
 #include "hitls_error.h"
@@ -38,21 +46,21 @@ static HITLS_Config *GetHitlsConfigViaVersion(int ver)
     switch (ver) {
         case HITLS_VERSION_TLS12:
             config = HITLS_CFG_NewTLS12Config();
-            ret = HITLS_CFG_SetCloseCheckKeyUsage(config, false);
+            ret = HITLS_CFG_SetCheckKeyUsage(config, false);
             if (ret != HITLS_SUCCESS) {
                 return NULL;
             }
             return config;
         case HITLS_VERSION_TLS13:
             config = HITLS_CFG_NewTLS13Config();
-            ret = HITLS_CFG_SetCloseCheckKeyUsage(config, false);
+            ret = HITLS_CFG_SetCheckKeyUsage(config, false);
             if (ret != HITLS_SUCCESS) {
                 return NULL;
             }
             return config;
         case HITLS_VERSION_DTLS12:
             config = HITLS_CFG_NewDTLS12Config();
-            ret = HITLS_CFG_SetCloseCheckKeyUsage(config, false);
+            ret = HITLS_CFG_SetCheckKeyUsage(config, false);
             if (ret != HITLS_SUCCESS) {
                 return NULL;
             }
@@ -119,13 +127,15 @@ void SDV_TLS_CM_KEYUPDATE_FUNC_TC001(int version)
     ASSERT_EQ(ret, HITLS_KEY_UPDATE_REQ_END);
     ret = HITLS_KeyUpdate(client->ssl, HITLS_UPDATE_NOT_REQUESTED);
     ASSERT_EQ(ret, HITLS_SUCCESS);
+    ASSERT_TRUE(HITLS_Connect(client->ssl) == HITLS_SUCCESS);
     ret = HITLS_GetKeyUpdateType(client->ssl);
     ASSERT_EQ(ret, HITLS_KEY_UPDATE_REQ_END);
 
     FuncStubInfo tmpRpInfo = {0};
     STUB_Replace(&tmpRpInfo, BSL_UIO_Write, STUB_BSL_UIO_Write);
     ret = HITLS_KeyUpdate(client->ssl, HITLS_UPDATE_REQUESTED);
-    ASSERT_EQ(ret, HITLS_REC_ERR_IO_EXCEPTION);
+    ASSERT_EQ(ret, HITLS_SUCCESS);
+    ASSERT_TRUE(HITLS_Connect(client->ssl) == HITLS_REC_ERR_IO_EXCEPTION);
     ret = HITLS_GetKeyUpdateType(client->ssl);
     ASSERT_EQ(ret, HITLS_UPDATE_REQUESTED);
 exit:

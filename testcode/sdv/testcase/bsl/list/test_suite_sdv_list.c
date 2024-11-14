@@ -1,12 +1,20 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /* BEGIN_HEADER */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -1010,3 +1018,28 @@ exit:
     BSL_SAL_FREE(testList);
 }
 /* END_CASE */
+
+/**
+ * @test   SDV_BSL_LIST_FREE_WITHOUT_FUNC_TC001
+ * @title  test BSL_LIST_FreeWithoutData functions
+ * @precon nan
+ * @brief
+ *    1.Call BSL_LIST_New create a list, Expected result 1 is obtained.
+ *    2.Call BSL_LIST_FreeWithoutData free normal list, Expected result 2 is obtained.
+ *    3.Call BSL_LIST_FreeWithoutData free empty list, Expected result 2 is obtained.
+ * @expect
+ *    1. The list is created successfully.
+ *    2. The list is free successfully.
+ */
+/* BEGIN_CASE */
+void SDV_BSL_LIST_FREE_WITHOUT_FUNC_TC001(void)
+{
+    BslList *testList = BSL_LIST_New(MAX_NAME_LEN);
+    ASSERT_TRUE(testList != NULL);
+    BSL_LIST_FreeWithoutData(testList);
+    testList = NULL;
+    BSL_LIST_FreeWithoutData(testList);
+exit:
+}
+/* END_CASE */
+

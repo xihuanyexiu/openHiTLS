@@ -1,13 +1,21 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /* BEGIN_HEADER */
 /* INCLUDE_BASE test_suite_tls12_consistency_rfc5246 */
+
 #include <stdio.h>
 #include "stub_replace.h"
 #include "hitls.h"
@@ -450,7 +458,7 @@ void UT_TLS_TLS12_RFC5246_CONSISTENCY_RECV_ZEROLENGTH_MSG_TC006(void)
     FRAME_CcsMsg *CcsMidMsg = &frameMsg1.body.ccsMsg;
     CcsMidMsg->ccsType.state = MISSING_FIELD;
     CcsMidMsg->extra.state = MISSING_FIELD;
-    CcsMidMsg->extra.size = MISSING_FIELD;
+    CcsMidMsg->extra.size = MISSING_FIELD; 
 
     uint32_t sendLen = MAX_RECORD_LENTH;
     uint8_t sendBuf[MAX_RECORD_LENTH] = {0};
@@ -463,21 +471,7 @@ void UT_TLS_TLS12_RFC5246_CONSISTENCY_RECV_ZEROLENGTH_MSG_TC006(void)
     memset_s(&frameMsg1, sizeof(frameMsg1), 0, sizeof(frameMsg1));
 
     ASSERT_TRUE(testInfo.server->ssl != NULL);
-    ASSERT_EQ(HITLS_Accept(testInfo.server->ssl), HITLS_REC_BAD_RECORD_MAC);
-
-    ioUserData1 = BSL_UIO_GetUserData(testInfo.server->io);
-    uint8_t *sndBuf = ioUserData1->sndMsg.msg;
-    uint32_t sndLen = ioUserData1->sndMsg.len;
-    ASSERT_TRUE(sndLen != 0);
-
-    uint32_t parseLen = 0;
-    frameType1.recordType = REC_TYPE_ALERT;
-    ASSERT_TRUE(FRAME_ParseMsg(&frameType1, sndBuf, sndLen, &frameMsg1, &parseLen) == HITLS_SUCCESS);
-
-    ASSERT_TRUE(frameMsg1.recType.data == REC_TYPE_ALERT);
-    FRAME_AlertMsg *alertMsg = &frameMsg1.body.alertMsg;
-    ASSERT_TRUE(alertMsg->alertLevel.data == ALERT_LEVEL_FATAL);
-
+    ASSERT_EQ(HITLS_Accept(testInfo.server->ssl), HITLS_REC_NORMAL_RECV_BUF_EMPTY);
 exit:
     FRAME_CleanMsg(&frameType1, &frameMsg1);
     HITLS_CFG_FreeConfig(testInfo.config);
@@ -535,18 +529,10 @@ void UT_TLS_TLS12_RFC5246_CONSISTENCY_RECV_ZEROLENGTH_MSG_TC007(void)
     memset_s(&frameMsg1, sizeof(frameMsg1), 0, sizeof(frameMsg1));
 
     ASSERT_TRUE(testInfo.client->ssl != NULL);
-    ASSERT_EQ(HITLS_Connect(testInfo.client->ssl), HITLS_REC_BAD_RECORD_MAC);
-
-    ioUserData1 = BSL_UIO_GetUserData(testInfo.client->io);
-    uint8_t *sndBuf = ioUserData1->sndMsg.msg;
-    uint32_t sndLen = ioUserData1->sndMsg.len;
-    ASSERT_TRUE(sndLen != 0);
-
-    uint32_t parseLen = 0;
-    ASSERT_EQ(FRAME_ParseMsgHeader(&frameType1, sndBuf, sndLen, &frameMsg1, &parseLen), 0);
-
-    ASSERT_TRUE(frameMsg1.recType.data == REC_TYPE_ALERT);
-
+    ASSERT_EQ(HITLS_Connect(testInfo.client->ssl), HITLS_REC_NORMAL_RECV_BUF_EMPTY);
+    FRAME_AlertMsg *alertMsg = &frameMsg1.body.alertMsg;
+    ASSERT_EQ(alertMsg->alertLevel.data , 0);
+    ASSERT_EQ(alertMsg->alertDescription.data , ALERT_CLOSE_NOTIFY);
 exit:
     FRAME_CleanMsg(&frameType1, &frameMsg1);
     HITLS_CFG_FreeConfig(testInfo.config);
@@ -1494,7 +1480,8 @@ void UT_TLS_TLS12_RFC5246_CONSISTENCY_AEAD_EXPLICIT_IV_LENGTH_TC001()
     BSL_Uint64ToByte(sequenceNumber, seq);
 
     /* Write app data to the server. */
-    int32_t ret = APP_Write(testInfo.server->ssl, transportData, transportDataLen);
+    uint32_t writeLen;
+    int32_t ret = APP_Write(testInfo.server->ssl, transportData, transportDataLen, &writeLen);
     ASSERT_TRUE(ret == HITLS_SUCCESS);
 
     /* Data transmission at the record layer. */
@@ -1949,7 +1936,8 @@ void UT_TLS_TLS12_RFC5246_CONSISTENCY_SEQ_NUM_TC002(int isClient)
     ASSERT_EQ(RandBytes(transportData, transportDataLen), HITLS_SUCCESS);
     /* Write app data. */
     HITLS_Ctx *localSsl = isClient ? testInfo.client->ssl : testInfo.server->ssl;
-    ASSERT_EQ(APP_Write(localSsl, transportData, transportDataLen), HITLS_SUCCESS);
+    uint32_t writeLen;
+    ASSERT_EQ(APP_Write(localSsl, transportData, transportDataLen, &writeLen), HITLS_SUCCESS);
 
     /* Obtain data from the I/O sent by the local end and parse the header and content. */
     BSL_UIO *sendIo = isClient ? testInfo.client->io : testInfo.server->io;
@@ -2737,7 +2725,8 @@ void UT_TLS_TLS12_RFC5246_CONSISTENCY_HELLO_REQUEST_TC004(void)
     ASSERT_TRUE(server->ssl->state == CM_STATE_TRANSPORTING);
 
     uint8_t data[] = "Hello World";
-    ASSERT_EQ(HITLS_Write(server->ssl, data, sizeof(data)), HITLS_SUCCESS);
+    uint32_t writeLen;
+    ASSERT_EQ(HITLS_Write(server->ssl, data, sizeof(data), &writeLen), HITLS_SUCCESS);
     ASSERT_TRUE(FRAME_TrasferMsgBetweenLink(server, client) == HITLS_SUCCESS);
     ASSERT_TRUE(HITLS_Read(clientTlsCtx, readBuf, READ_BUF_SIZE, &readLen) == HITLS_SUCCESS);
     ASSERT_TRUE(readLen == sizeof(data) && memcmp(data, readBuf, readLen) == 0);
@@ -4000,7 +3989,7 @@ void TlsCtxFree(void)
 
 ALERT_Level g_alertLevel;
 ALERT_Description g_alertDescription;
-void STUB_SendAlert(TLS_Ctx *ctx, ALERT_Level level, ALERT_Description description)
+void STUB_SendAlert(const TLS_Ctx *ctx, ALERT_Level level, ALERT_Description description)
 {
     (void)ctx;
     g_alertLevel = level;
@@ -4051,7 +4040,7 @@ int32_t NewConfig(ResumeTestInfo *testInfo)
 
 
     HITLS_CFG_SetClientVerifySupport(testInfo->config, true);
-    HITLS_CFG_SetCloseCheckKeyUsage(testInfo->config, false);
+    HITLS_CFG_SetCheckKeyUsage(testInfo->config, false);
     HITLS_CFG_SetExtenedMasterSecretSupport(testInfo->config, true);
     HITLS_CFG_SetNoClientCertSupport(testInfo->config, true);
     HITLS_CFG_SetRenegotiationSupport(testInfo->config, true);
@@ -4129,7 +4118,8 @@ int32_t FirstHandshake(ResumeTestInfo *testInfo)
 
     /* User data transmission */
     uint8_t data[] = "Hello World";
-    ret = HITLS_Write(testInfo->server->ssl, data, sizeof(data));
+    uint32_t writeLen;
+    ret = HITLS_Write(testInfo->server->ssl, data, sizeof(data), &writeLen);
     if (ret != HITLS_SUCCESS) {
         return ret;
     }
@@ -4266,7 +4256,8 @@ int32_t TryResumeBySessionId(ResumeTestInfo *testInfo)
 
     /* User data transmission */
     uint8_t data[] = "Hello World";
-    ret = HITLS_Write(testInfo->server->ssl, data, sizeof(data));
+    uint32_t writeLen;
+    ret = HITLS_Write(testInfo->server->ssl, data, sizeof(data), &writeLen);
     if (ret != HITLS_SUCCESS) {
         return ret;
     }
@@ -5184,8 +5175,7 @@ void UT_TLS1_2_RFC5246_SERVER_CHOSE_VERSION_TC002(void)
 
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(server->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
-    uint32_t recvLen = ioUserData->recMsg.len;
-    
+
     recvBuf[2] = 0x05;
     ASSERT_EQ(HITLS_Accept(serverTlsCtx), HITLS_REC_NORMAL_IO_BUSY);
 
@@ -5207,5 +5197,154 @@ exit:
     FRAME_FreeLink(client);
     FRAME_FreeLink(server);
     FRAME_CleanMsg(&frameType, &frameMsg);
+}
+/* END_CASE */
+
+/* @
+* @test  UT_TLS_TLS1_2_RFC5246_RENEGOTIATION_RECV_APP_TC001
+* @spec  -
+* @title  The client receives app after renegotiate request
+* @precon  nan
+* @brief  1. The client receives app after sending renegotiate request client hello
+* @expect 1.clien read app message success
+* @prior  Level 1
+* @auto  TRUE
+@ */
+/* BEGIN_CASE */
+void UT_TLS_TLS1_2_RFC5246_RENEGOTIATION_RECV_APP_TC001()
+{
+    FRAME_Init();
+    HITLS_Config *tlsConfig = HITLS_CFG_NewTLS12Config();
+    HITLS_CFG_SetRenegotiationSupport(tlsConfig, true);
+    FRAME_LinkObj *client = FRAME_CreateLink(tlsConfig, BSL_UIO_TCP);
+    FRAME_LinkObj *server = FRAME_CreateLink(tlsConfig, BSL_UIO_TCP);
+    ASSERT_TRUE(client != NULL);
+    ASSERT_TRUE(server != NULL);
+    HITLS_Ctx *clientTlsCtx = FRAME_GetTlsCtx(client);
+
+    ASSERT_TRUE(FRAME_CreateConnection(client, server, false, HS_STATE_BUTT) == HITLS_SUCCESS);
+    ASSERT_TRUE(HITLS_Renegotiate(clientTlsCtx) == HITLS_SUCCESS);
+    ASSERT_TRUE(HITLS_Connect(clientTlsCtx) == HITLS_REC_NORMAL_RECV_BUF_EMPTY);
+    ASSERT_TRUE(clientTlsCtx->state == CM_STATE_RENEGOTIATION);
+
+    uint8_t data[] = "Hello World";
+    uint32_t len;
+    HITLS_Write(server->ssl, data, sizeof(data), &len);
+    ASSERT_TRUE(FRAME_TrasferMsgBetweenLink(server, client) == HITLS_SUCCESS);
+
+    uint8_t readBuf[READ_BUF_SIZE] = {0};
+    uint32_t readLen = 0;
+    ASSERT_TRUE(HITLS_Read(clientTlsCtx, readBuf, READ_BUF_SIZE, &readLen) == HITLS_SUCCESS);
+    ASSERT_TRUE(readLen == sizeof(data) && memcmp(data, readBuf, readLen) == 0);
+exit:
+    FRAME_FreeLink(client);
+    FRAME_FreeLink(server);
+    HITLS_CFG_FreeConfig(tlsConfig);
+}
+/* END_CASE */
+
+/* @
+* @test  UT_TLS_TLS1_2_RFC5246_SEND_DATA_BEWTEEN_CCS_AND_FINISH
+* @spec  -
+* @title  The client receives a alert bewteen ccs and finish
+* @precon  nan
+* @brief  1. Use the configuration items to configure the client and server. Expected result 1 is obtained.
+*         2. Server send a alert message bewteen ccs and finish. Expected result 2 is obtained.
+* @expect 1. The initialization is successful.
+*         2. Client return HITLS_REC_ERR_DATA_BETWEEN_CCS_AND_FINISHED
+* @prior  Level 1
+* @auto  TRUE
+@ */
+/* BEGIN_CASE */
+void UT_TLS_TLS1_2_RFC5246_SEND_DATA_BEWTEEN_CCS_AND_FINISH(void)
+{
+    FRAME_Init();
+    HITLS_Config *config = HITLS_CFG_NewTLS12Config();
+    FRAME_LinkObj *client = FRAME_CreateLink(config, BSL_UIO_TCP);
+    FRAME_LinkObj *server = FRAME_CreateLink(config, BSL_UIO_TCP);
+    ASSERT_EQ(FRAME_CreateConnection(client, server, false, TRY_SEND_FINISH), HITLS_SUCCESS);
+    FrameUioUserData *ioUserData = BSL_UIO_GetUserData(server->io);
+    ioUserData->sndMsg.len = 0;
+    server->ssl->method.sendAlert(server->ssl, ALERT_LEVEL_FATAL, ALERT_CERTIFICATE_EXPIRED);
+    ALERT_Flush(server->ssl);
+    ASSERT_EQ(FRAME_TrasferMsgBetweenLink(server, client), HITLS_SUCCESS);
+    ASSERT_EQ(HITLS_Connect(client->ssl), HITLS_REC_ERR_DATA_BETWEEN_CCS_AND_FINISHED);
+exit:
+    HITLS_CFG_FreeConfig(config);
+    FRAME_FreeLink(client);
+    FRAME_FreeLink(server);
+}
+/* END_CASE */
+
+/* @
+* @test  UT_TLS_TLS1_2_RFC5246_Fragmented_Msg_FUNC_TC001
+* @spec  -
+* @title  The client receives a Fragmented_Msg during handshake
+* @precon  nan
+* @brief  1. Use the configuration items to configure the client and server. Expected result 1 is obtained.
+*         2. Server send a Fragmented_Msg during handshake. Expected result 2 is obtained.
+* @expect 1. The initialization is successful.
+*         2. Client return HITLS_REC_ERR_DATA_BETWEEN_CCS_AND_FINISHED
+* @prior  Level 1
+* @auto  TRUE
+@ */
+// To test whether fragmented messages can be received correctly. Test REC_TlsReadNbytes
+/* BEGIN_CASE */
+void UT_TLS_TLS1_2_RFC5246_Fragmented_Msg_FUNC_TC001(void)
+{
+    FRAME_Init();
+
+    HITLS_Config *config = HITLS_CFG_NewTLS12Config();
+    ASSERT_TRUE(config != NULL);
+    FRAME_LinkObj *client = FRAME_CreateLink(config, BSL_UIO_TCP);
+    FRAME_LinkObj *server = FRAME_CreateLink(config, BSL_UIO_TCP);
+    ASSERT_TRUE(client != NULL);
+    ASSERT_TRUE(server != NULL);
+
+    int32_t ret = HITLS_Connect(client->ssl);
+    ASSERT_TRUE(ret == HITLS_REC_NORMAL_RECV_BUF_EMPTY);
+    ASSERT_TRUE(client->ssl->hsCtx->state == TRY_RECV_SERVER_HELLO);
+
+    ret = HITLS_Accept(server->ssl);
+    ASSERT_TRUE(ret == HITLS_REC_NORMAL_RECV_BUF_EMPTY);
+    ASSERT_TRUE(server->ssl->hsCtx->state == TRY_RECV_CLIENT_HELLO);
+
+    FrameUioUserData *ioUserData = BSL_UIO_GetUserData(client->io);
+    uint8_t data[MAX_RECORD_LENTH] = {0};
+    uint32_t dataLen = MAX_RECORD_LENTH;
+    ASSERT_EQ(memcpy_s(data, MAX_RECORD_LENTH, ioUserData->sndMsg.msg, ioUserData->sndMsg.len), 0);
+    dataLen = ioUserData->sndMsg.len;
+
+    uint32_t msglength = BSL_ByteToUint16(&data[3]);
+    uint32_t msgLen = (msglength - 1) / 2;
+    uint32_t len = 5 + msgLen;  
+
+    uint8_t recorddata1[] = {0x16, 0x03, 0x03, 0x00, 0x46};
+
+    BSL_Uint16ToByte((uint16_t)msgLen, &recorddata1[3]);
+    ASSERT_EQ(memcpy_s(ioUserData->sndMsg.msg, MAX_RECORD_LENTH, data, len), 0);
+    ASSERT_EQ(memcpy_s(ioUserData->sndMsg.msg, MAX_RECORD_LENTH, recorddata1, sizeof(recorddata1)), 0);
+
+    uint8_t recorddata2[] = {0x16, 0x03, 0x03, 0x00, 0x53};
+    msgLen = dataLen - len;
+    BSL_Uint16ToByte((uint16_t)msgLen, &recorddata2[3]);
+    ASSERT_EQ(memcpy_s(ioUserData->sndMsg.msg + len, MAX_RECORD_LENTH - len, recorddata2, sizeof(recorddata2)), 0);
+    ioUserData->sndMsg.len = len + 5;
+    ASSERT_EQ(memcpy_s(ioUserData->sndMsg.msg + ioUserData->sndMsg.len, MAX_RECORD_LENTH - len, data + len, dataLen - len), 0);
+    ioUserData->sndMsg.len += dataLen - len;
+
+    ret = HITLS_Connect(client->ssl);
+    ASSERT_TRUE(FRAME_TrasferMsgBetweenLink(client, server) == HITLS_SUCCESS);
+    ret = HITLS_Accept(server->ssl);
+    ASSERT_TRUE(ret == HITLS_REC_NORMAL_RECV_BUF_EMPTY);
+    ret = HITLS_Accept(server->ssl);
+    ASSERT_TRUE(ret == HITLS_REC_NORMAL_IO_BUSY);
+    ASSERT_EQ(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT), HITLS_SUCCESS);
+    ASSERT_TRUE(client->ssl->state == CM_STATE_TRANSPORTING);
+
+exit:
+    HITLS_CFG_FreeConfig(config);
+    FRAME_FreeLink(client);
+    FRAME_FreeLink(server);
 }
 /* END_CASE */

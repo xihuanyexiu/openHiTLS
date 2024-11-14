@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include "hitls_build.h"
@@ -33,7 +40,6 @@ typedef struct {
 
 static const PkeyNewOpt NEW_OPT[] =  {
     {CRYPT_PKEY_SM2, CRYPT_CTRL_SET_SM2_HASH_METHOD, CRYPT_MD_SM3},
-    {CRYPT_PKEY_ED448, CRYPT_CTRL_SET_ED448_HASH_METHOD, CRYPT_MD_SHAKE256},
     {CRYPT_PKEY_ED25519, CRYPT_CTRL_SET_ED25519_HASH_METHOD, CRYPT_MD_SHA512}
 };
 
@@ -431,51 +437,18 @@ uint32_t CRYPT_EAL_PkeyGetKeyBits(const CRYPT_EAL_PkeyCtx *pkey)
     return pkey->method->bits(pkey->key);
 }
 
-typedef struct {
-    uint32_t rsaKeyLen;
-    uint32_t ecKeyLen;
-    uint32_t secBits;
-} ComparableStrengths;
-
-/* See the standard document
-   https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r4.pdf
-   Table 2: Comparable strengths */
-const ComparableStrengths g_strengthsTable[] = {
-    {15360, 512, 256},
-    {7680,  384, 192},
-    {3072,  256, 128},
-    {2048,  224, 112},
-    {1024,  160, 80}
-};
-
 uint32_t CRYPT_EAL_PkeyGetSecurityBits(const CRYPT_EAL_PkeyCtx *pkey)
 {
     if (pkey == NULL) {
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_PKEY, CRYPT_PKEY_MAX, CRYPT_NULL_INPUT);
         return 0;
     }
-    uint32_t keyBits = 0;
-    if (pkey->method->bits == NULL) {
+    if (pkey->method == NULL || pkey->method->getSecBits == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_EAL_ALG_NOT_SUPPORT);
         return 0;
     }
-    keyBits = (uint32_t)pkey->method->bits(pkey->key);
-    if (pkey->id == CRYPT_PKEY_RSA) {
-        for (uint32_t i = 0; i < sizeof(g_strengthsTable) / sizeof(g_strengthsTable[0]); i++) {
-            if (keyBits >= g_strengthsTable[i].rsaKeyLen) {
-                return g_strengthsTable[i].secBits;
-            }
-        }
-        return 0;
-    } else if (pkey->id == CRYPT_PKEY_ECDSA) {
-        keyBits = ((keyBits / 8 - 1) / 2) * 8; // 8 is convet to byte, 1 is encode byte, 2 is contain x and y
-        for (uint32_t i = 0; i < sizeof(g_strengthsTable) / sizeof(g_strengthsTable[0]); i++) {
-            if (keyBits >= g_strengthsTable[i].ecKeyLen) {
-                return g_strengthsTable[i].secBits;
-            }
-        }
-        return keyBits / 2; // If the key length is less than 160, the key strength is equal to the key length / 2.
-    }
-    return 0;
+    
+    return (uint32_t) pkey->method->getSecBits(pkey->key);
 }
 
 static int32_t SetOaep(CRYPT_EAL_PkeyCtx *pkey, const void *val, uint32_t len)
@@ -557,8 +530,8 @@ int32_t CRYPT_EAL_PkeyCtrl(CRYPT_EAL_PkeyCtx *pkey, int32_t opt, void *val, uint
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_PKEY, pkey->id, CRYPT_EAL_ALG_NOT_SUPPORT);
         return CRYPT_EAL_ALG_NOT_SUPPORT;
     }
-    if (opt == CRYPT_CTRL_SET_ED25519_HASH_METHOD || opt == CRYPT_CTRL_SET_SM9_HASH_METHOD ||
-        opt == CRYPT_CTRL_SET_ED448_HASH_METHOD || opt == CRYPT_CTRL_SET_SM2_HASH_METHOD) {
+    if (opt == CRYPT_CTRL_SET_ED25519_HASH_METHOD || opt == CRYPT_CTRL_SET_SM9_HASH_METHOD
+        || opt == CRYPT_CTRL_SET_SM2_HASH_METHOD) {
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_PKEY, pkey->id, CRYPT_EAL_ALG_NOT_SUPPORT);
         return CRYPT_EAL_ALG_NOT_SUPPORT;
     }
@@ -672,6 +645,9 @@ bool CRYPT_EAL_PkeyIsValidAlgId(CRYPT_PKEY_AlgId id)
 int32_t CRYPT_EAL_PkeyUpRef(CRYPT_EAL_PkeyCtx *pkey)
 {
     int i = 0;
+    if (pkey == NULL) {
+        return CRYPT_NULL_INPUT;
+    }
     return BSL_SAL_AtomicUpReferences(&(pkey->references), &i);
 }
 #endif

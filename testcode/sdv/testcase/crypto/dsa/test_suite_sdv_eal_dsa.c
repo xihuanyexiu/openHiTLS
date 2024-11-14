@@ -1,12 +1,20 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /* BEGIN_HEADER */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -739,6 +747,40 @@ void SDV_CRYPTO_DSA_GET_KEY_BITS_FUNC_TC001(int id, int keyBits, Hex *P, Hex *Q,
 
     ASSERT_TRUE(CRYPT_EAL_PkeySetPara(pkey, &para) == CRYPT_SUCCESS);
     ASSERT_TRUE(CRYPT_EAL_PkeyGetKeyBits(pkey) == (uint32_t)keyBits);
+exit:
+    CRYPT_EAL_PkeyFreeCtx(pkey);
+}
+/* END_CASE */
+
+/**
+ * @test   SDV_CRYPTO_DSA_GET_SEC_BITS_FUNC_TC001
+ * @title  DSA CRYPT_EAL_PkeyGetSecurityBits test.
+ * @precon nan
+ * @brief
+ *    1. Create the context of the dsa algorithm, expected result 1
+ *    2. Set dsa para, expected result 2
+ *    3. Call the CRYPT_EAL_PkeyGetSecurityBits Obtains secbits, expected result 3
+ * @expect
+ *    1. Success, and the context is not null.
+ *    2. CRYPT_SUCCESS
+ *    3. The return value is secBits.
+ */
+/* BEGIN_CASE */
+void SDV_CRYPTO_DSA_GET_SEC_BITS_FUNC_TC001(int id, int secBits, Hex *P, Hex *Q, Hex *G)
+{
+    CRYPT_EAL_PkeyCtx *pkey = CRYPT_EAL_PkeyNewCtx(id);
+    ASSERT_TRUE(pkey != NULL);
+    CRYPT_EAL_PkeyPara para;
+    para.id = CRYPT_PKEY_DSA;
+    para.para.dsaPara.p = P->x;
+    para.para.dsaPara.pLen = P->len;
+    para.para.dsaPara.q = Q->x;
+    para.para.dsaPara.qLen = Q->len;
+    para.para.dsaPara.g = G->x;
+    para.para.dsaPara.gLen = G->len;
+
+    ASSERT_TRUE(CRYPT_EAL_PkeySetPara(pkey, &para) == CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeyGetSecurityBits(pkey), secBits);
 exit:
     CRYPT_EAL_PkeyFreeCtx(pkey);
 }

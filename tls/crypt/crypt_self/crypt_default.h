@@ -1,10 +1,18 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
+
 #ifndef CRYPT_DEFAULT_H
 #define CRYPT_DEFAULT_H
 #include <stdint.h>
@@ -44,6 +52,16 @@ uint32_t CRYPT_DEFAULT_HMAC_Size(HITLS_HashAlgo hashAlgo);
  * @return HMAC context
  */
 HITLS_HMAC_Ctx *CRYPT_DEFAULT_HMAC_Init(HITLS_HashAlgo hashAlgo, const uint8_t *key, uint32_t len);
+
+/**
+ * @brief ReInitialize the HMAC context.
+ *
+ * @param ctx [IN] HMAC context.
+ *
+ * @retval HITLS_SUCCESS succeeded.
+ * @retval Other         failure
+ */
+int32_t CRYPT_DEFAULT_HMAC_ReInit(HITLS_HMAC_Ctx *ctx);
 
 /**
  * @brief Release the HMAC context.
@@ -197,6 +215,12 @@ int32_t CRYPT_DEFAULT_Decrypt(const HITLS_CipherParameters *cipher, const uint8_
     uint8_t *out, uint32_t *outLen);
 
 /**
+ * @brief Release the cipher ctx.
+ *
+ * @param ctx [IN] cipher ctx handle. The handle is set NULL by the invoker.
+ */
+void CRYPT_DEFAULT_CipherFree(HITLS_Cipher_Ctx *ctx);
+/**
  * @brief Generate the ECDH key pair.
  *
  * @param curveParams [IN] ECDH parameter
@@ -266,7 +290,7 @@ void CRYPT_DEFAULT_FreeKey(HITLS_CRYPT_Key *key);
  * @retval HITLS_SUCCESS succeeded.
  * @retval Other         failure
  */
-int32_t CRYPT_DEFAULT_GetPubKey(HITLS_CRYPT_Key *key, uint8_t *pubKeyBuf, uint32_t bufLen, uint32_t *usedLen);
+int32_t CRYPT_DEFAULT_GetPubKey(HITLS_CRYPT_Key *key, uint8_t *pubKeyBuf, uint32_t bufLen, uint32_t *pubKeyLen);
 
 /**
  * @brief Calculate the shared key.

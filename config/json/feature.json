@@ -7,8 +7,10 @@
                     "hash": null,
                     "init": {"deps": ["err"]},
                     "base64": null,
+                    "pem": null,
                     "list": null,
                     "log": null,
+                    "obj":null,
                     "sal": null,
                     "sal_mem": null,
                     "sal_thread": null,
@@ -25,7 +27,8 @@
                         "uio_sctp": {"deps": ["uio_plt", "sal_net"]},
                         "uio_tcp": {"deps": ["uio_plt", "sal_net"]}
                     },
-                    "usrdata": null
+                    "usrdata": null,
+                    "asn1":null
                 }
             }
         },
@@ -86,15 +89,12 @@
                         "rsa": {"deps": ["bn"]},
                         "dsa": {"deps": ["bn"]},
                         "dh": {"deps": ["bn"]},
+                        "paillier": {"deps":["bn"]},
                         "ecdh": {"deps": ["ecc"]},
                         "ecdsa": {"deps": ["ecc"]},
                         "curve25519": {
                             "ed25519": {"deps": ["sha512"]},
                             "x25519": null
-                        },
-                        "curve448": {
-                            "ed448": {"deps": ["sha3"]},
-                            "x448": null
                         },
                         "sm2": {
                             "sm2_crypt": null,
@@ -117,20 +117,373 @@
                 },
                 "armv8": {
                     "sm3": null,
-                    "gcm": null,
                     "aes": null,
                     "chacha20": null,
                     "sm4": null,
-                    "bn": null,
                     "ecc": null
                 }
             }
         },
         "hitls_tls": {
-            "Note": "Currently, hitls_tls does not support feature division. 'all_tls' is a temporary solution.",
             "features": {
                 "c": {
-                    "all_tls": null
+                    "proto_version":{
+                        "proto_tls12":null,
+                        "proto_tls13":null,
+                        "proto_tlcp11":null,
+                        "proto_dtls12":null
+                    },
+                    "host": {
+                        "host_client": null,
+                        "host_server": null,
+                        "opts": ["proto"]
+                    },
+                    "callback": {
+                        "callback_cert": null,
+                        "callback_crypt": {
+                            "callback_crypt_hmac_primitives": null
+                        }
+                    },
+                    "feature": {
+                        "feature_renegotiation": null,
+                        "feature_alpn": null,
+                        "feature_sni": null,
+                        "feature_pha": null,
+                        "feature_psk": null,
+                        "feature_security": {
+                            "deps" :["config_cipher_suite"]
+                        },
+                        "feature_indicator": null,
+                        "feature_session": {
+                            "feature_session_ticket": null,
+                            "feature_session_id": null
+                        },
+                        "feature_key_update": null,
+                        "feature_flight": null,
+                        "feature_cert_mode": null
+                    },
+                    "proto": {
+                        "deps": ["tlv", "sal", "eal", "list"],
+                        "opts": [
+                            ["host", "host_client", "host_server"],
+                            ["uio_sctp", "uio_tcp", "uio_plt"]
+                        ]
+                    },
+                    "config": {
+                        "config_manual_dh": null,
+                        "config_cert": {
+                            "config_cert_verify_param": null,
+                            "config_cert_load_file": null,
+                            "config_cert_callback": null
+                        },
+                        "config_key_usage": null,
+                        "config_state": null,
+                        "config_record_padding": null,
+                        "config_user_data": null,
+                        "config_cipher_suite": null
+                    },
+                    "connection": {
+                        "connection_info_negotiation": null
+                    },
+                    "suite": {
+                        "suite_aes_128_gcm_sha256": {
+                            "deps": ["sha256", "gcm", "aes", "ecdh"]
+                        },
+                        "suite_aes_256_gcm_sha384": {
+                            "deps": ["sha384", "gcm", "aes", "ecdh"]
+                        },
+                        "suite_chacha20_poly1305_sha256": {
+                            "deps": ["sha256", "chacha20poly1305", "chacha20", "ecdh"]
+                        },
+                        "suite_aes_128_ccm_sha256": {
+                            "deps": ["sha256", "ccm", "aes", "ecdh"]
+                        },
+                        "suite_aes_128_ccm_8_sha256": {
+                            "deps": ["sha256", "ccm", "aes", "ecdh"]
+                        },
+                        "suite_rsa_with_aes_128_cbc_sha": {
+                            "deps": ["sha1", "cbc", "aes", "rsa"]
+                        },
+                        "suite_rsa_with_aes_256_cbc_sha": {
+                            "deps": ["sha1", "cbc", "aes", "rsa"]
+                        },
+                        "suite_rsa_with_aes_128_cbc_sha256": {
+                            "deps": ["sha256", "cbc", "aes", "rsa"]
+                        },
+                        "suite_rsa_with_aes_256_cbc_sha256": {
+                            "deps": ["sha256", "cbc", "aes", "rsa"]
+                        },
+                        "suite_rsa_with_aes_128_gcm_sha256": {
+                            "deps": ["sha256", "gcm", "aes", "rsa"]
+                        },
+                        "suite_rsa_with_aes_256_gcm_sha384": {
+                            "deps": ["sha384", "gcm", "aes", "rsa"]
+                        },
+                        "suite_dhe_rsa_with_aes_128_gcm_sha256": {
+                            "deps": ["sha256", "gcm", "aes", "rsa", "dh"]
+                        },
+                        "suite_dhe_rsa_with_aes_256_gcm_sha384": {
+                            "deps": ["sha384", "gcm", "aes", "rsa", "dh"]
+                        },
+                        "suite_ecdhe_ecdsa_with_aes_128_cbc_sha": {
+                            "deps": ["sha1", "cbc", "aes", "ecdh", "ecdsa"]
+                        },
+                        "suite_ecdhe_ecdsa_with_aes_256_cbc_sha": {
+                            "deps": ["sha1", "cbc", "aes", "ecdh", "ecdsa"]
+                        },
+                        "suite_ecdhe_ecdsa_with_aes_128_cbc_sha256": {
+                            "deps": ["sha256", "cbc", "aes", "ecdh", "ecdsa"]
+                        },
+                        "suite_ecdhe_ecdsa_with_aes_256_cbc_sha384": {
+                            "deps": ["sha384", "cbc", "aes", "ecdh", "ecdsa"]
+                        },
+                        "suite_ecdhe_ecdsa_with_aes_128_gcm_sha256": {
+                            "deps": ["sha256", "gcm", "aes", "ecdh", "ecdsa"]
+                        },
+                        "suite_ecdhe_ecdsa_with_aes_256_gcm_sha384": {
+                            "deps": ["sha384", "gcm", "aes", "ecdh", "ecdsa"]
+                        },
+                        "suite_ecdhe_rsa_with_aes_128_cbc_sha": {
+                            "deps": ["sha1", "cbc", "aes", "rsa", "ecdh"]
+                        },
+                        "suite_ecdhe_rsa_with_aes_256_cbc_sha": {
+                            "deps": ["sha1", "cbc", "aes", "rsa", "ecdh"]
+                        },
+                        "suite_ecdhe_rsa_with_aes_128_cbc_sha256": {
+                            "deps": ["sha256", "cbc", "aes", "rsa", "ecdh"]
+                        },
+                        "suite_ecdhe_rsa_with_aes_256_cbc_sha384": {
+                            "deps": ["sha384", "cbc", "aes", "rsa", "ecdh"]
+                        },
+                        "suite_ecdhe_rsa_with_aes_128_gcm_sha256": {
+                            "deps": ["sha256", "gcm", "aes", "rsa", "ecdh"]
+                        },
+                        "suite_ecdhe_rsa_with_aes_256_gcm_sha384": {
+                            "deps": ["sha384", "gcm", "aes", "rsa", "ecdh"]
+                        },
+                        "suite_ecdhe_rsa_with_chacha20_poly1305_sha256": {
+                            "deps": ["sha256", "chacha20poly1305", "chacha20", "rsa", "ecdh"]
+                        },
+                        "suite_ecdhe_ecdsa_with_chacha20_poly1305_sha256": {
+                            "deps": ["sha256", "chacha20poly1305", "chacha20", "ecdh", "ecdsa"]
+                        },
+                        "suite_dhe_rsa_with_chacha20_poly1305_sha256": {
+                            "deps": ["sha256", "chacha20poly1305", "chacha20", "rsa", "dh"]
+                        },
+                        "suite_dhe_dss_with_aes_128_gcm_sha256": {
+                            "deps": ["sha256", "gcm", "aes", "dsa", "dh"]
+                        },
+                        "suite_dhe_dss_with_aes_256_gcm_sha384": {
+                            "deps": ["sha384", "gcm", "aes", "dsa", "dh"]
+                        },
+                        "suite_dhe_dss_with_aes_128_cbc_sha": {
+                            "deps": ["sha1", "cbc", "aes", "dsa", "dh"]
+                        },
+                        "suite_dhe_dss_with_aes_256_cbc_sha": {
+                            "deps": ["sha1", "cbc", "aes", "dsa", "dh"]
+                        },
+                        "suite_dhe_dss_with_aes_128_cbc_sha256": {
+                            "deps": ["sha256", "cbc", "aes", "dsa", "dh"]
+                        },
+                        "suite_dhe_dss_with_aes_256_cbc_sha256": {
+                            "deps": ["sha256", "cbc", "aes", "dsa", "dh"]
+                        },
+                        "suite_dhe_rsa_with_aes_128_cbc_sha": {
+                            "deps": ["sha1", "cbc", "aes", "rsa", "dh"]
+                        },
+                        "suite_dhe_rsa_with_aes_256_cbc_sha": {
+                            "deps": ["sha1", "cbc", "aes", "rsa", "dh"]
+                        },
+                        "suite_dhe_rsa_with_aes_128_cbc_sha256": {
+                            "deps": ["sha256", "cbc", "aes", "rsa", "dh"]
+                        },
+                        "suite_dhe_rsa_with_aes_256_cbc_sha256": {
+                            "deps": ["sha256", "cbc", "aes", "rsa", "dh"]
+                        },
+                        "suite_psk_with_aes_128_cbc_sha": {
+                            "deps": ["sha1", "cbc", "aes"]
+                        },
+                        "suite_psk_with_aes_256_cbc_sha": {
+                            "deps": ["sha1", "cbc", "aes"]
+                        },
+                        "suite_dhe_psk_with_aes_128_cbc_sha": {
+                            "deps": ["sha1", "cbc", "aes", "dh"]
+                        },
+                        "suite_dhe_psk_with_aes_256_cbc_sha": {
+                            "deps": ["sha1", "cbc", "aes", "dh"]
+                        },
+                        "suite_rsa_psk_with_aes_128_cbc_sha": {
+                            "deps": ["sha1", "cbc", "aes", "rsa"]
+                        },
+                        "suite_rsa_psk_with_aes_256_cbc_sha": {
+                            "deps": ["sha1", "cbc", "aes", "rsa"]
+                        },
+                        "suite_psk_with_aes_128_gcm_sha256": {
+                            "deps": ["sha256", "gcm", "aes"]
+                        },
+                        "suite_psk_with_aes_256_gcm_sha384": {
+                            "deps": ["sha384", "gcm", "aes"]
+                        },
+                        "suite_psk_with_aes_256_ccm": {
+                            "deps": ["ccm", "aes"]
+                        },
+                        "suite_dhe_psk_with_aes_128_gcm_sha256": {
+                            "deps": ["sha256", "gcm", "aes", "dh"]
+                        },
+                        "suite_dhe_psk_with_aes_256_gcm_sha384": {
+                            "deps": ["sha384", "gcm", "aes", "dh"]
+                        },
+                        "suite_dhe_psk_with_aes_128_ccm": {
+                            "deps": ["ccm", "aes", "dh"]
+                        },
+                        "suite_dhe_psk_with_aes_256_ccm": {
+                            "deps": ["ccm", "aes", "dh"]
+                        },
+                        "suite_rsa_psk_with_aes_128_gcm_sha256": {
+                            "deps": ["sha256", "gcm", "aes", "rsa"]
+                        },
+                        "suite_rsa_psk_with_aes_256_gcm_sha384": {
+                            "deps": ["sha384", "gcm", "aes", "rsa"]
+                        },
+                        "suite_psk_with_aes_128_cbc_sha256": {
+                            "deps": ["sha256", "cbc", "aes"]
+                        },
+                        "suite_psk_with_aes_256_cbc_sha384": {
+                            "deps": ["sha384", "cbc", "aes"]
+                        },
+                        "suite_dhe_psk_with_aes_128_cbc_sha256": {
+                            "deps": ["sha256", "cbc", "aes", "dh"]
+                        },
+                        "suite_dhe_psk_with_aes_256_cbc_sha384": {
+                            "deps": ["sha384", "cbc", "aes", "dh"]
+                        },
+                        "suite_rsa_psk_with_aes_128_cbc_sha256": {
+                            "deps": ["sha256", "cbc", "aes", "rsa"]
+                        },
+                        "suite_rsa_psk_with_aes_256_cbc_sha384": {
+                            "deps": ["sha384", "cbc", "aes", "rsa"]
+                        },
+                        "suite_ecdhe_psk_with_aes_128_cbc_sha": {
+                            "deps": ["sha1", "cbc", "aes", "ecdh"]
+                        },
+                        "suite_ecdhe_psk_with_aes_256_cbc_sha": {
+                            "deps": ["sha1", "cbc", "aes", "ecdh"]
+                        },
+                        "suite_ecdhe_psk_with_aes_128_cbc_sha256": {
+                            "deps": ["sha256", "cbc", "aes", "ecdh"]
+                        },
+                        "suite_ecdhe_psk_with_aes_256_cbc_sha384": {
+                            "deps": ["sha384", "cbc", "aes", "ecdh"]
+                        },
+                        "suite_psk_with_chacha20_poly1305_sha256": {
+                            "deps": ["sha256", "chacha20poly1305", "chacha20"]
+                        },
+                        "suite_ecdhe_psk_with_chacha20_poly1305_sha256": {
+                            "deps": ["sha256", "chacha20poly1305", "chacha20", "ecdh"]
+                        },
+                        "suite_dhe_psk_with_chacha20_poly1305_sha256": {
+                            "deps": ["sha256", "chacha20poly1305", "chacha20", "dh"]
+                        },
+                        "suite_rsa_psk_with_chacha20_poly1305_sha256": {
+                            "deps": ["sha256", "chacha20poly1305", "chacha20", "rsa"]
+                        },
+                        "suite_ecdhe_psk_with_aes_128_ccm_sha256": {
+                            "deps": ["sha256", "ccm", "aes", "ecdh"]
+                        },
+                        "suite_ecdhe_psk_with_aes_128_gcm_sha256": {
+                            "deps": ["sha256", "gcm", "aes", "ecdh"]
+                        },
+                        "suite_ecdhe_psk_with_aes_256_gcm_sha384": {
+                            "deps": ["sha384", "gcm", "aes", "ecdh"]
+                        },
+                        "suite_dh_anon_with_aes_128_cbc_sha": {
+                            "deps": ["sha1", "cbc", "aes", "dh"]
+                        },
+                        "suite_dh_anon_with_aes_256_cbc_sha": {
+                            "deps": ["sha1", "cbc", "aes", "dh"]
+                        },
+                        "suite_dh_anon_with_aes_128_cbc_sha256": {
+                            "deps": ["sha256", "cbc", "aes", "dh"]
+                        },
+                        "suite_dh_anon_with_aes_256_cbc_sha256": {
+                            "deps": ["sha256", "cbc", "aes", "dh"]
+                        },
+                        "suite_dh_anon_with_aes_128_gcm_sha256": {
+                            "deps": ["sha256", "gcm", "aes", "dh"]
+                        },
+                        "suite_dh_anon_with_aes_256_gcm_sha384": {
+                            "deps": ["sha384", "gcm", "aes", "dh"]
+                        },
+                        "suite_ecdh_anon_with_aes_128_cbc_sha": {
+                            "deps": ["sha1", "cbc", "aes", "dh", "ecdh"]
+                        },
+                        "suite_ecdh_anon_with_aes_256_cbc_sha": {
+                            "deps": ["sha1", "cbc", "aes", "dh", "ecdh"]
+                        },
+                        "suite_ecdhe_ecdsa_with_aes_128_ccm": {
+                            "deps": ["ccm", "aes", "ecdh", "ecdsa"]
+                        },
+                        "suite_ecdhe_ecdsa_with_aes_256_ccm": {
+                            "deps": ["ccm", "aes", "ecdh", "ecdsa"]
+                        },
+                        "suite_dhe_rsa_with_aes_128_ccm": {
+                            "deps": ["ccm", "aes", "rsa", "dh"]
+                        },
+                        "suite_dhe_rsa_with_aes_256_ccm": {
+                            "deps": ["ccm", "aes", "rsa", "dh"]
+                        },
+                        "suite_rsa_with_aes_128_ccm": {
+                            "deps": ["ccm", "aes", "rsa"]
+                        },
+                        "suite_rsa_with_aes_128_ccm_8": {
+                            "deps": ["ccm", "aes", "rsa"]
+                        },
+                        "suite_rsa_with_aes_256_ccm": {
+                            "deps": ["ccm", "aes", "rsa"]
+                        },
+                        "suite_rsa_with_aes_256_ccm_8": {
+                            "deps": ["ccm", "aes", "rsa"]
+                        },
+                        "suite_ecdhe_sm4_cbc_sm3": {
+                            "deps": ["sm3", "cbc", "sm4", "sm2", "ecdh"]
+                        },
+                        "suite_ecc_sm4_cbc_sm3": {
+                            "deps": ["sm3", "cbc", "sm4", "sm2"]
+                        }
+                    },
+                    "suite_cipher": {
+                        "suite_cipher_aead": null,
+                        "suite_cipher_cbc": null,
+                        "opts": ["proto"]
+                    },
+                    "suite_kx": {
+                        "suite_kx_ecdhe": null,
+                        "suite_kx_dhe": null,
+                        "suite_kx_ecdh":  null,
+                        "suite_kx_dh": null,
+                        "suite_kx_rsa": null,
+                        "opts": ["proto"]
+                    },
+                    "suite_auth": {
+                        "suite_auth_rsa": null,
+                        "suite_auth_ecdsa": null,
+                        "suite_auth_dss": null,
+                        "suite_auth_psk": null,
+                        "suite_auth_sm2": null,
+                        "opts": ["proto"]
+                    },
+                    "maintain":{
+                        "deps":["log", "err"],
+                        "maintain_keylog": null
+                    }
+                }
+            }
+        },
+        "hitls_x509":{
+            "lang" : "C",
+            "features" : {
+                "c": {
+                    "all_x509" : null
                 }
             }
         }
@@ -168,8 +521,8 @@
                     "crypto/ecdsa/include",
                     "crypto/ecdh/include",
                     "crypto/curve25519/include",
-                    "crypto/curve448/include",
-                    "crypto/sm2/include"
+                    "crypto/sm2/include",
+                    "crypto/paillier/include"
                 ]
             },
             "ealinit": {
@@ -266,12 +619,10 @@
                     "no_asm": "crypto/modes/src/noasm_*.c",
                     "armv8": [
                         "crypto/modes/src/noasm_poly1305.c",
-                        "crypto/modes/src/asm_aes_gcm.c",
+                        "crypto/modes/src/noasm_aes_gcm.c",
                         "crypto/modes/src/asm_aes_cbc.c",
                         "crypto/modes/src/asm_aes_ecb.c",
                         "crypto/modes/src/asm_aes_ctr.c",
-                        "crypto/modes/src/asm/aes_gcm_16block_aarch64.S",
-                        "crypto/modes/src/asm/aes_gcm_64block_aarch64.S",
                         "crypto/modes/src/asm/ghash_armv8.S",
                         "crypto/modes/src/noasm_aes_ccm.c",
                         "crypto/modes/src/asm_aes_cfb.c",
@@ -287,10 +638,7 @@
                     "x8664": {
                         "x8664":[
                             "crypto/modes/src/asm_aes_ctr.c",
-                            "crypto/modes/src/asm_aes_gcm.c",
-                            "crypto/modes/src/asm/aes_gcm_16block_x86_64.S",
-                            "crypto/modes/src/asm/aes_gcm_64block_x86_64.S",
-                            "crypto/modes/src/asm/aes_gcm_96block_x86_64.S",
+                            "crypto/modes/src/noasm_aes_gcm.c",
                             "crypto/modes/src/asm_aes_cbc.c",
                             "crypto/modes/src/asm_aes_ecb.c",
                             "crypto/modes/src/asm/ghash_x86_64.S",
@@ -309,10 +657,7 @@
                         ],
                         "avx512":[
                             "crypto/modes/src/asm_aes_ctr.c",
-                            "crypto/modes/src/asm_aes_gcm.c",
-                            "crypto/modes/src/asm/aes_gcm_16block_x86_64.S",
-                            "crypto/modes/src/asm/aes_gcm_64block_x86_64.S",
-                            "crypto/modes/src/asm/aes_gcm_96block_x86_64.S",
+                            "crypto/modes/src/noasm_aes_gcm.c",
                             "crypto/modes/src/asm_aes_cbc.c",
                             "crypto/modes/src/asm_aes_ecb.c",
                             "crypto/modes/src/asm/ghash_x86_64.S",
@@ -419,8 +764,7 @@
                     "public": [
                         "crypto/bn/src/bn_*.c"
                     ],
-                    "no_asm": "crypto/bn/src/noasm_*.c",
-                    "armv8": ["crypto/bn/src/asm_*.c", "crypto/bn/src/asm/*_armv8.S"]
+                    "no_asm": "crypto/bn/src/noasm_*.c"
                 },
                 ".deps": ["bsl::sal"]
             },
@@ -437,11 +781,6 @@
                 },
                 ".deps": ["platform::Secure_C", "bsl::sal"]
             },
-            "curve448": {
-                ".features": ["ed448", "x448"],
-                ".srcs": ["crypto/curve448/src/*.c"],
-                ".deps": ["platform::Secure_C", "bsl::sal"]
-            },
             "dsa": {
                 ".features": ["dsa"],
                 ".srcs": "crypto/dsa/src/*.c",
@@ -454,15 +793,15 @@
             },
             "encode": {
                 ".features": ["dsa", "ecdsa", "sm2", "sm2_crypt", "sm2_sign", "sm2_exch"],
-                ".srcs": "crypto/encode/src/crypt_encode.c",
-                ".deps": ["crypto::bn"]
+                ".srcs": "crypto/encode/src/*.c",
+                ".deps": ["crypto::bn", "bsl::asn1", "bsl::pem", "crypto::ecc", "bsl::obj"]
             },
             "util": {
                 ".features": [
                     "sha1", "sha224", "sha256", "sha384", "sha512",
                     "bn",
                     "drbg_hash", "drbg_hmac", "drbg_ctr",
-                    "rsa", "ed25519", "x25519", "ed448", "x448"
+                    "rsa", "ed25519", "x25519"
                 ],
                 ".srcs": "crypto/util/*.c",
                 ".deps": ["platform::Secure_C"]
@@ -494,6 +833,11 @@
                 ".features": ["sm2_crypt", "sm2_sign", "sm2_exch"],
                 ".srcs": "crypto/sm2/src/*.c",
                 ".deps": ["crypto::bn", "bsl::sal", "crypto::encode", "crypto::ecc"]
+            },
+            "paillier": {
+                ".features": ["paillier"],
+                ".srcs": "crypto/paillier/src/*.c",
+                ".deps": ["crypto::bn"]
             }
         },
         "bsl":{
@@ -525,10 +869,20 @@
                 ".srcs": "bsl/list/src/*.c",
                 ".deps": ["platform::Secure_C", "bsl::sal"]
             },
+            "obj": {
+                ".features":["obj"],
+                ".srcs":"bsl/obj/src/*.c",
+                ".deps": ["platform::Secure_C", "bsl::sal"]
+            },
             "base64": {
                 ".features": ["base64"],
                 ".srcs": "bsl/base64/src/*.c",
                 ".deps": ["platform::Secure_C", "bsl::sal"]
+            },
+            "pem": {
+                ".features": ["pem"],
+                ".srcs": "bsl/pem/src/*.c",
+                ".deps": ["platform::Secure_C", "bsl::sal", "bsl::base64"]
             },
             "hash": {
                 ".features": ["hash"],
@@ -546,6 +900,11 @@
                 ".features": ["usrdata"],
                 ".srcs": "bsl/usrdata/src/*.c"
             },
+            "asn1": {
+                ".features": ["asn1"],
+                ".srcs": "bsl/asn1/src/*.c",
+                ".deps": ["bsl::sal"]
+            },
             "init": {
                 ".features": ["init"],
                 ".srcs": "bsl/init/*.c"
@@ -557,24 +916,25 @@
         },
         "tls": {
             "cm": {
-                ".features": ["all_tls"],
+                ".features": ["proto"],
                 ".srcs": "tls/cm/src/*.c",
-                ".deps": ["bsl::tlv", "tls::alert", "tls::handshake", "tls::ccs", "bsl::log", "tls::app", "tls::config"],
+                ".deps": ["bsl::tlv", "tls::alert", "tls::handshake", "tls::ccs", "tls::app", "tls::config"],
                 ".include": [
                     "include",
                     "tls/handshake/include",
                     "tls/handshake/common/include",
                     "tls/handshake/recv/include",
-                    "tls/handshake/send/include"
+                    "tls/handshake/send/include",
+                    "tls/record/src"
                 ]
             },
             "crypt": {
-                ".features": ["all_tls"],
+                ".features": ["proto"],
                 ".srcs": "tls/crypt/crypt_adapt/*.c",
-                ".deps": ["platform::Secure_C", "bsl::log", "bsl::sal"]
+                ".deps": ["platform::Secure_C", "bsl::sal"]
             },
             "crypt_self": {
-                ".features": ["all_tls"],
+                ".features": ["proto"],
                 ".srcs": "tls/crypt/crypt_self/*.c",
                 ".deps": ["tls::crypt", "crypto::eal"],
                 ".include": [
@@ -582,49 +942,65 @@
                 ]
             },
             "cert": {
-                ".features": ["all_tls"],
+                ".features": ["proto"],
                 ".srcs": "tls/cert/**/*.c",
-                ".deps": ["platform::Secure_C", "bsl::log", "bsl::sal"],
+                ".deps": ["platform::Secure_C", "bsl::sal"],
                 ".include": [
                     "include",
                     "include/tls",
+                    "include/bsl",
+                    "bsl/asn1/include",
+                    "x509/include",
+                    "x509/x509_cert/include",
+                    "x509/x509_common/include",
                     "tls/cert/hitls_x509_adapt"
                 ]
             },
             "config": {
-                ".features": ["all_tls"],
+                ".features": ["proto"],
                 ".srcs": "tls/config/src/*.c",
-                ".deps": ["platform::Secure_C", "bsl::log", "bsl::sal", "tls::cert", "tls::crypt"]
+                ".deps": ["platform::Secure_C", "bsl::sal", "tls::cert", "tls::crypt"],
+                ".include": [
+                    "tls/record/include"
+                ]
 
             },
             "record": {
-                ".features": ["all_tls"],
+                ".features": ["proto"],
                 ".srcs": "tls/record/src/*.c",
-                ".deps": ["platform::Secure_C", "bsl::log", "bsl::sal", "bsl::tlv", "bsl::uio", "tls::config", "tls::crypt"],
+                ".deps": ["platform::Secure_C", "bsl::sal", "bsl::tlv", "bsl::uio", "tls::config", "tls::crypt"],
                 ".include": [
                     "tls/handshake/include",
-                    "tls/handshake/common/include"
+                    "tls/handshake/common/include",
+                    "tls/alert/include",
+                    "bsl/async/include"
                 ]
             },
             "ccs": {
-                ".features": ["all_tls"],
+                ".features": ["proto"],
                 ".srcs": "tls/ccs/src/*.c",
-                ".deps": ["platform::Secure_C", "bsl::log", "bsl::sal", "tls::record", "bsl::uio"],
+                ".deps": ["platform::Secure_C", "bsl::sal", "tls::record", "bsl::uio"],
                 ".include": [
-                    "tls/handshake/include"
+                    "tls/handshake/include",
+                    "tls/alert/include"
                 ]
             },
             "alert": {
-                ".features": ["all_tls"],
+                ".features": ["proto"],
                 ".srcs": "tls/alert/src/*.c",
-                ".deps": ["platform::Secure_C", "bsl::log", "bsl::sal", "tls::record"]
+                ".deps": ["platform::Secure_C", "bsl::sal", "tls::record"],
+                ".include": [
+
+                    "tls/record/src"
+                ]
             },
             "handshake": {
-                ".features": ["all_tls"],
+                ".features": ["proto"],
                 ".srcs": "tls/handshake/**/*.c",
                 ".include": [
                     "tls/include",
                     "tls/cert/include",
+                    "tls/cert/cert_adapt",
                     "tls/crypt/include",
                     "tls/record/include",
                     "tls/handshake/common/include",
@@ -633,27 +1009,71 @@
                     "tls/handshake/recv/include",
                     "tls/handshake/send/include",
                     "tls/handshake/reass/include",
-                    "tls/handshake/cookie/include"
+                    "tls/handshake/cookie/include",
+                    "tls/record/src",
+                    "tls/alert/include"
                 ],
-                ".deps": ["platform::Secure_C", "bsl::log", "bsl::sal", "bsl::tlv", "tls::cert", "tls::crypt", "tls::record", "tls::config"]
+                ".deps": ["platform::Secure_C", "bsl::sal", "bsl::tlv", "tls::cert", "tls::crypt", "tls::record", "tls::config"]
             },
             "app": {
-                ".features": ["all_tls"],
+                ".features": ["proto"],
                 ".srcs": "tls/app/src/*.c",
-                ".deps": ["platform::Secure_C", "bsl::log", "bsl::sal", "tls::record"]
+                ".deps": ["platform::Secure_C", "bsl::sal", "tls::record"],
+                ".include": [
+
+                    "tls/record/src"
+                ]
             },
             "feature": {
-                ".features": ["all_tls"],
+                ".features": ["proto"],
                 ".srcs": "tls/feature/**/*.c",
-                ".deps": ["platform::Secure_C", "bsl::log", "bsl::sal", "bsl::err", "bsl::tlv", "bsl::hash", "bsl::uio", "tls::cm", "tls::crypt"],
+                ".deps": ["platform::Secure_C", "bsl::sal", "bsl::tlv", "bsl::uio", "tls::cm", "tls::crypt"],
                 ".include": [
                     "include",
+                    "bsl/hash/include/",
                     "bsl/uio/src",
-                    "bsl/obj/include",
                     "tls/cert/cert_adapt",
                     "tls/handshake/parse/src",
                     "tls/handshake/common/include"
                 ]
+            }
+        },
+        "x509" : {
+            "x509_cert": {
+                ".features" : ["all_x509"],
+                ".srcs" : "x509/x509_cert/src/*",
+                ".deps" : ["platform::Secure_C", "x509::x509_common", "crypto::encode", "bsl::sal", "bsl::asn1", "bsl::obj", "bsl::list"],
+                ".include": ["x509/x509_csr/include"]
+            },
+            "x509_crl" : {
+                ".features" : ["all_x509"],
+                ".srcs" : "x509/x509_crl/src/*",
+                ".deps" : ["platform::Secure_C", "x509::x509_common", "bsl::sal", "bsl::asn1", "bsl::obj", "bsl::list"]
+            },
+            "x509_common" : {
+                ".features" : ["all_x509"],
+                ".srcs" : "x509/x509_common/src/*",
+                ".deps" : ["platform::Secure_C", "bsl::sal", "bsl::asn1", "bsl::obj", "bsl::list", "bsl::pem", "crypto::encode"]
+            },
+            "x509_verify" : {
+                ".features" : ["all_x509"],
+                ".srcs" : "x509/x509_verify/src/*",
+                ".deps" : ["platform::Secure_C", "x509::x509_cert", "x509::x509_crl", "x509::x509_common"]
+            },
+            "x509_csr" : {
+                ".features" : ["all_x509"],
+                ".srcs" : "x509/x509_csr/src/*",
+                ".deps" : ["platform::Secure_C", "x509::x509_common", "bsl::sal", "bsl::asn1", "bsl::obj", "bsl::list"]
+            },
+            "pkcs12" : {
+                ".features" : ["all_x509"],
+                ".srcs" : "x509/pkcs12/src/*",
+                ".deps" : ["platform::Secure_C", "x509::x509_common", "crypto::encode", "bsl::sal", "bsl::asn1", "bsl::obj", "bsl::list", "x509::x509_cert", "x509::cms"]
+            },
+            "cms" : {
+                ".features" : ["all_x509"],
+                ".srcs" : "x509/cms/src/*",
+                ".deps" : ["platform::Secure_C", "crypto::encode"]
             }
         }
     }

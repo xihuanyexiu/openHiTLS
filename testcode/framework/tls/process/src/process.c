@@ -1,19 +1,26 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/syscall.h>
 #include <libgen.h>
 #include "lock.h"
-#include "process.h"
 #include "hlt.h"
 #include "logger.h"
 #include "tls_res.h"
@@ -22,6 +29,7 @@
 #include "rpc_func.h"
 #include "hitls.h"
 #include "hitls_config.h"
+#include "process.h"
 
 #define SUCCESS 0
 #define ERROR (-1)
@@ -53,7 +61,7 @@ static int g_processIndex = 0;
 
 // Initialization process linked list, which is used only in the Local Process process and is used to save the Remote
 // Process.
-int InitProcessList()
+int InitProcessList(void)
 {
     g_processList.processRes = (ProcessRes*)malloc(sizeof(ProcessRes));
     ASSERT_RETURN(g_processList.processRes != NULL, "Malloc ProcessRes Error");
@@ -85,7 +93,7 @@ int InsertProcessToList(Process *tmpProcess)
     return SUCCESS;
 }
 
-Process *GetProcessFromList()
+Process *GetProcessFromList(void)
 {
     ProcessRes *headProcessRes = g_processList.processRes;
     ProcessRes *firstProcessRes, *nextProcessRes;
@@ -108,7 +116,7 @@ Process *GetProcessFromList()
     return resultProcess;
 }
 
-void FreeProcessResList()
+void FreeProcessResList(void)
 {
     ProcessRes *frontProcessRes = g_processList.processRes;
     ProcessRes *nextProcessRes = NULL;
@@ -134,12 +142,12 @@ int InitProcess(void)
     return SUCCESS;
 }
 
-Process *GetProcess()
+Process *GetProcess(void)
 {
     return g_process;
 }
 
-void FreeProcess()
+void FreeProcess(void)
 {
     if (g_process != NULL) {
         free(g_process);
@@ -229,28 +237,28 @@ HLT_Process *InitSrcProcess(TLS_TYPE tlsType, char *srcDomainPath)
 
     if (HLT_LibraryInit(tlsType) != SUCCESS) {
         LOG_ERROR("HLT_TlsRegCallback ERROR is %d", ret);
-        goto err;
+        goto ERR;
     }
 
     // Initialize the process resource linked list, which is used to store remote process resources.
-    ret =  InitProcessList();
+    ret = InitProcessList();
     if (ret != SUCCESS) {
         LOG_ERROR("InitProcessList ERROR");
-        goto err;
+        goto ERR;
     }
 
     // Initializes the CTX SSL resource linked list.
     ret = InitTlsResList();
     if (ret != SUCCESS) {
         LOG_ERROR("InitTlsResList ERROR");
-        goto err;
+        goto ERR;
     }
 
     // Initialize the control link.
     ret = InitControlChannelRes(srcControlDomainPath, strlen(srcControlDomainPath), NULL, 0);
     if (ret != SUCCESS) {
         LOG_ERROR("InitControlChannelRes ERROR");
-        goto err;
+        goto ERR;
     }
 
     channelInfo = GetControlChannelRes();
@@ -259,17 +267,17 @@ HLT_Process *InitSrcProcess(TLS_TYPE tlsType, char *srcDomainPath)
     ret = ControlChannelInit(channelInfo);
     if (ret != SUCCESS) {
         LOG_ERROR("ControlChannelInit ERROR");
-        goto err;
+        goto ERR;
     }
 
     // Start a thread to listen to the control link. The link is used to receive the results returned by other processes
-    pthread_t t_id;
+    pthread_t tId;
     channelInfo->isExit = false;
-    if (pthread_create(&t_id, NULL, (void*)MonitorControlChannel, NULL) != 0) {
+    if (pthread_create(&tId, NULL, (void*)MonitorControlChannel, NULL) != 0) {
         LOG_ERROR("Create MonitorControlChannel Thread Error ...");
-        goto err;
+        goto ERR;
     }
-    channelInfo->tid = t_id;
+    channelInfo->tid = tId;
 
     // Populate Process Information
     process->tlsType = tlsType;
@@ -282,12 +290,12 @@ HLT_Process *InitSrcProcess(TLS_TYPE tlsType, char *srcDomainPath)
     ret = memcpy_s(process->srcDomainPath, DOMAIN_PATH_LEN, srcControlDomainPath, strlen(srcControlDomainPath));
     if (ret != EOK) {
         LOG_ERROR("memcpy_s process->srcDomainPath ERROR");
-        goto err;
+        goto ERR;
     }
     LOG_DEBUG("Init Local Process Successful");
     return (HLT_Process*)process;
 
-err:
+ERR:
     free(process);
     return NULL;
 }
@@ -359,7 +367,7 @@ HLT_Process *InitPeerProcess(TLS_TYPE tlsType, HILT_TransportType connType, int 
 
     if (ret == ERROR) {
         LOG_ERROR("WaitResultFromPeer Error");
-        goto err;
+        goto ERR;
     }
 
     // Populate Process Information
@@ -370,7 +378,7 @@ HLT_Process *InitPeerProcess(TLS_TYPE tlsType, HILT_TransportType connType, int 
     ret = sprintf_s(process->srcDomainPath, DOMAIN_PATH_LEN, "%s_%d", localProcess->srcDomainPath, g_processIndex);
     if (ret <= 0) {
         LOG_ERROR("sprintf_s Error");
-        goto err;
+        goto ERR;
     }
     // Creating a Data Link
     if (connType != NONE_TYPE) {
@@ -378,7 +386,7 @@ HLT_Process *InitPeerProcess(TLS_TYPE tlsType, HILT_TransportType connType, int 
         HLT_FD sockFd = {0};
         channelParam.port = port;
         channelParam.type = connType;
-        channelParam.isBlock = false; // The SCTP link is set to non-block. Otherwise, the SCTP link may be suspended.
+        channelParam.isBlock = isBlock; // The SCTP link is set to non-block. Otherwise, the SCTP link may be suspended.
         sockFd = HLT_CreateDataChannel(process, localProcess, channelParam);
         localProcess->connType = connType;
         localProcess->connFd = sockFd.peerFd;
@@ -388,12 +396,12 @@ HLT_Process *InitPeerProcess(TLS_TYPE tlsType, HILT_TransportType connType, int 
         process->connPort = sockFd.connPort;
         if ((sockFd.srcFd <= 0) || (sockFd.peerFd <= 0)) {
             LOG_ERROR("Create CHANNEL ERROR");
-            goto err;
+            goto ERR;
         }
     }
     g_processIndex++;
     return (HLT_Process*)process;
-err:
+ERR:
     // You do not need to release the process. If you can go to this point,
     // the process is successfully created and inserted into the table.
     // The process resource is released in the HLT_FreeAllProcess function.

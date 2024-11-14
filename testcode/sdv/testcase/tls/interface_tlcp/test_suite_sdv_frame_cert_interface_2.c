@@ -1,13 +1,21 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /* BEGIN_HEADER */
 /* INCLUDE_BASE test_suite_interface */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -53,61 +61,12 @@
 #include "crypt_errno.h"
 #include "bsl_obj.h"
 #include "bsl_errno.h"
-#include "hitls_x509_adapter.h"
+#include "hitls_x509_adapt_local.h"
 /* END_HEADER */
 
 #define BUF_MAX_SIZE 4096
 int32_t g_uiPort = 18886;
-static int TestHITLS_VerifyCb(int32_t isPreverifyOk, HITLS_CERT_StoreCtx *storeCtx)
-{
-    (void)isPreverifyOk;
-    (void)storeCtx;
-    return 0;
-}
-
-static int32_t TestPasswordCb(char *buf, int32_t bufLen, int32_t flag, void *userdata)
-{
-    (void)flag;
-    char *passwd = NULL;
-    static char pass[] = "123456";
-    if (userdata != NULL) {
-        passwd = userdata;
-    } else {
-        passwd = pass;
-    }
-    int32_t len = strlen(passwd);
-    if (len > bufLen) {
-        return -1;
-    }
-    bufLen = len;
-
-    memcpy(buf, passwd, bufLen);
-    return bufLen;
-}
-
-static uint32_t ReadFileBuffer(const char *filePath, char *data)
-{
-    FILE *fd;
-    uint32_t size;
-    uint32_t bytes;
-
-    fd = fopen(filePath, "rb");
-    if (fd == NULL) {
-        return 0;
-    }
-
-    (void)fseek(fd, 0, SEEK_END);
-    size = (uint32_t)ftell(fd);
-    rewind(fd);
-
-    bytes = (uint32_t)fread(data, 1, size, fd);
-    (void)fclose(fd);
-    if (bytes != size) {
-        return 0;
-    }
-
-    return bytes;
-}
+HITLS_CERT_X509 *HiTLS_X509_LoadCertFile(const char *file);
 
 /* @
 * @test    UT_TLS_CERT_CM_SetVerifyStore_API_TC001
@@ -280,7 +239,8 @@ void UT_TLS_CERT_SetGetAndCheckPrivateKey_API_TC001(int version, char *keyFile)
     HitlsInit();
     HITLS_Config *tlsConfig = NULL;
     HITLS_Ctx *ctx = NULL;
-    HITLS_CERT_Key *privatekey = HITLS_X509_Adapt_KeyParse(tlsConfig, (const uint8_t *)keyFile, sizeof(keyFile),TLS_PARSE_TYPE_FILE, TLS_PARSE_FORMAT_PEM);
+    HITLS_CERT_Key *privatekey = HITLS_X509_Adapt_KeyParse(tlsConfig, (const uint8_t *)keyFile, sizeof(keyFile),
+        TLS_PARSE_TYPE_FILE, TLS_PARSE_FORMAT_ASN1);
 
     tlsConfig = HitlsNewCtx(version);
     ASSERT_TRUE(tlsConfig != NULL);
@@ -319,7 +279,9 @@ void UT_HITLS_CERT_ClearChainCerts_API_TC001(int version, char *certFile, char *
     HITLS_Ctx *ctx = NULL;
 
     HITLS_CERT_X509 *cert = HiTLS_X509_LoadCertFile(certFile);
+    ASSERT_TRUE(cert != NULL);
     HITLS_CERT_X509 *addCert = HiTLS_X509_LoadCertFile(addCertFile);
+    ASSERT_TRUE(addCert != NULL);
 
     tlsConfig = HitlsNewCtx(version);
     ASSERT_TRUE(tlsConfig != NULL);

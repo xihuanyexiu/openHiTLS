@@ -1,13 +1,21 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /* BEGIN_HEADER */
 /* INCLUDE_BASE test_suite_tls13_consistency_rfc8446 */
+
 #include <stdio.h>
 #include "stub_replace.h"
 #include "hitls.h"
@@ -103,20 +111,20 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_TWO_DISOEDER_CHAIN_CERT_FUNC_TC001(void)
     serverCtxConfig = HLT_NewCtxConfig(NULL, "SERVER");
     ASSERT_TRUE(serverCtxConfig != NULL);
     HLT_SetCertPath(serverCtxConfig,
-        "rsa_sha512/otherRoot.crt",
-        "rsa_sha512/otherInter.crt:rsa_sha512/otherInter2.crt",
-        "rsa_sha512/otherEnd.crt",
-        "rsa_sha512/otherEnd.key",
+        "rsa_sha512/otherRoot.der",
+        "rsa_sha512/otherInter.der:rsa_sha512/otherInter2.der",
+        "rsa_sha512/otherEnd.der",
+        "rsa_sha512/otherEnd.key.der",
         "NULL",
         "NULL");
     HLT_SetClientVerifySupport(serverCtxConfig, true);
     clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
     ASSERT_TRUE(clientCtxConfig != NULL);
     HLT_SetCertPath(clientCtxConfig,
-        "rsa_sha512/otherRoot.crt",
-        "rsa_sha512/otherInter.crt:rsa_sha512/otherInter2.crt",
-        "rsa_sha512/otherEnd.crt",
-        "rsa_sha512/otherEnd.key",
+        "rsa_sha512/otherRoot.der",
+        "rsa_sha512/otherInter.der:rsa_sha512/otherInter2.der",
+        "rsa_sha512/otherEnd.der",
+        "rsa_sha512/otherEnd.key.der",
         "NULL",
         "NULL");
     HLT_SetClientVerifySupport(clientCtxConfig, true);

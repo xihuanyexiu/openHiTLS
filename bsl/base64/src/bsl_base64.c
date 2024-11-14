@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include "hitls_build.h"
@@ -14,7 +21,6 @@
 #include "bsl_errno.h"
 #include "bsl_err_internal.h"
 #include "bsl_sal.h"
-#include "bsl_base64_local.h"
 #include "bsl_base64_internal.h"
 #include "bsl_base64.h"
 
@@ -49,7 +55,7 @@ void BSL_BASE64_CtxClear(BSL_Base64Ctx *ctx)
     BSL_SAL_CleanseData(ctx, (uint32_t)sizeof(BSL_Base64Ctx));
 }
 
-static uint32_t BslBase64EncodeParamsValidate(const uint8_t *srcBuf, const uint32_t srcBufLen,
+static int32_t BslBase64EncodeParamsValidate(const uint8_t *srcBuf, const uint32_t srcBufLen,
     const char *dstBuf, uint32_t *dstBufLen)
 {
     if (srcBuf == NULL || srcBufLen == 0U || dstBuf == NULL || dstBufLen == NULL) {
@@ -161,7 +167,7 @@ static void BslBase64EncodeProcess(BSL_Base64Ctx *ctx, const uint8_t **srcBuf, u
     *srcBuf = srcBufTmp;
 }
 
-static uint32_t BslBase64DecodeCheck(const char src, uint32_t *paddingCnt)
+static int32_t BslBase64DecodeCheck(const char src, uint32_t *paddingCnt)
 {
     uint32_t padding = 0;
     /* 66U is the header identifier '-' (invalid), and 66U or above are invalid characters beyond the range. */
@@ -182,8 +188,8 @@ static uint32_t BslBase64DecodeCheck(const char src, uint32_t *paddingCnt)
             return BSL_BASE64_INVALID;
         }
     }
-
-    if (*paddingCnt > 0 && BASE64_DECODE_MAP_TABLE[(uint8_t)src] < 64U) { /* illegal behavior: data after padding. */
+    /* illegal behavior: data after padding. */
+    if (*paddingCnt > 0 && BASE64_DECODE_MAP_TABLE[(uint8_t)src] < 64U) {
         BSL_ERR_PUSH_ERROR(BSL_BASE64_DATA_AFTER_PADDING);
         return BSL_BASE64_DATA_AFTER_PADDING;
     }
@@ -192,9 +198,9 @@ static uint32_t BslBase64DecodeCheck(const char src, uint32_t *paddingCnt)
     return BSL_SUCCESS;
 }
 
-uint32_t BSL_BASE64_Encode(const uint8_t *srcBuf, const uint32_t srcBufLen, char *dstBuf, uint32_t *dstBufLen)
+int32_t BSL_BASE64_Encode(const uint8_t *srcBuf, const uint32_t srcBufLen, char *dstBuf, uint32_t *dstBufLen)
 {
-    uint32_t ret = BslBase64EncodeParamsValidate(srcBuf, srcBufLen, (const char *)dstBuf, dstBufLen);
+    int32_t ret = BslBase64EncodeParamsValidate(srcBuf, srcBufLen, (const char *)dstBuf, dstBufLen);
     if (ret != BSL_SUCCESS) {
         return ret;
     }
@@ -204,7 +210,7 @@ uint32_t BSL_BASE64_Encode(const uint8_t *srcBuf, const uint32_t srcBufLen, char
     return BSL_SUCCESS;
 }
 
-static uint32_t BslBase64Normalization(const char *srcBuf, const uint32_t srcBufLen, uint8_t *filterBuf,
+static int32_t BslBase64Normalization(const char *srcBuf, const uint32_t srcBufLen, uint8_t *filterBuf,
     uint32_t *filterBufLen)
 {
     const uint8_t *tmp = (const uint8_t *)srcBuf;
@@ -212,13 +218,12 @@ static uint32_t BslBase64Normalization(const char *srcBuf, const uint32_t srcBuf
     uint32_t expectLen = 0U;
     uint32_t idx;
 
-    *filterBufLen = 0U;
     /* Filter the characters \r\n, spaces, and '=' in the character string. */
     for (idx = 0U; idx < srcBufLen; idx++) {
         /* Check whether the characters are invalid characters in the Base64 mapping table. */
         if (BASE64_DECODE_MAP_TABLE[tmp[idx]] > 65U) {
             /* 66U is the status code of invalid characters. */
-            return BASE64_ERRNO_INVAL;
+            return BSL_BASE64_INVALID_CHARACTER;
         }
 
         /* Process the '=' */
@@ -228,7 +233,7 @@ static uint32_t BslBase64Normalization(const char *srcBuf, const uint32_t srcBuf
             expectLen -= validCnt;
             expectLen += idx;
             if (expectLen > srcBufLen) {
-                return BASE64_ERRNO_INVAL;
+                return BSL_BASE64_INVALID_CHARACTER;
             }
             break;
         }
@@ -241,6 +246,7 @@ static uint32_t BslBase64Normalization(const char *srcBuf, const uint32_t srcBuf
         }
     }
 
+    uint32_t num = 0;
     /* Filter out the specified number of '=' when the '=' is encountered. */
     while (idx < expectLen) {
         if (BASE64_DECODE_MAP_TABLE[tmp[idx]] == 64U) {
@@ -252,16 +258,17 @@ static uint32_t BslBase64Normalization(const char *srcBuf, const uint32_t srcBuf
 
         if (BASE64_DECODE_MAP_TABLE[tmp[idx]] != 65U) {
             /* 65U indicates '=' */
-            return BASE64_ERRNO_INVAL;
+            return BSL_BASE64_INVALID_CHARACTER;
         }
         idx++;
+        num++;
     }
 
     /* Filter out the '\r's, '\n's or spaces after valid characters. */
     while (idx < srcBufLen) {
         /* If a non \r\n or space is encountered again, it is an invalid base64 string. */
         if (BASE64_DECODE_MAP_TABLE[tmp[idx]] != 64U) {
-            return BASE64_ERRNO_INVAL;
+            return BSL_BASE64_INVALID_CHARACTER;
         }
         idx++;
     }
@@ -269,13 +276,17 @@ static uint32_t BslBase64Normalization(const char *srcBuf, const uint32_t srcBuf
         BSL_ERR_PUSH_ERROR(BSL_NULL_INPUT);
         return BSL_NULL_INPUT;
     }
+    if ((validCnt + num) % BASE64_DECODE_BYTES != 0) {
+        BSL_ERR_PUSH_ERROR(BSL_BASE64_INVALID_ENCODE);
+        return BSL_BASE64_INVALID_ENCODE;
+    }
     *filterBufLen = validCnt;
 
     return BSL_SUCCESS;
 }
 
 /* can ensure that dstBuf and dstBufLen are sufficient and that srcBuf does not contain invalid characters */
-static uint32_t BslBase64DecodeBuffer(const uint8_t *srcBuf, const uint32_t srcBufLen, uint8_t *dstBuf,
+static int32_t BslBase64DecodeBuffer(const uint8_t *srcBuf, const uint32_t srcBufLen, uint8_t *dstBuf,
     uint32_t *dstBufLen)
 {
     uint32_t idx = 0U;
@@ -314,21 +325,16 @@ static uint32_t BslBase64DecodeBuffer(const uint8_t *srcBuf, const uint32_t srcB
     return BSL_SUCCESS;
 }
 
-static uint32_t BslBase64ArithDecodeProc(const char *srcBuf, uint8_t *dstBuf, uint32_t *dstBufLen)
+static int32_t BslBase64ArithDecodeProc(const char *srcBuf, const uint32_t srcBufLen, uint8_t *dstBuf,
+    uint32_t *dstBufLen)
 {
     uint8_t *buf = NULL;
-    size_t srcBufLen;
     uint32_t bufLen; /* length to be decoded after redundant characters are deleted */
-    uint32_t ret;
+    int32_t ret;
 
-    /* Allocate the space for the base64 chars to delete the redundant white space chars (\r\n, spaces, '=') */
-    srcBufLen = strlen(srcBuf);
-    if (srcBufLen > UINT32_MAX) {
-        return BASE64_ERRNO_PARAM;
-    }
     buf = BSL_SAL_Malloc((uint32_t)srcBufLen);
     if (buf == NULL) {
-        return BASE64_ERRNO_NOMEM;
+        return BSL_MALLOC_FAIL;
     }
 
     /* Delete the extra white space characters (\r\n, space, '=') */
@@ -350,9 +356,9 @@ static uint32_t BslBase64ArithDecodeProc(const char *srcBuf, uint8_t *dstBuf, ui
 }
 
 /* Ensure that dstBuf and dstBufLen are correctly created. */
-uint32_t BSL_BASE64_Decode(const char *srcBuf, const uint32_t srcBufLen, uint8_t *dstBuf, uint32_t *dstBufLen)
+int32_t BSL_BASE64_Decode(const char *srcBuf, const uint32_t srcBufLen, uint8_t *dstBuf, uint32_t *dstBufLen)
 {
-    uint32_t ret;
+    int32_t ret;
 
     /* An error is returned when a parameter is abnormal. */
     if (srcBuf == NULL || dstBuf == NULL || dstBufLen == NULL) {
@@ -366,16 +372,16 @@ uint32_t BSL_BASE64_Decode(const char *srcBuf, const uint32_t srcBufLen, uint8_t
         return BSL_BASE64_BUF_NOT_ENOUGH;
     }
 
-    ret = BslBase64ArithDecodeProc(srcBuf, dstBuf, dstBufLen);  /* start decoding */
+    ret = BslBase64ArithDecodeProc(srcBuf, srcBufLen, dstBuf, dstBufLen);  /* start decoding */
     if (ret != BSL_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(BSL_BASE64_DECODE_FAILED);
-        return BSL_BASE64_DECODE_FAILED;
+        BSL_ERR_PUSH_ERROR(ret);
+        return ret;
     }
 
     return ret;
 }
 
-uint32_t BSL_BASE64_EncodeInit(BSL_Base64Ctx *ctx)
+int32_t BSL_BASE64_EncodeInit(BSL_Base64Ctx *ctx)
 {
     if (ctx == NULL) {
         BSL_ERR_PUSH_ERROR(BSL_NULL_INPUT);
@@ -387,7 +393,7 @@ uint32_t BSL_BASE64_EncodeInit(BSL_Base64Ctx *ctx)
     return BSL_SUCCESS;
 }
 
-uint32_t BSL_BASE64_EncodeUpdate(BSL_Base64Ctx *ctx, const uint8_t *srcBuf, uint32_t srcBufLen,
+int32_t BSL_BASE64_EncodeUpdate(BSL_Base64Ctx *ctx, const uint8_t *srcBuf, uint32_t srcBufLen,
     char *dstBuf, uint32_t *dstBufLen)
 {
     /* ensure the validity of dstBuf */
@@ -426,7 +432,7 @@ uint32_t BSL_BASE64_EncodeUpdate(BSL_Base64Ctx *ctx, const uint8_t *srcBuf, uint
     return BSL_SUCCESS;
 }
 
-uint32_t BSL_BASE64_EncodeFinal(BSL_Base64Ctx *ctx, char *dstBuf, uint32_t *dstBufLen)
+int32_t BSL_BASE64_EncodeFinal(BSL_Base64Ctx *ctx, char *dstBuf, uint32_t *dstBufLen)
 {
     uint32_t tmpDstLen = 0;
     if (ctx == NULL || dstBuf == NULL || dstBufLen == NULL) {
@@ -453,7 +459,7 @@ uint32_t BSL_BASE64_EncodeFinal(BSL_Base64Ctx *ctx, char *dstBuf, uint32_t *dstB
     return BSL_SUCCESS;
 }
 
-uint32_t BSL_BASE64_DecodeInit(BSL_Base64Ctx *ctx)
+int32_t BSL_BASE64_DecodeInit(BSL_Base64Ctx *ctx)
 {
     if (ctx == NULL) {
         BSL_ERR_PUSH_ERROR(BSL_NULL_INPUT);
@@ -466,7 +472,7 @@ uint32_t BSL_BASE64_DecodeInit(BSL_Base64Ctx *ctx)
     return BSL_SUCCESS;
 }
 
-uint32_t BSL_BASE64_DecodeUpdate(BSL_Base64Ctx *ctx, const char *srcBuf, const uint32_t srcBufLen,
+int32_t BSL_BASE64_DecodeUpdate(BSL_Base64Ctx *ctx, const char *srcBuf, const uint32_t srcBufLen,
     uint8_t *dstBuf, uint32_t *dstBufLen)
 {
     if (ctx == NULL || srcBuf == NULL || dstBuf == NULL || srcBufLen == 0 || dstBufLen == NULL) {
@@ -484,7 +490,7 @@ uint32_t BSL_BASE64_DecodeUpdate(BSL_Base64Ctx *ctx, const char *srcBuf, const u
     uint32_t totalLen = 0;
     uint32_t decodeLen = 0;
     uint8_t *tmpBuf = ctx->buf;
-    uint32_t ret = BSL_SUCCESS;
+    int32_t ret = BSL_SUCCESS;
     uint8_t *dstTmp = dstBuf;
 
     for (uint32_t i = 0U; i < srcBufLen; i++) {
@@ -528,9 +534,9 @@ uint32_t BSL_BASE64_DecodeUpdate(BSL_Base64Ctx *ctx, const char *srcBuf, const u
     return BSL_SUCCESS;
 }
 
-uint32_t BSL_BASE64_DecodeFinal(BSL_Base64Ctx *ctx, uint8_t *dstBuf, uint32_t *dstBufLen)
+int32_t BSL_BASE64_DecodeFinal(BSL_Base64Ctx *ctx, uint8_t *dstBuf, uint32_t *dstBufLen)
 {
-    uint32_t ret = BSL_SUCCESS;
+    int32_t ret = BSL_SUCCESS;
     uint32_t totalLen = 0;
 
     if (ctx == NULL || dstBuf == NULL || dstBufLen == NULL) {
@@ -559,23 +565,13 @@ uint32_t BSL_BASE64_DecodeFinal(BSL_Base64Ctx *ctx, uint8_t *dstBuf, uint32_t *d
     return ret;
 }
 
-uint32_t BSL_BASE64_SetFlags(BSL_Base64Ctx *ctx, uint32_t flags)
+int32_t BSL_BASE64_SetFlags(BSL_Base64Ctx *ctx, uint32_t flags)
 {
     if (ctx == NULL) {
         BSL_ERR_PUSH_ERROR(BSL_NULL_INPUT);
         return BSL_NULL_INPUT;
     }
     ctx->flags |= flags;
-    return BSL_SUCCESS;
-}
-
-uint32_t BSL_Base64GetNum(BSL_Base64Ctx *ctx, uint32_t *num)
-{
-    if (ctx == NULL) {
-        BSL_ERR_PUSH_ERROR(BSL_NULL_INPUT);
-        return BSL_NULL_INPUT;
-    }
-    *num = ctx->num;
     return BSL_SUCCESS;
 }
 #endif /* HITLS_BSL_BASE64 */

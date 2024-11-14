@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #ifndef BSL_BASE64_H
@@ -44,7 +51,7 @@ typedef struct BASE64_ControlBlock BSL_Base64Ctx;
  * @param dstBufLen     [OUT] Number of encoded bytes excluding the terminator (a multiple of 4)
  * @return Error code
  */
-uint32_t BSL_BASE64_Encode(const uint8_t *srcBuf, const uint32_t srcBufLen, char *dstBuf, uint32_t *dstBufLen);
+int32_t BSL_BASE64_Encode(const uint8_t *srcBuf, const uint32_t srcBufLen, char *dstBuf, uint32_t *dstBufLen);
 
 /**
  * @ingroup bsl_base64
@@ -58,7 +65,7 @@ uint32_t BSL_BASE64_Encode(const uint8_t *srcBuf, const uint32_t srcBufLen, char
  * @param dstBuf        [OUT] Encoding string obtained after decoding.
  * @retval when success , return BSL_SUCCESS; Otherwise, return error code
  */
-uint32_t BSL_BASE64_Decode(const char *srcBuf, const uint32_t srcBufLen, uint8_t *dstBuf, uint32_t *dstBufLen);
+int32_t BSL_BASE64_Decode(const char *srcBuf, const uint32_t srcBufLen, uint8_t *dstBuf, uint32_t *dstBufLen);
 
 /**
  * @ingroup bsl_base64
@@ -94,7 +101,7 @@ void BSL_BASE64_CtxClear(BSL_Base64Ctx *ctx);
  * @param ctx            [IN] Base64 context
  * @retval In the case of success, return BSL_SUCCESS; Otherwise, returned error code.
  */
-uint32_t BSL_BASE64_EncodeInit(BSL_Base64Ctx *ctx);
+int32_t BSL_BASE64_EncodeInit(BSL_Base64Ctx *ctx);
 
 /**
  * @ingroup bsl_base64
@@ -108,7 +115,7 @@ uint32_t BSL_BASE64_EncodeInit(BSL_Base64Ctx *ctx);
  * @param dstBufLen     [OUT] Length obtained after encoding.
  * @retval In the case of success, return BSL_SUCCESS. Otherwise, returned error code.
  */
-uint32_t BSL_BASE64_EncodeUpdate(BSL_Base64Ctx *ctx, const uint8_t *srcBuf, uint32_t srcBufLen,
+int32_t BSL_BASE64_EncodeUpdate(BSL_Base64Ctx *ctx, const uint8_t *srcBuf, uint32_t srcBufLen,
     char *dstBuf, uint32_t *dstBufLen);
 
 /**
@@ -119,7 +126,7 @@ uint32_t BSL_BASE64_EncodeUpdate(BSL_Base64Ctx *ctx, const uint8_t *srcBuf, uint
  * @param dstBuf        [OUT] String obtained after encoding.
  * @retval In the case of success, return BSL_SUCCESS. Otherwise, returned error code.
  */
-uint32_t BSL_BASE64_EncodeFinal(BSL_Base64Ctx *ctx, char *dstBuf, uint32_t *dstBufLen);
+int32_t BSL_BASE64_EncodeFinal(BSL_Base64Ctx *ctx, char *dstBuf, uint32_t *dstBufLen);
 
 /**
  * @ingroup bsl_base64
@@ -128,7 +135,7 @@ uint32_t BSL_BASE64_EncodeFinal(BSL_Base64Ctx *ctx, char *dstBuf, uint32_t *dstB
  * @param ctx            [IN] Base64 context
  * @retval In the case of success, return BSL_SUCCESS. Otherwise, returned error code.
  */
-uint32_t BSL_BASE64_DecodeInit(BSL_Base64Ctx *ctx);
+int32_t BSL_BASE64_DecodeInit(BSL_Base64Ctx *ctx);
 
 /**
  * @ingroup bsl_base64
@@ -141,7 +148,7 @@ uint32_t BSL_BASE64_DecodeInit(BSL_Base64Ctx *ctx);
  * @param dstBufLen     [OUT] Length obtained after decoding.
  * @retval In the case of success, return BSL_SUCCESS; Otherwise, returned error code.
  */
-uint32_t BSL_BASE64_DecodeUpdate(BSL_Base64Ctx *ctx, const char *srcBuf, const uint32_t srcBufLen,
+int32_t BSL_BASE64_DecodeUpdate(BSL_Base64Ctx *ctx, const char *srcBuf, const uint32_t srcBufLen,
     uint8_t *dstBuf, uint32_t *dstBufLen);
 
 /**
@@ -152,7 +159,7 @@ uint32_t BSL_BASE64_DecodeUpdate(BSL_Base64Ctx *ctx, const char *srcBuf, const u
  * @param dstBuf        [OUT] String obtained after decoding.
  * @retval In the case of success, return BSL_SUCCESS. Otherwise, returned error code.
  */
-uint32_t BSL_BASE64_DecodeFinal(BSL_Base64Ctx *ctx, uint8_t *dstBuf, uint32_t *dstBufLen);
+int32_t BSL_BASE64_DecodeFinal(BSL_Base64Ctx *ctx, uint8_t *dstBuf, uint32_t *dstBufLen);
 
 /**
  * @ingroup bsl_base64
@@ -162,7 +169,7 @@ uint32_t BSL_BASE64_DecodeFinal(BSL_Base64Ctx *ctx, uint8_t *dstBuf, uint32_t *d
  * @param flags      [IN] Flags to be set.
  * @retval In the case of success, return BSL_SUCCESS; Otherwise, returned error code.
  */
-uint32_t BSL_BASE64_SetFlags(BSL_Base64Ctx *ctx, uint32_t flags);
+int32_t BSL_BASE64_SetFlags(BSL_Base64Ctx *ctx, uint32_t flags);
 
 #ifdef __cplusplus
 }

@@ -1,21 +1,27 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include "securec.h"
 #include "hlt.h"
 #include "handle_cmd.h"
 #include "tls_res.h"
 #include "logger.h"
-#include "securec.h"
 #include "lock.h"
-#include "rpc_func.h"
 #include "hitls_error.h"
 #include "hitls_type.h"
 #include "tls.h"
@@ -23,6 +29,7 @@
 #include "hitls.h"
 #include "common_func.h"
 #include "sctp_channel.h"
+#include "rpc_func.h"
 
 #define HITLS_READBUF_MAXLEN (20 * 1024) /* 20K */
 #define SUCCESS 0
@@ -65,12 +72,12 @@ RpcFunList g_rpcFuncList[] = {
     {"HLT_RpcTlsVerifyClientPostHandshake", RpcTlsVerifyClientPostHandshake},
 };
 
-RpcFunList *GetRpcFuncList()
+RpcFunList *GetRpcFuncList(void)
 {
     return g_rpcFuncList;
 }
 
-int GetRpcFuncNum()
+int GetRpcFuncNum(void)
 {
     return sizeof(g_rpcFuncList) / sizeof(g_rpcFuncList[0]);
 }
@@ -82,9 +89,8 @@ int RpcTlsNewCtx(CmdData *cmdData)
     (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
 
     tlsVersion = atoi(cmdData->paras[0]);
-    bool isClient = atoi(cmdData->paras[1]);
     // Invoke the corresponding function.
-    void* ctx = HLT_TlsNewCtx(tlsVersion, isClient);
+    void* ctx = HLT_TlsNewCtx(tlsVersion);
     if (ctx == NULL) {
         LOG_ERROR("HLT_TlsNewCtx Return NULL");
         id = ERROR;
@@ -199,7 +205,8 @@ ERR:
 
 int RpcTlsListen(CmdData *cmdData)
 {
-    int ret, fd, sslId;
+    int ret;
+    int sslId;
     (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
     ResList *sslList = GetSslList();
     sslId = strtol(cmdData->paras[0], NULL, 10); // Convert to a decimal number
@@ -221,7 +228,7 @@ ERR:
 
 int RpcTlsAccept(CmdData *cmdData)
 {
-    int ret, fd;
+    int ret;
 
     (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
     ResList *sslList = GetSslList();
@@ -245,7 +252,7 @@ ERR:
 
 int RpcTlsConnect(CmdData *cmdData)
 {
-    int ret, fd;
+    int ret;
 
     (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
 
@@ -269,7 +276,7 @@ ERR:
 
 int RpcTlsRead(CmdData *cmdData)
 {
-    int ret = SUCCESS, fd;
+    int ret = SUCCESS;
 
     (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
     ResList *sslList = GetSslList();
@@ -310,7 +317,7 @@ ERR:
 
 int RpcTlsWrite(CmdData *cmdData)
 {
-    int ret, fd;
+    int ret;
     (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
 
     ResList *sslList = GetSslList();
@@ -423,7 +430,6 @@ int RpcDataChannelAccept(CmdData *cmdData)
     // Invoke the blocking interface
     sockFd = RunDataChannelAccept(&channelParam);
 
-ERR:
     // Return the result.
     ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, sockFd);
     ASSERT_RETURN(ret > 0);
@@ -446,7 +452,6 @@ int RpcDataChannelBind(CmdData *cmdData)
     // Invoke the blocking interface
     sockFd = RunDataChannelBind(&channelParam);
 
-ERR:
     // Return the result.
     ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d|%d", cmdData->id, cmdData->funcId,
         sockFd, channelParam.port);

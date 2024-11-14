@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /* BEGIN_HEADER */
@@ -191,6 +198,7 @@ static const BASE64_TEST_DATA testData[] = {
         .encodeResultLen = 0,
     },
 };
+
 static const int32_t testCnt = sizeof(testData) / sizeof(testData[0]);
 
 /**
@@ -229,7 +237,8 @@ void SDV_BSL_BASE64_FUNC_TC001(void)
         ASSERT_TRUE(memcmp((const char *)encodeBuf, testData[i].encodeResult, testData[i].encodeResultLen) == 0);
         ASSERT_TRUE(encodeBufLen == testData[i].encodeResultLen);
 
-        ASSERT_TRUE(BSL_BASE64_Decode((const char *)encodeBuf, testData[i].encodeResultLen, decodeBuf, &decodeBufLen) == BSL_SUCCESS);
+        ASSERT_TRUE(BSL_BASE64_Decode((const char *)encodeBuf, testData[i].encodeResultLen, decodeBuf,
+            &decodeBufLen) == BSL_SUCCESS);
         ASSERT_TRUE(memcmp((const uint8_t *)decodeBuf, srcBuf, srcLen) == 0);
         ASSERT_TRUE(decodeBufLen == srcLen);
     }
@@ -268,7 +277,7 @@ exit:
  * @auto  TRUE
  */
 /* BEGIN_CASE */
-void SDV_BSL_BASE64_FUNC_TC002()
+void SDV_BSL_BASE64_FUNC_TC002(void)
 {
     for (int32_t i = 0; i < 6; i++) {
         const uint8_t *srcBuf = testData[i].src;
@@ -283,6 +292,8 @@ void SDV_BSL_BASE64_FUNC_TC002()
         uint32_t total = 0;
 
         BSL_Base64Ctx *ctx = BSL_BASE64_CtxNew();
+        ASSERT_TRUE(encodeBuf != NULL);
+        ASSERT_TRUE(decodeBuf != NULL);
         BSL_BASE64_EncodeInit(ctx);
         BSL_BASE64_SetFlags(ctx, BSL_BASE64_FLAGS_NO_NEWLINE);
         ASSERT_TRUE(BSL_BASE64_EncodeUpdate(ctx, srcBuf, srcLen, encodeBuf, &tmpLen) == BSL_SUCCESS);
@@ -337,7 +348,7 @@ exit:
  * @auto  TRUE
  */
 /* BEGIN_CASE */
-void SDV_BSL_BASE64_FUNC_TC003()
+void SDV_BSL_BASE64_FUNC_TC003(void)
 {
     const uint8_t *srcBuf = src_08;
     const uint32_t srcLen = (const uint32_t)sizeof(src_08) - 1;
@@ -348,6 +359,7 @@ void SDV_BSL_BASE64_FUNC_TC003()
     uint32_t total = 0;
 
     BSL_Base64Ctx *ctx = BSL_BASE64_CtxNew();
+    ASSERT_TRUE(encodeBuf != NULL);
     BSL_BASE64_EncodeInit(ctx);
     ASSERT_TRUE(BSL_BASE64_EncodeUpdate(ctx, srcBuf, srcLen, encodeBuf, &tmpLen) == BSL_SUCCESS);
     encodeBufLen -= tmpLen;
@@ -384,7 +396,7 @@ exit:
  * @auto  TRUE
  */
 /* BEGIN_CASE */
-void SDV_BSL_BASE64_FUNC_TC004()
+void SDV_BSL_BASE64_FUNC_TC004(void)
 {
     const uint8_t *srcBuf = src_08;
     const uint32_t srcLen = (const uint32_t)sizeof(src_08) - 1;
@@ -396,8 +408,8 @@ void SDV_BSL_BASE64_FUNC_TC004()
     uint32_t total = 0;
 
     BSL_Base64Ctx *ctx = BSL_BASE64_CtxNew();
+    ASSERT_TRUE(decodeBuf != NULL);
     BSL_BASE64_DecodeInit(ctx);
-
     ASSERT_TRUE(BSL_BASE64_DecodeUpdate(ctx, encodeResult_08_withNL, encodeBufLen, decodeBuf, &tmpLen) == BSL_SUCCESS);
     encodeBufLen -= tmpLen;
     total += tmpLen;
@@ -460,14 +472,14 @@ exit:
  * @auto  TRUE
  */
 /* BEGIN_CASE */
-void SDV_BSL_BASE64_FUNC_TC006()
+void SDV_BSL_BASE64_FUNC_TC006(void)
 {
     const char illEncodeResult_1[] = "MT=1";
     const char illEncodeResult_2[] = "MT-1";
     const char illEncodeResult_3[] = "MT#1";
     uint32_t decodeBufLen = HITLS_BASE64_DECODE_LENGTH(4);
     uint8_t *decodeBuf = malloc(decodeBufLen);
-
+    ASSERT_TRUE(decodeBuf != NULL);
     BSL_Base64Ctx *ctx = BSL_BASE64_CtxNew();
     BSL_BASE64_SetFlags(ctx, BSL_BASE64_FLAGS_NO_NEWLINE);
 
@@ -484,7 +496,7 @@ void SDV_BSL_BASE64_FUNC_TC006()
     BSL_BASE64_CtxClear(ctx);
     BSL_BASE64_DecodeInit(ctx);
     ASSERT_TRUE(BSL_BASE64_DecodeUpdate(ctx, illEncodeResult_3, sizeof(illEncodeResult_3),
-        decodeBuf, &decodeBufLen) == BSL_INVALID_ARG); 
+        decodeBuf, &decodeBufLen) == BSL_INVALID_ARG);
 exit:
     free(decodeBuf);
     BSL_BASE64_CtxFree(ctx);
@@ -517,7 +529,7 @@ exit:
  * @auto  TRUE
  */
 /* BEGIN_CASE */
-void SDV_BSL_BASE64_FUNC_TC007()
+void SDV_BSL_BASE64_FUNC_TC007(void)
 {
     uint32_t zeroLen = 0;
     const uint32_t srcLen = (const uint32_t)sizeof(src_01);
@@ -526,7 +538,8 @@ void SDV_BSL_BASE64_FUNC_TC007()
     char *encodeBuf = malloc(encodeBufLen);
     uint32_t decodeBufLen = HITLS_BASE64_DECODE_LENGTH(encodeBufLen);
     uint8_t *decodeBuf = malloc(decodeBufLen);
-
+    ASSERT_TRUE(encodeBuf != NULL);
+    ASSERT_TRUE(decodeBuf != NULL);
     /* Block codec empty input test */
     ASSERT_TRUE(BSL_BASE64_Encode(NULL, zeroLen, encodeBuf, &encodeBufLen) == BSL_NULL_INPUT);
     ASSERT_TRUE(BSL_BASE64_Encode(src_01, sizeof(src_01) - 1, encodeBuf, &zeroLen) == BSL_BASE64_BUF_NOT_ENOUGH);
@@ -542,7 +555,7 @@ void SDV_BSL_BASE64_FUNC_TC007()
     BSL_BASE64_CtxClear(ctx);
     BSL_BASE64_DecodeInit(ctx);
     ASSERT_TRUE(BSL_BASE64_DecodeUpdate(ctx, NULL, (const uint32_t)encodeBufLen,
-            decodeBuf, &decodeBufLen) == BSL_NULL_INPUT);
+        decodeBuf, &decodeBufLen) == BSL_NULL_INPUT);
     ASSERT_TRUE(BSL_BASE64_DecodeFinal(ctx, decodeBuf, &decodeBufLen) == BSL_SUCCESS);
 exit:
     free(encodeBuf);
@@ -578,7 +591,7 @@ exit:
  * @auto  TRUE
  */
 /* BEGIN_CASE */
-void SDV_BSL_BASE64_FUNC_TC008()
+void SDV_BSL_BASE64_FUNC_TC008(void)
 {
     uint32_t srcLen = testData[0].srcLen + testData[7].srcLen + testData[6].srcLen;
     uint32_t encodeBufLen = HITLS_BASE64_ENCODE_LENGTH(srcLen);
@@ -586,13 +599,14 @@ void SDV_BSL_BASE64_FUNC_TC008()
     uint32_t decodeBufLen = HITLS_BASE64_DECODE_LENGTH(encodeBufLen);
     uint8_t *decodeBuf = malloc(HITLS_BASE64_DECODE_LENGTH(encodeBufLen));
 
-    /* 
+    /*
      * The output parameter dstBufLen needs to be updated in real time when the update operation is performed for
      * multiple times.
      */
     uint32_t tmpLen = encodeBufLen;
     uint32_t total = 0;
-
+    ASSERT_TRUE(encodeBuf != NULL);
+    ASSERT_TRUE(decodeBuf != NULL);
     /* encode */
     BSL_Base64Ctx *ctx = BSL_BASE64_CtxNew();
     BSL_BASE64_EncodeInit(ctx);
@@ -623,18 +637,18 @@ void SDV_BSL_BASE64_FUNC_TC008()
     tmpLen = decodeBufLen;
     total = 0;
     BSL_BASE64_DecodeInit(ctx);
-    ASSERT_TRUE(BSL_BASE64_DecodeUpdate(ctx, testData[0].encodeResult, (const uint32_t)testData[0].encodeResultLen,
-            decodeBuf, &tmpLen) == BSL_SUCCESS); /* 4bytes */
+    ASSERT_TRUE(BSL_BASE64_DecodeUpdate(ctx, testData[0].encodeResult,
+        (const uint32_t)testData[0].encodeResultLen, decodeBuf, &tmpLen) == BSL_SUCCESS); /* 4bytes */
     decodeBufLen -= tmpLen;
     total += tmpLen;
     tmpLen = decodeBufLen;
-    ASSERT_TRUE(BSL_BASE64_DecodeUpdate(ctx, testData[7].encodeResult, (const uint32_t)testData[7].encodeResultLen,
-            decodeBuf + total, &tmpLen) == BSL_SUCCESS); /* 196bytes */
+    ASSERT_TRUE(BSL_BASE64_DecodeUpdate(ctx, testData[7].encodeResult,
+        (const uint32_t)testData[7].encodeResultLen, decodeBuf + total, &tmpLen) == BSL_SUCCESS); /* 196bytes */
     decodeBufLen -= tmpLen;
     total += tmpLen;
     tmpLen = decodeBufLen;
-    ASSERT_TRUE(BSL_BASE64_DecodeUpdate(ctx, testData[6].encodeResult, (const uint32_t)testData[6].encodeResultLen,
-            decodeBuf + total, &tmpLen) == BSL_SUCCESS); /* 60bytes */
+    ASSERT_TRUE(BSL_BASE64_DecodeUpdate(ctx, testData[6].encodeResult,
+        (const uint32_t)testData[6].encodeResultLen, decodeBuf + total, &tmpLen) == BSL_SUCCESS); /* 60bytes */
     decodeBufLen -= tmpLen;
     total += tmpLen;
     tmpLen = decodeBufLen;
@@ -654,13 +668,11 @@ void Base64BlockEncDec(const uint8_t *buf, const uint32_t len)
     const uint8_t *src = buf;
     const uint32_t srcLen = len;
 
-    const uint32_t hitlsEncLen = HITLS_BASE64_ENCODE_LENGTH(len);
+    uint32_t hitlsEncLen = HITLS_BASE64_ENCODE_LENGTH(len);
     char *hitlsEncResult = BSL_SAL_Malloc(hitlsEncLen);
-    int opensslEncLen = 0;
 
-    const uint32_t hitlsDecLen = HITLS_BASE64_DECODE_LENGTH(hitlsEncLen);
+    uint32_t hitlsDecLen = HITLS_BASE64_DECODE_LENGTH(hitlsEncLen);
     uint8_t *hitlsDecResult = BSL_SAL_Malloc(hitlsDecLen);
-    int opensslDecLen = 0;
     TRUE_OR_EXIT(BSL_BASE64_Encode(src, srcLen, hitlsEncResult, &hitlsEncLen) == BSL_SUCCESS);
 
     TRUE_OR_EXIT(BSL_BASE64_Decode(hitlsEncResult, hitlsEncLen, hitlsDecResult, &hitlsDecLen) == BSL_SUCCESS);
@@ -788,12 +800,13 @@ void Base64StreamMultiUpdate(const BASE64_TEST_DATA data[])
 
     uint32_t hitlsDecLen = HITLS_BASE64_DECODE_LENGTH(hitlsEncLen);
     uint8_t *hitlsDecResult = malloc(hitlsDecLen);
-
     /* encode */
     // hitls stream encoding
     uint32_t tmpLen = hitlsEncLen;
     uint32_t total = 0;
     BSL_Base64Ctx *ctx = BSL_BASE64_CtxNew();
+    ASSERT_TRUE(hitlsEncResult != NULL);
+    ASSERT_TRUE(hitlsDecResult != NULL);
     BSL_BASE64_EncodeInit(ctx);
     TRUE_OR_EXIT(BSL_BASE64_EncodeUpdate(ctx, data[12].src, data[12].srcLen, hitlsEncResult, &tmpLen) == BSL_SUCCESS);
     hitlsEncLen -= tmpLen;
@@ -868,5 +881,18 @@ exit:
 void SDV_BSL_BASE64_FUNC_TC011(void)
 {
     Base64StreamMultiUpdate(testData);
+}
+/* END_CASE */
+
+/* BEGIN_CASE */
+void SDV_BSL_BASE64_FUNC_TC012(char *src, int expectRes)
+{
+    uint32_t srcBufLen = strlen(src);
+    uint32_t dstBufLen = HITLS_BASE64_DECODE_LENGTH(srcBufLen);
+    uint8_t *dst = BSL_SAL_Malloc(dstBufLen);
+    ASSERT_TRUE(dst != NULL);
+    ASSERT_EQ(BSL_BASE64_Decode(src, srcBufLen, dst, &dstBufLen), (int32_t)expectRes);
+exit:
+    BSL_SAL_Free(dst);
 }
 /* END_CASE */

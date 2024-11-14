@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #ifndef FRAME_MSG_H
@@ -21,14 +28,14 @@ extern "C" {
 typedef enum {
     /* field is missing. If this state is set, the field will not be packed into the buffer during packing */
     MISSING_FIELD = 0,
-    /* field initial status. The field status in the parsed msg structure is filled with the value.*/
+    /* field initial status. The field status in the parsed msg structure is filled with the value. */
     INITIAL_FIELD,
-    /* Specifies the value of the field. If the field content is modified, set the status to the value.*/
+    /* Specifies the value of the field. If the field content is modified, set the status to the value. */
     ASSIGNED_FIELD,
     /* Repeat the field. During the packing, the field will be packed again */
     DUPLICATE_FIELD,
-    /*Only one byte length is packed and used to construct abnormal messages. 
-    It is used for two or more bytes of fields (such as the cipher suite length).*/
+    /* Only one byte length is packed and used to construct abnormal messages.
+    It is used for two or more bytes of fields (such as the cipher suite length). */
     SET_LEN_TO_ONE_BYTE,
 } FieldState;
 
@@ -183,9 +190,9 @@ typedef struct {
     FRAME_HsExtArray8 sessionTicket;        /* sessionTicket */
     FRAME_HsExtArray8 serverName;           /* sni */
     FRAME_HsExtArray8 alpn;                 /* alpn */
-    FRAME_HsExtUint16 supportedVersion;     /* tls1.3 supported version*/
-    FRAME_HsExtServerKeyShare keyShare;     /* tls1.3 key share*/
-    FRAME_HsExtUint16 pskSelectedIdentity;  /* tls1.3 psk extension*/
+    FRAME_HsExtUint16 supportedVersion;     /* tls1.3 supported version */
+    FRAME_HsExtServerKeyShare keyShare;     /* tls1.3 key share */
+    FRAME_HsExtUint16 pskSelectedIdentity;  /* tls1.3 psk extension */
     FRAME_HsExtArray8 tls13Cookie;          /* tls1.3 cookie */
 } FRAME_ServerHelloMsg;
 
@@ -280,7 +287,7 @@ typedef struct {
 typedef struct {
     FRAME_Integer type;             /* Handshake type */
     FRAME_Integer length;           /* Length of the handshake message */
-    /* Sequence number of DTLS handshake messages. Increases by 1 each time a new handshake message is sent. 
+    /* Sequence number of DTLS handshake messages. Increases by 1 each time a new handshake message is sent.
      *Does not increase for retransmission */
     FRAME_Integer sequence;
     FRAME_Integer fragmentOffset;   /* Fragment offset of DTLS handshake message */
@@ -328,7 +335,8 @@ typedef struct {
 
     FRAME_Integer recType;        /* record the message type */
     FRAME_Integer recVersion;     /* record version */
-    FRAME_Integer epoch;          /* Counter value that increases each time the password status changes. This counter is used by DTLS */
+    FRAME_Integer epoch;          /* Counter value that increases each time the password status changes.
+                                    This counter is used by DTLS */
     FRAME_Integer sequence;       /* Record message sequence number, for DTLS */
     FRAME_Integer length;         /* Length of the record message */
     union {
@@ -368,18 +376,6 @@ typedef struct {
  * @retval  For other error codes, see hitls_error.h
  */
 int32_t FRAME_PackMsg(FRAME_Type *frameType, const FRAME_Msg *msg, uint8_t *buffer, uint32_t bufLen, uint32_t *usedLen);
-
-/**
- * @brief   Generate tls13 handshake message according to type
-
- * @param   type [IN] handshake message type
- * @param   buffer [OUT] Returned handshake message
- * @param   bufLen [IN] Input buffer size
- * @param   usedLen [OUT] Returned message length
- *
- * @retval  HITLS_SUCCESS
- */
-int32_t FRAME_GetTls13DisorderHsMsg(HS_MsgType type, uint8_t *buffer, uint32_t bufLen, uint32_t *usedLen);
 
 /**
  * @brief   Generate a TLS record body byte stream based on the specified parameter of frameType
@@ -425,7 +421,7 @@ int32_t FRAME_ParseMsgHeader(FRAME_Type *frameType, const uint8_t *buffer, uint3
  * @retval  For other error codes, see hitls_error.h
  */
 int32_t FRAME_ParseTLSRecordHeader(const uint8_t *buffer, uint32_t bufferLen,
-                             FRAME_Msg *msg, uint32_t *parseLen);
+    FRAME_Msg *msg, uint32_t *parseLen);
 
 /**
  * @brief   Parse the body of the TLS non-handshake record
@@ -439,7 +435,7 @@ int32_t FRAME_ParseTLSRecordHeader(const uint8_t *buffer, uint32_t bufferLen,
  * @retval  For other error codes, see hitls_error.h
  */
 int32_t FRAME_ParseTLSNonHsRecordBody(const uint8_t *buffer, uint32_t bufferLen,
-                           FRAME_Msg *msg, uint32_t *parseLen);
+    FRAME_Msg *msg, uint32_t *parseLen);
 
 /**
  * @brief   Parse the TLS non-handshake record
@@ -453,7 +449,7 @@ int32_t FRAME_ParseTLSNonHsRecordBody(const uint8_t *buffer, uint32_t bufferLen,
  * @retval  For other error codes, see hitls_error.h
  */
 int32_t FRAME_ParseTLSNonHsRecord(const uint8_t *buffer, uint32_t bufferLen,
-                       FRAME_Msg *msg, uint32_t *parseLen);
+    FRAME_Msg *msg, uint32_t *parseLen);
 
 /**
  * @brief   Parse the record of the handshake type
@@ -466,8 +462,8 @@ int32_t FRAME_ParseTLSNonHsRecord(const uint8_t *buffer, uint32_t bufferLen,
  * @retval  HITLS_SUCCESS
  * @retval  For other error codes, see hitls_error.h
  */
-int32_t FRAME_ParseHsRecord(
-    FRAME_Type *frameType, const uint8_t *buffer, uint32_t bufferLen, FRAME_Msg *msg, uint32_t *parseLen);
+int32_t FRAME_ParseHsRecord(FRAME_Type *frameType, const uint8_t *buffer, uint32_t bufferLen,
+    FRAME_Msg *msg, uint32_t *parseLen);
 
 /**
  * @brief    Parse the MSG structure based on the specified parameter of frameType and the TLS record byte stream.
@@ -488,7 +484,8 @@ int32_t FRAME_ParseMsgBody(FRAME_Type *frameType, const uint8_t *buffer, uint32_
     FRAME_Msg *msg, uint32_t *parseLen);
 
 /**
- * @brief   Parse the message into the msg structure based on the specified parameter of frameType and the TLS record byte stream
+ * @brief   Parse the message into the msg structure based on the specified parameter of frameType and
+ * the TLS record byte stream
  *
  * @param   frameType [IN] Specified parsing parameters, mainly versionType and keyExType
  * @param   buffer [IN] TLS record byte stream
@@ -536,7 +533,7 @@ int32_t FRAME_GetDefaultMsg(FRAME_Type *frameType, FRAME_Msg *msg);
 
 /**
  * @brief   Modify a message field
- *          This method is used to modify the contents of integer fields in a message, such as the message type, 
+ *          This method is used to modify the contents of integer fields in a message, such as the message type,
  *          version number, and field length
  *
  * @param   data [IN] Data content
@@ -575,7 +572,7 @@ int32_t FRAME_ModifyMsgArray8(const uint8_t *data, uint32_t dataLen,
  * @param   data [IN] Data content
  * @param   dataLen [IN] Number of data records
  * @param   frameArray [IN/OUT] IN original field; OUT New field
- * @param   frameArrayLen [IN/OUT] IN Original field length; Length of the new field in the OUT field. This parameter 
+ * @param   frameArrayLen [IN/OUT] IN Original field length; Length of the new field in the OUT field. This parameter
  *          can be none
  *
  * @retval  HITLS_SUCCESS

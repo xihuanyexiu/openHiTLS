@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /**
@@ -157,6 +164,7 @@ typedef enum {
     HITLS_MSG_HANDLE_HANDSHAKE_FAILURE,             /**< TLS1.3 handshake parameters cannot be negotiated. */
     HITLS_MSG_HANDLE_INVALID_COMPRESSION_METHOD,    /**< Receives an incorrect compression algorithm. */
     HITLS_MSG_HANDLE_INVALID_EXTENDED_MASTER_SECRET, /**< The peer Unsupported the extended master key. */
+    HITLS_MSG_HANDLE_ERR_CLIENT_HELLO_FRAGMENT,
 
     HITLS_PACK_FAIL_START = 0x02050001,             /**< Start bit of the pack error code. */
     HITLS_PACK_UNSUPPORT_VERSION,                   /**< Unsupported version. */
@@ -192,6 +200,7 @@ typedef enum {
     HITLS_PARSE_DH_PUBKEY_ERR,                      /**< Failed to parse the DHE public key. */
     HITLS_PARSE_DH_SIGN_ERR,                        /**< Failed to parse the DHE signature. */
     HITLS_PARSE_UNSUPPORTED_EXTENSION,              /**< Unsupported extended fields. */
+    HITLS_PARSE_CA_LIST_ERR,                        /**< Failed to parse the CA name list. */
     HTILS_PARSE_EXCESSIVE_MESSAGE_SIZE,             /**< The length of the parsing exceeds the maximum. */
     HTILS_PARSE_PRE_SHARED_KEY_FAILED,              /**< Failed to parse the PSK extension. */
     HTILS_PARSE_DUPLICATED_KEY_SHARE,               /**< duplicated key share entry. */
@@ -230,7 +239,6 @@ typedef enum {
     HITLS_REC_ERR_GENERATE_MAC,                    /**< Failed to generate the MAC address. */
     HITLS_REC_NORMAL_IO_EOF,                       /**< IO object has reached EOF. */
     HITLS_REC_ENCRYPTED_NUMBER_OVERFLOW,           /**< The number of AES-GCM encryption times cannot exceed 2^24.5. */
-    HITLS_REC_ERR_MSAK_APP_MSG,                    /**< set app msg failure. */
     HITLS_REC_ERR_DATA_BETWEEN_CCS_AND_FINISHED,   /**< When version is below TLS13,
                                                         must not have data between ccs and finished. */
 
@@ -244,9 +252,8 @@ typedef enum {
     HITLS_UIO_SCTP_DEL_AUTH_KEY_FAIL,              /**< Failed to delete the auth key for the sctp UIO object. */
 
     HITLS_CERT_FAIL_START = 0x020C0001,            /**< Certificate module error code start bit. */
-    HITLS_CERT_STORE_ERR_NEW,                      /**< Failed to new certificate store. */
-    HITLS_CERT_STORE_CTRL_ERR_SET_VERIFY_DEPTH,    /**< Failed to set certificate store verify depth. */
-    HITLS_CERT_STORE_CTRL_ERR_ADD_CERT_LIST,       /**< Failed to add cert to certificate store. */
+    HITLS_CERT_STORE_CTRL_ERR_SET_VERIFY_DEPTH,
+    HITLS_CERT_STORE_CTRL_ERR_ADD_CERT_LIST,
     HITLS_CERT_ERR_X509_DUP,                       /**< Failed to duplicate the certificate. */
     HITLS_CERT_ERR_KEY_DUP,                        /**< Failed to duplicate the key. */
     HITLS_CERT_ERR_STORE_DUP,                      /**< Failed to duplicate the store. */
@@ -260,7 +267,7 @@ typedef enum {
     HITLS_CERT_KEY_CTRL_ERR_GET_POINT_FORMAT,      /**< Failed to obtain the point format. */
     HITLS_CERT_KEY_CTRL_ERR_GET_SECBITS,           /**< Failed to obtain security bits. */
     HITLS_CERT_KEY_CTRL_ERR_IS_ENC_USAGE,          /**< Determine whether the certificate fails to be encrypted,
-                                                        Applicable to Chinese secret scenarios. */
+                                                        Applicable to TCLP scenarios. */
     HITLS_CERT_KEY_CTRL_ERR_IS_DIGITAL_SIGN_USAGE,  /**< Determine whether the certificate fails to be digital sign. */
     HITLS_CERT_KEY_CTRL_ERR_IS_KEY_CERT_SIGN_USAGE, /**< Determine whether the certificate fails to be cert sign. */
     HITLS_CERT_KEY_CTRL_ERR_IS_KEY_AGREEMENT_USAGE, /**< Determine whether the certificate fails to be agreement. */
@@ -305,6 +312,7 @@ typedef enum {
     HITLS_APP_FAIL_START = 0x020E0001,             /**< APP module error code start bit. */
     HITLS_APP_ERR_TOO_LONG_TO_WRITE,               /**< APP Data written is too long. */
     HITLS_APP_ERR_ZERO_READ_BUF_LEN,               /**< The buffer size read by the APP cannot be 0. */
+    HITLS_APP_ERR_WRITE_BAD_RETRY,                 /**< The addresses of the buffers sent twice are inconsistent. */
 
     HITLS_CLIENT_HELLO_CHECK_ERROR,                /**< ClientHello callback detection failure. */
 
@@ -390,6 +398,9 @@ typedef enum {
     HITLS_X509_V_ERR_ERROR_IN_CMP_CRL_NEXT_UPDATE_FIELD,
     HITLS_X509_V_ERR_ERROR_IN_CMP_CERT_NOT_BEFORE_FIELD,
     HITLS_X509_V_ERR_CRL_PATH_VALIDATION_ERROR,
+
+    HITLS_X509_ADAPT_ERR = 0x02200001,
+    HITLS_X509_ADAPT_BUILD_CERT_CHAIN_ERR,
 } HITLS_ERROR;
 
 /**

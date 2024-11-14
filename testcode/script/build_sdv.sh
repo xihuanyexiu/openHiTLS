@@ -1,12 +1,17 @@
 #!/bin/bash
 
-# ---------------------------------------------------------------------------------------------
-#  This file is part of the openHiTLS project.
-#  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
-#  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
-#  for license information.
-# ---------------------------------------------------------------------------------------------
-
+# This file is part of the openHiTLS project.
+#
+# openHiTLS is licensed under the Mulan PSL v2.
+# You can use this software according to the terms and conditions of the Mulan PSL v2.
+# You may obtain a copy of Mulan PSL v2 at:
+#
+#     http://license.coscl.org.cn/MulanPSL2
+#
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+# EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+# MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+# See the Mulan PSL v2 for more details.
 set -e
 
 usage()
@@ -18,7 +23,8 @@ usage()
     printf "%-50s %-30s\n" "* tls-debug    : Enable the debug mode."           "bash ${BASH_SOURCE[0]} tls-debug"
     printf "%-50s %-30s\n" "* no-crypto    : Custom crypto testcase."          "bash ${BASH_SOURCE[0]} no-crypto"
     printf "%-50s %-30s\n" "* no-bsl       : Custom bsl testcase."             "bash ${BASH_SOURCE[0]} no-bsl"
-    printf "%-50s %-30s\n" "* tls-test       : Custom tls testcase."           "bash ${BASH_SOURCE[0]} tls-test"
+    printf "%-50s %-30s\n" "* no-tls       : Custom tls testcase."             "bash ${BASH_SOURCE[0]} no-tls"
+    printf "%-50s %-30s\n" "* no-x509      : Custom x509 testcase."            "bash ${BASH_SOURCE[0]} no-x509"
     printf "%-50s %-30s\n" "* verbose      : Show detailse."                   "bash ${BASH_SOURCE[0]} verbose"
     printf "%-50s %-30s\n" "* gcov         : Enable the coverage capability."  "bash ${BASH_SOURCE[0]} gcov"
     printf "%-50s %-30s\n" "* asan         : Enabling the ASAN capability."    "bash ${BASH_SOURCE[0]} asan"
@@ -32,14 +38,14 @@ export_env()
     LOCAL_ARCH=${LOCAL_ARCH:=`arch`}
     ENABLE_GCOV=${ENABLE_GCOV:=OFF}
     ENABLE_ASAN=${ENABLE_ASAN:=OFF}
-    TLS_DEBUG=${TLS_DEBUG:=OFF}
     ENABLE_PRINT=${ENABLE_PRINT:=ON}
     ENABLE_FAIL_REPEAT=${ENABLE_FAIL_REPEAT:=OFF}
     CUSTOM_CFLAGS=${CUSTOM_CFLAGS:=''}
-    ENABLE_TLS=${ENABLE_TLS:=OFF}
+    ENABLE_TLS=${ENABLE_TLS:=ON}
     BIG_ENDIAN=${BIG_ENDIAN:=OFF}
     ENABLE_CRYPTO=${ENABLE_CRYPTO:=ON}
     ENABLE_BSL=${ENABLE_BSL:=ON}
+    ENABLE_X509=${ENABLE_X509:=ON}
     ENABLE_UIO_SCTP=${ENABLE_UIO_SCTP:=ON}
     ENABLE_VERBOSE=${ENABLE_VERBOSE:=''}
     RUN_TESTS=${RUN_TESTS:=''}
@@ -68,10 +74,13 @@ find_test_suite()
     if [[ ${ENABLE_BSL} == "ON" ]]; then
         bsl_testsuite=$(find ${HITLS_ROOT_DIR}/testcode/sdv/testcase/bsl -name "*.data" | sed -e "s/.data//" | tr -s "\n" " ")
     fi
+    if [[ ${ENABLE_X509} == "ON" ]]; then
+        x509_testsuite=$(find ${HITLS_ROOT_DIR}/testcode/sdv/testcase/x509 -name "*.data" | sed -e "s/.data//" | tr -s "\n" " ")
+    fi
     if [[ ${ENABLE_TLS} == "ON" ]]; then
         proto_testsuite=$(find ${HITLS_ROOT_DIR}/testcode/sdv/testcase/tls  -name "*.data" | sed -e "s/.data//" | tr -s "\n" " ")
     fi
-    RUN_TEST_SUITES="${crypto_testsuite}${proto_testsuite}${bsl_testsuite}"
+    RUN_TEST_SUITES="${crypto_testsuite}${bsl_testsuite}${x509_testsuite}${proto_testsuite}"
 }
 
 build_generate()
@@ -80,7 +89,7 @@ build_generate()
     cmake -DENABLE_GCOV=${ENABLE_GCOV} -DENABLE_ASAN=${ENABLE_ASAN} \
           -DCUSTOM_CFLAGS="${CUSTOM_CFLAGS}" -DDEBUG=${DEBUG} -DENABLE_UIO_SCTP=${ENABLE_UIO_SCTP} \
           -DGEN_TEST_FILES=${TEST_SUITE} -DENABLE_TLS=${ENABLE_TLS} \
-          -DENABLE_CRYPTO=${ENABLE_CRYPTO} -DTLS_DEBUG=${TLS_DEBUG} \
+          -DENABLE_CRYPTO=${ENABLE_CRYPTO} -DENABLE_X509=${ENABLE_X509} -DTLS_DEBUG=${TLS_DEBUG} \
           -DOS_BIG_ENDIAN=${BIG_ENDIAN} -DPRINT_TO_TERMINAL=${ENABLE_PRINT} -DENABLE_FAIL_REPEAT=${ENABLE_FAIL_REPEAT} ..
     make GEN_TESTCASE ${ENABLE_VERBOSE} -j
 }
@@ -112,8 +121,9 @@ build_test_suite()
             cmake -DENABLE_GCOV=${ENABLE_GCOV} -DENABLE_ASAN=${ENABLE_ASAN} \
                 -DCUSTOM_CFLAGS="${CUSTOM_CFLAGS}" -DDEBUG=${DEBUG} -DENABLE_UIO_SCTP=${ENABLE_UIO_SCTP} \
                 -DGEN_TEST_FILES=${TEST_SUITE} -DTESTFILE=${tmp_dir} \
-                -DENABLE_CRYPTO=${ENABLE_CRYPTO} -DENABLE_TLS=${ENABLE_TLS} -DTLS_DEBUG=${TLS_DEBUG} \
-                -DOS_BIG_ENDIAN=${BIG_ENDIAN} -DPRINT_TO_TERMINAL=${ENABLE_PRINT} -DENABLE_FAIL_REPEAT=${ENABLE_FAIL_REPEAT} ../..
+                -DENABLE_CRYPTO=${ENABLE_CRYPTO} -DENABLE_X509=${ENABLE_X509} -DENABLE_TLS=${ENABLE_TLS} \
+                -DTLS_DEBUG=${TLS_DEBUG} -DOS_BIG_ENDIAN=${BIG_ENDIAN} \
+                -DPRINT_TO_TERMINAL=${ENABLE_PRINT} -DENABLE_FAIL_REPEAT=${ENABLE_FAIL_REPEAT} ../..
             make TESTCASE ${ENABLE_VERBOSE} -j || (read -u8 && echo "1" >&8)
             echo >&7
        } &
@@ -176,11 +186,14 @@ options()
             no-crypto)
                 ENABLE_CRYPTO=OFF
                 ;;
+            no-x509)
+                ENABLE_X509=OFF
+                ;;
             no-bsl)
                 ENABLE_BSL=OFF
                 ;;
-            tls-test)
-                ENABLE_TLS=ON
+            no-tls)
+                ENABLE_TLS=OFF
                 ;;
             no-sctp)
                 ENABLE_UIO_SCTP=OFF

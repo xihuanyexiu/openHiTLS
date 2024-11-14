@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include "hitls_build.h"
@@ -20,27 +27,36 @@
 
 static int32_t RandGenerate(BN_BigNum *r, uint32_t bits)
 {
-    uint8_t *buf = NULL;
     int32_t ret;
     uint32_t room = BITS_TO_BN_UNIT(bits);
-    if (BnExtend(r, room) != CRYPT_SUCCESS) {
+    BN_UINT mask;
+    uint32_t bufSize = BITS_TO_BYTES(bits); // bits < (1u << 29), hence bits + 7 will not exceed the upper limit.
+    uint8_t *buf = BSL_SAL_Malloc(bufSize);
+    if (buf == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
         return CRYPT_MEM_ALLOC_FAIL;
     }
-    buf = (uint8_t *)r->data;
-    BN_Zeroize(r);
-    ret = CRYPT_Rand(buf, room * sizeof(BN_UINT));
+    ret = CRYPT_Rand(buf, bufSize);
     if (ret == CRYPT_NO_REGIST_RAND) {
         BSL_ERR_PUSH_ERROR(ret);
-        return ret;
+        goto ERR;
     }
     if (ret != CRYPT_SUCCESS) {
+        ret = CRYPT_BN_RAND_GEN_FAIL;
         BSL_ERR_PUSH_ERROR(CRYPT_BN_RAND_GEN_FAIL);
-        return CRYPT_BN_RAND_GEN_FAIL;
+        goto ERR;
     }
-    BN_UINT mask = (BN_UINT)(-1) >> ((BN_UINT_BITS - bits % BN_UINT_BITS) % BN_UINT_BITS);
+    ret = BN_Bin2Bn(r, buf, bufSize);
+    BSL_SAL_CleanseData((void *)buf, bufSize);
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+        goto ERR;
+    }
+    mask = (BN_UINT)(-1) >> ((BN_UINT_BITS - bits % BN_UINT_BITS) % BN_UINT_BITS);
     r->data[room - 1] &= mask;
     r->size = BinFixSize(r->data, room);
+ERR:
+    BSL_SAL_FREE(buf);
     return ret;
 }
 
@@ -81,6 +97,10 @@ int32_t BN_Rand(BN_BigNum *r, uint32_t bits, uint32_t top, uint32_t bottom)
         BSL_ERR_PUSH_ERROR(CRYPT_BN_BITS_TOO_MAX);
         return CRYPT_BN_BITS_TOO_MAX;
     }
+    if (BnExtend(r, BITS_TO_BN_UNIT(bits)) != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
+        return CRYPT_MEM_ALLOC_FAIL;
+    }
     ret = RandGenerate(r, bits);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
@@ -97,7 +117,7 @@ int32_t BN_Rand(BN_BigNum *r, uint32_t bits, uint32_t top, uint32_t bottom)
     return ret;
 }
 
-static int32_t InputCheck(const BN_BigNum *r, const BN_BigNum *p)
+static int32_t InputCheck(BN_BigNum *r, const BN_BigNum *p)
 {
     if (r == NULL || p == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
@@ -108,9 +128,13 @@ static int32_t InputCheck(const BN_BigNum *r, const BN_BigNum *p)
         BSL_ERR_PUSH_ERROR(CRYPT_BN_ERR_RAND_ZERO);
         return CRYPT_BN_ERR_RAND_ZERO;
     }
-    if (p->sign == true) {
+    if (BN_ISNEG(p->flag)) {
         BSL_ERR_PUSH_ERROR(CRYPT_BN_ERR_RAND_NEGATIVE);
         return CRYPT_BN_ERR_RAND_NEGATIVE;
+    }
+    if (BnExtend(r, p->size) != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
+        return CRYPT_MEM_ALLOC_FAIL;
     }
     return CRYPT_SUCCESS;
 }

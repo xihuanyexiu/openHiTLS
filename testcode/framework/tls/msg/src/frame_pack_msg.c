@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include "securec.h"
@@ -921,7 +928,7 @@ static int32_t PackServerDheMsg(FRAME_Type *type, const FRAME_ServerKeyExchangeM
     return HITLS_SUCCESS;
 }
 
-static int32_t PackServerEccMsg(FRAME_Type *type, const FRAME_ServerKeyExchangeMsg *serverKeyExchange, uint8_t *buf,
+static int32_t PackServerEccMsg(const FRAME_ServerKeyExchangeMsg *serverKeyExchange, uint8_t *buf,
     uint32_t bufLen, uint32_t *usedLen)
 {
     uint32_t offset = 0;
@@ -941,7 +948,7 @@ static int32_t PackServerKeyExchangeMsg(FRAME_Type *type, const FRAME_ServerKeyE
     } else if (type->keyExType == HITLS_KEY_EXCH_DHE) {
         return PackServerDheMsg(type, serverKeyExchange, buf, bufLen, usedLen);
     } else if (type->keyExType == HITLS_KEY_EXCH_ECC) {
-        return PackServerEccMsg(type, serverKeyExchange, buf, bufLen, usedLen);
+        return PackServerEccMsg(serverKeyExchange, buf, bufLen, usedLen);
     }
 
     return HITLS_PACK_UNSUPPORT_KX_ALG;
@@ -1032,14 +1039,12 @@ static int32_t PackClientEcdheMsg(FRAME_Type *type, const FRAME_ClientKeyExchang
     uint32_t bufLen, uint32_t *usedLen)
 {
     uint32_t offset = 0;
-#ifndef HITLS_NO_TLCP11
     if (type->versionType == HITLS_VERSION_TLCP11) { /* Three bytes are added to the client key exchange. */
         buf[offset] = HITLS_EC_CURVE_TYPE_NAMED_CURVE;
         offset += sizeof(uint8_t);
         BSL_Uint16ToByte(HITLS_EC_GROUP_SM2, &buf[offset]);
         offset += sizeof(uint16_t);
     }
-#endif
     PackInteger8(&clientKeyExchange->pubKeySize, &buf[offset], bufLen, &offset);
     PackArray8(&clientKeyExchange->pubKey, &buf[offset], bufLen - offset, &offset);
 
@@ -1380,18 +1385,4 @@ int32_t FRAME_PackMsg(FRAME_Type *frameType, const FRAME_Msg *msg, uint8_t *buff
     }
     *usedLen = headerLen + bodyLen;
     return ret;
-}
-
-int32_t FRAME_GetTls13DisorderHsMsg(HS_MsgType type, uint8_t *buffer, uint32_t bufLen, uint32_t *usedLen)
-{
-    if (bufLen < 5) {
-        return HITLS_INTERNAL_EXCEPTION;
-    }
-    buffer[0] = type;
-    buffer[1] = 0;
-    buffer[2] = 0;
-    buffer[3] = 1;
-    buffer[4] = 0;
-    *usedLen = 5;
-    return HITLS_SUCCESS;
 }

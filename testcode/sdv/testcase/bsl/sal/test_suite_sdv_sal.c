@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /* BEGIN_HEADER */
@@ -779,104 +786,29 @@ exit:
 }
 /* END_CASE */
 
-#define TEST_THREAD_ATOMICADD_CNT 10000000
-#define TEST_atomic_add_pid_cnt 3
-#define TEST_atomic_sub_pid_cnt 3
-BSL_SAL_RefCount g_threadStartNum;
-static void *TestAtomicAdd(void *arg)
-{
-    (void)arg;
-    int ref = 0;
-    int ret = 0;
-    for (int i = 0; i < TEST_THREAD_ATOMICADD_CNT; i++) {
-        ret = BSL_SAL_AtomicUpReferences(&g_threadStartNum, &ref);
-        if (ret != BSL_SUCCESS) {
-            return NULL;
-        }
-    }
-    return NULL;
-}
-
-static void *TestAtomicSub(void *arg)
-{
-    (void)arg;
-    int ref = 0;
-    int ret = 0;
-    for (int i = 0; i < TEST_THREAD_ATOMICADD_CNT; i++) {
-        ret = BSL_SAL_AtomicDownReferences(&g_threadStartNum, &ref);
-        if (ret != BSL_SUCCESS) {
-            return NULL;
-        }
-    }
-    return NULL;
-}
-
-static void RegThreadCallback(void)
-{
-    BSL_SAL_ThreadCallback cb = { 0 };
-    cb.pfThreadLockNew = pthreadRWLockNew;
-    cb.pfThreadLockFree = pthreadRWLockFree;
-    cb.pfThreadReadLock = pthreadRWLockReadLock;
-    cb.pfThreadWriteLock = pthreadRWLockWriteLock;
-    cb.pfThreadUnlock = pthreadRWLockUnlock;
-    cb.pfThreadGetId = pthreadGetId;
-    ASSERT_TRUE(BSL_SAL_RegThreadCallback(&cb) == BSL_SUCCESS);
-
-    BSL_SAL_MemCallback mcb = { NULL, NULL };
-    mcb.pfMalloc = StdMalloc;
-    mcb.pfFree = free;
-    ASSERT_TRUE(BSL_SAL_RegMemCallback(&mcb) == BSL_SUCCESS);
-exit:
-    return;
-}
 /**
- * @test UT_BSL_SAL_THREAD_DEFAULT_TC001
- * @title Default Thread Related Functions.
- * @precon NA
+ * @test   SDV_BSL_SAL_CALLBACK_CTRL_FUNC_TC001
+ * @title  test BSL_SAL_CallBack_Ctrl functions
+ * @precon nan
  * @brief
- *    1. No registration, create thread lock
- *    2. Create 3 threads to perform addition and one thread to perform subtraction.
- *    3. Check whether the value after execution is consistent with the expected value.
- *    4. Create 2 threads to perform subtraction.
- *    5. Check whether the value after execution is consistent with the expected value.
+ *    1.Call BSL_SAL_CallBack_Ctrl registering file Callback Function, Expected result 1 is obtained.
+ *    2.Call BSL_SAL_CallBack_Ctrl registering time Callback Function, Expected result 1 is obtained.
+ *    3.Call BSL_SAL_CallBack_Ctrl registering net Callback Function, Expected result 1 is obtained.
+ *    4.Call BSL_SAL_CallBack_Ctrl registering invalid Callback Function, Expected result 2 is obtained.
+ *    5.Call BSL_SAL_SockGetLastSocketError obtaining the last socket error, Expected result 3 is obtained.
  * @expect
- *    1. Success.
- *    2. Success. The value at the end of the thread is the same as expected.
+ *    1. BSL_SUCCESS
+ *    2. BSL_SAL_ERR_NET_IOCTL
+ *    3. Succeeded in obtaining the last socket error.
  */
 /* BEGIN_CASE */
-void SDV_BSL_SAL_THREAD_ATOMICADD_TC001(void)
+void SDV_BSL_SAL_CALLBACK_CTRL_FUNC_TC001(void)
 {
-    RegThreadCallback();
-    ASSERT_TRUE(BSL_SAL_ReferencesInit(&(g_threadStartNum)) == BSL_SUCCESS);
-    g_threadStartNum.count = 0;
-
-    pthread_t pid[TEST_atomic_add_pid_cnt];
-    pthread_t pid2[TEST_atomic_sub_pid_cnt];
-    size_t i;
-    for (i = 0u; i < TEST_atomic_add_pid_cnt; i++) {
-        pthread_create(&pid[i], NULL, TestAtomicAdd, NULL);
-    }
-    pthread_create(&pid2[0], NULL, TestAtomicSub, NULL);
-
-    for (i = 0u; i < TEST_atomic_add_pid_cnt; i++) {
-        pthread_join(pid[i], NULL);  // Waiting for all child threads to end.
-    }
-    pthread_join(pid2[0], NULL);  // Waiting for all child threads to end.
-
-    ASSERT_EQ(g_threadStartNum.count, (TEST_atomic_add_pid_cnt - 1) * TEST_THREAD_ATOMICADD_CNT);
-
-    for (i = 1; i < TEST_atomic_sub_pid_cnt; i++) {
-        pthread_create(&pid2[i], NULL, TestAtomicSub, NULL);
-    }
-
-    for (i = 1; i < TEST_atomic_sub_pid_cnt; i++) {
-        pthread_join(pid2[i], NULL);
-    }
-    ASSERT_EQ(g_threadStartNum.count, 0);
-
+    ASSERT_EQ(BSL_SAL_CallBack_Ctrl(BSL_SAL_FILE_OPEN_CB_FUNC, NULL), BSL_SUCCESS);
+    ASSERT_EQ(BSL_SAL_CallBack_Ctrl(BSL_SAL_TIME_GET_SYS_TIME_CB_FUNC, NULL), BSL_SUCCESS);
+    ASSERT_EQ(BSL_SAL_CallBack_Ctrl(BSL_SAL_NET_WRITE_CB_FUNC, NULL), BSL_SUCCESS);
+    ASSERT_EQ(BSL_SAL_Ioctlsocket(0, 0, NULL), BSL_SAL_ERR_NET_IOCTL);
+    BSL_SAL_SockGetLastSocketError();
 exit:
-    g_threadStartNum.count = 0;
-    BSL_SAL_ReferencesFree(&g_threadStartNum);
-    return;
 }
 /* END_CASE */

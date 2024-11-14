@@ -1,13 +1,21 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /* BEGIN_HEADER */
 /* INCLUDE_BASE test_suite_tls13_consistency_rfc8446 */
+
 #include <stdio.h>
 #include "stub_replace.h"
 #include "hitls.h"
@@ -77,7 +85,7 @@ int32_t NewConfig(HsTestInfo *testInfo)
 }
 static int32_t DoHandshake(HsTestInfo *testInfo)
 {
-    HITLS_CFG_SetCloseCheckKeyUsage(testInfo->config, false);
+    HITLS_CFG_SetCheckKeyUsage(testInfo->config, false);
 
     testInfo->client = FRAME_CreateLink(testInfo->config, testInfo->uioType);
     if (testInfo->client == NULL) {
@@ -629,8 +637,8 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_CLIENT_NO_CERT_FUNC_TC001(int isSupportNoC
     FRAME_LinkObj *client = NULL;
     FRAME_LinkObj *server = NULL;
     FRAME_CertInfo certInfo = {
-        "ecdsa/root.pem",
-        "ecdsa/intca.pem",
+        "ecdsa/ca-nist521.der",
+        "ecdsa/inter-nist521.der",
         0,
         0,
         0,
@@ -688,10 +696,10 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_CLIENT_CERTCHAIN_FUNC_TC002(void)
     FRAME_LinkObj *server = NULL;
     FRAME_CertInfo certInfo = {
         0,
-        "ecdsa/intca.pem",
-        "ecdsa/ec_app256SHA256.pem",
+        "ecdsa/inter-nist521.der",
+        "ecdsa/end256-sha256.der",
         0,
-        "ecdsa/ec_app256SHA256.key.pem",
+        "ecdsa/end256-sha256.key.der",
         0,
     };
 
@@ -750,11 +758,11 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_CLIENT_CERTCHAIN_FUNC_TC003(void)
     FRAME_LinkObj *client = NULL;
     FRAME_LinkObj *server = NULL;
     FRAME_CertInfo certInfo = {
-        "ecdsa/root.pem",
+        "ecdsa/ca-nist521.der",
         0,
-        "ecdsa/ec_app256SHA256.pem",
+        "ecdsa/end256-sha256.der",
         0,
-        "ecdsa/ec_app256SHA256.key.pem",
+        "ecdsa/end256-sha256.key.der",
         0,
     };
 
@@ -813,11 +821,11 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_CLIENT_CERTCHAIN_FUNC_TC004(void)
     FRAME_LinkObj *client = NULL;
     FRAME_LinkObj *server = NULL;
     FRAME_CertInfo certInfo = {
-        "rsa_sha/root.pem",
-        "ecdsa/intca.pem",
-        "ecdsa/ec_app256SHA256.pem",
+        "rsa_sha/ca-3072.der",
+        "ecdsa/inter-nist521.der",
+        "ecdsa/end256-sha256.der",
         0,
-        "ecdsa/ec_app256SHA256.key.pem",
+        "ecdsa/end256-sha256.key.der",
         0,
     };
 
@@ -877,11 +885,11 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_CLIENT_CERTCHAIN_FUNC_TC005(void)
     FRAME_LinkObj *client = NULL;
     FRAME_LinkObj *server = NULL;
     FRAME_CertInfo certInfo = {
-        "ecdsa/root.pem",
-        "ecdsa/intca.pem",
-        "ecdsa/ec_app256SHA256.pem",
+        "ecdsa/ca-nist521.der",
+        "ecdsa/inter-nist521.der",
+        "ecdsa/end256-sha256.der",
         0,
-        "ecdsa/ec_app256SHA256.key.pem",
+        "ecdsa/end256-sha256.key.der",
         0,
     };
 
@@ -1020,7 +1028,7 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_ABNORMAL_CERTREQMSG_FUNC_TC003()
         TRY_SEND_CERTIFICATE_REQUEST, REC_TYPE_HANDSHAKE, false, NULL, Test_CertReqPackAndParseNoSign};
     RegisterWrapper(wrapper);
 
-    ASSERT_EQ(DoHandshake(&testInfo), HITLS_MSG_HANDLE_MISSING_EXTENSION);
+    ASSERT_EQ(DoHandshake(&testInfo), HITLS_MSG_HANDLE_UNSUPPORT_EXTENSION_TYPE);
 exit:
     ClearWrapper();
     HITLS_CFG_FreeConfig(testInfo.config);
@@ -1079,7 +1087,7 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_ABNORMAL_CERTREQMSG_FUNC_TC004()
         TRY_SEND_CERTIFICATE_REQUEST, REC_TYPE_HANDSHAKE, false, NULL, Test_CertReqPackAndParseUnknownEx};
     RegisterWrapper(wrapper);
 
-    ASSERT_EQ(DoHandshake(&testInfo), HITLS_MSG_HANDLE_MISSING_EXTENSION);
+    ASSERT_EQ(DoHandshake(&testInfo), HITLS_MSG_HANDLE_UNSUPPORT_EXTENSION_TYPE);
 
 exit:
     ClearWrapper();
@@ -1303,11 +1311,11 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_SIGN_ERR_FUNC_TC001(void)
     FRAME_LinkObj *client = NULL;
     FRAME_LinkObj *server = NULL;
     FRAME_CertInfo serverCertInfo = {
-        "ecdsa_sha1/ec_root.pem",
-        "ecdsa_sha1/ec_intca.pem",
-        "ecdsa_sha1/ec_app384SHA1.pem",
+        "ecdsa_sha1/ca-nist521.der",
+        "ecdsa_sha1/inter-nist521.der",
+        "ecdsa_sha1/end384-sha1.der",
         0,
-        "ecdsa_sha1/ec_app384SHA1.key.pem",
+        "ecdsa_sha1/end384-sha1.key.der",
         0,
     };
 
@@ -1322,11 +1330,11 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_SIGN_ERR_FUNC_TC001(void)
     ASSERT_TRUE(server != NULL);
     client = FRAME_CreateLinkWithCert(config, BSL_UIO_TCP, &serverCertInfo);
     ASSERT_TRUE(client != NULL);
-    ASSERT_EQ(FRAME_CreateConnection(client, server, false, HS_STATE_BUTT), HITLS_MSG_HANDLE_ERR_NO_SERVER_CERTIFICATE);
+    ASSERT_EQ(FRAME_CreateConnection(client, server, false, HS_STATE_BUTT), HITLS_CERT_ERR_NO_SIGN_SCHEME_MATCH);
     ALERT_Info alert = {0};
-    ALERT_GetInfo(server->ssl, &alert);
+    ALERT_GetInfo(client->ssl, &alert);
     ASSERT_EQ(alert.level, ALERT_LEVEL_FATAL);
-    ASSERT_EQ(alert.description, ALERT_HANDSHAKE_FAILURE);
+    ASSERT_EQ(alert.description, ALERT_INTERNAL_ERROR);
 exit:
     HITLS_CFG_FreeConfig(config);
     FRAME_FreeLink(client);
@@ -1629,20 +1637,20 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_CERTVERIFY_SIGN_FUNC_TC001(int isClient)
     };
     RegisterWrapper(wrapper);
     FRAME_CertInfo serverCertInfo = {
-        "ecdsa/root.pem",
-        "ecdsa/intca.pem",
-        "ecdsa/ec_app256SHA256.pem",
+        "ecdsa/ca-nist521.der",
+        "ecdsa/inter-nist521.der",
+        "ecdsa/end256-sha256.der",
         0,
-        "ecdsa/ec_app256SHA256.key.pem",
+        "ecdsa/end256-sha256.key.der",
         0,
     };
 
     FRAME_CertInfo clientCertInfo = {
-        "ecdsa/root.pem",
-        "ecdsa/intca.pem",
-        "ecdsa/ec_app256SHA256.pem",
+        "ecdsa/ca-nist521.der",
+        "ecdsa/inter-nist521.der",
+        "ecdsa/end256-sha256.der",
         0,
-        "ecdsa/ec_app256SHA256.key.pem",
+        "ecdsa/end256-sha256.key.der",
         0,
     };
 
@@ -1658,7 +1666,7 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_CERTVERIFY_SIGN_FUNC_TC001(int isClient)
     client = FRAME_CreateLinkWithCert(config, BSL_UIO_TCP, &clientCertInfo);
     ASSERT_TRUE(client != NULL);
 
-    ASSERT_EQ(FRAME_CreateConnection(client, server, false, HS_STATE_BUTT), HITLS_PARSE_VERIFY_SIGN_FAIL);
+    ASSERT_EQ(FRAME_CreateConnection(client, server, false, HS_STATE_BUTT), HITLS_PARSE_UNSUPPORT_SIGN_ALG);
 exit:
     ClearWrapper();
     HITLS_CFG_FreeConfig(config);
@@ -1837,10 +1845,10 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_SERVER_CERTCHAIN_FUNC_TC001(void)
     FRAME_LinkObj *server = NULL;
     FRAME_CertInfo certInfo = {
         0,
-        "ecdsa/intca.pem",
-        "ecdsa/ec_app256SHA256.pem",
+        "ecdsa/inter-nist521.der",
+        "ecdsa/end256-sha256.der",
         0,
-        "ecdsa/ec_app256SHA256.key.pem",
+        "ecdsa/end256-sha256.key.der",
         0,
     };
 
@@ -1888,20 +1896,20 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_SERVER_CERTCHAIN_FUNC_TC002(void)
     FRAME_LinkObj *client = NULL;
     FRAME_LinkObj *server = NULL;
     FRAME_CertInfo serverCertInfo = {
-        "ecdsa/root.pem",
-        "ecdsa/intca.pem",
-        "ecdsa/ec_app256SHA256.pem",
+        "ecdsa/ca-nist521.der",
+        "ecdsa/inter-nist521.der",
+        "ecdsa/end256-sha256.der",
         0,
-        "ecdsa/ec_app256SHA256.key.pem",
+        "ecdsa/end256-sha256.key.der",
         0,
     };
 
     FRAME_CertInfo clientCertInfo = {
-        "ecdsa/root.pem",
-        "ecdsa/intca.pem",
-        "ecdsa/ec_app256SHA256.pem",
+        "ecdsa/ca-nist521.der",
+        "ecdsa/inter-nist521.der",
+        "ecdsa/end256-sha256.der",
         0,
-        "ecdsa/ec_app256SHA256.key.pem",
+        "ecdsa/end256-sha256.key.der",
         0,
     };
 
@@ -1943,11 +1951,11 @@ void  UT_TLS_TLS13_RFC8446_CONSISTENCY_SERVER_CERTCHAIN_FUNC_TC003(void)
     FRAME_LinkObj *client = NULL;
     FRAME_LinkObj *server = NULL;
     FRAME_CertInfo certInfo = {
-        "rsa_sha/root.pem",
-        "ecdsa/intca.pem",
-        "ecdsa/ec_app256SHA256.pem",
+        "rsa_sha/ca-3072.der",
+        "ecdsa/inter-nist521.der",
+        "ecdsa/end256-sha256.der",
         0,
-        "ecdsa/ec_app256SHA256.key.pem",
+        "ecdsa/end256-sha256.key.der",
         0,
     };
     RecWrapper wrapper = {
@@ -2004,7 +2012,7 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_CLIENT_CERTNULL_FUNC_TC001(void)
     FRAME_LinkObj *client = NULL;
     FRAME_LinkObj *server = NULL;
     FRAME_CertInfo certInfo = {
-        "ecdsa/root.pem",
+        "ecdsa/ca-nist521.der",
         0,
         0,
         0,
@@ -2061,11 +2069,11 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_ECDSA_SIGN_RSA_CERT_FUNC_TC001(void)
     FRAME_LinkObj *client = NULL;
     FRAME_LinkObj *server = NULL;
     FRAME_CertInfo certInfo = {
-        "ecdsa_rsa_cert/rootCA.pem",
-        "ecdsa_rsa_cert/CA1.pem",
-        "ecdsa_rsa_cert/ee.pem",
+        "ecdsa_rsa_cert/rootCA.der",
+        "ecdsa_rsa_cert/CA1.der",
+        "ecdsa_rsa_cert/ee.der",
         0,
-        "ecdsa_rsa_cert/ee.key.pem",
+        "ecdsa_rsa_cert/ee.key.der",
         0,
     };
     config = HITLS_CFG_NewTLS13Config();
@@ -2083,6 +2091,56 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_ECDSA_SIGN_RSA_CERT_FUNC_TC001(void)
     ASSERT_TRUE(serverTlsCtx->state == CM_STATE_IDLE);
 
     ASSERT_EQ(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT), HITLS_SUCCESS);
+exit:
+    HITLS_CFG_FreeConfig(config);
+    FRAME_FreeLink(client);
+    FRAME_FreeLink(server);
+}
+/* END_CASE */
+
+/* @
+* @test  UT_TLS_TLS13_RFC8446_CONSISTENCY_MD5_CERT_TC001
+* @spec Apply for the ee certificate signed by the MD5 signature algorithm, set the MD5 certificate at both ends,
+* set up a link, and observe the server behavior.
+* Expected result: The server cannot select a proper certificate, sends bad_certificate, and disconnects the link.
+* @title
+* @precon nan
+* @brief 4.4.2.4. Receiving a Certificate Message row143
+         Any endpoint receiving any certificate which it would need to validate using any signature algorithm using an
+        MD5 hash MUST abort the handshake with a "bad_certificate" alert.
+* @expect 1. The link is set up successfully.
+* @prior Level 1
+* @auto TRUE
+@ */
+/* BEGIN_CASE */
+void UT_TLS_TLS13_RFC8446_CONSISTENCY_MD5_CERT_TC001(void)
+{
+    FRAME_Init();
+
+    HITLS_Config *config = HITLS_CFG_NewTLS13Config();
+    ASSERT_TRUE(config != NULL);
+
+    HITLS_CFG_SetClientVerifySupport(config, true);
+    FRAME_CertInfo certInfo = {
+        "md5_cert/rsa_root.der",
+        "md5_cert/rsa_intCa.der",
+        "md5_cert/md5_dev.der",
+        0,
+        "md5_cert/md5_dev.key",
+        0,
+    };
+
+    FRAME_LinkObj *server = FRAME_CreateLinkWithCert(config, BSL_UIO_TCP, &certInfo);
+    ASSERT_TRUE(server != NULL);
+    FRAME_LinkObj *client = FRAME_CreateLinkWithCert(config, BSL_UIO_TCP, &certInfo);
+    ASSERT_TRUE(client != NULL);
+
+    ASSERT_EQ(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT), HITLS_CERT_CTRL_ERR_GET_SIGN_ALGO);
+
+    ALERT_Info alertInfo = { 0 };
+    ALERT_GetInfo(client->ssl, &alertInfo);
+    ASSERT_EQ(alertInfo.level, ALERT_LEVEL_FATAL);
+    ASSERT_EQ(alertInfo.description, ALERT_BAD_CERTIFICATE);
 exit:
     HITLS_CFG_FreeConfig(config);
     FRAME_FreeLink(client);

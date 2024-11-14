@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include "hitls_build.h"
@@ -115,7 +122,11 @@ int32_t BN_SetSign(BN_BigNum *a, bool sign)
         BSL_ERR_PUSH_ERROR(CRYPT_BN_NO_NEGATIVE_ZERO);
         return CRYPT_BN_NO_NEGATIVE_ZERO;
     }
-    a->sign = sign;
+    if (sign) {
+        BN_SETNEG(a->flag);
+    } else {
+        BN_CLRNEG(a->flag);
+    }
     return CRYPT_SUCCESS;
 }
 
@@ -130,7 +141,8 @@ int32_t BN_Copy(BN_BigNum *r, const BN_BigNum *a)
             BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
             return CRYPT_MEM_ALLOC_FAIL;
         }
-        r->sign = a->sign;
+        BN_CLRNEG(r->flag);
+        r->flag |= BN_GETNEG(a->flag);
         BN_COPY_BYTES(r->data, r->size, a->data, a->size);
         r->size = a->size;
     }
@@ -144,7 +156,7 @@ BN_BigNum *BN_Dup(const BN_BigNum *a)
     }
     BN_BigNum *r = BN_Create(a->room * BN_UINT_BITS);
     if (r != NULL) {
-        r->sign = a->sign;
+        r->flag |= BN_GETNEG(a->flag);
         BN_COPY_BYTES(r->data, r->size, a->data, a->size);
         r->size = a->size;
     }
@@ -166,7 +178,7 @@ bool BN_IsOne(const BN_BigNum *a)
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return false;
     }
-    return (a->size == 1 && a->data[0] == 1 && a->sign == false);
+    return (a->size == 1 && a->data[0] == 1 && !BN_ISNEG(a->flag));
 }
 
 bool BN_IsNegative(const BN_BigNum *a)
@@ -175,7 +187,7 @@ bool BN_IsNegative(const BN_BigNum *a)
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return false;
     }
-    return a->sign;
+    return BN_ISNEG(a->flag);
 }
 
 bool BN_IsOdd(const BN_BigNum *a)
@@ -204,7 +216,7 @@ int32_t BN_Zeroize(BN_BigNum *a)
     }
     // clear sensitive information
     BSL_SAL_CleanseData(a->data, a->size * sizeof(BN_UINT));
-    a->sign = false;
+    BN_CLRNEG(a->flag);
     a->size = 0;
     return CRYPT_SUCCESS;
 }
@@ -285,7 +297,7 @@ int32_t BN_ClrBit(BN_BigNum *a, uint32_t n)
     // check whether the size changes
     a->size = BinFixSize(a->data, a->size);
     if (a->size == 0) {
-        a->sign = false;
+        BN_CLRNEG(a->flag);
     }
     return CRYPT_SUCCESS;
 }
@@ -331,5 +343,28 @@ uint32_t BnExtend(BN_BigNum *a, uint32_t words)
     a->data = tmp;
     a->room = words;
     return CRYPT_SUCCESS;
+}
+
+/* See the standard document
+ * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r4.pdf
+ * Table 2: Comparable strengths
+ * */
+int32_t BN_SecBit(int32_t publen, int32_t prvlen)
+{
+    int32_t bits = 256;
+    int32_t level[] = {1024, 2048, 3072, 7680, 15360, INT32_MAX};
+    int32_t secbits[] = {0, 80, 112, 128, 192, 256};
+
+    for (size_t i = 0; i < (sizeof(level) / sizeof(level[0])); i++) {
+        if (publen < level[i]) {
+            bits = secbits[i];
+            break;
+        }
+    }
+    if (prvlen == -1) {
+        return bits;
+    }
+    bits = ((prvlen / 2) >= bits) ? bits : (prvlen / 2);
+    return (bits < 80) ? 0 : bits;
 }
 #endif /* HITLS_CRYPTO_BN */

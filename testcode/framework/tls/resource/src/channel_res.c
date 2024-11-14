@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include <sys/time.h>
@@ -102,7 +109,7 @@ ControlChannelRes *GetControlChannelRes()
     return &g_channelRes;
 }
 
-int PushResultToChannelSendBuffer(ControlChannelRes *channelInfo, uint8_t *result)
+int PushResultToChannelSendBuffer(ControlChannelRes *channelInfo, char *result)
 {
     int ret;
     OsLock(channelInfo->sendBufferLock);
@@ -126,7 +133,7 @@ int PushResultToChannelSendBuffer(ControlChannelRes *channelInfo, uint8_t *resul
     return SUCCESS;
 }
 
-int PushResultToChannelRcvBuffer(ControlChannelRes *channelInfo, uint8_t *result)
+int PushResultToChannelRcvBuffer(ControlChannelRes *channelInfo, char *result)
 {
     int ret;
     OsLock(channelInfo->rcvBufferLock);
@@ -150,7 +157,7 @@ int PushResultToChannelRcvBuffer(ControlChannelRes *channelInfo, uint8_t *result
     return SUCCESS;
 }
 
-int PushResultToChannelIdBuffer(ControlChannelRes *channelInfo, uint8_t *result, int id)
+int PushResultToChannelIdBuffer(ControlChannelRes *channelInfo, char *result, int id)
 {
     int ret;
     OsLock(channelInfo->rcvBufferLock);
@@ -167,7 +174,7 @@ int PushResultToChannelIdBuffer(ControlChannelRes *channelInfo, uint8_t *result,
     return SUCCESS;
 }
 
-void FreeControlChannelRes()
+void FreeControlChannelRes(void)
 {
     if (g_channelRes.tid != 0) {
         g_channelRes.isExit = true;

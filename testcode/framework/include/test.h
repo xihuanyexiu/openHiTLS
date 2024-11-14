@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #ifndef TEST_H
@@ -70,6 +77,18 @@ typedef struct {
         int64_t value2__ = (int64_t)(VALUE2);           \
         if (value1__ != value2__) {                     \
             RecordFailure(#VALUE1 #VALUE2, __FILE__);   \
+            Print("\nvalue is %d (0x%x).\nexpect %d (0x%x).\n", value1__, value1__, value2__, value2__); \
+            goto exit;                                  \
+        }                                               \
+    } while (0)
+
+
+#define ASSERT_EQ_LOG(LOG, VALUE1, VALUE2)              \
+    do {                                                \
+        int64_t value1__ = (int64_t)(VALUE1);           \
+        int64_t value2__ = (int64_t)(VALUE2);           \
+        if (value1__ != value2__) {                     \
+            RecordFailure(LOG, __FILE__);   \
             Print("\nvalue is %d (0x%x).\nexpect %d (0x%x).\n", value1__, value1__, value2__, value2__); \
             goto exit;                                  \
         }                                               \

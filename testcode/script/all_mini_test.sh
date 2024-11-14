@@ -1,12 +1,17 @@
 #!/bin/bash
 
-# ---------------------------------------------------------------------------------------------
-#  This file is part of the openHiTLS project.
-#  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
-#  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
-#  for license information.
-# ---------------------------------------------------------------------------------------------
-
+# This file is part of the openHiTLS project.
+#
+# openHiTLS is licensed under the Mulan PSL v2.
+# You can use this software according to the terms and conditions of the Mulan PSL v2.
+# You may obtain a copy of Mulan PSL v2 at:
+#
+#     http://license.coscl.org.cn/MulanPSL2
+#
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+# EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+# MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+# See the Mulan PSL v2 for more details.
 # Build different miniaturized targets and perform basic functional testing.
 
 set -eu
@@ -119,9 +124,6 @@ test_pkey()
 
     bash mini_build_test.sh no-tls enable=x25519,sha2,eal,drbg,entropy test=x25519
     bash mini_build_test.sh no-tls enable=ed25519,eal,drbg,entropy test=ed25519 # ed25519 depends on sha512 by default.
-
-    bash mini_build_test.sh no-tls enable=x448,sha2,eal,drbg,entropy test=x448
-    bash mini_build_test.sh no-tls enable=ed448,sha2,eal,drbg,entropy test=ed448 # ed448 depends on sha3 by default.
 
     # sm2 depends on sm3 by default.
     bash mini_build_test.sh no-tls enable=sm2_crypt,eal,drbg,entropy test=sm2_crypt

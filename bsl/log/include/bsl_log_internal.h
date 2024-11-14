@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #ifndef BSL_LOG_INTERNAL_H
@@ -18,6 +25,11 @@ extern "C" {
 #endif
 
 #ifdef HITLS_BSL_LOG
+#ifdef HITLS_BSL_LOG_NO_FORMAT_STRING
+#define LOG_STR(str) NULL
+#else
+#define LOG_STR(str) (str)
+#endif
 
 #define BSL_LOG_BUF_SIZE            1024U
 
@@ -27,7 +39,7 @@ extern "C" {
  * @attention A maximum of four parameters can be contained in the formatted string.
  *            If the number of parameters is less than four, 0s or NULL must be added.
  *            If the number of parameters exceeds four, multiple invoking is required.
- *            Only the BSL_LOG_BINLOG_FIXLEN macro can be invoked. This macro cannot be redefined.
+ *            Only the LOG_BINLOG_FIXLEN macro can be invoked. This macro cannot be redefined.
  * @param logId [IN] Log ID
  * @param logLevel [IN] Log level
  * @param logType [IN] String label
@@ -45,7 +57,7 @@ void BSL_LOG_BinLogFixLen(uint32_t logId, uint32_t logLevel, uint32_t logType,
  * @brief one-parameter dotting log function
  * @attention The formatted character string contains only one parameter, which is %s.
  *            For a pure character string, use LOG_BinLogFixLen
- *            Only the BSL_LOG_BINLOG_VARLEN macro can be invoked. This macro cannot be redefined.
+ *            Only the LOG_BINLOG_VARLEN macro can be invoked. This macro cannot be redefined.
  * @param logId [IN] Log ID
  * @param logLevel [IN] Log level
  * @param logType [IN] String label
@@ -71,7 +83,7 @@ void BSL_LOG_BinLogVarLen(uint32_t logId, uint32_t logLevel, uint32_t logType, v
  */
 #define BSL_LOG_BINLOG_FIXLEN(logId, logLevel, logType, format, para1, para2, para3, para4) \
     BSL_LOG_BinLogFixLen(logId, logLevel, logType, \
-        (void *)(uintptr_t)(const void *)(format), (void *)(uintptr_t)(para1), (void *)(uintptr_t)(para2), \
+        (void *)(uintptr_t)(const void *)(LOG_STR(format)), (void *)(uintptr_t)(para1), (void *)(uintptr_t)(para2), \
         (void *)(uintptr_t)(para3), (void *)(uintptr_t)(para4))
 
 /**
@@ -87,7 +99,7 @@ void BSL_LOG_BinLogVarLen(uint32_t logId, uint32_t logLevel, uint32_t logType, v
  */
 #define BSL_LOG_BINLOG_VARLEN(logId, logLevel, logType, format, para) \
     BSL_LOG_BinLogVarLen(logId, logLevel, logType, \
-        (void *)(uintptr_t)(const void *)(format), (void *)(uintptr_t)(const void *)(para))
+        (void *)(uintptr_t)(const void *)(LOG_STR(format)), (void *)(uintptr_t)(const void *)(para))
 
 #else
 

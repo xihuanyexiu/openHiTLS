@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #ifndef SESSION_ENC_H
@@ -18,14 +25,13 @@ extern "C" {
 
 /**
  * Enumerated value of session information
- *  Do not change the enumerated value. If need add the enumerated value, add at the end
+ * Do not change the enumerated value. If need add the enumerated value, add at the end
  */
 typedef enum {
     SESS_OBJ_VERSION = 0x0101,
     SESS_OBJ_CIPHER_SUITE = 0x0102,
     SESS_OBJ_MASTER_SECRET = 0x0103,
     SESS_OBJ_PEER_CERT = 0x0104,
-    SESS_OBJ_PSK_IDENTITY = 0x0105,
     SESS_OBJ_START_TIME = 0x0106,
     SESS_OBJ_TIMEOUT = 0x0107,
     SESS_OBJ_HOST_NAME = 0x0108,

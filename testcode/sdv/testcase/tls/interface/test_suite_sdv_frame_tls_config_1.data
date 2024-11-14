@@ -98,9 +98,9 @@ UT_TLS_CFG_SET_CONFIG_USERDATA_FREECB_API_TC001
 UT_TLS_CFG_SET_CONFIG_USERDATA_FREECB_API_TC001:HITLS_VERSION_TLS13
 
 UT_TLS_CFG_SET_GET_CERTIFICATE_API_TC001
-UT_TLS_CFG_SET_GET_CERTIFICATE_API_TC001:TLS1_2:"../testdata/tls/certificate/ecdsa_sha256/intca.pem"
+UT_TLS_CFG_SET_GET_CERTIFICATE_API_TC001:TLS1_2:"../testdata/tls/certificate/der/ecdsa_sha256/inter.der"
 UT_TLS_CFG_SET_GET_CERTIFICATE_API_TC001
-UT_TLS_CFG_SET_GET_CERTIFICATE_API_TC001:TLS1_3:"../testdata/tls/certificate/ecdsa_sha256/intca.pem"
+UT_TLS_CFG_SET_GET_CERTIFICATE_API_TC001:TLS1_3:"../testdata/tls/certificate/der/ecdsa_sha256/inter.der"
 
 UT_TLS_CFG_CHECK_PRIVATEKEY_API_TC001
 UT_TLS_CFG_CHECK_PRIVATEKEY_API_TC001:TLS1_2
@@ -109,22 +109,46 @@ UT_TLS_CFG_CHECK_PRIVATEKEY_API_TC001
 UT_TLS_CFG_CHECK_PRIVATEKEY_API_TC001:TLS1_3
 
 UT_TLS_CFG_ADD_CHAINCERT_API_TC001
-UT_TLS_CFG_ADD_CHAINCERT_API_TC001:TLS1_2:"../testdata/tls/certificate/ecdsa_sha256/server.pem":"../testdata/tls/certificate/ecdsa_sha256/intca.pem"
+UT_TLS_CFG_ADD_CHAINCERT_API_TC001:TLS1_2:"../testdata/tls/certificate/der/ecdsa_sha256/server.der":"../testdata/tls/certificate/der/ecdsa_sha256/inter.der"
 
 UT_TLS_CFG_ADD_CHAINCERT_API_TC001
-UT_TLS_CFG_ADD_CHAINCERT_API_TC001:TLS1_3:"../testdata/tls/certificate/ecdsa_sha256/server.pem":"../testdata/tls/certificate/ecdsa_sha256/intca.pem"
+UT_TLS_CFG_ADD_CHAINCERT_API_TC001:TLS1_3:"../testdata/tls/certificate/der/ecdsa_sha256/server.der":"../testdata/tls/certificate/der/ecdsa_sha256/inter.der"
 
 UT_HITLS_CFG_REMOVE_CERTANDKEY_API_TC001
-UT_HITLS_CFG_REMOVE_CERTANDKEY_API_TC001:TLS1_2:"../testdata/tls/certificate/rsa_sha256/client.pem":"../testdata/tls/certificate/rsa_sha256/client.key.pem"
+UT_HITLS_CFG_REMOVE_CERTANDKEY_API_TC001:TLS1_2:"../testdata/tls/certificate/der/rsa_sha256/client.der":"../testdata/tls/certificate/der/rsa_sha256/client.key.der"
 
 UT_HITLS_CFG_REMOVE_CERTANDKEY_API_TC001
-UT_HITLS_CFG_REMOVE_CERTANDKEY_API_TC001:TLS1_3:"../testdata/tls/certificate/rsa_sha256/client.pem":"../testdata/tls/certificate/rsa_sha256/client.key.pem"
+UT_HITLS_CFG_REMOVE_CERTANDKEY_API_TC001:TLS1_3:"../testdata/tls/certificate/der/rsa_sha256/client.der":"../testdata/tls/certificate/der/rsa_sha256/client.key.der"
 
 UT_HITLS_CFG_ADD_EXTRA_CHAINCERT_API_TC001
-UT_HITLS_CFG_ADD_EXTRA_CHAINCERT_API_TC001:TLS1_2:"../testdata/tls/certificate/ecdsa_sha1/ec_intca.pem":"../testdata/tls/certificate/ecdsa_sha256/intca.pem"
+UT_HITLS_CFG_ADD_EXTRA_CHAINCERT_API_TC001:TLS1_2:"../testdata/tls/certificate/der/ecdsa_sha1/ca-nist521.der":"../testdata/tls/certificate/der/ecdsa_sha256/inter.der"
 
 UT_HITLS_CFG_ADD_EXTRA_CHAINCERT_API_TC001
-UT_HITLS_CFG_ADD_EXTRA_CHAINCERT_API_TC001:TLS1_3:"../testdata/tls/certificate/ecdsa_sha1/ec_intca.pem":"../testdata/tls/certificate/ecdsa_sha256/intca.pem"
+UT_HITLS_CFG_ADD_EXTRA_CHAINCERT_API_TC001:TLS1_3:"../testdata/tls/certificate/der/ecdsa_sha1/ca-nist521.der":"../testdata/tls/certificate/der/ecdsa_sha256/inter.der"
 
 UT_TLS_CFG_SET_DTLS_MTU_API_TC001
 UT_TLS_CFG_SET_DTLS_MTU_API_TC001:
+
+UT_TLS_CFG_LogSecret_TC001
+UT_TLS_CFG_LogSecret_TC001:
+
+UT_TLS_CFG_SetTmpDhCb_TC001
+UT_TLS_CFG_SetTmpDhCb_TC001:
+
+UT_TLS_CFG_GET_CIPHERSUITESBYSTDNAME_TC001
+UT_TLS_CFG_GET_CIPHERSUITESBYSTDNAME_TC001:
+
+UT_TLS_CFG_CLEAR_CALIST_TC001
+UT_TLS_CFG_CLEAR_CALIST_TC001:
+
+UT_TLS_CFG_SET_GET_DHAUTOSUPPORT_TC001
+UT_TLS_CFG_SET_GET_DHAUTOSUPPORT_TC001:HITLS_VERSION_TLS12
+
+UT_TLS_CFG_SET_GET_DHAUTOSUPPORT_TC001
+UT_TLS_CFG_SET_GET_DHAUTOSUPPORT_TC001:HITLS_VERSION_TLS13
+
+UT_TLS_CFG_GET_READ_AHEAD_TC001
+UT_TLS_CFG_GET_READ_AHEAD_TC001:
+
+UT_TLS_CFG_SET_KeyLogCb_TC001
+UT_TLS_CFG_SET_KeyLogCb_TC001:

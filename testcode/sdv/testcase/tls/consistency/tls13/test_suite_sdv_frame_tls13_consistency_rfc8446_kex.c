@@ -1,11 +1,20 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
+
 /* BEGIN_HEADER */
+
 #include "hitls_error.h"
 #include "tls.h"
 #include "change_cipher_spec.h"
@@ -40,12 +49,12 @@
 #define ERROR_VERSION_BIT 0x00000000U
 #define READ_BUF_LEN_18K (18 * 1024)
 #define BUF_SIZE_DTO_TEST (18 * 1024)
-#define ROOT_PEM "%s/root.pem:%s/intca.pem"
-#define INTCA_PEM "%s/intca.pem"
-#define SERVER_PEM "%s/server.pem"
-#define SERVER_KEY_PEM "%s/server.key.pem"
-#define CLIENT_PEM "%s/client.pem"
-#define CLIENT_KEY_PEM "%s/client.key.pem"
+#define ROOT_DER "%s/ca.der:%s/inter.der"
+#define INTCA_DER "%s/inter.der"
+#define SERVER_DER "%s/server.der"
+#define SERVER_KEY_DER "%s/server.key.der"
+#define CLIENT_DER "%s/client.der"
+#define CLIENT_KEY_DER "%s/client.key.der"
 static char *g_serverName = "testServer";
 uint32_t g_uiPort = 18890;
 /* END_HEADER */
@@ -144,13 +153,13 @@ static int SetCertPath(HLT_Ctx_Config *ctxConfig, const char *certStr, bool isSe
     char eeCertPath[30];
     char privKeyPath[30];
 
-    int32_t ret = sprintf_s(caCertPath, sizeof(caCertPath), ROOT_PEM, certStr, certStr);
+    int32_t ret = sprintf_s(caCertPath, sizeof(caCertPath), ROOT_DER, certStr, certStr);
     ASSERT_TRUE(ret > 0);
-    ret = sprintf_s(chainCertPath, sizeof(chainCertPath), INTCA_PEM, certStr);
+    ret = sprintf_s(chainCertPath, sizeof(chainCertPath), INTCA_DER, certStr);
     ASSERT_TRUE(ret > 0);
-    ret = sprintf_s(eeCertPath, sizeof(eeCertPath), isServer ? SERVER_PEM : CLIENT_PEM, certStr);
+    ret = sprintf_s(eeCertPath, sizeof(eeCertPath), isServer ? SERVER_DER : CLIENT_DER, certStr);
     ASSERT_TRUE(ret > 0);
-    ret = sprintf_s(privKeyPath, sizeof(privKeyPath), isServer ? SERVER_KEY_PEM : CLIENT_KEY_PEM, certStr);
+    ret = sprintf_s(privKeyPath, sizeof(privKeyPath), isServer ? SERVER_KEY_DER : CLIENT_KEY_DER, certStr);
     ASSERT_TRUE(ret > 0);
     HLT_SetCaCertPath(ctxConfig, (char *)caCertPath);
     HLT_SetChainCertPath(ctxConfig, (char *)chainCertPath);
@@ -211,7 +220,7 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_RECEIVE_RENEGOTIATION_REQUEST_FUNC_TC001()
     uint32_t readLen = 0;
     ASSERT_EQ(REC_Write(clientTlsCtx, REC_TYPE_HANDSHAKE, recMsg.msg, recMsg.len), HITLS_SUCCESS);
     ASSERT_TRUE(FRAME_TrasferMsgBetweenLink(client, server) == HITLS_SUCCESS);
-    ASSERT_EQ(HITLS_Read(serverTlsCtx, readBuf, READ_BUF_SIZE, &readLen), HITLS_REC_NORMAL_RECV_UNEXPECT_MSG);
+    ASSERT_EQ(HITLS_Read(serverTlsCtx, readBuf, READ_BUF_SIZE, &readLen), HITLS_MSG_HANDLE_UNEXPECTED_MESSAGE);
 
     ASSERT_TRUE(serverTlsCtx->state == CM_STATE_ALERTED);
     ALERT_Info info = { 0 };
@@ -1338,6 +1347,7 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_RENEGOTIATION_OLD_VERSION_FUNC_TC001()
     ASSERT_TRUE(server != NULL);
     HITLS_Ctx *clientTlsCtx = FRAME_GetTlsCtx(client);
     HITLS_Ctx *serverTlsCtx = FRAME_GetTlsCtx(server);
+    HITLS_SetClientRenegotiateSupport(server->ssl, true);
 
     ASSERT_TRUE(FRAME_CreateConnection(client, server, false, HS_STATE_BUTT) == HITLS_SUCCESS);
     ASSERT_TRUE(clientTlsCtx->state == CM_STATE_TRANSPORTING);
@@ -1412,6 +1422,7 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_RENEGOTIATION_OLD_VERSION_FUNC_TC002()
     ASSERT_TRUE(server != NULL);
     HITLS_Ctx *clientTlsCtx = FRAME_GetTlsCtx(client);
     HITLS_Ctx *serverTlsCtx = FRAME_GetTlsCtx(server);
+    HITLS_SetClientRenegotiateSupport(server->ssl, true);
 
     ASSERT_TRUE(FRAME_CreateConnection(client, server, false, HS_STATE_BUTT) == HITLS_SUCCESS);
     ASSERT_TRUE(clientTlsCtx->state == CM_STATE_TRANSPORTING);
@@ -2236,7 +2247,7 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_COMPRESSION_METHOD_FUNC_TC002()
     ALERT_GetInfo(server->ssl, &info);
     ASSERT_EQ(info.flag, ALERT_FLAG_SEND);
     ASSERT_EQ(info.level, ALERT_LEVEL_FATAL);
-    ASSERT_EQ(info.description, ALERT_ILLEGAL_PARAMETER);
+    ASSERT_EQ(info.description, ALERT_DECODE_ERROR);
 
 exit:
     HITLS_CFG_FreeConfig(tlsConfig);
@@ -2331,7 +2342,7 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_UNKNOWN_EXTENSION_FUNC_TC001()
     HITLS_Config *tlsConfig = HITLS_CFG_NewTLS13Config();
     tlsConfig->isSupportClientVerify = true;
     HITLS_CFG_SetKeyExchMode(tlsConfig, TLS13_KE_MODE_PSK_WITH_DHE);
-    HITLS_CFG_SetServerName(tlsConfig, (uint8_t *)g_serverName, (uint32_t)strlen((char *)g_serverName));
+    HITLS_CFG_SetServerName(tlsConfig, (uint8_t *)g_serverName, (uint32_t)strlen(g_serverName));
     ASSERT_TRUE(tlsConfig != NULL);
 
     FRAME_LinkObj *client = FRAME_CreateLink(tlsConfig, BSL_UIO_TCP);
@@ -2703,7 +2714,7 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_DATA_AFTER_COMPRESSION_FUNC_TC004()
         HITLS_CFG_SetCipherSuites(tlsConfig_s, cipherSuites, sizeof(cipherSuites) / sizeof(uint16_t)) == HITLS_SUCCESS);
     ASSERT_TRUE(tlsConfig_s != NULL);
     HITLS_Config *tlsConfig_c = HITLS_CFG_NewTLS12Config();
-    HITLS_CFG_SetServerName(tlsConfig_c, (uint8_t *)g_serverName, (uint32_t)strlen((char *)g_serverName));
+    HITLS_CFG_SetServerName(tlsConfig_c, (uint8_t *)g_serverName, (uint32_t)strlen(g_serverName));
     tlsConfig_c->isSupportClientVerify = true;
     ASSERT_TRUE(tlsConfig_c != NULL);
     FRAME_LinkObj *client = FRAME_CreateLink(tlsConfig_c, BSL_UIO_TCP);
@@ -3051,7 +3062,7 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_SERVER_EXTENSION_FUNC_TC001()
     ALERT_GetInfo(client->ssl, &info);
     ASSERT_EQ(info.flag, ALERT_FLAG_SEND);
     ASSERT_EQ(info.level, ALERT_LEVEL_FATAL);
-    ASSERT_EQ(info.description, ALERT_UNSUPPORTED_EXTENSION);
+    ASSERT_EQ(info.description, ALERT_ILLEGAL_PARAMETER);
 exit:
     HITLS_CFG_FreeConfig(tlsConfig);
     FRAME_FreeLink(client);
@@ -3071,15 +3082,12 @@ exit:
 *       establishment). Other extensions (see Section 4.2) are sent
 *       separately in the EncryptedExtensions message.
 * @title Initialize the client and server to tls1.3 and construct the serverhello message that does not carry the
-*        supportedversion extension,
-*       The expected client stays in the TRY_RECV_CERTIFICATIONATE state after receiving the serverhello message. After
-*        receiving the CCS message, the client sends an alarm indicating that the unexpected message is received.
+*        supportedversion extension, client send illegal parameter after receive serverhello
 * @precon nan
 * @brief 4.1.3. Server Hello row28
-*       Initialize the client server to tls1.3 and construct the serverhello message without the supportedversion
-*        extension, The expected client stays in the TRY_RECV_CERTIFICATIONATE state after receiving the serverhello
-*        message. After receiving the CCS message, the client sends an alarm indicating that the unexpected message is
-*        received.
+*        Initialize the client server to tls1.3 and construct the serverhello message without the supportedversion
+*        extension, client send illegal parameter because server send a tls13 ciphersuite without supportedversion
+*        extension
 * @expect 1. The client receives an alert response from the CCS.
 @ */
 /* BEGIN_CASE */
@@ -3130,13 +3138,12 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_SERVER_EXTENSION_FUNC_TC002()
     ASSERT_TRUE(FRAME_TransportRecMsg(client->io, sendBuf, sendLen) == HITLS_SUCCESS);
     FRAME_CleanMsg(&frameType, &frameMsg);
 
-    ASSERT_EQ(HITLS_Connect(clientTlsCtx), HITLS_REC_NORMAL_RECV_BUF_EMPTY);
-    ASSERT_EQ(clientTlsCtx->hsCtx->state, TRY_RECV_CERTIFICATE);
-
-    ASSERT_EQ(HITLS_Accept(serverTlsCtx), HITLS_REC_NORMAL_IO_BUSY);
-    ASSERT_TRUE(FRAME_TrasferMsgBetweenLink(server, client) == HITLS_SUCCESS);
-
-    ASSERT_EQ(HITLS_Connect(clientTlsCtx), HITLS_REC_NORMAL_RECV_UNEXPECT_MSG);
+    ASSERT_EQ(HITLS_Connect(clientTlsCtx), HITLS_MSG_HANDLE_CIPHER_SUITE_ERR);
+    ALERT_Info info = { 0 };
+    ALERT_GetInfo(client->ssl, &info);
+    ASSERT_EQ(info.flag, ALERT_FLAG_SEND);
+    ASSERT_EQ(info.level, ALERT_LEVEL_FATAL);
+    ASSERT_EQ(info.description, ALERT_ILLEGAL_PARAMETER);
 
 exit:
     HITLS_CFG_FreeConfig(tlsConfig);
@@ -3471,7 +3478,7 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_SERVER_RENEGOTIATION_VERSION_FUNC_TC001()
     ASSERT_TRUE(server != NULL);
     HITLS_Ctx *clientTlsCtx = FRAME_GetTlsCtx(client);
     HITLS_Ctx *serverTlsCtx = FRAME_GetTlsCtx(server);
-
+    HITLS_SetClientRenegotiateSupport(server->ssl, true);
     ASSERT_TRUE(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT) == HITLS_SUCCESS);
     ASSERT_TRUE(clientTlsCtx->state == CM_STATE_TRANSPORTING);
     ASSERT_TRUE(serverTlsCtx->state == CM_STATE_TRANSPORTING);

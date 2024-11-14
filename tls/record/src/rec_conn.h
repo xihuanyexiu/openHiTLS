@@ -1,14 +1,23 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
+
 #ifndef REC_CONN_H
 #define REC_CONN_H
 
 #include <stdint.h>
+#include <stddef.h>
 #include "rec.h"
 
 #ifdef __cplusplus
@@ -32,6 +41,8 @@ typedef struct {
     HITLS_MacAlgo macAlg;               /* MAC algorithm */
     HITLS_CipherAlgo cipherAlg;         /* symmetric encryption algorithm */
     HITLS_CipherType cipherType;        /* encryption algorithm type */
+    HITLS_Cipher_Ctx *ctx;              /* cipher context handle, only for record layer encryption and decryption */
+    HITLS_HMAC_Ctx *macCtx;             /* mac context handle, only for record layer mac */
 
     uint8_t macKey[REC_MAX_MAC_KEY_LEN];
     uint8_t key[REC_MAX_KEY_LENGTH];
@@ -54,16 +65,15 @@ typedef struct {
     RecConnSuitInfo *suiteInfo;             /* Cipher suite information */
     uint64_t seq;                           /* tls: 8 byte sequence number or dtls: 6 byte seq */
 
-#ifndef HITLS_NO_DTLS12
     uint16_t epoch;                         /* dtls: 2 byte epoch */
-    uint16_t reserve;                       /* Four-byte alignment is reserved */
-#endif
 } RecConnState;
 
 /* see TLSPlaintext structure definition in rfc */
 typedef struct {
     uint8_t type;  // ccs(20), alert(21), hs(22), app data(23), (255)
+#ifdef HITLS_TLS_FEATURE_ETM
     bool isEncryptThenMac;
+#endif
     uint8_t reverse[2];
 
     uint16_t version;
@@ -104,7 +114,7 @@ uint64_t RecConnGetSeqNum(const RecConnState *state);
  */
 void RecConnSetSeqNum(RecConnState *state, uint64_t seq);
 
-#ifndef HITLS_NO_DTLS12
+#ifdef HITLS_TLS_PROTO_DTLS12
 /**
  * @brief   Obtain the epoch
  *
@@ -140,16 +150,6 @@ void RecConnSetEpoch(RecConnState *state, uint16_t epoch);
  */
 int32_t RecConnStateSetCipherInfo(RecConnState *state, RecConnSuitInfo *suitInfo);
 
-/**
- * @brief   Calculate the ciphertext length based on the plaintext length
- * @attention The ciphertext length is accurate
- * @param   state [IN] RecState context, including cipher suite information
- * @param   plainLen [IN] Plaintext length
- * @param   isEncThenMac [IN] Indicates whether the Encrypt-Then-Mac mode is used
- *
- * @return  ciphertext length
- */
-uint32_t RecConnCalcCiphertextLen(const RecConnState *state, uint32_t plainLen, bool isEncThenMac);
 
 /**
  * @brief   Encrypt the record payload
@@ -211,6 +211,45 @@ int32_t RecConnKeyBlockGen(const REC_SecParameters *param, RecConnSuitInfo *clie
  */
 int32_t RecTLS13ConnKeyBlockGen(const REC_SecParameters *param, RecConnSuitInfo *suitInfo);
 
+/*
+ * @brief   check the mac
+ *
+ * @param   ctx [IN] tls Context
+ * @param   suiteInfo [IN] ciphersuiteInfo
+ * @param   cryptMsg [IN] text info
+ * @param   text [IN] fragment
+ * @param   textLen [IN] fragment len
+ * @retval  HITLS_SUCCESS
+ * @retval  Reference hitls_error.h
+ */
+int32_t RecConnCheckMac(TLS_Ctx *ctx, RecConnSuitInfo *suiteInfo, const REC_TextInput *cryptMsg,
+    const uint8_t *text, uint32_t textLen);
+
+/*
+ * @brief   generate the mac
+ *
+ * @param   suiteInfo [IN] ciphersuiteInfo
+ * @param   plainMsg [IN] text info
+ * @param   mac [OUT] mac buffer
+ * @param   macLen [OUT] mac buffer len
+ * @retval  HITLS_SUCCESS
+ * @retval  Reference hitls_error.h
+ */
+int32_t RecConnGenerateMac(RecConnSuitInfo *suiteInfo, const REC_TextInput *plainMsg,
+    uint8_t *mac, uint32_t *macLen);
+
+/*
+ * @brief   check the mac
+ *
+ * @param   in [IN] plaintext info
+ * @param   text [IN] plaintext buf
+ * @param   textLen [IN] plaintext buf len
+ * @param   out [IN] mac info
+ * @retval  HITLS_SUCCESS
+ * @retval  Reference hitls_error.h
+ */
+void RecConnInitGenerateMacInput(const REC_TextInput *in, const uint8_t *text, uint32_t textLen,
+    REC_TextInput *out);
 #ifdef __cplusplus
 }
 #endif

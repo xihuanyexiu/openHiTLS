@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include "hitls_build.h"
@@ -23,9 +30,6 @@
 #ifdef HITLS_CRYPTO_CURVE25519
 #include "crypt_curve25519.h"
 #endif
-#ifdef HITLS_CRYPTO_CURVE448
-#include "crypt_curve448.h"
-#endif
 #ifdef HITLS_CRYPTO_DH
 #include "crypt_dh.h"
 #endif
@@ -38,6 +42,9 @@
 #ifdef HITLS_CRYPTO_SM2
 #include "crypt_sm2.h"
 #endif
+#ifdef HITLS_CRYPTO_PAILLIER
+#include "crypt_paillier.h"
+#endif
 #include "bsl_err_internal.h"
 #include "crypt_types.h"
 #include "eal_common.h"
@@ -45,13 +52,13 @@
 
 #define EAL_PKEY_METHOD_DEFINE(id, newCtx, dupCtx, freeCtx, setPara, getPara, gen, bits, signLen, ctrl, newParaById, \
     getParaId, freePara, newPara, setPub, setPrv, getPub, getPrv, sign, verify, computeShareKey, encrypt, \
-    decrypt, check, cmp) { \
+    decrypt, check, cmp, getSecBits) { \
     id, (PkeyNew)(newCtx), (PkeyDup)(dupCtx), (PkeyFree)(freeCtx), (PkeySetPara)(setPara), (PkeyGetPara)(getPara), \
     (PkeyGen)(gen), (PkeyBits)(bits), (PkeyGetSignLen)(signLen), (PkeyCtrl)(ctrl), (PkeyNewParaById)(newParaById), \
     (PkeyGetParaId)(getParaId), (PkeyFreePara)(freePara), (PkeyNewPara)(newPara), (PkeySetPub)(setPub), \
     (PkeySetPrv)(setPrv), (PkeyGetPub)(getPub), (PkeyGetPrv)(getPrv), (PkeySign)(sign), \
     (PkeyVerify)(verify), (PkeyComputeShareKey)(computeShareKey), (PkeyCrypt)(encrypt), \
-    (PkeyCrypt)(decrypt), (PkeyCheck)(check), (PkeyCmp)(cmp)}
+    (PkeyCrypt)(decrypt), (PkeyCheck)(check), (PkeyCmp)(cmp), (PkeyGetSecBits)(getSecBits)}
 
 static const EAL_PkeyMethod METHODS[] = {
 #ifdef HITLS_CRYPTO_DSA
@@ -80,7 +87,8 @@ static const EAL_PkeyMethod METHODS[] = {
         NULL,
         NULL,
         NULL,
-        CRYPT_DSA_Cmp
+        CRYPT_DSA_Cmp,
+        CRYPT_DSA_GetSecBits
     ), // CRYPT_PKEY_DSA
 #endif
 #ifdef HITLS_CRYPTO_ED25519
@@ -109,7 +117,8 @@ static const EAL_PkeyMethod METHODS[] = {
         NULL,
         NULL,
         NULL,
-        CRYPT_CURVE25519_Cmp
+        CRYPT_CURVE25519_Cmp,
+        CRYPT_CURVE25519_GetSecBits
     ), // CRYPT_PKEY_ED25519
 #endif
 #ifdef HITLS_CRYPTO_X25519
@@ -138,7 +147,8 @@ static const EAL_PkeyMethod METHODS[] = {
         NULL,
         NULL,
         NULL,
-        CRYPT_CURVE25519_Cmp
+        CRYPT_CURVE25519_Cmp,
+        CRYPT_CURVE25519_GetSecBits
     ), // CRYPT_PKEY_X25519
 #endif
 #ifdef HITLS_CRYPTO_RSA
@@ -167,7 +177,8 @@ static const EAL_PkeyMethod METHODS[] = {
         CRYPT_RSA_Encrypt,
         CRYPT_RSA_Decrypt,
         NULL,
-        CRYPT_RSA_Cmp
+        CRYPT_RSA_Cmp,
+        CRYPT_RSA_GetSecBits
     ), // CRYPT_PKEY_RSA
 #endif
 #ifdef HITLS_CRYPTO_DH
@@ -196,7 +207,8 @@ static const EAL_PkeyMethod METHODS[] = {
         NULL,
         NULL,
         CRYPT_DH_Check,
-        CRYPT_DH_Cmp
+        CRYPT_DH_Cmp,
+        CRYPT_DH_GetSecBits
     ), // CRYPT_PKEY_DH
 #endif
 #ifdef HITLS_CRYPTO_ECDSA
@@ -225,7 +237,8 @@ static const EAL_PkeyMethod METHODS[] = {
         NULL,   // encrypt
         NULL,   // decrypt
         NULL,
-        CRYPT_ECDSA_Cmp
+        CRYPT_ECDSA_Cmp,
+        CRYPT_ECDSA_GetSecBits
     ), // CRYPT_PKEY_ECDSA
 #endif
 #ifdef HITLS_CRYPTO_ECDH
@@ -254,7 +267,8 @@ static const EAL_PkeyMethod METHODS[] = {
         NULL,   // encrypt
         NULL,   // decrypt
         NULL,
-        CRYPT_ECDH_Cmp
+        CRYPT_ECDH_Cmp,
+        CRYPT_ECDH_GetSecBits
     ), // CRYPT_PKEY_ECDH
 #endif
 #ifdef HITLS_CRYPTO_SM2
@@ -301,66 +315,39 @@ static const EAL_PkeyMethod METHODS[] = {
         NULL,
 #endif
         NULL,
-        CRYPT_SM2_Cmp
+        CRYPT_SM2_Cmp,
+        CRYPT_SM2_GetSecBits
     ), // CRYPT_PKEY_SM2
 #endif
-#ifdef HITLS_CRYPTO_ED448
+#ifdef HITLS_CRYPTO_PAILLIER
     EAL_PKEY_METHOD_DEFINE(
-        CRYPT_PKEY_ED448,
-        CRYPT_CURVE448_NewCtx,
-        CRYPT_CURVE448_DupCtx,
-        CRYPT_CURVE448_FreeCtx,
+        CRYPT_PKEY_PAILLIER,
+        CRYPT_PAILLIER_NewCtx,
+        CRYPT_PAILLIER_DupCtx,
+        CRYPT_PAILLIER_FreeCtx,
+        CRYPT_PAILLIER_SetPara,
+        NULL,
+        CRYPT_PAILLIER_Gen,
+        CRYPT_PAILLIER_GetBits,
+        NULL,
+        NULL,  // ctrl,
         NULL,
         NULL,
-        CRYPT_ED448_GenKey,
-        CRYPT_ED448_GetBits,
-        CRYPT_ED448_GetSignLen,
-        CRYPT_CURVE448_Ctrl,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        CRYPT_ED448_SetPubKey,
-        CRYPT_ED448_SetPrvKey,
-        CRYPT_ED448_GetPubKey,
-        CRYPT_ED448_GetPrvKey,
-        CRYPT_CURVE448_Sign,
-        CRYPT_CURVE448_Verify,
-        NULL,
+        CRYPT_PAILLIER_FreePara,
+        CRYPT_PAILLIER_NewPara,
+        CRYPT_PAILLIER_SetPubKey,
+        CRYPT_PAILLIER_SetPrvKey,
+        CRYPT_PAILLIER_GetPubKey,
+        CRYPT_PAILLIER_GetPrvKey,
         NULL,
         NULL,
         NULL,
-        CRYPT_CURVE448_Cmp
-    ), // CRYPT_PKEY_ED448
-#endif
-#ifdef HITLS_CRYPTO_X448
-    EAL_PKEY_METHOD_DEFINE(
-        CRYPT_PKEY_X448,
-        CRYPT_CURVE448_NewCtx,
-        CRYPT_CURVE448_DupCtx,
-        CRYPT_CURVE448_FreeCtx,
+        CRYPT_PAILLIER_Encrypt,
+        CRYPT_PAILLIER_Decrypt,
         NULL,
-        NULL,
-        CRYPT_X448_GenKey,
-        CRYPT_X448_GetBits,
-        NULL,
-        CRYPT_CURVE448_Ctrl,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        CRYPT_X448_SetPubKey,
-        CRYPT_X448_SetPrvKey,
-        CRYPT_X448_GetPubKey,
-        CRYPT_X448_GetPrvKey,
-        NULL,
-        NULL,
-        CRYPT_X448_ComputeSharedKey,
-        NULL,
-        NULL,
-        NULL,
-        CRYPT_CURVE448_Cmp
-    ), // CRYPT_PKEY_X448
+        NULL,  // cmp
+        CRYPT_PAILLIER_GetSecBits
+    ), // CRYPT_PKEY_PAILLIER
 #endif
 };
 

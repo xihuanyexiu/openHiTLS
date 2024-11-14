@@ -1,10 +1,18 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
+
 /* BEGIN_HEADER */
 
 #include <semaphore.h>
@@ -108,7 +116,7 @@ int32_t DefaultCfgStatusPark(HandshakeTestInfo *testInfo)
     if (testInfo->config == NULL) {
         return HITLS_INTERNAL_EXCEPTION;
     }
-    HITLS_CFG_SetCloseCheckKeyUsage(testInfo->config, false);
+    HITLS_CFG_SetCheckKeyUsage(testInfo->config, false);
     testInfo->config->isSupportExtendMasterSecret = testInfo->isSupportExtendMasterSecret;
     testInfo->config->isSupportClientVerify = testInfo->isSupportClientVerify;
     testInfo->config->isSupportNoClientCert = testInfo->isSupportNoClientCert;
@@ -1062,6 +1070,7 @@ void UT_TLS_TLS12_RFC5746_CONSISTENCY_EXTENDED_RENEGOTIATION_FUNC_TC0014(void)
     ASSERT_TRUE(server != NULL);
     HITLS_SetRenegotiationSupport(client->ssl, true);
     HITLS_SetRenegotiationSupport(server->ssl, true);
+    HITLS_SetClientRenegotiateSupport(server->ssl, true);
 
     ASSERT_EQ(FRAME_CreateConnection(client, server, false, HS_STATE_BUTT), HITLS_SUCCESS);
     ASSERT_TRUE(HITLS_GetRenegotiationState(client->ssl, &isRenegotiation) == HITLS_SUCCESS);
@@ -1229,6 +1238,7 @@ void UT_TLS_TLS12_RFC5746_CONSISTENCY_EXTENDED_RENEGOTIATION_FUNC_TC0012(void)
     ASSERT_TRUE(server != NULL);
     HITLS_SetRenegotiationSupport(client->ssl, true);
     HITLS_SetRenegotiationSupport(server->ssl, true);
+    HITLS_SetClientRenegotiateSupport(server->ssl, true);
 
     ASSERT_EQ(FRAME_CreateConnection(client, server, false, HS_STATE_BUTT), HITLS_SUCCESS);
     ASSERT_TRUE(HITLS_GetRenegotiationState(client->ssl, &isRenegotiation) == HITLS_SUCCESS);

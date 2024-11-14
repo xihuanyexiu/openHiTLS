@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include <string.h>
@@ -78,14 +85,18 @@ static bool StateCompare(FRAME_LinkObj *link, bool isClient, HITLS_HandshakeStat
         /* In tls1.3, if the single-end verification is used, the server may receive the CCS message in the TRY_RECV_FINISH phase */
         if (state == TRY_RECV_FINISH){
             if (link->needStopBeforeRecvCCS || CCS_IsRecv(link->ssl) == true ||
-            link->ssl->config.tlsConfig.maxVersion == HITLS_VERSION_TLS13 && isClient == true ||
-            link->ssl->config.tlsConfig.maxVersion == HITLS_VERSION_TLS13 && link->ssl->config.tlsConfig.isSupportClientVerify == true) {
+                (link->ssl->config.tlsConfig.maxVersion == HITLS_VERSION_TLS13 && isClient == true) ||
+                (link->ssl->config.tlsConfig.maxVersion == HITLS_VERSION_TLS13 &&
+                link->ssl->config.tlsConfig.isSupportClientVerify == true)) {
             return true;
             }
         }
         // In tls1.3, the server may receive the CCS message in the TRY_RECV_CERTIFICATIONATE phase
         if (state == TRY_RECV_CERTIFICATE){
-            if (link->needStopBeforeRecvCCS || CCS_IsRecv(link->ssl) == true || link->ssl->hsCtx->haveHrr == true ||
+            if (link->needStopBeforeRecvCCS || CCS_IsRecv(link->ssl) == true ||
+#ifdef HITLS_TLS_PROTO_TLS13
+                link->ssl->hsCtx->haveHrr == true ||
+#endif /* HITLS_TLS_PROTO_TLS13 */
                 link->ssl->config.tlsConfig.maxVersion != HITLS_VERSION_TLS13 || isClient == true) {
                 return true;
             }
@@ -207,7 +218,8 @@ int32_t FRAME_CreateRenegotiation(FRAME_LinkObj *linkA, FRAME_LinkObj *linkB)
     }
 
     do {
-        clientRet = HITLS_Write(linkA->ssl, writeBuf, sizeof(writeBuf));
+        uint32_t len = 0;
+        clientRet = HITLS_Write(linkA->ssl, writeBuf, sizeof(writeBuf), &len);
         if (clientRet != HITLS_SUCCESS) {
             ret = clientRet;
             if ((clientRet != HITLS_REC_NORMAL_IO_BUSY) && (clientRet != HITLS_REC_NORMAL_RECV_BUF_EMPTY)) {

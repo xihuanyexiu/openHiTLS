@@ -1,26 +1,32 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include <stdlib.h>
-#include <stdlib.h>
 #include <malloc.h>
 #include <stdatomic.h>
+#include "securec.h"
 #include "hitls_crypt_type.h"
 #include "hitls_session.h"
-#include "securec.h"
 #include "logger.h"
-#include "common_func.h"
 #include "bsl_sal.h"
 #include "hitls_error.h"
 #include "hitls_sni.h"
 #include "sni.h"
 #include "hitls_alpn.h"
 #include "hitls_type.h"
+#include "common_func.h"
 
 #define SUCCESS 0
 #define ERROR (-1)
@@ -97,7 +103,7 @@ int32_t ExampleHexStr2BufHelper(const uint8_t *input, uint32_t inLen, uint8_t *o
     for (curr = input, outIndex = out; *curr;) {
         indexH[0] = *curr++;
         indexL[0] = *curr++;
-        if (!indexL[0]) {
+        if (indexL[0] == '\0') {
             return -1;
         }
 
@@ -218,8 +224,9 @@ int32_t ExampleTicketKeyAlertCb(uint8_t *keyName, uint32_t keyNameSize, HITLS_Ci
         (void)memcpy_s(keyName, keyNameSize, g_keyName, KEY_NAME_SIZE);
         SetCipherInfo(cipher);
         return HITLS_TICKET_KEY_RET_SUCCESS_RENEW;
-    } else
+    } else {
         return HITLS_TICKET_KEY_RET_NEED_ALERT;
+    }
 }
 
 int32_t ExampleTicketKeyFailCb(uint8_t *keyName, uint32_t keyNameSize, HITLS_CipherParameters *cipher,
@@ -237,9 +244,8 @@ int32_t ExampleTicketKeyFailCb(uint8_t *keyName, uint32_t keyNameSize, HITLS_Cip
 
 int32_t ExampleServerNameCb(HITLS_Ctx *ctx, int *alert, void *arg)
 {
-    SNI_Arg *sniArg = (SNI_Arg *)arg;
-    const char *servername = "testServer";
-
+    (void)ctx;
+    (void)arg;
     *alert = HITLS_ACCEPT_SNI_ERR_OK;
     return HITLS_ACCEPT_SNI_ERR_OK;
 }
@@ -266,12 +272,7 @@ void *ExampleServerNameArg(void)
     return g_sniArg;
 }
 
-static uint8_t C_parsedList1[100];
-uint8_t C_parsedListLen1;
-static const char *g_alpn1 = "http,ftp";
-static const char *g_alpnhttp = "http";
-static const char *g_alpnftp = "ftp";
-#define MAX_PROTOCOL_LEN1 255
+static char *g_alpnhttp = "http";
 
 int32_t ExampleAlpnParseProtocolList1(uint8_t *out, uint8_t *outLen, uint8_t *in, uint8_t inLen)
 {
@@ -279,7 +280,7 @@ int32_t ExampleAlpnParseProtocolList1(uint8_t *out, uint8_t *outLen, uint8_t *in
         return HITLS_NULL_INPUT;
     }
 
-    if (inLen == 0 || inLen > MAX_PROTOCOL_LEN1) {
+    if (inLen == 0) {
         return HITLS_CONFIG_INVALID_LENGTH;
     }
 
@@ -306,12 +307,10 @@ int32_t ExampleAlpnParseProtocolList1(uint8_t *out, uint8_t *outLen, uint8_t *in
     return HITLS_SUCCESS;
 }
 
-int32_t ExampleAlpnCb(HITLS_Ctx *ctx, uint8_t **selectedProto, uint8_t *selectedProtoSize, uint8_t *clientAlpnList,
+int32_t ExampleAlpnCb(HITLS_Ctx *ctx, char **selectedProto, uint8_t *selectedProtoSize, char *clientAlpnList,
     uint32_t clientAlpnListSize, void *userData)
 {
     (void)ctx;
-    (void)clientAlpnList;
-    (void)clientAlpnListSize;
     (void)userData;
     if (clientAlpnListSize >= 5 && memcmp(clientAlpnList + 1, "http", 4) == 0) {
         *selectedProto = clientAlpnList + 1;
@@ -360,7 +359,7 @@ int32_t AlpnCbALERT1(HITLS_Ctx *ctx, uint8_t **selectedProto, uint8_t *selectedP
     return HITLS_ALPN_ERR_ALERT_FATAL;
 }
 
-void *ExampleAlpnData()
+void *ExampleAlpnData(void)
 {
     // Return the alpnData address.
     return "audata";
@@ -373,34 +372,6 @@ void *GetTicketKeyCb(char *str)
         {"ExampleTicketKeyRenewCb", ExampleTicketKeyRenewCb},
         {"ExampleTicketKeyAlertCb", ExampleTicketKeyAlertCb},
         {"ExampleTicketKeyFailCb", ExampleTicketKeyFailCb},
-    };
-
-    int len = sizeof(cbList) / sizeof(cbList[0]);
-    for (int i = 0; i < len; i++) {
-        if (strcmp(str, cbList[i].name) == 0) {
-            return cbList[i].cb;
-        }
-    }
-    return NULL;
-}
-
-int32_t NoSecRenegotiationCb_Success(HITLS_Ctx *ctx)
-{
-    (void)ctx;
-    return 0;
-}
-
-int32_t NoSecRenegotiationCb_Fail(HITLS_Ctx *ctx)
-{
-    (void)ctx;
-    return RENEGOTIATE_FAIL;
-}
-
-void *GetNoSecRenegotiationCb(const char *str)
-{
-    const ExampleCb cbList[] = {
-        {"NoSecRenegotiationCb_Success", NoSecRenegotiationCb_Success},
-        {"NoSecRenegotiationCb_Fail", NoSecRenegotiationCb_Fail},
     };
 
     int len = sizeof(cbList) / sizeof(cbList[0]);

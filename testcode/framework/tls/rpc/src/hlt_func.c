@@ -1,13 +1,21 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
@@ -25,7 +33,7 @@
 #include "socket_common.h"
 #include "cert_callback.h"
 #include "sctp_channel.h"
-
+#include "frame_tls.h"
 
 #define DOMAIN_PATH_LEN (128)
 #define CMD_MAX_LEN 1024
@@ -34,7 +42,7 @@
 
 int g_acceptFd;
 
-void* HLT_TlsNewCtx(TLS_VERSION tlsVersion, bool isClient)
+void* HLT_TlsNewCtx(TLS_VERSION tlsVersion)
 {
     int ret;
     void *ctx = NULL;
@@ -398,7 +406,6 @@ int RunDataChannelAccept(void *param)
 
 pthread_t HLT_DataChannelAccept(DataChannelParam *channelParam)
 {
-    int ret;
     pthread_t t_id;
     if (pthread_create(&t_id, NULL, (void*)RunDataChannelAccept, (void*)channelParam) != 0) {
         LOG_ERROR("Create Thread HLT_RpcDataChannelAccept Error ...");
@@ -415,7 +422,6 @@ int HLT_DataChannelBind(DataChannelParam *channelParam)
 
 int HLT_DataChannelConnect(DataChannelParam *dstChannelParam)
 {
-    int sockFd = -1;
     switch (dstChannelParam->type) {
         case SCTP: return SctpConnect(dstChannelParam->ip, dstChannelParam->port, dstChannelParam->isBlock);
         case TCP: return TcpConnect(dstChannelParam->ip, dstChannelParam->port);
@@ -433,10 +439,11 @@ int HLT_GetAcceptFd(pthread_t threadId)
 
 HLT_FD HLT_CreateDataChannel(HLT_Process *process1, HLT_Process *process2, DataChannelParam channelParam)
 {
-    int ret, acceptId, bindFd;
+    int acceptId;
+    int bindFd;
     unsigned long int pthreadId;
     HLT_FD sockFd;
-    char *userPort = secure_getenv("FIXED_PORT");
+    char *userPort = getenv("FIXED_PORT");
     if (userPort == NULL) {
         channelParam.port = 0; // The system randomly allocates available ports.
     }
@@ -497,16 +504,16 @@ void HLT_CloseFd(int fd, int linkType)
 
 HLT_Ctx_Config* HLT_NewCtxConfigTLCP(char *setFile, const char *key, bool isClient)
 {
-    HLT_Ctx_Config *ctxConfig;
+    (void)setFile;
     Process *localProcess;
 
-    ctxConfig = (HLT_Ctx_Config*)malloc(sizeof(HLT_Ctx_Config));
+    HLT_Ctx_Config *ctxConfig = (HLT_Ctx_Config*)calloc(sizeof(HLT_Ctx_Config), 1u);
     if (ctxConfig == NULL) {
         return NULL;
     }
-
-    (void)memset_s(ctxConfig, sizeof(HLT_Ctx_Config), 0, sizeof(HLT_Ctx_Config));
     ctxConfig->isSupportRenegotiation = false;
+    ctxConfig->allowClientRenegotiate = false;
+    ctxConfig->allowLegacyRenegotiate = false;
     ctxConfig->isSupportClientVerify = false;
     ctxConfig->isSupportNoClientCert = false;
     ctxConfig->isSupportExtendMasterSecret = false;
@@ -544,6 +551,7 @@ HLT_Ctx_Config* HLT_NewCtxConfigTLCP(char *setFile, const char *key, bool isClie
 
 HLT_Ctx_Config* HLT_NewCtxConfig(char *setFile, const char *key)
 {
+    (void)setFile;
     HLT_Ctx_Config *ctxConfig;
     Process *localProcess;
 
@@ -555,9 +563,12 @@ HLT_Ctx_Config* HLT_NewCtxConfig(char *setFile, const char *key)
     (void)memset_s(ctxConfig, sizeof(HLT_Ctx_Config), 0, sizeof(HLT_Ctx_Config));
     ctxConfig->needCheckKeyUsage = false;
     ctxConfig->isSupportRenegotiation = false;
+    ctxConfig->allowClientRenegotiate = false;
+    ctxConfig->allowLegacyRenegotiate = false;
     ctxConfig->isSupportClientVerify = false;
     ctxConfig->isSupportNoClientCert = false;
     ctxConfig->isSupportVerifyNone = false;
+    ctxConfig->isSupportPostHandshakeAuth = false;
     ctxConfig->isSupportExtendMasterSecret = true;
     ctxConfig->isSupportSessionTicket = false;
     ctxConfig->isSupportDhAuto = true;
@@ -566,9 +577,10 @@ HLT_Ctx_Config* HLT_NewCtxConfig(char *setFile, const char *key)
     ctxConfig->setSessionCache = HITLS_SESS_CACHE_SERVER;
     ctxConfig->mtu = 0;
     ctxConfig->infoCb = NULL;
-	ctxConfig->securitylevel = HITLS_DEFAULT_SECURITY_LEVEL;
+	ctxConfig->securitylevel = HITLS_SECURITY_LEVEL_ZERO;
 	ctxConfig->SupportType = 0;
-
+    ctxConfig->readAhead = 1;
+    ctxConfig->emptyRecordsNum = 32;
     HLT_SetGroups(ctxConfig, "NULL");
     HLT_SetCipherSuites(ctxConfig, "NULL");
     HLT_SetTls13CipherSuites(ctxConfig, "NULL");
@@ -604,6 +616,7 @@ HLT_Ctx_Config* HLT_NewCtxConfig(char *setFile, const char *key)
 
 HLT_Ssl_Config *HLT_NewSslConfig(char *setFile)
 {
+    (void)setFile;
     HLT_Ssl_Config *sslConfig;
     Process *localProcess;
 
@@ -634,8 +647,6 @@ int HLT_LibraryInit(TLS_TYPE tlsType)
 
 int HLT_TlsRegCallback(TlsCallbackType type)
 {
-    Process *process = GetProcess();
-
     switch (type) {
         case HITLS_CALLBACK_DEFAULT:
 		    FRAME_Init();
@@ -646,8 +657,7 @@ int HLT_TlsRegCallback(TlsCallbackType type)
     return SUCCESS;
 }
 
-
-void HLT_FreeAllProcess()
+void HLT_FreeAllProcess(void)
 {
     int ret;
     HLT_Tls_Res* tlsRes;
@@ -713,7 +723,7 @@ static int LocalProcessTlsInit(HLT_Process *process, TLS_VERSION tlsVersion,
 {
     void *ctx, *ssl;
 
-    ctx = HLT_TlsNewCtx(tlsVersion, ctxConfig->isClient);
+    ctx = HLT_TlsNewCtx(tlsVersion);
     if (ctx == NULL) {
         LOG_ERROR("HLT_TlsNewCtx ERROR");
         goto ERR;
@@ -755,7 +765,8 @@ ERR:
 static int RemoteProcessTlsInit(HLT_Process *process, TLS_VERSION tlsVersion,
                                 HLT_Ctx_Config *ctxConfig, HLT_Ssl_Config *sslConfig, HLT_Tls_Res *tlsRes)
 {
-    int ctxId, sslId;
+    int ctxId;
+    int sslId;
 
     ctxId = HLT_RpcTlsNewCtx(process, tlsVersion, ctxConfig->isClient);
     if (ctxId < 0) {
@@ -877,13 +888,13 @@ HLT_Tls_Res* HLT_ProcessTlsAccept(HLT_Process *process, TLS_VERSION tlsVersion,
     // Check whether the call is invoked by the local process or by the RPC.
     if (process->remoteFlag == 0) {
         acceptId = HLT_TlsAccept(tlsRes->ssl);
-        if (acceptId == ERROR) {
+        if (acceptId == (unsigned long int)ERROR) {
             LOG_ERROR("HLT_TlsAccept ERROR");
             return NULL;
         }
     } else {
         acceptId = HLT_RpcTlsAccept(process, tlsRes->sslId);
-        if (acceptId == ERROR) {
+        if (acceptId == (unsigned long int)ERROR) {
             LOG_ERROR("HLT_TlsAccept ERROR");
             return NULL;
         }
@@ -994,13 +1005,27 @@ int HLT_SetRenegotiationSupport(HLT_Ctx_Config *ctxConfig, bool support)
     return SUCCESS;
 }
 
-int32_t HLT_SetNoSecRenegotiationCb(HLT_Ctx_Config *ctxConfig, char* NoSecRenegotiationCb)
+int HLT_SetLegacyRenegotiateSupport(HLT_Ctx_Config *ctxConfig, bool support)
 {
-    (void)memset_s(ctxConfig->noSecRenegotiationCb, MAX_NO_RENEGOTIATIONCB_LEN, 0, MAX_NO_RENEGOTIATIONCB_LEN);
-    if (strcpy_s(ctxConfig->noSecRenegotiationCb, MAX_NO_RENEGOTIATIONCB_LEN, NoSecRenegotiationCb) != EOK) {
-        LOG_ERROR("HLT_SetNoSecRenegotiationCb failed.");
-        return -1;
-    }
+    ctxConfig->allowLegacyRenegotiate = support;
+    return SUCCESS;
+}
+
+int HLT_SetClientRenegotiateSupport(HLT_Ctx_Config *ctxConfig, bool support)
+{
+    ctxConfig->allowClientRenegotiate = support;
+    return SUCCESS;
+}
+
+int HLT_SetEmptyRecordsNum(HLT_Ctx_Config *ctxConfig, uint32_t emptyNum)
+{
+    ctxConfig->emptyRecordsNum = emptyNum;
+    return SUCCESS;
+}
+
+int HLT_SetEncryptThenMac(HLT_Ctx_Config *ctxConfig, int support)
+{
+    ctxConfig->isEncryptThenMac = support;
     return SUCCESS;
 }
 
@@ -1270,4 +1295,24 @@ int HLT_SetFrameHandle(HLT_FrameHandle *frameHandle)
 void HLT_CleanFrameHandle(void)
 {
     CleanFrameHandle();
+}
+
+#define SCTP_AUTH_FILE_PATH "/proc/sys/net/sctp/auth_enable"
+#define SCTP_AUTH_ENABLE "echo 1 > /proc/sys/net/sctp/auth_enable"
+#define SCTP_FLAG_BUFF 10
+
+bool IsEnableSctpAuth(void)
+{
+    system(SCTP_AUTH_ENABLE);
+    char buf[SCTP_FLAG_BUFF] = { 0 };
+    FILE* file = fopen(SCTP_AUTH_FILE_PATH, "r+");
+    if (file == NULL) {
+        return false;
+    }
+    (void)fgets(buf, SCTP_FLAG_BUFF, file);
+    fclose(file);
+    if (strcmp(buf, "1") == 0) {
+        return true;
+    }
+    return false;
 }

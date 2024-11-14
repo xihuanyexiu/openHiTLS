@@ -1,12 +1,20 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /* BEGIN_HEADER */
+
 #include "rec_wrapper.h"
 #include "alert.h"
 #include "hitls_crypt_init.h"
@@ -96,7 +104,7 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_OBSOLETE_RESERVED_FUNC_TC001(int signAlg)
     ASSERT_EQ(NewConfig(&testInfo), HITLS_SUCCESS);
     HITLS_CFG_SetSignature(testInfo.config, (uint16_t *)&signAlg, 1);
 
-    ASSERT_EQ(DoHandshake(&testInfo), HITLS_MSG_HANDLE_ERR_NO_SERVER_CERTIFICATE);
+    ASSERT_EQ(DoHandshake(&testInfo), HITLS_CERT_ERR_NO_SIGN_SCHEME_MATCH);
 
 exit:
     ClearWrapper();
@@ -122,7 +130,7 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_OBSOLETE_RESERVED_FUNC_TC002(int group)
     HsTestInfo testInfo = {0};
     testInfo.version = HITLS_VERSION_TLS13;
     testInfo.uioType = BSL_UIO_TCP;
- 
+
     ASSERT_EQ(NewConfig(&testInfo), HITLS_SUCCESS);
     HITLS_CFG_SetGroups(testInfo.config, (uint16_t *)&group, 1);
     ASSERT_EQ(DoHandshake(&testInfo), HITLS_MSG_HANDLE_ILLEGAL_SELECTED_GROUP);

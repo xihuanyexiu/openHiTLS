@@ -1,62 +1,125 @@
-openHiTLS软件许可协议 1.0
-（openHiTLS Software License Agreement 1.0）
+                                                            木兰宽松许可证, 第2版
 
-1. 适用范围
-本许可协议（下称“本协议”）用于约定您及您有权代表的公司（以下称 “您”或“被许可方”）与华为技术有限公司及其子公司（以下称“华为”或“许可方”）之间关于在中华人民共和国境内对openHiTLS软件（下称“本软件”或“被许可软件”）的非排他使用。您同意本协议的约定，方可下载、安装以及使用本软件。如果您不同意本协议的约定或者您没有本协议约定的上述缔约资格，请不要下载、安装以及按照本协议约定使用本软件。
+木兰宽松许可证， 第2版
+2020年1月 http://license.coscl.org.cn/MulanPSL2
 
-2. 定义
-2.1 本软件是指本协议所在的代码仓发布的openHiTLS软件、文档等及其更新。本软件包含可执行文件代码、源代码、示例源代码和openHiTLS预发布版本等。
-在本软件中包含的第三方软件，也可能受单独的许可条款管辖，包括但不限于第三方许可条款，和/或开源许可证条款。如果本协议中的条款与该单独的许可条款之间存在任何冲突，则该单独的许可条款仅应在解决前述冲突所需的范围内适用。
-2.2 openHiTLS预发布版本是指在发行说明、代码仓或其他地方标记为预发行、原型、alpha或beta代码的材料或材料的相关部分。因此，openHiTLS预发布版本中的代码（i）可能没有完全功能或测试，可能包含错误或缺陷；（ii）华为在开发生产版本时可能会对其进行实质性修改；或（iii）华为不保证它将开发或提供相应的生产版本。
-2.3 开源软件（Open Source Software）是指任何受“开源许可证”约束的源代码或者目标码。本软件中以源代码形式、非公开分发的软件不属于开源软件。
-2.4 开源许可证（Open Source License）是指经OSI批准的符合开源定义的许可证。
-2.5 本软件中的标识包含但不限于商标。
+您对“软件”的复制、使用、修改及分发受木兰宽松许可证，第2版（“本许可证”）的如下条款的约束：
 
-3. 许可范围
-在被许可方遵守本协议的前提下，许可方许可被许可方在全球范围内的、免费的、非独占的、有限的、非排他的、不可分许可的、不可转许可的、可撤销的、有期限的、针对被许可软件的如下使用许可：
-（1）复制合理数量的被许可软件副本；
-（2）可以根据被许可方的业务用途，在被许可方系统上运行被许可软件；
-（3）被许可方可以对被许可软件进行必要的修改、增加、编译或二次开发，以适应性的开发目标软件。
+0.   定义
 
-4. 使用限制
-4.1 除本协议明确约定外，您不得：
-（1）使用、复制、披露、分发或公开展示本软件；
-（2）共享、发布、出租或租赁本软件给任何第三方；
-（3）转让您在本协议中的权利及义务或转让本软件；
-（4）删除、阻止、最小化或修改本软件内包含的版权声明、提示、通知以及其他法律声明; 
-（5）未经华为书面同意公开本软件相关数据，包括但不限于性能评估数据。
+“软件” 是指由“贡献”构成的许可在“本许可证”下的程序和相关文档的集合。
 
-4.2 本协议授权您的各项权利，除非获得许可方的书面同意，否则不可转让。您只能在所有权变更、合并、收购、出售或转让您的全部或实质上全部业务或资产的同时，才可将您根据本协议收到的本软件以及您在本协议下的所有权利转让给另一方（“统称为受让人”）。
+“贡献” 是指由任一“贡献者”许可在“本许可证”下的受版权法保护的作品。
 
-5. 材料更新
-本软件可能随时被更新，并且可能不会事先对您进行通知。除非这些更新包含独立的许可条款，否则这些更新视为本协议中的本软件的一部分，适用于本协议。
+“贡献者” 是指将受版权法保护的作品许可在“本许可证”下的自然人或“法人实体”。
 
-6. 所有权
-本软件受知识产权保护，包括但不限于版权法和国际条约规定。您不得从本软件中删除任何版权或其他专有通知。您同意防止任何未经授权的复制本软件。除在本协议中明确授权您的权利外，本协议不授予您任何其他权利或许可；特别是，不授予您任何明显或暗示的华为专利、版权、商标或商业秘密权利。
+“法人实体” 是指提交贡献的机构及其“关联实体”。
 
-7. 反馈
-您同意根据您使用本软件提供给华为的任何代码、文档、评论、建议或其他材料（统称“材料”），您在此授予华为非独占、永久的、不可撤销、免费的版权许可，华为可以基于您提供的材料复制、修改、创建衍生作品、公开展示、披露、分发、许可和分许可，将材料及其包含的所有数据、图像、声音、文本和其他作品，包括其衍生作品，用于任何商业或非商业目的，并以其他方式使用。
+“关联实体” 是指，对“本许可证”下的行为方而言，控制、受控制或与其共同受控制的机构，此处的控制是指有受控方或共同受控方至少50%直接或间接的投票权、资金或其他有价证券。
 
-8. 保密义务
-如果您与华为之间就使用本软件没有签订独立的保密协议，本协议以下约定将适用您使用本软件要遵从的保密条款。本协议中约定的本软件是保密信息，这些信息仅用于根据本协议进行使用的目的。您将以至少与您保护自己的机密和专有信息相同的谨慎程度维护华为机密信息的机密性，并且这种谨慎程度要至少达到合理程度。您将仅向需要了解并同意遵守保密条款的员工披露机密信息，您将对任何此类员工的违反本协议约定的行为负责。就本协议而言，术语“员工”将包括与您签署保密协议的您的独立承包商。
+1.   授予版权许可
 
-9. 责任限制与排除
-在任何情况下，华为不对您根据本协议使用本软件而产生或与之相关的任何直接、间接、附带、后果、特殊或其他损失或损害负责，包括但不限于，下列任何损失或损害（无论此类损失或损害是预见的、可预见的、已知的或其他的）:（i）收入损失；（ii）实际或预期利润损失；（iii）货币使用损失；（iv）预期节约的损失；（v）业务损失；（vi）机会损失；（vii）商誉损失；（viii）软件的使用损失；（ix）声誉损失；（x）损失、损害，或数据损坏；或（xi）任何间接、附带的特殊或间接损害损失。
+每个“贡献者”根据“本许可证”授予您永久性的、全球性的、免费的、非独占的、不可撤销的版权许可，您可以复制、使用、修改、分发其“贡献”，不论修改与否。
 
-10. 不保证
-10.1 本协议中的本软件，华为不提供任何明示、暗示的保证，包括关于适销性、适用于任何特定目的的保证或条件、不侵权或因任何交易过程、贸易使用、建议书、规范或样品而产生的任何保证。
-10.2 除法律另有明确规定外，华为不保证本软件中的软件（包括但不限于第三方软件或开源软件）无错误或不间断地运行，华为将积极响应并提供在本软件生命周期内出现的影响产品使用的重大软件漏洞的缓解措施或修补方案，但不保证华为会测试、纠正所有错误。此外，由于不断出现新的入侵和攻击网络的技术，华为不保证本软件或使用本软件的任何设备、系统或网络不会受到入侵或攻击。
+2.   授予专利许可
 
-11. 期限和终止
-11.1 本协议自您接受本协议之日起生效。如果您违反了本协议任何条款和条件，并且在华为书面通知后三十（30）天内，此类违规行为未得到纠正，华为可立即终止本协议，您将承担由此给华为造成的损失，该损失包含诉讼费和律师费。
-11.2 如果您在本协议期间发起针对华为的诉讼或对第三方使用的本软件本身提起诉讼，本协议在您发起诉讼之日起自动终止。
-11.3 您将同意您为本软件提供与本协议至少同等的保护，如果您的客户在销售、使用您开发的集成了本软件的产品的过程中出现违反本协议的行为，您将及时采取措施制止上述行为。如果您未采取有效措施，华为可终止本协议。若您违反本协议约定而引起华为遭受损失或第三方索赔，您应负责应诉、并为华为抗辩，或在华为的要求下合作抗辩，以保障华为的利益不受任何损害，并赔偿华为因此而支出的包括但不限于诉讼费及律师费、和解费，赔偿费在内的全部费用和支出。
-11.4 本协议终止后，您将立即返还或销毁本软件及其所有副本。如果本协议终止，则在终止生效日期之前，您根据本协议条款和条件分发的任何本软件将在本协议的任何此类终止后继续有效。
+每个“贡献者”根据“本许可证”授予您永久性的、全球性的、免费的、非独占的、不可撤销的（根据本条规定撤销除外）专利许可，供您制造、委托制造、使用、许诺销售、销售、进口其“贡献”或以其他方式转移其“贡献”。前述专利许可仅限于“贡献者”现在或将来拥有或控制的其“贡献”本身或其“贡献”与许可“贡献”时的“软件”结合而将必然会侵犯的专利权利要求，不包括对“贡献”的修改或包含“贡献”的其他结合。如果您或您的“关联实体”直接或间接地，就“软件”或其中的“贡献”对任何人发起专利侵权诉讼（包括反诉或交叉诉讼）或其他专利维权行动，指控其侵犯专利权，则“本许可证”授予您对“软件”的专利许可自您提起诉讼或发起维权行动之日终止。
 
+3.   无商标许可
 
-12. 出口管制
-您同意本软件的出口、再出口可能适用出口管制相关的法律。任何针对本软件或集成本软件的产品的出口、再出口均不得违反上述法律，也不得用于上述法律所禁止的任何目的。
+“本许可证”不提供对“贡献者”的商品名称、商标、服务标志或产品名称的商标许可，但您为满足第4条规定的声明义务而必须使用除外。
 
-13. 一般条款
-13.1 本协议应根据中华人民共和国法律解释、理解和管辖。本协议下产生的争议如双方不能友好协商解决，应由中国广东省深圳市有管辖权的法院管辖。
-13.2 本协议的某一条款无效、非法或不可执行，双方应尽可能按照原有意图订立修改条款来替代该无效条款，协议中其余条款的效力和执行力不受该无效条款的影响。
+4.   分发限制
+
+您可以在任何媒介中将“软件”以源程序形式或可执行形式重新分发，不论修改与否，但您必须向接收者提供“本许可证”的副本，并保留“软件”中的版权、商标、专利及免责声明。
+
+5.   免责声明与责任限制
+
+“软件”及其中的“贡献”在提供时不带任何明示或默示的担保。在任何情况下，“贡献者”或版权所有者不对任何人因使用“软件”或其中的“贡献”而引发的任何直接或间接损失承担责任，不论因何种原因导致或者基于何种法律理论，即使其曾被建议有此种损失的可能性。
+
+6.   语言
+
+“本许可证”以中英文双语表述，中英文版本具有同等法律效力。如果中英文版本存在任何冲突不一致，以中文版为准。
+
+条款结束
+
+如何将木兰宽松许可证，第2版，应用到您的软件
+
+如果您希望将木兰宽松许可证，第2版，应用到您的新软件，为了方便接收者查阅，建议您完成如下三步：
+
+1， 请您补充如下声明中的空白，包括软件名、软件的首次发表年份以及您作为版权人的名字；
+
+2， 请您在软件包的一级目录下创建以“LICENSE”为名的文件，将整个许可证文本放入该文件中；
+
+3， 请将如下声明文本放入每个源文件的头部注释中。
+
+Copyright (c) [Year] [name of copyright holder]
+[Software Name] is licensed under Mulan PSL v2.
+You can use this software according to the terms and conditions of the Mulan PSL v2.
+You may obtain a copy of Mulan PSL v2 at:
+         http://license.coscl.org.cn/MulanPSL2
+THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+See the Mulan PSL v2 for more details.
+Mulan Permissive Software License，Version 2
+Mulan Permissive Software License，Version 2 (Mulan PSL v2)
+
+January 2020 http://license.coscl.org.cn/MulanPSL2
+
+Your reproduction, use, modification and distribution of the Software shall be subject to Mulan PSL v2 (this License) with the following terms and conditions:
+
+0. Definition
+
+Software means the program and related documents which are licensed under this License and comprise all Contribution(s).
+
+Contribution means the copyrightable work licensed by a particular Contributor under this License.
+
+Contributor means the Individual or Legal Entity who licenses its copyrightable work under this License.
+
+Legal Entity means the entity making a Contribution and all its Affiliates.
+
+Affiliates means entities that control, are controlled by, or are under common control with the acting entity under this License, ‘control’ means direct or indirect ownership of at least fifty percent (50%) of the voting power, capital or other securities of controlled or commonly controlled entity.
+
+1. Grant of Copyright License
+
+Subject to the terms and conditions of this License, each Contributor hereby grants to you a perpetual, worldwide, royalty-free, non-exclusive, irrevocable copyright license to reproduce, use, modify, or distribute its Contribution, with modification or not.
+
+2. Grant of Patent License
+
+Subject to the terms and conditions of this License, each Contributor hereby grants to you a perpetual, worldwide, royalty-free, non-exclusive, irrevocable (except for revocation under this Section) patent license to make, have made, use, offer for sale, sell, import or otherwise transfer its Contribution, where such patent license is only limited to the patent claims owned or controlled by such Contributor now or in future which will be necessarily infringed by its Contribution alone, or by combination of the Contribution with the Software to which the Contribution was contributed. The patent license shall not apply to any modification of the Contribution, and any other combination which includes the Contribution. If you or your Affiliates directly or indirectly institute patent litigation (including a cross claim or counterclaim in a litigation) or other patent enforcement activities against any individual or entity by alleging that the Software or any Contribution in it infringes patents, then any patent license granted to you under this License for the Software shall terminate as of the date such litigation or activity is filed or taken.
+
+3. No Trademark License
+
+No trademark license is granted to use the trade names, trademarks, service marks, or product names of Contributor, except as required to fulfill notice requirements in section 4.
+
+4. Distribution Restriction
+
+You may distribute the Software in any medium with or without modification, whether in source or executable forms, provided that you provide recipients with a copy of this License and retain copyright, patent, trademark and disclaimer statements in the Software.
+
+5. Disclaimer of Warranty and Limitation of Liability
+
+THE SOFTWARE AND CONTRIBUTION IN IT ARE PROVIDED WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED. IN NO EVENT SHALL ANY CONTRIBUTOR OR COPYRIGHT HOLDER BE LIABLE TO YOU FOR ANY DAMAGES, INCLUDING, BUT NOT LIMITED TO ANY DIRECT, OR INDIRECT, SPECIAL OR CONSEQUENTIAL DAMAGES ARISING FROM YOUR USE OR INABILITY TO USE THE SOFTWARE OR THE CONTRIBUTION IN IT, NO MATTER HOW IT’S CAUSED OR BASED ON WHICH LEGAL THEORY, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+6. Language
+
+THIS LICENSE IS WRITTEN IN BOTH CHINESE AND ENGLISH, AND THE CHINESE VERSION AND ENGLISH VERSION SHALL HAVE THE SAME LEGAL EFFECT. IN THE CASE OF DIVERGENCE BETWEEN THE CHINESE AND ENGLISH VERSIONS, THE CHINESE VERSION SHALL PREVAIL.
+
+END OF THE TERMS AND CONDITIONS
+
+How to Apply the Mulan Permissive Software License，Version 2 (Mulan PSL v2) to Your Software
+
+To apply the Mulan PSL v2 to your work, for easy identification by recipients, you are suggested to complete following three steps:
+
+Fill in the blanks in following statement, including insert your software name, the year of the first publication of your software, and your name identified as the copyright owner;
+Create a file named "LICENSE" which contains the whole context of this License in the first directory of your software package;
+Attach the statement to the appropriate annotated syntax at the beginning of each source file.
+Copyright (c) [Year] [name of copyright holder]
+[Software Name] is licensed under Mulan PSL v2.
+You can use this software according to the terms and conditions of the Mulan PSL v2.
+You may obtain a copy of Mulan PSL v2 at:
+         http://license.coscl.org.cn/MulanPSL2
+THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+See the Mulan PSL v2 for more details.

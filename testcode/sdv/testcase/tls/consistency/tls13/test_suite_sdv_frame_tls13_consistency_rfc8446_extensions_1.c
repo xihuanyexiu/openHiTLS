@@ -1,13 +1,21 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /* BEGIN_HEADER */
 /* INCLUDE_BASE test_suite_tls13_consistency_rfc8446 */
+
 #include <stdio.h>
 #include "stub_replace.h"
 #include "hitls.h"
@@ -49,7 +57,7 @@ typedef struct {
 
 static int32_t DoHandshake(ResumeTestInfo *testInfo)
 {
-    HITLS_CFG_SetCloseCheckKeyUsage(testInfo->config, false);
+    HITLS_CFG_SetCheckKeyUsage(testInfo->config, false);
 
     testInfo->client = FRAME_CreateLink(testInfo->config, testInfo->uioType);
     if (testInfo->client == NULL) {
@@ -538,9 +546,9 @@ static void RepeatClientHelloExtension(void *memberAddress, bool isPsk)
         HITLS_CFG_SetPskServerCallback(testInfo.config, (HITLS_PskServerCb)ExampleServerCb);
         HITLS_CFG_SetPskClientCallback(testInfo.config, (HITLS_PskClientCb)ExampleClientCb);
     }
-    uint8_t serverName[] = "testServer";
+    char serverName[] = "testServer";
     uint8_t alpn[6] = {4, '1', '2', '3', '4', 0};
-    HITLS_CFG_SetServerName(testInfo.config, serverName, strlen((char *)serverName));
+    HITLS_CFG_SetServerName(testInfo.config, (uint8_t *)serverName, strlen(serverName));
     HITLS_CFG_SetAlpnProtos(testInfo.config, alpn, strlen((char *)alpn));
     testInfo.client = FRAME_CreateLink(testInfo.config, testInfo.uioType);
     testInfo.server = FRAME_CreateLink(testInfo.config, testInfo.uioType);
@@ -1374,7 +1382,7 @@ static void ErrorServerVersion(uint16_t version)
         ALERT_Info alert = { 0 };
         ALERT_GetInfo(testInfo.client->ssl, &alert);
         ASSERT_EQ(alert.level, ALERT_LEVEL_FATAL);
-        ASSERT_EQ(alert.description, ALERT_PROTOCOL_VERSION);
+        ASSERT_EQ(alert.description, ALERT_ILLEGAL_PARAMETER);
     }
 exit:
     ClearWrapper();

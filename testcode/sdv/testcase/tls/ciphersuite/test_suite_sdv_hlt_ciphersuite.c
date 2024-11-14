@@ -1,13 +1,23 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /* BEGIN_HEADER */
+
+#include <stdio.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include <semaphore.h>
 #include "securec.h"
 #include "hlt.h"
@@ -15,6 +25,7 @@
 #include "hitls_config.h"
 #include "hitls_cert_type.h"
 #include "crypt_util_rand.h"
+#include "helper.h"
 #include "hitls.h"
 #include "frame_tls.h"
 #include "hitls_type.h"
@@ -22,15 +33,11 @@
 
 #define READ_BUF_LEN_18K (18 * 1024)
 #define PORT 10086
-
 int32_t g_testSecurityLevel = 0;
 
 void SetCert(HLT_Ctx_Config *ctxConfig, char *cert)
 {
-    if (strncmp(cert, "DSS", strlen("DSS")) == 0) {
-        HLT_SetCertPath(ctxConfig, DSA_SHA1_CA_PATH, DSA_SHA1_CHAIN_PATH, DSA_SHA1_CLIENT_PATH,
-            DSA_SHA1_CLIENT_PRIV_PATH, "NULL", "NULL");
-    } else if (strncmp(cert, "RSA", strlen("RSA")) == 0) {
+    if (strncmp(cert, "RSA", strlen("RSA")) == 0) {
         HLT_SetCertPath(ctxConfig, RSA_SHA_CA_PATH, RSA_SHA_CHAIN_PATH, RSA_SHA256_EE_PATH3, RSA_SHA256_PRIV_PATH3,
             "NULL", "NULL");
     } else if (strncmp(cert, "ECDSA", strlen("ECDSA")) == 0) {
@@ -62,8 +69,6 @@ char *HITLS_RSA_Ciphersuite[] = {
     "HITLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
     "HITLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
     "HITLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
-    "HITLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
-    "HITLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
     "HITLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
     "HITLS_DHE_RSA_WITH_AES_128_CBC_SHA",
     "HITLS_DHE_RSA_WITH_AES_256_CBC_SHA",
@@ -90,15 +95,6 @@ char *HITLS_ECDSA_Ciphersuite[] = {
     "HITLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
     "HITLS_ECDHE_ECDSA_WITH_AES_128_CCM",
     "HITLS_ECDHE_ECDSA_WITH_AES_256_CCM",
-};
-
-char *HITLS_DSS_Ciphersuite[] = {
-    "HITLS_DHE_DSS_WITH_AES_128_GCM_SHA256",
-    "HITLS_DHE_DSS_WITH_AES_256_GCM_SHA384",
-    "HITLS_DHE_DSS_WITH_AES_128_CBC_SHA",
-    "HITLS_DHE_DSS_WITH_AES_256_CBC_SHA",
-    "HITLS_DHE_DSS_WITH_AES_128_CBC_SHA256",
-    "HITLS_DHE_DSS_WITH_AES_256_CBC_SHA256",
 };
 
 char *HITLS_ANON_Ciphersuite[] = {
@@ -175,17 +171,17 @@ static void CONNECT(int version, int connType, char *Ciphersuite, int hasPsk, ch
     HLT_SetCipherSuites(serverCtxConfig, Ciphersuite);
     HLT_SetCipherSuites(clientCtxConfig, Ciphersuite);
 
-    HLT_Tls_Res *serverRes = HLT_ProcessTlsAccept(remoteProcess, version, serverCtxConfig, NULL);
+    HLT_Tls_Res *serverRes = HLT_ProcessTlsAccept(localProcess, version, serverCtxConfig, NULL);
     ASSERT_TRUE(serverRes != NULL);
 
-    HLT_Tls_Res *clientRes = HLT_ProcessTlsConnect(localProcess, version, clientCtxConfig, NULL);
+    HLT_Tls_Res *clientRes = HLT_ProcessTlsConnect(remoteProcess, version, clientCtxConfig, NULL);
     ASSERT_TRUE(clientRes != NULL);
     ASSERT_TRUE(HLT_GetTlsAcceptResult(serverRes) == 0);
 
-    ASSERT_TRUE(HLT_ProcessTlsWrite(remoteProcess, serverRes, (uint8_t *)"Hello World", strlen("Hello World")) == 0);
+    ASSERT_TRUE(HLT_ProcessTlsWrite(localProcess, serverRes, (uint8_t *)"Hello World", strlen("Hello World")) == 0);
     uint8_t readBuf[READ_BUF_LEN_18K] = {0};
     uint32_t readLen;
-    ASSERT_TRUE(HLT_ProcessTlsRead(localProcess, clientRes, readBuf, READ_BUF_LEN_18K, &readLen) == 0);
+    ASSERT_TRUE(HLT_ProcessTlsRead(remoteProcess, clientRes, readBuf, READ_BUF_LEN_18K, &readLen) == 0);
     ASSERT_TRUE(readLen == strlen("Hello World"));
     ASSERT_TRUE(memcmp("Hello World", readBuf, readLen) == 0);
 exit:
@@ -193,7 +189,7 @@ exit:
 }
 
 /* BEGIN_CASE */
-void SDV_TLS_TLS13_CIPHER_SUITE()
+void SDV_TLS_TLS13_CIPHER_SUITE(void)
 {
     for (uint16_t i = 0; i < sizeof(HITLS_TLS13_Ciphersuite) / sizeof(HITLS_TLS13_Ciphersuite[0]); i++) {
         CONNECT(TLS1_3, TCP, HITLS_TLS13_Ciphersuite[i], 0, "RSA");
@@ -202,12 +198,14 @@ void SDV_TLS_TLS13_CIPHER_SUITE()
 /* END_CASE */
 
 /* BEGIN_CASE */
-void SDV_TLS_RSA_CIPHER_SUITE()
+void SDV_TLS_RSA_CIPHER_SUITE(void)
 {
     for (uint16_t i = 0; i < sizeof(HITLS_RSA_Ciphersuite) / sizeof(HITLS_RSA_Ciphersuite[0]); i++) {
         SUB_PROC_BEGIN(continue);
         CONNECT(TLS1_2, TCP, HITLS_RSA_Ciphersuite[i], 0, "RSA");
-        CONNECT(DTLS1_2, SCTP, HITLS_RSA_Ciphersuite[i], 0, "RSA");
+        if (IsEnableSctpAuth()) {
+            CONNECT(DTLS1_2, SCTP, HITLS_RSA_Ciphersuite[i], 0, "RSA");
+        }
         SUB_PROC_END();
     }
     SUB_PROC_WAIT(sizeof(HITLS_RSA_Ciphersuite) / sizeof(HITLS_RSA_Ciphersuite[0]));
@@ -215,12 +213,14 @@ void SDV_TLS_RSA_CIPHER_SUITE()
 /* END_CASE */
 
 /* BEGIN_CASE */
-void SDV_TLS_ECDSA_CIPHER_SUITE()
+void SDV_TLS_ECDSA_CIPHER_SUITE(void)
 {
     for (uint16_t i = 0; i < sizeof(HITLS_ECDSA_Ciphersuite) / sizeof(HITLS_ECDSA_Ciphersuite[0]); i++) {
         SUB_PROC_BEGIN(continue);
         CONNECT(TLS1_2, TCP, HITLS_ECDSA_Ciphersuite[i], 0, "ECDSA");
-        CONNECT(DTLS1_2, SCTP, HITLS_ECDSA_Ciphersuite[i], 0, "ECDSA");
+        if (IsEnableSctpAuth()) {
+            CONNECT(DTLS1_2, SCTP, HITLS_ECDSA_Ciphersuite[i], 0, "ECDSA");
+        }
         SUB_PROC_END();
     }
     SUB_PROC_WAIT(sizeof(HITLS_ECDSA_Ciphersuite) / sizeof(HITLS_ECDSA_Ciphersuite[0]));
@@ -228,41 +228,32 @@ void SDV_TLS_ECDSA_CIPHER_SUITE()
 /* END_CASE */
 
 /* BEGIN_CASE */
-void SDV_TLS_DSS_CIPHER_SUITE()
-{
-    for (uint16_t i = 0; i < sizeof(HITLS_DSS_Ciphersuite) / sizeof(HITLS_DSS_Ciphersuite[0]); i++) {
-        SUB_PROC_BEGIN(continue);
-        CONNECT(TLS1_2, TCP, HITLS_DSS_Ciphersuite[i], 0, "DSS");
-        CONNECT(DTLS1_2, SCTP, HITLS_DSS_Ciphersuite[i], 0, "DSS");
-        SUB_PROC_END();
-    }
-    SUB_PROC_WAIT(sizeof(HITLS_DSS_Ciphersuite) / sizeof(HITLS_DSS_Ciphersuite[0]));
-}
-/* END_CASE */
-
-/* BEGIN_CASE */
-void SDV_TLS_PSK_CIPHER_SUITE()
+void SDV_TLS_PSK_CIPHER_SUITE(void)
 {
     for (uint16_t i = 0; i < sizeof(HITLS_PSK_Ciphersuite) / sizeof(HITLS_PSK_Ciphersuite[0]); i++)
     {
         SUB_PROC_BEGIN(continue);
         CONNECT(TLS1_2, TCP, HITLS_PSK_Ciphersuite[i], 1, "RSA");
-        CONNECT(DTLS1_2, SCTP, HITLS_PSK_Ciphersuite[i], 1, "RSA");
+        if (IsEnableSctpAuth()) {
+            CONNECT(DTLS1_2, SCTP, HITLS_PSK_Ciphersuite[i], 1, "RSA");
+        }
         SUB_PROC_END();
     }
-    SUB_PROC_WAIT(sizeof(HITLS_PSK_Ciphersuite)/sizeof(HITLS_PSK_Ciphersuite[0]));
+    SUB_PROC_WAIT(sizeof(HITLS_PSK_Ciphersuite) / sizeof(HITLS_PSK_Ciphersuite[0]));
 }
 /* END_CASE */
 
 /* BEGIN_CASE */
-void SDV_TLS_ANON_CIPHER_SUITE()
+void SDV_TLS_ANON_CIPHER_SUITE(void)
 {
     for (uint16_t i = 0; i < sizeof(HITLS_ANON_Ciphersuite) / sizeof(HITLS_ANON_Ciphersuite[0]); i++) {
         SUB_PROC_BEGIN(continue);
         CONNECT(TLS1_2, TCP, HITLS_ANON_Ciphersuite[i], 0, "RSA");
-        CONNECT(DTLS1_2, SCTP, HITLS_ANON_Ciphersuite[i], 0, "RSA");
+        if (IsEnableSctpAuth()) {
+            CONNECT(DTLS1_2, SCTP, HITLS_ANON_Ciphersuite[i], 0, "RSA");
+        }
         SUB_PROC_END();
     }
-    SUB_PROC_WAIT(sizeof(HITLS_ANON_Ciphersuite)/sizeof(HITLS_ANON_Ciphersuite[0]));
+    SUB_PROC_WAIT(sizeof(HITLS_ANON_Ciphersuite) / sizeof(HITLS_ANON_Ciphersuite[0]));
 }
 /* END_CASE */

@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /**
@@ -122,6 +129,22 @@ typedef struct {
 /**
  * @ingroup crypt_types
  *
+ * Paillier private key parameter structure
+ */
+typedef struct {
+    uint8_t *n;      /**< Paillier private key parameter marked as n */
+    uint8_t *lambda; /**< Paillier private key parameter marked as lambda */
+    uint8_t *mu;     /**< Paillier private key parameter marked as mu */
+    uint8_t *n2;     /**< Paillier private key parameter marked as n2 */
+    uint32_t nLen;   /**< Length of the Paillier private key parameter marked as n */
+    uint32_t lambdaLen; /**< Length of the Paillier private key parameter marked as lambda */
+    uint32_t muLen; /**< Length of the Paillier private key parameter marked as mu */
+    uint32_t n2Len; /**< Length of the Paillier private key parameter marked as n2 */
+} CRYPT_PaillierPrv;
+
+/**
+ * @ingroup crypt_types
+ *
  * DSA private key parameter structure
  */
 typedef CRYPT_Data CRYPT_DsaPrv;
@@ -171,13 +194,6 @@ typedef CRYPT_Data CRYPT_Curve25519Prv;
 /**
  * @ingroup crypt_types
  *
- * ed448/x448 private key parameter structure
- */
-typedef CRYPT_Data CRYPT_Curve448Prv;
-
-/**
- * @ingroup crypt_types
- *
  * RSA public key parameter structure
  */
 typedef struct {
@@ -186,6 +202,20 @@ typedef struct {
     uint32_t eLen; /**< Length of the RSA public key parameter marked as e*/
     uint32_t nLen; /**< Length of the RSA public key parameter marked as e*/
 } CRYPT_RsaPub;
+
+/**
+ * @ingroup crypt_types
+ *
+ * Paillier public key parameter structure
+ */
+typedef struct {
+    uint8_t *n;  /**< Paillier public key parameter marked as n */
+    uint8_t *g;  /**< Paillier public key parameter marked as g */
+    uint8_t *n2; /**< Paillier public key parameter marked as n2 */
+    uint32_t nLen; /**< Length of the Paillier public key parameter marked as n */
+    uint32_t gLen; /**< Length of the Paillier public key parameter marked as g */
+    uint32_t n2Len; /**< Length of the Paillier public key parameter marked as n2 */
+} CRYPT_PaillierPub;
 
 /**
  * @ingroup crypt_types
@@ -239,13 +269,6 @@ typedef CRYPT_Data CRYPT_Curve25519Pub;
 /**
  * @ingroup crypt_types
  *
- * ed448/x448 public key parameter structure
- */
-typedef CRYPT_Data CRYPT_Curve448Pub;
-
-/**
- * @ingroup crypt_types
- *
  * Para structure of the RSA algorithm
  */
 typedef struct {   /**< This parameter cannot be NULL and is determined by the underlying structure. */
@@ -281,6 +304,19 @@ typedef struct {
     uint32_t qLen; /**< Length of parameter q. */
     uint32_t gLen; /**< Length of parameter g. */
 } CRYPT_DhPara;
+
+/**
+ * @ingroup crypt_types
+ *
+ * Para structure of the Paillier algorithm
+ */
+typedef struct {
+    uint8_t *p; /**< Parameter p. */
+    uint8_t *q; /**< Parameter q. */
+    uint32_t pLen; /**< Length of parameter p. */
+    uint32_t qLen; /**< Length of parameter q. */
+    uint32_t bits; /**< Bits of para. */
+} CRYPT_PaillierPara;
 
 /**
  * @ingroup crypt_types
@@ -400,6 +436,7 @@ typedef enum {
     CRYPT_CTRL_SET_RSA_FLAG,            /**< RSA set the flag. */
     CRYPT_CTRL_CLR_RSA_FLAG,            /**< RSA clear the flag. */
     CRYPT_CTRL_SET_RSA_RSAES_PKCSV15,   /**< RSA Set the encryption/decryption padding mode to RSAES_PKCSV15. */
+    CRYPT_CTRL_SET_RSA_RSAES_PKCSV15_TLS, /**< RSA Set the encryption/decryption padding mode to RSAES_PKCSV15_TLS. */
     CRYPT_CTRL_SET_SM9_HASH_METHOD,     /**< SM9 Set the hash method. */
     CRYPT_CTRL_SET_SM2_USER_ID,
     CRYPT_CTRL_SET_SM2_HASH_METHOD,     /* SM2 calculate the hash value by set SM3. */
@@ -411,11 +448,9 @@ typedef enum {
     CRYPT_CTRL_SM2_GET_SEND_CHECK,      /* SM2 obtain the check value sent from the local end to the peer end. */
     CRYPT_CTRL_SM2_DO_CHECK,            /* SM2 check the shared key. */
 
-    CRYPT_CTRL_SET_ED448_HASH_METHOD,   /**< ed448 Set the hash method. */
-    CRYPT_CTRL_SET_ED448_CONTEXT,       /**< ed448 Set the context. */
-    CRYPT_CTRL_SET_ED448_PREHASH,       /**< ed448 Set the prehash mode. */
     CRYPT_CTRL_UP_REFERENCES,           /**< The reference count value increases automatically.
                                              It is applicable to asymmetric algorithms such as 25519, RSA, and ECC. */
+    CRYPT_CTRL_GEN_ECC_PUBLICKEY,       /**< Use prikey genarate pubkey. */
 } CRYPT_PkeyCtrl;
 
 /**
@@ -439,6 +474,8 @@ typedef enum {
     CRYPT_PKEY_RSAES_OAEP,       /**< OAEP according to RFC8017. */
     CRYPT_PKEY_RSAES_PKCSV15,    /**< RSAES_PKCSV15 according to RFC8017. */
     CRYPT_PKEY_RSA_NO_PAD,
+    CRYPT_RSAES_PKCSV15_TLS, /* Specific RSA pkcs1.5 padding verification process to
+                                prevent possible Bleichenbacher attacks */
     CRYPT_PKEY_RSA_PADDINGMAX,
 } CRYPT_RsaPadType;
 

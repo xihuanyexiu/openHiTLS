@@ -1,20 +1,40 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include <stdint.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <fcntl.h>
 
+#include "hitls_build.h"
 #include "bsl_sal.h"
+#include "bsl_errno.h"
+#include "bsl_errno.h"
 #include "crypt_errno.h"
 #include "crypt_types.h"
+#include "crypt_eal_md.h"
+#include "eal_md_local.h"
 #include "crypt_eal_rand.h"
+#include "crypt_eal_mac.h"
 
+#include "test.h"
 #include "helper.h"
 #include "crypto_test_util.h"
+
+#include "securec.h"
+#include "crypt_util_rand.h"
 
 #ifndef HITLS_BSL_SAL_MEM
 void *TestMalloc(uint32_t len)
@@ -76,6 +96,23 @@ static void CleanEntropy(void *ctx, CRYPT_Data *entropy)
     return;
 }
 #endif
+
+int32_t TestSimpleRand(uint8_t *buff, uint32_t len)
+{
+    int rand = open("/dev/urandom", O_RDONLY);
+    if (rand < 0) {
+        printf("open /dev/urandom failed.\n");
+        return -1;
+    }
+    int l = read(rand, buff, len);
+    if (l < 0) {
+        printf("read from /dev/urandom failed. errno: %d.\n", errno);
+        close(rand);
+        return -1;
+    }
+    close(rand);
+    return 0;
+}
 
 int TestRandInit(void)
 {

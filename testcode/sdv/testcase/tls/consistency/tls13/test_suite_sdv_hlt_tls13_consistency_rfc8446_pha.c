@@ -1,13 +1,21 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /* BEGIN_HEADER */
 /* INCLUDE_BASE test_suite_tls13_consistency_rfc8446 */
+
 #include <stdio.h>
 #include "stub_replace.h"
 #include "hitls.h"
@@ -822,7 +830,7 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC009()
     ASSERT_TRUE(remoteProcess != NULL);
 
     int32_t serverConfigId = HLT_RpcTlsNewCtx(remoteProcess, version, false);
-    void *clientConfig = HLT_TlsNewCtx(version, true);
+    void *clientConfig = HLT_TlsNewCtx(version);
     ASSERT_TRUE(clientConfig != NULL);
 
     // Apply and initialize config
@@ -946,7 +954,7 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC011()
     ASSERT_TRUE(remoteProcess != NULL);
 
     int32_t serverConfigId = HLT_RpcTlsNewCtx(remoteProcess, version, false);
-    void *clientConfig = HLT_TlsNewCtx(version, true);
+    void *clientConfig = HLT_TlsNewCtx(version);
     ASSERT_TRUE(clientConfig != NULL);
 
     // Apply for and initialize the config file
@@ -965,12 +973,12 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC011()
 
     // Configure the client to send an empty certificate
     HLT_SetCertPath(
-        clientCtxConfig, "rsa_sha256/root.pem:rsa_sha256/intca.pem", "NULL", "NULL", "NULL", "NULL", "NULL");
+        clientCtxConfig, "rsa_sha256/ca.der:rsa_sha256/inter.der", "NULL", "NULL", "NULL", "NULL", "NULL");
     HLT_SetCertPath(serverCtxConfig,
-        "rsa_sha256/root.pem:rsa_sha256/intca.pem",
-        "rsa_sha256/intca.pem",
-        "rsa_sha256/server.pem",
-        "rsa_sha256/server.key.pem",
+        "rsa_sha256/ca.der:rsa_sha256/inter.der",
+        "rsa_sha256/inter.der",
+        "rsa_sha256/server.der",
+        "rsa_sha256/server.key.der",
         "NULL",
         "NULL");
 
@@ -1070,7 +1078,7 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC012()
     ASSERT_TRUE(remoteProcess != NULL);
 
     int32_t serverConfigId = HLT_RpcTlsNewCtx(remoteProcess, version, false);
-    void *clientConfig = HLT_TlsNewCtx(version, true);
+    void *clientConfig = HLT_TlsNewCtx(version);
     ASSERT_TRUE(clientConfig != NULL);
 
     // Apply for and initialize the config file
@@ -1089,12 +1097,12 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC012()
 
     // Configure the client to send an empty certificate
     HLT_SetCertPath(
-        clientCtxConfig, "rsa_sha256/root.pem:rsa_sha256/intca.pem", "NULL", "NULL", "NULL", "NULL", "NULL");
+        clientCtxConfig, "rsa_sha256/ca.der:rsa_sha256/inter.der", "NULL", "NULL", "NULL", "NULL", "NULL");
     HLT_SetCertPath(serverCtxConfig,
-        "rsa_sha256/root.pem:rsa_sha256/intca.pem",
-        "rsa_sha256/intca.pem",
-        "rsa_sha256/server.pem",
-        "rsa_sha256/server.key.pem",
+        "rsa_sha256/ca.der:rsa_sha256/inter.der",
+        "rsa_sha256/inter.der",
+        "rsa_sha256/server.der",
+        "rsa_sha256/server.key.der",
         "NULL",
         "NULL");
 
@@ -1193,7 +1201,7 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC013()
     ASSERT_TRUE(remoteProcess != NULL);
 
     int32_t serverConfigId = HLT_RpcTlsNewCtx(remoteProcess, version, false);
-    void *clientConfig = HLT_TlsNewCtx(version, true);
+    void *clientConfig = HLT_TlsNewCtx(version);
     ASSERT_TRUE(clientConfig != NULL);
 
     // Apply for and initialize the configuration file
@@ -1212,17 +1220,17 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC013()
 
     // Set the server certificate to the RSA certificate and the client certificate to the ECDSA certificate.
     HLT_SetCertPath(clientCtxConfig,
-        "rsa_sha256/root.pem:rsa_sha256/intca.pem",
-        "ecdsa/intca.pem",
-        "ecdsa/ec_app256SHA256.pem",
-        "ecdsa/ec_app256SHA256.key.pem",
+        "rsa_sha256/ca.der:rsa_sha256/inter.der",
+        "ecdsa/inter-nist521.der",
+        "ecdsa/end256-sha256.der",
+        "ecdsa/end256-sha256.key.der",
         "NULL",
         "NULL");
     HLT_SetCertPath(serverCtxConfig,
-        "rsa_sha256/root.pem:rsa_sha256/intca.pem",
-        "rsa_sha256/intca.pem",
-        "rsa_sha256/server.pem",
-        "rsa_sha256/server.key.pem",
+        "rsa_sha256/ca.der:rsa_sha256/inter.der",
+        "rsa_sha256/inter.der",
+        "rsa_sha256/server.der",
+        "rsa_sha256/server.key.der",
         "NULL",
         "NULL");
 
@@ -1322,7 +1330,7 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC014()
 
     // Apply for and initialize the configuration file
     int32_t serverConfigId = HLT_RpcTlsNewCtx(remoteProcess, version, false);
-    void *clientConfig = HLT_TlsNewCtx(version, true);
+    void *clientConfig = HLT_TlsNewCtx(version);
     ASSERT_TRUE(clientConfig != NULL);
 
     HLT_Ctx_Config *clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
@@ -1341,17 +1349,17 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC014()
     // Set the client server certificate to RSA certificate, and set the client terminal certificate to ECDSA
     // certificate.
     HLT_SetCertPath(clientCtxConfig,
-        "rsa_sha256/root.pem:rsa_sha256/intca.pem",
-        "ecdsa/intca.pem",
-        "ecdsa/ec_app256SHA256.pem",
-        "ecdsa/ec_app256SHA256.key.pem",
+        "rsa_sha256/ca.der:rsa_sha256/inter.der",
+        "ecdsa/inter-nist521.der",
+        "ecdsa/end256-sha256.der",
+        "ecdsa/end256-sha256.key.der",
         "NULL",
         "NULL");
     HLT_SetCertPath(serverCtxConfig,
-        "rsa_sha256/root.pem:rsa_sha256/intca.pem",
-        "rsa_sha256/intca.pem",
-        "rsa_sha256/server.pem",
-        "rsa_sha256/server.key.pem",
+        "rsa_sha256/ca.der:rsa_sha256/inter.der",
+        "rsa_sha256/inter.der",
+        "rsa_sha256/server.der",
+        "rsa_sha256/server.key.der",
         "NULL",
         "NULL");
 
@@ -1454,7 +1462,7 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC015()
     ASSERT_TRUE(remoteProcess != NULL);
 
     int32_t serverConfigId = HLT_RpcTlsNewCtx(remoteProcess, version, false);
-    void *clientConfig = HLT_TlsNewCtx(version, true);
+    void *clientConfig = HLT_TlsNewCtx(version);
     ASSERT_TRUE(clientConfig != NULL);
 
     // Apply for and initialize the configuration file
@@ -1470,17 +1478,17 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC015()
     serverCtxConfig->isSupportPostHandshakeAuth = true;
 
     HLT_SetCertPath(clientCtxConfig,
-        "rsa_sha256/root.pem:rsa_sha256/intca.pem",
-        "rsa_sha256/intca.pem",
-        "rsa_sha256/server.pem",
-        "rsa_sha256/server.key.pem",
+        "rsa_sha256/ca.der:rsa_sha256/inter.der",
+        "rsa_sha256/inter.der",
+        "rsa_sha256/server.der",
+        "rsa_sha256/server.key.der",
         "NULL",
         "NULL");
     HLT_SetCertPath(serverCtxConfig,
-        "rsa_sha256/root.pem:rsa_sha256/intca.pem",
-        "rsa_sha256/intca.pem",
-        "rsa_sha256/server.pem",
-        "rsa_sha256/server.key.pem",
+        "rsa_sha256/ca.der:rsa_sha256/inter.der",
+        "rsa_sha256/inter.der",
+        "rsa_sha256/server.der",
+        "rsa_sha256/server.key.der",
         "NULL",
         "NULL");
 
@@ -1591,7 +1599,7 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC016()
     ASSERT_TRUE(remoteProcess != NULL);
 
     int32_t serverConfigId = HLT_RpcTlsNewCtx(remoteProcess, version, false);
-    void *clientConfig = HLT_TlsNewCtx(version, true);
+    void *clientConfig = HLT_TlsNewCtx(version);
     ASSERT_TRUE(clientConfig != NULL);
 
     // Apply for and initialize the configuration file
@@ -1607,17 +1615,17 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC016()
     serverCtxConfig->isSupportPostHandshakeAuth = true;
 
     HLT_SetCertPath(clientCtxConfig,
-        "rsa_sha256/root.pem:rsa_sha256/intca.pem",
-        "rsa_sha256/intca.pem",
-        "rsa_sha256/server.pem",
-        "rsa_sha256/server.key.pem",
+        "rsa_sha256/ca.der:rsa_sha256/inter.der",
+        "rsa_sha256/inter.der",
+        "rsa_sha256/server.der",
+        "rsa_sha256/server.key.der",
         "NULL",
         "NULL");
     HLT_SetCertPath(serverCtxConfig,
-        "rsa_sha256/root.pem:rsa_sha256/intca.pem",
-        "rsa_sha256/intca.pem",
-        "rsa_sha256/server.pem",
-        "rsa_sha256/server.key.pem",
+        "rsa_sha256/ca.der:rsa_sha256/inter.der",
+        "rsa_sha256/inter.der",
+        "rsa_sha256/server.der",
+        "rsa_sha256/server.key.der",
         "NULL",
         "NULL");
 
@@ -1728,7 +1736,7 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC017()
     ASSERT_TRUE(remoteProcess != NULL);
 
     int32_t serverConfigId = HLT_RpcTlsNewCtx(remoteProcess, version, false);
-    void *clientConfig = HLT_TlsNewCtx(version, true);
+    void *clientConfig = HLT_TlsNewCtx(version);
     ASSERT_TRUE(clientConfig != NULL);
 
     // Apply for and initialize the configuration file
@@ -1744,17 +1752,17 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC017()
     serverCtxConfig->isSupportPostHandshakeAuth = true;
 
     HLT_SetCertPath(clientCtxConfig,
-        "rsa_sha256/root.pem:rsa_sha256/intca.pem",
-        "rsa_sha256/intca.pem",
-        "rsa_sha256/server.pem",
-        "rsa_sha256/server.key.pem",
+        "rsa_sha256/ca.der:rsa_sha256/inter.der",
+        "rsa_sha256/inter.der",
+        "rsa_sha256/server.der",
+        "rsa_sha256/server.key.der",
         "NULL",
         "NULL");
     HLT_SetCertPath(serverCtxConfig,
-        "rsa_sha256/root.pem:rsa_sha256/intca.pem",
-        "rsa_sha256/intca.pem",
-        "rsa_sha256/server.pem",
-        "rsa_sha256/server.key.pem",
+        "rsa_sha256/ca.der:rsa_sha256/inter.der",
+        "rsa_sha256/inter.der",
+        "rsa_sha256/server.der",
+        "rsa_sha256/server.key.der",
         "NULL",
         "NULL");
 
