@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /**
@@ -97,7 +104,7 @@ typedef enum {
     BSL_UIO_SCTP_SND_BUFF_IS_EMPTY,
     BSL_UIO_SCTP_GET_SEND_STREAM_ID,
     BSL_UIO_SCTP_SET_APP_STREAM_ID,
-    BSL_UIO_SCTP_MARK_APP_MESSAGE,
+    BSL_UIO_SCTP_MASK_APP_MESSAGE,
 } BSL_UIO_CtrlParameter;
 
 #define BSL_UIO_FILE_READ             0x02
@@ -349,6 +356,17 @@ int32_t BSL_UIO_Gets(BSL_UIO *uio, char *buf, uint32_t *readLen);
  * @retval  protocol type
  */
 int32_t BSL_UIO_GetTransportType(const BSL_UIO *uio);
+
+/**
+ * @ingroup bsl_uio
+ *
+ * @brief   Obtain the UIO transmission protocol type
+ * @param   uio  [IN] UIO object.
+ * @param   uioType [IN] Type of the protocol to be obtained.
+ * @return  TRUE, Succeeded in obtaining the UIO type.
+ * @return  FALSE, Failed to obtain the UIO type.
+ */
+bool BSL_UIO_GetUioChainTransportType(BSL_UIO *uio, const BSL_UIO_TransportType uioType);
 
 /**
  * @ingroup bsl_uio

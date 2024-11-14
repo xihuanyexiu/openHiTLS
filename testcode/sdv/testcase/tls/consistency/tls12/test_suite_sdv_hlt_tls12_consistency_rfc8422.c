@@ -1,13 +1,21 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /* BEGIN_HEADER */
 /* INCLUDE_BASE test_suite_tls12_consistency_rfc5246 */
+
 #include <stdio.h>
 #include "stub_replace.h"
 #include "hitls.h"
@@ -217,173 +225,6 @@ void SDV_TLS_TLS12_RFC8422_CONSISTENCY_CURVE_AND_AUTH_FUNC_TC002(void)
     clientRes = HLT_ProcessTlsInit(localProcess, TLS1_2, clientCtxConfig, NULL);
     /* Set the curve secp256r1 on the client and server, set the certificate curve secp384r1, and set the ECC
      *  cipher suite. */
-    int ret = HLT_TlsConnect(clientRes->ssl);
-    ASSERT_TRUE(ret != 0);
-exit:
-    HLT_FreeAllProcess();
-    HLT_CleanFrameHandle();
-}
-/* END_CASE */
-
-/** @
-* @test SDV_TLS_TLS12_RFC8422_CONSISTENCY_ED448_ED25519_FUNC_TC001
-* @title    Use the ED25519 certificate (pub key alg) and specify the ed448 signature (client hello).
-* @precon nan
-* @brief    Set the signature algorithm supported by the client is set to ed448 and the server certificate is set to
-*            ed25519, the expected connection establishment fails.
-* @expect 1. Connect establishment fails.
-@ */
-/* BEGIN_CASE */
-void SDV_TLS_TLS12_RFC8422_CONSISTENCY_ED448_ED25519_FUNC_TC001(void)
-{
-    HLT_Tls_Res *serverRes = NULL;
-    HLT_Tls_Res *clientRes = NULL;
-    HLT_Process *localProcess = NULL;
-    HLT_Process *remoteProcess = NULL;
-    HLT_Ctx_Config *serverCtxConfig = NULL;
-    HLT_Ctx_Config *clientCtxConfig = NULL;
-    // Create a process.
-    localProcess = HLT_InitLocalProcess(HITLS);
-    ASSERT_TRUE(localProcess != NULL);
-    remoteProcess = HLT_LinkRemoteProcess(HITLS, TCP, g_uiPort, true);
-    ASSERT_TRUE(remoteProcess != NULL);
-    serverCtxConfig = HLT_NewCtxConfig(NULL, "SERVER");
-    ASSERT_TRUE(serverCtxConfig != NULL);
-
-    HLT_SetCertPath(serverCtxConfig,
-        "ed25519/root.pem",
-        "ed25519/intca.pem",
-        "ed25519/server.pem",
-        "ed25519/server.key.pem",
-        "NULL",
-        "NULL");
-
-    clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
-    ASSERT_TRUE(clientCtxConfig != NULL);
-    HLT_SetCertPath(clientCtxConfig, "ed25519/root.pem", "ed25519/intca.pem", "NULL", "NULL", "NULL", "NULL");
-    HLT_SetGroups(clientCtxConfig, "HITLS_EC_GROUP_SECP256R1");
-    HLT_SetCipherSuites(clientCtxConfig, "HITLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256");
-    HLT_SetSignature(clientCtxConfig, "CERT_SIG_SCHEME_ED448");
-
-    serverRes = HLT_ProcessTlsAccept(remoteProcess, TLS1_2, serverCtxConfig, NULL);
-    ASSERT_TRUE(serverRes != NULL);
-    clientRes = HLT_ProcessTlsInit(localProcess, TLS1_2, clientCtxConfig, NULL);
-    ASSERT_TRUE(clientRes != NULL);
-    /* Set the signature algorithm supported by the client is set to ed448 and the server certificate is set to ed25519
-     */
-    int ret = HLT_TlsConnect(clientRes->ssl);
-    ASSERT_TRUE(ret != 0);
-exit:
-    HLT_FreeAllProcess();
-    HLT_CleanFrameHandle();
-}
-/* END_CASE */
-
-/** @
-* @test SDV_TLS_TLS12_RFC8422_CONSISTENCY_NIST_ED25519_FUNC_TC001
-* @title Use the ED25519 certificate to specify the SEPC signature algorithm.
-* @precon nan
-* @brief  Set the signature algorithm supported by the client is set to secp256r1,secp384r1,secp521r1,ecdsa_sha1 and the
-*         server certificate is set to ED25519, the connection establishment fails.
-* @expect 1. Connect establishment fails.
-@ */
-/* BEGIN_CASE */
-void SDV_TLS_TLS12_RFC8422_CONSISTENCY_NIST_ED25519_FUNC_TC001(void)
-{
-    HLT_Tls_Res *serverRes = NULL;
-    HLT_Tls_Res *clientRes = NULL;
-    HLT_Process *localProcess = NULL;
-    HLT_Process *remoteProcess = NULL;
-    HLT_Ctx_Config *serverCtxConfig = NULL;
-    HLT_Ctx_Config *clientCtxConfig = NULL;
-    // Create a process.
-    localProcess = HLT_InitLocalProcess(HITLS);
-    ASSERT_TRUE(localProcess != NULL);
-    remoteProcess = HLT_LinkRemoteProcess(HITLS, TCP, g_uiPort, true);
-    ASSERT_TRUE(remoteProcess != NULL);
-    serverCtxConfig = HLT_NewCtxConfig(NULL, "SERVER");
-    ASSERT_TRUE(serverCtxConfig != NULL);
-    /* Set the signature algorithm supported by the client is set to secp256r1,secp384r1,secp521r1,ecdsa_sha1 and the
-     *  server certificate is set to ED25519 */
-    HLT_SetCertPath(serverCtxConfig,
-        "ed25519/root.pem",
-        "ed25519/intca.pem",
-        "ed25519/server.pem",
-        "ed25519/server.key.pem",
-        "NULL",
-        "NULL");
-    clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
-    ASSERT_TRUE(clientCtxConfig != NULL);
-    HLT_SetCertPath(clientCtxConfig, "ed25519/root.pem", "ed25519/intca.pem", "NULL", "NULL", "NULL", "NULL");
-    HLT_SetGroups(clientCtxConfig, "HITLS_EC_GROUP_SECP256R1:HITLS_EC_GROUP_SECP384R1:HITLS_EC_GROUP_SECP521R1");
-    HLT_SetCipherSuites(clientCtxConfig, "HITLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256");
-    HLT_SetSignature(clientCtxConfig,
-        "CERT_SIG_SCHEME_ECDSA_SECP256R1_SHA256:CERT_SIG_SCHEME_ECDSA_SECP384R1_SHA384:"
-        "CERT_SIG_SCHEME_ECDSA_SECP521R1_SHA512");
-
-    serverRes = HLT_ProcessTlsAccept(remoteProcess, TLS1_2, serverCtxConfig, NULL);
-    ASSERT_TRUE(serverRes != NULL);
-    clientRes = HLT_ProcessTlsInit(localProcess, TLS1_2, clientCtxConfig, NULL);
-    ASSERT_TRUE(clientRes != NULL);
-    int ret = HLT_TlsConnect(clientRes->ssl);
-    ASSERT_TRUE(ret != 0);
-exit:
-    HLT_FreeAllProcess();
-    HLT_CleanFrameHandle();
-}
-/* END_CASE */
-
-/** @
-* @test SDV_TLS_TLS12_RFC8422_CONSISTENCY_ECDHE_DIFF_CURVE_FUNC_TC001
-* @title The client and server support different curves.
-* @precon nan
-* @brief Set the ECC cipher suite is set on the client and server, the curve is set to SECP256R1, and the curve is set
-*        to CURVE448 on the server, the handshake fails.
-* @expect 1. Connect establishment fails.
-@ */
-/* BEGIN_CASE */
-void SDV_TLS_TLS12_RFC8422_CONSISTENCY_ECDHE_DIFF_CURVE_FUNC_TC001(void)
-{
-    HLT_Tls_Res *serverRes = NULL;
-    HLT_Tls_Res *clientRes = NULL;
-    HLT_Process *localProcess = NULL;
-    HLT_Process *remoteProcess = NULL;
-    HLT_Ctx_Config *serverCtxConfig = NULL;
-    HLT_Ctx_Config *clientCtxConfig = NULL;
-    localProcess = HLT_InitLocalProcess(HITLS);
-    ASSERT_TRUE(localProcess != NULL);
-    remoteProcess = HLT_LinkRemoteProcess(HITLS, TCP, g_uiPort, true);
-    ASSERT_TRUE(remoteProcess != NULL);
-    /* Set the ECC cipher suite is set on the client and server, the curve is set to SECP256R1, and the curve is set
-     *  to CURVE448 on the server */
-    serverCtxConfig = HLT_NewCtxConfig(NULL, "SERVER");
-    ASSERT_TRUE(serverCtxConfig != NULL);
-
-    HLT_SetCertPath(serverCtxConfig,
-        "ed25519/root.pem",
-        "ed25519/intca.pem",
-        "ed25519/server.pem",
-        "ed25519/server.key.pem",
-        "NULL",
-        "NULL");
-    HLT_SetGroups(serverCtxConfig, "HITLS_EC_GROUP_CURVE448");
-    clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
-    ASSERT_TRUE(clientCtxConfig != NULL);
-    HLT_SetCertPath(clientCtxConfig,
-        "ed25519/root.pem",
-        "ed25519/intca.pem",
-        "ed25519/server.pem",
-        "ed25519/server.key.pem",
-        "NULL",
-        "NULL");
-    HLT_SetGroups(clientCtxConfig, "HITLS_EC_GROUP_SECP256R1");
-    HLT_SetCipherSuites(clientCtxConfig, "HITLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256");
-    HLT_SetSignature(clientCtxConfig, "CERT_SIG_SCHEME_ED25519");
-
-    serverRes = HLT_ProcessTlsAccept(remoteProcess, TLS1_2, serverCtxConfig, NULL);
-    ASSERT_TRUE(serverRes != NULL);
-    clientRes = HLT_ProcessTlsInit(localProcess, TLS1_2, clientCtxConfig, NULL);
-    ASSERT_TRUE(clientRes != NULL);
     int ret = HLT_TlsConnect(clientRes->ssl);
     ASSERT_TRUE(ret != 0);
 exit:

@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #ifndef HS_COMMON_H
@@ -116,7 +123,7 @@ uint8_t *HS_PrepareSignData(const TLS_Ctx *ctx, const uint8_t *partSignData,
 uint8_t *HS_PrepareSignDataTlcp(
     const TLS_Ctx *ctx, const uint8_t *partSignData, uint32_t partSignDataLen, uint32_t *signDataLen);
 
-#ifndef HITLS_NO_DTLS12
+#if defined(HITLS_TLS_PROTO_DTLS12) && defined(HITLS_BSL_UIO_SCTP)
 /**
  * @brief Set the SCTP auth key to the SCTP.
  *
@@ -150,20 +157,7 @@ int32_t HS_ActiveSctpAuthKey(TLS_Ctx *ctx);
 * @retval For details, see UIO_SctpDelPreAuthKey.
 */
 int32_t HS_DeletePreviousSctpAuthKey(TLS_Ctx *ctx);
-#endif /* end #ifndef HITLS_NO_DTLS12 */
-
-/**
- * @brief Obtain the list of supported certificate types based on the configured cipher suite.
- *
- * @param config [IN] config Context
- * @param buf [OUT] List of supported certificate types
- * @param bufSize [IN] Array buffer size
- * @param listSize [OUT] Length of the supported certificate type list
- *
- * @retval HITLS_SUCCESS Operation succeeded.
- * @retval HITLS_INTERNAL_EXCEPTION The length of the array buffer is insufficient.
- */
-int32_t HS_GetSupportedCertTypeList(const TLS_Config *config, uint8_t *buf, uint32_t bufSize, uint32_t *listSize);
+#endif /* #if defined(HITLS_TLS_PROTO_DTLS12) && defined(HITLS_BSL_UIO_SCTP) */
 
 bool IsNeedServerKeyExchange(const TLS_Ctx *ctx);
 
@@ -171,7 +165,7 @@ bool IsPskNegotiation(const TLS_Ctx *ctx);
 
 bool IsNeedCertPrepare(const CipherSuiteInfo *cipherSuiteInfo);
 
-bool IsTicketSupport(TLS_Ctx *ctx);
+bool IsTicketSupport(const TLS_Ctx *ctx);
 
 int32_t CheckClientPsk(TLS_Ctx *ctx);
 
@@ -191,17 +185,28 @@ int32_t HS_ReSizeMsgBuf(TLS_Ctx *ctx, uint32_t msgSize);
  * the capacity does not exceed upperBound bytes, And you can choose whether to retain the original data
  * @param ctx [IN] TLS context
  * @param msgSize[IN] Expected length
- * @param upperBound[IN] Upper limit of the capacity length
  * @param keepOldData[IN] Indicates whether to retain the old data.
  *
  * @retval HITLS_SUCCESS Operation succeeded.
  * @retval HITLS_MEMALLOC_FAIL failed to apply for memory.
  * @retval HITLS_MEMCPY_FAIL Data fails to be copied.
  */
-int32_t HS_GrowMsgBuf(TLS_Ctx *ctx, uint32_t msgSize, uint32_t upperBound, bool keepOldData);
+int32_t HS_GrowMsgBuf(TLS_Ctx *ctx, uint32_t msgSize, bool keepOldData);
 
 /**
- * @brief Return the maximum message length allowed by the handshake status.
+ * @brief Calculate the length based on the type of the packet to be sent to expand the capacity of
+ * the msgBuf in the hsCtx.
+ *
+ * @param ctx [IN] TLS context
+ * @param state[IN] Handshake status
+ *
+ * @retval HITLS_SUCCESS Operation succeeded.
+ * @retval  For details about other error codes, see hitls_error.
+ */
+int32_t HS_AllocMsgBufferFromType(TLS_Ctx *ctx, HITLS_HandshakeState state);
+
+/**
+ * @brief Return the maximum packet length allowed by the handshake status.
  *
  * @param ctx [IN] TLS context
  * @param type[IN] Handshake message type
@@ -229,6 +234,14 @@ uint32_t HS_GetBinderLen(HITLS_Session *session, HITLS_HashAlgo* hashAlg);
  * @return  true: valid; false: invalid
  */
 bool GroupConformToVersion(uint16_t version, uint16_t group);
+
+uint16_t *CheckSupportSignAlgorithms(const TLS_Ctx *ctx, const uint16_t *signAlgorithms,
+    uint32_t signAlgorithmsSize, uint32_t *newSignAlgorithmsSize);
+
+uint32_t HS_GetExtensionTypeId(uint32_t hsExtensionsType);
+
+int32_t HS_CheckReceivedExtension(HITLS_Ctx *ctx, HS_MsgType hsType, uint64_t hsMsgExtensionsMask,
+    uint64_t hsMsgAllowedExtensionsMask);
 
 #ifdef __cplusplus
 }

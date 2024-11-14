@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #ifndef HLT_TYPE_H
@@ -39,122 +46,55 @@ extern "C" {
 #define ALPN_DATA_NAME_LEN (50)
 #define MAX_NO_RENEGOTIATIONCB_LEN (1024)
 
-#define DEFAULT_CERT_PATH       "../../testcode/testdata/tls/certificate/"
+#define DEFAULT_CERT_PATH       "../../testcode/testdata/tls/certificate/der/"
 
-#define ECDSA_RSA_CA_PATH       "ecdsa_rsa_cert/rootCA.pem:ecdsa_rsa_cert/CA1.pem"
-#define ECDSA_RSA_CHAIN_PATH    "ecdsa_rsa_cert/CA1.pem"
-#define ECDSA_RSA_EE_PATH       "ecdsa_rsa_cert/ee.pem"
-#define ECDSA_RSA_PRIV_PATH     "ecdsa_rsa_cert/ee.key.pem"
+#define RSA_SHA_CA_PATH         "rsa_sha/ca-3072.der:rsa_sha/inter-3072.der"
+#define RSA_SHA_CHAIN_PATH      "rsa_sha/inter-3072.der"
+#define RSA_SHA1_EE_PATH        "rsa_sha/end-sha1.der"
+#define RSA_SHA1_PRIV_PATH      "rsa_sha/end-sha1.key.der"
+#define RSA_SHA384_EE_PATH      "rsa_sha/end-sha384.der"
+#define RSA_SHA384_PRIV_PATH    "rsa_sha/end-sha384.key.der"
+#define RSA_SHA512_EE_PATH      "rsa_sha/end-sha512.der"
+#define RSA_SHA512_PRIV_PATH    "rsa_sha/end-sha512.key.der"
+#define ECDSA_SHA_CA_PATH       "ecdsa/ca-nist521.der:ecdsa/inter-nist521.der"
+#define ECDSA_SHA_CHAIN_PATH    "ecdsa/inter-nist521.der"
+#define ECDSA_SHA256_EE_PATH    "ecdsa/end256-sha256.der"
+#define ECDSA_SHA256_PRIV_PATH  "ecdsa/end256-sha256.key.der"
+#define ECDSA_SHA384_EE_PATH    "ecdsa/end384-sha384.der"
+#define ECDSA_SHA384_PRIV_PATH  "ecdsa/end384-sha384.key.der"
+#define ECDSA_SHA512_EE_PATH    "ecdsa/end521-sha512.der"
+#define ECDSA_SHA512_PRIV_PATH  "ecdsa/end521-sha512.key.der"
 
-#define RSA_SHA_CA_PATH         "rsa_sha/root.pem:rsa_sha/intca.pem"
-#define RSA_SHA_CHAIN_PATH      "rsa_sha/intca.pem"
-#define RSA_SHA1_EE_PATH        "rsa_sha/RSA2048SHA1.pem"
-#define RSA_SHA1_PRIV_PATH      "rsa_sha/RSA2048SHA1.key.pem"
-#define RSA_SHA384_EE_PATH      "rsa_sha/RSA2048SHA384.pem"
-#define RSA_SHA384_PRIV_PATH    "rsa_sha/RSA2048SHA384.key.pem"
-#define RSA_SHA512_EE_PATH      "rsa_sha/RSA2048SHA512.pem"
-#define RSA_SHA512_PRIV_PATH    "rsa_sha/RSA2048SHA512.key.pem"
+#define ECDSA_SHA1_CA_PATH      "ecdsa_sha1/ca-nist521.der:ecdsa_sha1/inter-nist521.der"
+#define ECDSA_SHA1_CHAIN_PATH   "ecdsa_sha1/inter-nist521.der"
+#define ECDSA_SHA1_EE_PATH      "ecdsa_sha1/end384-sha1.der"
+#define ECDSA_SHA1_PRIV_PATH    "ecdsa_sha1/end384-sha1.key.der"
+#define RSA_SHA256_CA_PATH      "rsa_sha256/ca.der:rsa_sha256/inter.der"
+#define RSA_SHA256_CHAIN_PATH   "rsa_sha256/inter.der"
+#define RSA_SHA256_EE_PATH1     "rsa_sha256/server.der"
+#define RSA_SHA256_PRIV_PATH1   "rsa_sha256/server.key.der"
+#define RSA_SHA256_EE_PATH2     "rsa_sha256/client.der"
+#define RSA_SHA256_PRIV_PATH2   "rsa_sha256/client.key.der"
+#define RSA_SHA256_EE_PATH3     "rsa_sha/end-sha256.der"
+#define RSA_SHA256_PRIV_PATH3   "rsa_sha/end-sha256.key.der"
 
-#define ECDSA_SHA_CA_PATH       "ecdsa/root.pem:ecdsa/intca.pem"
-#define ECDSA_SHA_CHAIN_PATH    "ecdsa/intca.pem"
-#define ECDSA_SHA256_EE_PATH    "ecdsa/ec_app256SHA256.pem"
-#define ECDSA_SHA256_PRIV_PATH  "ecdsa/ec_app256SHA256.key.pem"
-#define ECDSA_SHA384_EE_PATH    "ecdsa/ec_app384SHA384.pem"
-#define ECDSA_SHA384_PRIV_PATH  "ecdsa/ec_app384SHA384.key.pem"
-#define ECDSA_SHA512_EE_PATH    "ecdsa/ec_app512SHA512.pem"
-#define ECDSA_SHA512_PRIV_PATH  "ecdsa/ec_app512SHA512.key.pem"
+#define ECDSA_SHA256_CA_PATH    "ecdsa_sha256/ca.der:ecdsa_sha256/inter.der"
+#define ECDSA_SHA256_CHAIN_PATH "ecdsa_sha256/inter.der"
+#define ECDSA_SHA256_EE_PATH1   "ecdsa_sha256/server.der"
+#define ECDSA_SHA256_PRIV_PATH1 "ecdsa_sha256/server.key.der"
+#define ECDSA_SHA256_EE_PATH2   "ecdsa_sha256/client.der"
+#define ECDSA_SHA256_PRIV_PATH2 "ecdsa_sha256/client.key.der"
 
-#define ECDSA_SHA1_CA_PATH      "ecdsa_sha1/ec_root.pem:ecdsa_sha1/ec_intca.pem"
-#define ECDSA_SHA1_CHAIN_PATH   "ecdsa_sha1/ec_intca.pem"
-#define ECDSA_SHA1_EE_PATH      "ecdsa_sha1/ec_app384SHA1.pem"
-#define ECDSA_SHA1_PRIV_PATH    "ecdsa_sha1/ec_app384SHA1.key.pem"
-
-#define RSA_SHA256_CA_PATH      "rsa_sha256/root.pem:rsa_sha256/intca.pem"
-#define RSA_SHA256_CHAIN_PATH   "rsa_sha256/intca.pem"
-#define RSA_SHA256_EE_PATH1     "rsa_sha256/server.pem"
-#define RSA_SHA256_PRIV_PATH1   "rsa_sha256/server.key.pem"
-#define RSA_SHA256_EE_PATH2     "rsa_sha256/client.pem"
-#define RSA_SHA256_PRIV_PATH2   "rsa_sha256/client.key.pem"
-#define RSA_SHA256_EE_PATH3     "rsa_sha/RSA2048SHA256.pem"
-#define RSA_SHA256_PRIV_PATH3   "rsa_sha/RSA2048SHA256.key.pem"
-
-#define ECDSA_SHA256_CA_PATH    "ecdsa_sha256/root.pem:ecdsa_sha256/intca.pem"
-#define ECDSA_SHA256_CHAIN_PATH "ecdsa_sha256/intca.pem"
-#define ECDSA_SHA256_EE_PATH1   "ecdsa_sha256/server.pem"
-#define ECDSA_SHA256_PRIV_PATH1 "ecdsa_sha256/server.key.pem"
-#define ECDSA_SHA256_EE_PATH2   "ecdsa_sha256/client.pem"
-#define ECDSA_SHA256_PRIV_PATH2 "ecdsa_sha256/client.key.pem"
-
-#define DSA_SHA256_CA_PATH      "dss_sha256/dsaCa.pem"
-#define DSA_SHA256_CHAIN_PATH   "dss_sha256/dsaSecond.pem"
-#define DSA_SHA256_EE_PATH      "dss_sha256/dsaApp.pem"
-#define DSA_SHA256_PRIV_PATH    "dss_sha256/dsaApp.key"
-
-#define DSA_SHA1_CA_PATH            "dss_sha1/root.pem"
-#define DSA_SHA1_CHAIN_PATH         "dss_sha1/intca.pem"
-#define DSA_SHA1_CLIENT_PATH        "dss_sha1/client.pem"
-#define DSA_SHA1_CLIENT_PRIV_PATH   "dss_sha1/client.key.pem"
-#define DSA_SHA1_SERVER_PATH        "dss_sha1/server.pem"
-#define DSA_SHA1_SERVER_PRIV_PATH   "dss_sha1/server.key.pem"
-
-#define SM2_VERIFY_PATH "sm2/root.pem:sm2/ca.pem:sm2/second_ca.pem"
-#define SM2_CHAIN_PATH "sm2/ca.pem:sm2/second_ca.pem"
-#define SM2_SERVER_ENC_CERT_PATH "sm2/server_enc.pem"
-#define SM2_SERVER_ENC_KEY_PATH "sm2/server_enc.key.pem"
-#define SM2_SERVER_SIGN_CERT_PATH "sm2/server_sign.pem"
-#define SM2_SERVER_SIGN_KEY_PATH "sm2/server_sign.key.pem"
-#define SM2_CLIENT_ENC_CERT_PATH "sm2/client_enc.pem"
-#define SM2_CLIENT_ENC_KEY_PATH "sm2/client_enc.key.pem"
-#define SM2_CLIENT_SIGN_CERT_PATH "sm2/client_sign.pem"
-#define SM2_CLIENT_SIGN_KEY_PATH "sm2/client_sign.key.pem"
-
-
-#define DSA_SHA256_LEN_512_CA_PATH             "securitylevel/dsa/dsa_512_ca.pem"
-#define DSA_SHA256_LEN_512_EE_PATH             "securitylevel/dsa/dsa_512_App.pem"
-#define DSA_SHA256_LEN_512_KEY_PATH             "securitylevel/dsa/dsa_512_App.key"
-#define DSA_SHA256_LEN_1024_CA_PATH             "dss_sha256/dsaCa.pem"
-#define DSA_SHA256_LEN_1024_CHAIN_PATH          "dss_sha256/dsaSecond.pem"
-#define DSA_SHA256_LEN_1024_EE_PATH             "dss_sha256/dsaApp.pem"
-#define DSA_SHA256_LEN_1024_KEY_PATH            "dss_sha256/dsaApp.key"
-#define DSA_SHA256_LEN_2048_CA_PATH             "securitylevel/dsa/dsa_2048_ca.pem"
-#define DSA_SHA256_LEN_2048_EE_PATH             "securitylevel/dsa/dsa_2048_App.pem"
-#define DSA_SHA256_LEN_2048_KEY_PATH             "securitylevel/dsa/dsa_2048_App.key"
-#define DSA_SHA256_LEN_3072_CA_PATH             "securitylevel/dsa/dsa_3072_ca.pem"
-#define DSA_SHA256_LEN_3072_EE_PATH             "securitylevel/dsa/dsa_3072_App.pem"
-#define DSA_SHA256_LEN_3072_KEY_PATH             "securitylevel/dsa/dsa_3072_App.key"
-#define DSA_SHA256_LEN_8192_CA_PATH             "securitylevel/dsa/dsa_8192_ca.pem"
-#define DSA_SHA256_LEN_8192_EE_PATH             "securitylevel/dsa/dsa_8192_App.pem"
-#define DSA_SHA256_LEN_8192_KEY_PATH             "securitylevel/dsa/dsa_8192_App.key"
-
-#define ECDSA_SHA256_LEN_112_CA_PATH                "securitylevel/ecc/ecc_ca_112.pem"
-#define ECDSA_SHA256_LEN_112_EE_PATH                "securitylevel/ecc/ecc_app_112.pem"
-#define ECDSA_SHA256_LEN_112_KEY_PATH                "securitylevel/ecc/ecc_app_112.key"
-#define ECDSA_SHA256_LEN_160_CA_PATH                "securitylevel/ecc/ecc_ca_160.pem"
-#define ECDSA_SHA256_LEN_160_EE_PATH                "securitylevel/ecc/ecc_app_160.pem"
-#define ECDSA_SHA256_LEN_160_KEY_PATH                "securitylevel/ecc/ecc_app_160.key"
-#define ECDSA_SHA256_LEN_224_CA_PATH                "securitylevel/ecc/ecc_ca_224.pem"
-#define ECDSA_SHA256_LEN_224_EE_PATH                "securitylevel/ecc/ecc_app_224.pem"
-#define ECDSA_SHA256_LEN_224_KEY_PATH                "securitylevel/ecc/ecc_app_244.key"
-
-#define RSA_SHA256_LEN_512_CA_PATH              "securitylevel/rsa/rsa_ca_512.pem"
-#define RSA_SHA256_LEN_512_EE_PATH              "securitylevel/rsa/rsa_ee_512.pem"
-#define RSA_SHA256_LEN_512_KEY_PATH             "securitylevel/rsa/rsa_ee_512.key"
-#define RSA_SHA256_LEN_1024_CA_PATH             "securitylevel/rsa/rsa_ca_1024.pem"
-#define RSA_SHA256_LEN_1024_EE_PATH             "securitylevel/rsa/rsa_ee_1024.pem"
-#define RSA_SHA256_LEN_1024_KEY_PATH            "securitylevel/rsa/rsa_ee_1024.key"
-#define RSA_SHA_LEN_2048_CA_PATH                "rsa_sha/root.pem:rsa_sha/intca.pem"
-#define RSA_SHA_LEN_2048_CHAIN_PATH             "rsa_sha/intca.pem"
-#define RSA_SHA384_LEN_2048_EE_PATH             "rsa_sha/RSA2048SHA384.pem"
-#define RSA_SHA384_LEN_2048_KEY_PATH            "rsa_sha/RSA2048SHA384.key.pem"
-#define RSA_SHA256_LEN_3072_CA_PATH             "securitylevel/rsa/rsa_ca_3072.pem"
-#define RSA_SHA256_LEN_3072_EE_PATH             "securitylevel/rsa/rsa_ee_3072.pem"
-#define RSA_SHA256_LEN_3072_KEY_PATH            "securitylevel/rsa/rsa_ee_3072.key"
-#define RSA_SHA256_LEN_8192_CA_PATH             "securitylevel/rsa/rsa_ca_8192.pem"
-#define RSA_SHA256_LEN_8192_EE_PATH             "securitylevel/rsa/rsa_ee_8192.pem"
-#define RSA_SHA256_LEN_8192_KEY_PATH            "securitylevel/rsa/rsa_ee_8192.key"
-#define RSA_SHA256_LEN_15360_CA_PATH             "securitylevel/rsa/rsa_ca_15360.pem"
-#define RSA_SHA256_LEN_15360_EE_PATH             "securitylevel/rsa/rsa_ee_15360.pem"
-#define RSA_SHA256_LEN_15360_KEY_PATH            "securitylevel/rsa/rsa_ee_15360.key"
+#define SM2_VERIFY_PATH "sm2/ca.der:sm2/inter.der"
+#define SM2_CHAIN_PATH "sm2/inter.der"
+#define SM2_SERVER_ENC_CERT_PATH "sm2/enc.der"
+#define SM2_SERVER_ENC_KEY_PATH "sm2/enc.key.der"
+#define SM2_SERVER_SIGN_CERT_PATH "sm2/sign.der"
+#define SM2_SERVER_SIGN_KEY_PATH "sm2/sign.key.der"
+#define SM2_CLIENT_ENC_CERT_PATH "sm2/enc22.der"
+#define SM2_CLIENT_ENC_KEY_PATH "sm2/enc22.key.der"
+#define SM2_CLIENT_SIGN_CERT_PATH "sm2/sign22.der"
+#define SM2_CLIENT_SIGN_KEY_PATH "sm2/sign22.key.der"
 
 typedef struct ProcessSt HLT_Process;
 
@@ -249,12 +189,12 @@ typedef struct {
     char alpnList[MAX_ALPN_LEN];               // alpn
     char alpnUserData[ALPN_CB_NAME_LEN];
     char alpnSelectCb[ALPN_DATA_NAME_LEN];     // Application Layer Protocol Select Callback
-    /* Callback function when the peer end does not support security renegotiation */
-    char noSecRenegotiationCb[MAX_NO_RENEGOTIATIONCB_LEN];
 
     // Indicates whether renegotiation is supported. The default value is False, indicating that renegotiation is not
     // supported
     bool isSupportRenegotiation;
+    bool allowClientRenegotiate;        /* allow a renegotiation initiated by the client */
+    bool allowLegacyRenegotiate;        /* whether to abort handshake when server doesn't support SecRenegotiation */
     int  SupportType;                   // 1:The server algorithm is preferred
     bool needCheckKeyUsage;             // Client verification is supported. The default value is False
     // Indicates whether to allow the empty certificate list on the client. The default value is False
@@ -269,7 +209,7 @@ typedef struct {
     // Users can set the DH parameter to be automatically selected. If the switch is enabled,
     // the DH parameter is automatically selected based on the length of the certificate private key
     bool isSupportDhAuto;
-	int32_t setSessionCache;            // Setting the Session Storage Mode
+    int32_t setSessionCache;            // Setting the Session Storage Mode
     uint32_t keyExchMode;               // TLS1.3 key exchange mode
     void *infoCb;                       // connection establishment callback function
     void *msgCb;                        // Message callback function
@@ -278,6 +218,7 @@ typedef struct {
     bool isFlightTransmitEnable;
     bool isNoSetCert;                   // Indicates whether the certificate does not need to be set
 	int32_t securitylevel;                  // Security level
+    int32_t readAhead;
 
     char psk[PSK_MAX_LEN];              // psk password
     char ticketKeyCb[TICKET_KEY_CB_NAME_LEN]; // ticket key Callback Function Name
@@ -291,6 +232,7 @@ typedef struct {
     char chainCert[MAX_CERT_LEN];
 
     bool isClient;
+    uint32_t emptyRecordsNum;
 } HLT_Ctx_Config;
 
 typedef struct {

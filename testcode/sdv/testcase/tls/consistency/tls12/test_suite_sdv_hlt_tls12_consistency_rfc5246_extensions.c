@@ -1,11 +1,20 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
+
 /* BEGIN_HEADER */
+
 #include <semaphore.h>
 #include "process.h"
 #include "securec.h"
@@ -37,13 +46,12 @@
 #define EXTRA_DATA_SIZE 12u
 #define MAX_PROTOCOL_LEN1 65536
 #define READ_BUF_SIZE 18432
-#define ROOT_PEM "%s/root.pem:%s/intca.pem"
-#define INTCA_PEM "%s/intca.pem"
-#define SERVER_PEM "%s/server.pem"
-#define SERVER_KEY_PEM "%s/server.key.pem"
-#define CLIENT_PEM "%s/client.pem"
-#define CLIENT_KEY_PEM "%s/client.key.pem"
-
+#define ROOT_DER "%s/ca.der:%s/inter.der"
+#define INTCA_DER "%s/inter.der"
+#define SERVER_DER "%s/server.der"
+#define SERVER_KEY_DER "%s/server.key.der"
+#define CLIENT_DER "%s/client.der"
+#define CLIENT_KEY_DER "%s/client.key.der"
 typedef struct {
     int port;
     HITLS_HandshakeState expectHsState; // Expected Local Handshake Status
@@ -383,13 +391,13 @@ static int SetCertPath(HLT_Ctx_Config *ctxConfig, const char *certStr, bool isSe
     char eeCertPath[30] = {0};
     char privKeyPath[30] = {0};
 
-    ret = sprintf_s(caCertPath, sizeof(caCertPath), ROOT_PEM, certStr, certStr);
+    ret = sprintf_s(caCertPath, sizeof(caCertPath), ROOT_DER, certStr, certStr);
     ASSERT_TRUE(ret > 0);
-    ret = sprintf_s(chainCertPath, sizeof(chainCertPath), INTCA_PEM, certStr);
+    ret = sprintf_s(chainCertPath, sizeof(chainCertPath), INTCA_DER, certStr);
     ASSERT_TRUE(ret > 0);
-    ret = sprintf_s(eeCertPath, sizeof(eeCertPath), isServer ? SERVER_PEM : CLIENT_PEM, certStr);
+    ret = sprintf_s(eeCertPath, sizeof(eeCertPath), isServer ? SERVER_DER : CLIENT_DER, certStr);
     ASSERT_TRUE(ret > 0);
-    ret = sprintf_s(privKeyPath, sizeof(privKeyPath), isServer ? SERVER_KEY_PEM : CLIENT_KEY_PEM, certStr);
+    ret = sprintf_s(privKeyPath, sizeof(privKeyPath), isServer ? SERVER_KEY_DER : CLIENT_KEY_DER, certStr);
     ASSERT_TRUE(ret > 0);
     HLT_SetCaCertPath(ctxConfig, (char *)caCertPath);
     HLT_SetChainCertPath(ctxConfig, (char *)chainCertPath);
@@ -408,13 +416,13 @@ static int SetCertPath1(HLT_Ctx_Config *ctxConfig, const char *certStr, const ch
     char eeCertPath[30] = {0};
     char privKeyPath[30] = {0};
 
-    ret = sprintf_s(caCertPath, sizeof(caCertPath), ROOT_PEM, certStr1, certStr1);
+    ret = sprintf_s(caCertPath, sizeof(caCertPath), ROOT_DER, certStr1, certStr1);
     ASSERT_TRUE(ret > 0);
-    ret = sprintf_s(chainCertPath, sizeof(chainCertPath), INTCA_PEM, certStr);
+    ret = sprintf_s(chainCertPath, sizeof(chainCertPath), INTCA_DER, certStr);
     ASSERT_TRUE(ret > 0);
-    ret = sprintf_s(eeCertPath, sizeof(eeCertPath), isServer ? SERVER_PEM : CLIENT_PEM, certStr);
+    ret = sprintf_s(eeCertPath, sizeof(eeCertPath), isServer ? SERVER_DER : CLIENT_DER, certStr);
     ASSERT_TRUE(ret > 0);
-    ret = sprintf_s(privKeyPath, sizeof(privKeyPath), isServer ? SERVER_KEY_PEM : CLIENT_KEY_PEM, certStr);
+    ret = sprintf_s(privKeyPath, sizeof(privKeyPath), isServer ? SERVER_KEY_DER : CLIENT_KEY_DER, certStr);
     ASSERT_TRUE(ret > 0);
     HLT_SetCaCertPath(ctxConfig, (char *)caCertPath);
     HLT_SetChainCertPath(ctxConfig, (char *)chainCertPath);
@@ -1054,7 +1062,7 @@ void SDV_TLS_TLS12_RFC5246_CONSISTENCY_RESUME_TAKE_EXTENSION_TC001(int version, 
     ASSERT_TRUE(remoteProcess != NULL);
 
     int32_t serverConfigId = HLT_RpcTlsNewCtx(remoteProcess, version, false);
-    void *clientConfig = HLT_TlsNewCtx(version, true);
+    void *clientConfig = HLT_TlsNewCtx(version);
     ASSERT_TRUE(clientConfig != NULL);
 
     HLT_Ctx_Config *clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
@@ -1172,7 +1180,7 @@ void SDV_TLS_TLS12_RFC5246_CONSISTENCY_RESUME_TAKE_EXTENSION_TC002(int version, 
     ASSERT_TRUE(remoteProcess != NULL);
 
     int32_t serverConfigId = HLT_RpcTlsNewCtx(remoteProcess, version, false);
-    void *clientConfig = HLT_TlsNewCtx(version, true);
+    void *clientConfig = HLT_TlsNewCtx(version);
     ASSERT_TRUE(clientConfig != NULL);
 
     HLT_Ctx_Config *clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
@@ -1285,7 +1293,7 @@ void SDV_TLS_TLS12_RFC5246_CONSISTENCY_RESUME_TAKE_EXTENSION_TC003(int version, 
     ASSERT_TRUE(remoteProcess != NULL);
 
     int32_t serverConfigId = HLT_RpcTlsNewCtx(remoteProcess, version, false);
-    void *clientConfig = HLT_TlsNewCtx(version, true);
+    void *clientConfig = HLT_TlsNewCtx(version);
     ASSERT_TRUE(clientConfig != NULL);
 
     HLT_Ctx_Config *clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
@@ -1397,7 +1405,7 @@ void SDV_TLS_TLS12_RFC5246_CONSISTENCY_RESUME_TAKE_EXTENSION_TC004(int version, 
     ASSERT_TRUE(remoteProcess != NULL);
 
     int32_t serverConfigId = HLT_RpcTlsNewCtx(remoteProcess, version, false);
-    void *clientConfig = HLT_TlsNewCtx(version, true);
+    void *clientConfig = HLT_TlsNewCtx(version);
     ASSERT_TRUE(clientConfig != NULL);
 
     HLT_Ctx_Config *clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
@@ -1658,7 +1666,7 @@ void SDV_TLS_TLS12_RFC5246_CONSISTENCY_NEGOTIATE_CIPHERSUITE_TC002(int version, 
 
     HLT_Ctx_Config *clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
     ASSERT_TRUE(clientCtxConfig != NULL);
-
+    HLT_SetLegacyRenegotiateSupport(clientCtxConfig, true);
     SetCertPath(clientCtxConfig, "ecdsa_sha256", false);
     HLT_SetCipherSuites(clientCtxConfig, "HITLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256");
 
@@ -2067,8 +2075,8 @@ void SDV_TLS_TLS12_RFC5246_CONSISTENCY_MULTILINK_RESUME_ALERT_TC002(int version,
     ASSERT_TRUE(remoteProcess != NULL);
 
     int32_t serverConfigId = HLT_RpcTlsNewCtx(remoteProcess, version, false);
-    void *clientConfig = HLT_TlsNewCtx(version, true);
-    void *clientConfig2 = HLT_TlsNewCtx(version, true);
+    void *clientConfig = HLT_TlsNewCtx(version);
+    void *clientConfig2 = HLT_TlsNewCtx(version);
     ASSERT_TRUE(clientConfig != NULL);
     ASSERT_TRUE(clientConfig2 != NULL);
 

@@ -1,11 +1,20 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
+
 /* BEGIN_HEADER */
+
 #include <stdlib.h>
 #include <unistd.h>
 #include "securec.h"
@@ -49,21 +58,21 @@ static HITLS_Config *GetHitlsConfigViaVersion(int ver)
     switch (ver) {
         case HITLS_VERSION_TLS12:
             config = HITLS_CFG_NewTLS12Config();
-            ret = HITLS_CFG_SetCloseCheckKeyUsage(config, false);
+            ret = HITLS_CFG_SetCheckKeyUsage(config, false);
             if (ret != HITLS_SUCCESS) {
                 return NULL;
             }
             return config;
         case HITLS_VERSION_TLS13:
             config = HITLS_CFG_NewTLS13Config();
-            ret = HITLS_CFG_SetCloseCheckKeyUsage(config, false);
+            ret = HITLS_CFG_SetCheckKeyUsage(config, false);
             if (ret != HITLS_SUCCESS) {
                 return NULL;
             }
             return config;
         case HITLS_VERSION_DTLS12:
             config = HITLS_CFG_NewDTLS12Config();
-            ret = HITLS_CFG_SetCloseCheckKeyUsage(config, false);
+            ret = HITLS_CFG_SetCheckKeyUsage(config, false);
             if (ret != HITLS_SUCCESS) {
                 return NULL;
             }
@@ -812,7 +821,8 @@ void UT_TLS_CM_READHASPENDING_FUNC_TC001(int version)
     ASSERT_TRUE(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT) == HITLS_SUCCESS);
 
     uint8_t data[] = "Hello World";
-    ASSERT_TRUE(HITLS_Write(client->ssl, data, sizeof(data)) == HITLS_SUCCESS);
+    uint32_t writeLen;
+    ASSERT_TRUE(HITLS_Write(client->ssl, data, sizeof(data), &writeLen) == HITLS_SUCCESS);
     ASSERT_TRUE(FRAME_TrasferMsgBetweenLink(client, server) == HITLS_SUCCESS);
 
     uint8_t readBuf[5] = {0};
@@ -862,18 +872,12 @@ void UT_TLS_CM_GET_READPENDING_FUNC_TC001(void)
     ASSERT_TRUE(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT) == HITLS_SUCCESS);
     ASSERT_TRUE(HITLS_Renegotiate(client->ssl) == HITLS_SUCCESS);
     uint8_t data[] = "Hello World";
-    ASSERT_TRUE(HITLS_Write(server->ssl, data, sizeof(data)) == HITLS_SUCCESS);
+    uint32_t writeLen;
+    ASSERT_TRUE(HITLS_Write(server->ssl, data, sizeof(data), &writeLen) == HITLS_SUCCESS);
     ASSERT_TRUE(FRAME_TrasferMsgBetweenLink(server, client) == HITLS_SUCCESS);
-    ASSERT_TRUE(HITLS_Connect(client->ssl) == HITLS_SUCCESS);
-
+    ASSERT_TRUE(HITLS_Connect(client->ssl) == HITLS_REC_NORMAL_IO_BUSY);
+    client->ssl->state = CM_STATE_ALERTING;
     ASSERT_TRUE(HITLS_GetReadPendingBytes(client->ssl) == sizeof("Hello World"));
-
-    client->ssl->state = CM_STATE_TRANSPORTING;
-    uint8_t readBuf[READ_BUF_SIZE] = {0};
-    uint32_t readLen = 0;
-    ASSERT_EQ(HITLS_Read(client->ssl, readBuf, 2, &readLen), HITLS_SUCCESS);
-    ASSERT_TRUE(HITLS_GetReadPendingBytes(client->ssl) == (sizeof("Hello World") - 2));
-
 exit:
     HITLS_CFG_FreeConfig(config);
     FRAME_FreeLink(client);
@@ -1360,13 +1364,13 @@ void UT_TLS_CM_GET_RANDOM_FUNC_TC001(void)
     uint8_t serverRandom[RANDOM_SIZE];
     uint32_t randomSize = RANDOM_SIZE;
 
-    ASSERT_TRUE(HITLS_GetRandom(testInfo.client->ssl, g_clientRandom, &randomSize, true) == HITLS_SUCCESS);
-    ASSERT_TRUE(HITLS_GetRandom(testInfo.server->ssl, clientRandom, &randomSize, true) == HITLS_SUCCESS);
+    ASSERT_TRUE(HITLS_GetHsRandom(testInfo.client->ssl, g_clientRandom, &randomSize, true) == HITLS_SUCCESS);
+    ASSERT_TRUE(HITLS_GetHsRandom(testInfo.server->ssl, clientRandom, &randomSize, true) == HITLS_SUCCESS);
     ASSERT_TRUE(randomSize == RANDOM_SIZE);
     ASSERT_TRUE(memcmp(g_clientRandom, clientRandom, RANDOM_SIZE) == 0);
 
-    ASSERT_TRUE(HITLS_GetRandom(testInfo.server->ssl, g_serverRandom, &randomSize, false) == HITLS_SUCCESS);
-    ASSERT_TRUE(HITLS_GetRandom(testInfo.client->ssl, serverRandom, &randomSize, false) == HITLS_SUCCESS);
+    ASSERT_TRUE(HITLS_GetHsRandom(testInfo.server->ssl, g_serverRandom, &randomSize, false) == HITLS_SUCCESS);
+    ASSERT_TRUE(HITLS_GetHsRandom(testInfo.client->ssl, serverRandom, &randomSize, false) == HITLS_SUCCESS);
     ASSERT_TRUE(randomSize == RANDOM_SIZE);
     ASSERT_TRUE(memcmp(g_serverRandom, serverRandom, RANDOM_SIZE) == 0);
 exit:
@@ -1434,12 +1438,11 @@ exit:
 /* BEGIN_CASE */
 void UT_TLS_CM_GET_STATE_STRING_FUNC_TC001()
 {
-    const char goalStr[31][32] = {
+    const char goalStr[34][32] = {
         "idle",
         "connected",
         "send hello request",
         "send client hello",
-        "send hello verify request",
         "send hello retry request",
         "send server hello",
         "send encrypted extensions",
@@ -1453,8 +1456,8 @@ void UT_TLS_CM_GET_STATE_STRING_FUNC_TC001()
         "send change cipher spec",
         "send end of early data",
         "send finished",
+        "send keyupdate",
         "recv client hello",
-        "recv hello verify request",
         "recv server hello",
         "recv encrypted extensions",
         "recv certificate",
@@ -1466,6 +1469,8 @@ void UT_TLS_CM_GET_STATE_STRING_FUNC_TC001()
         "recv new session ticket",
         "recv end of early data",
         "recv finished",
+        "recv keyupdate",
+        "recv hello request",
     };
     int32_t ret;
     for (uint32_t i = 0; i <= 30; i++) {
@@ -2584,7 +2589,8 @@ void UT_TLS_CM_HITLS_GetRwstate_FUNC_TC001(int version)
     HITLS_Accept(server->ssl);
     ASSERT_EQ(ret, HITLS_SUCCESS);
     uint8_t writeBuf[100] = {0};
-    ret = HITLS_Write(client->ssl, writeBuf, sizeof(writeBuf));
+    uint32_t writeLen;
+    ret = HITLS_Write(client->ssl, writeBuf, sizeof(writeBuf), &writeLen);
     ret = HITLS_GetRwstate(client->ssl, &rwstate);
     ASSERT_EQ(ret, HITLS_SUCCESS);
     ASSERT_EQ(rwstate, HITLS_WRITING);
@@ -2822,12 +2828,6 @@ exit:
 }
 /* END_CASE */
 
-int32_t NoSecRenegotiationCb(HITLS_Ctx *ctx)
-{
-    (void)ctx;
-    return HITLS_SUCCESS;
-}
-
 /**
 * @test Verifying the HITLS_ClearRenegotiationNum Interface
 * @title  UT_HITLS_CM_HITLS_ClearRenegotiationNum_FUNC_TC001
@@ -2872,6 +2872,7 @@ void UT_HITLS_CM_HITLS_ClearRenegotiationNum_FUNC_TC001(int version)
 
     HITLS_Ctx *clientTlsCtx = FRAME_GetTlsCtx(client);
     HITLS_Ctx *serverTlsCtx = FRAME_GetTlsCtx(server);
+    HITLS_SetClientRenegotiateSupport(server->ssl, true);
     uint32_t renegotiationNum = 0;
 
     ASSERT_TRUE(HITLS_ClearRenegotiationNum(clientTlsCtx, &renegotiationNum) == HITLS_SUCCESS);
@@ -2938,11 +2939,9 @@ void UT_HITLS_CM_HITLS_ClearRenegotiationNum_FUNC_TC001(int version)
     ASSERT_TRUE(HITLS_Renegotiate(clientTlsCtx) == HITLS_SUCCESS);
 
     serverTlsCtx->negotiatedInfo.isSecureRenegotiation = false;
-    serverTlsCtx->config.tlsConfig.noSecRenegotiationCb = NoSecRenegotiationCb;
-    clientTlsCtx->config.tlsConfig.noSecRenegotiationCb = NoSecRenegotiationCb;
+    ASSERT_EQ(FRAME_CreateRenegotiation(client, server), HITLS_REC_NORMAL_RECV_UNEXPECT_MSG);
 
-    ASSERT_TRUE(FRAME_CreateRenegotiation(client, server) == HITLS_SUCCESS);
-    ASSERT_TRUE(clientTlsCtx->state == CM_STATE_TRANSPORTING);
+    ASSERT_TRUE(clientTlsCtx->state == CM_STATE_ALERTED);
     ASSERT_TRUE(serverTlsCtx->state == CM_STATE_TRANSPORTING);
 
     ASSERT_TRUE(HITLS_GetFinishVerifyData(serverTlsCtx, verifyDataNew, sizeof(verifyDataNew), &verifyDataNewSize) ==
@@ -3045,33 +3044,12 @@ void UT_HITLS_CM_HITLS_GetNegotiateGroup_FUNC_TC002(int version)
     ASSERT_TRUE(config_c != NULL);
     ASSERT_TRUE(config_s != NULL);
 
-    uint16_t groups_c[] = {HITLS_EC_GROUP_SECP384R1, HITLS_EC_GROUP_CURVE25519};
-    uint16_t signAlgs_c[] = {
-        CERT_SIG_SCHEME_RSA_PSS_RSAE_SHA256,
-        CERT_SIG_SCHEME_ECDSA_SECP384R1_SHA384,
-    };
-
-    uint16_t groups_s[] = {HITLS_EC_GROUP_SECP521R1, HITLS_EC_GROUP_CURVE25519};
-    uint16_t signAlgs_s[] = {
-        CERT_SIG_SCHEME_RSA_PSS_RSAE_SHA256,
-        CERT_SIG_SCHEME_ECDSA_SECP521R1_SHA512,
-    };
-
     if (version == HITLS_VERSION_TLS12) {
         ASSERT_EQ(HITLS_CFG_SetEncryptThenMac(config_c, true), HITLS_SUCCESS);
         ASSERT_EQ(HITLS_CFG_SetEncryptThenMac(config_s, true), HITLS_SUCCESS);
         uint16_t cipherSuite = HITLS_RSA_WITH_AES_256_CBC_SHA;
         ASSERT_EQ(HITLS_CFG_SetCipherSuites(config_c, &cipherSuite, 1), HITLS_SUCCESS);
     }
-    if (version == HITLS_VERSION_TLS13) {
-        uint16_t cipherSuite = HITLS_AES_128_GCM_SHA256;
-        ASSERT_EQ(HITLS_CFG_SetCipherSuites(config_c, &cipherSuite, 1), HITLS_SUCCESS);
-        HITLS_CFG_SetGroups(config_c, groups_c, sizeof(groups_c) / sizeof(uint16_t));
-        HITLS_CFG_SetSignature(config_c, signAlgs_c, sizeof(signAlgs_c) / sizeof(uint16_t));
-        HITLS_CFG_SetGroups(config_s, groups_s, sizeof(groups_s) / sizeof(uint16_t));
-        HITLS_CFG_SetSignature(config_s, signAlgs_s, sizeof(signAlgs_s) / sizeof(uint16_t));
-    }
-
     FRAME_LinkObj *client = FRAME_CreateLink(config_c, BSL_UIO_TCP);
     FRAME_LinkObj *server = FRAME_CreateLink(config_s, BSL_UIO_TCP);
     ASSERT_TRUE(client != NULL);
@@ -3461,15 +3439,16 @@ exit:
 }
 /* END_CASE */
 
-uint32_t psk_callback(HITLS_Ctx *ctx, const uint8_t *identity, uint8_t *psk, uint32_t maxPskLen)
+uint32_t SetPskClientCallback(HITLS_Ctx *ctx, const uint8_t *hint, uint8_t *identity, uint32_t maxIdentityLen,
+    uint8_t *psk, uint32_t maxPskLen)
 {
-    uint32_t pskTransUsedLen = 0u;
     (void)ctx;
+    (void)hint;
     (void)identity;
+    (void)maxIdentityLen;
     (void)psk;
     (void)maxPskLen;
-
-    return pskTransUsedLen;
+    return HITLS_SUCCESS;
 }
 
 /* @
@@ -3492,13 +3471,22 @@ void UT_TLS_CM_SetPskClientCallback_API_TC001()
     HITLS_Ctx *ctx = NULL;
     ctx = HITLS_New(tlsConfig);
     ASSERT_TRUE(ctx != NULL);
-    ASSERT_EQ(HITLS_SetPskClientCallback(NULL, psk_callback), HITLS_NULL_INPUT);
-    ASSERT_EQ(HITLS_SetPskClientCallback(ctx, psk_callback), HITLS_SUCCESS);
+    ASSERT_EQ(HITLS_SetPskClientCallback(NULL, SetPskClientCallback), HITLS_NULL_INPUT);
+    ASSERT_EQ(HITLS_SetPskClientCallback(ctx, SetPskClientCallback), HITLS_SUCCESS);
 exit:
     HITLS_CFG_FreeConfig(tlsConfig);
     HITLS_Free(ctx);
 }
 /* END_CASE */
+
+static uint32_t SetPskServerCallback(HITLS_Ctx *ctx, const uint8_t *identity, uint8_t *psk, uint32_t maxPskLen)
+{
+    (void)ctx;
+    (void)identity;
+    (void)psk;
+    (void)maxPskLen;
+    return HITLS_SUCCESS;
+}
 
 /* @
 * @test  UT_TLS_CM_SetPskServerCallback_API_TC001
@@ -3520,23 +3508,23 @@ void UT_TLS_CM_SetPskServerCallback_API_TC001()
     HITLS_Ctx *ctx = NULL;
     ctx = HITLS_New(tlsConfig);
     ASSERT_TRUE(ctx != NULL);
-    ASSERT_EQ(HITLS_SetPskServerCallback(NULL, psk_callback), HITLS_NULL_INPUT);
-    ASSERT_EQ(HITLS_SetPskServerCallback(ctx, psk_callback), HITLS_SUCCESS);
+    ASSERT_EQ(HITLS_SetPskServerCallback(NULL, SetPskServerCallback), HITLS_NULL_INPUT);
+    ASSERT_EQ(HITLS_SetPskServerCallback(ctx, SetPskServerCallback), HITLS_SUCCESS);
 exit:
     HITLS_CFG_FreeConfig(tlsConfig);
     HITLS_Free(ctx);
 }
 /* END_CASE */
 
-static int32_t psksession_callback(HITLS_Ctx *ctx, const uint8_t *identity, uint32_t identityLen,
-    HITLS_Session **session)
+static int32_t SetPskUsePsksessionCallback(HITLS_Ctx *ctx, uint32_t hashAlgo, const uint8_t **id,
+    uint32_t *idLen, HITLS_Session **session)
 {
     (void)ctx;
-    (void)identity;
-    (void)identityLen;
+    (void)hashAlgo;
+    (void)id;
+    (void)idLen;
     (void)session;
-
-    return HITLS_PSK_FIND_SESSION_CB_FAIL;
+    return HITLS_SUCCESS;
 }
 
 /* @
@@ -3559,13 +3547,23 @@ void UT_TLS_CM_SetPskUseSessionCallback_API_TC001()
     HITLS_Ctx *ctx = NULL;
     ctx = HITLS_New(tlsConfig);
     ASSERT_TRUE(ctx != NULL);
-    ASSERT_EQ(HITLS_SetPskUseSessionCallback(NULL, psksession_callback), HITLS_NULL_INPUT);
-    ASSERT_EQ(HITLS_SetPskUseSessionCallback(ctx, psksession_callback), HITLS_SUCCESS);
+    ASSERT_EQ(HITLS_SetPskUseSessionCallback(NULL, SetPskUsePsksessionCallback), HITLS_NULL_INPUT);
+    ASSERT_EQ(HITLS_SetPskUseSessionCallback(ctx, SetPskUsePsksessionCallback), HITLS_SUCCESS);
 exit:
     HITLS_CFG_FreeConfig(tlsConfig);
     HITLS_Free(ctx);
 }
 /* END_CASE */
+
+int32_t SetPskFindSessionCallback(HITLS_Ctx *ctx, const uint8_t *identity, uint32_t identityLen,
+    HITLS_Session **session)
+{
+    (void)ctx;
+    (void)identity;
+    (void)identityLen;
+    (void)session;
+    return HITLS_SUCCESS;
+}
 
 /* @
 * @test  UT_TLS_CM_SetPskFindSessionCallback_API_TC001
@@ -3587,8 +3585,8 @@ void UT_TLS_CM_SetPskFindSessionCallback_API_TC001()
     HITLS_Ctx *ctx = NULL;
     ctx = HITLS_New(tlsConfig);
     ASSERT_TRUE(ctx != NULL);
-    ASSERT_EQ(HITLS_SetPskFindSessionCallback(NULL, psksession_callback), HITLS_NULL_INPUT);
-    ASSERT_EQ(HITLS_SetPskFindSessionCallback(ctx, psksession_callback), HITLS_SUCCESS);
+    ASSERT_EQ(HITLS_SetPskFindSessionCallback(NULL, SetPskFindSessionCallback), HITLS_NULL_INPUT);
+    ASSERT_EQ(HITLS_SetPskFindSessionCallback(ctx, SetPskFindSessionCallback), HITLS_SUCCESS);
 exit:
     HITLS_CFG_FreeConfig(tlsConfig);
     HITLS_Free(ctx);
@@ -3644,7 +3642,7 @@ void UT_TLS_CM_SetPskIdentityHint_API_TC001()
     ASSERT_TRUE(ctx != NULL);
 
     uint8_t * identityH = (uint8_t *)"123456";
-    uint32_t identityHintLen = strlen(identityH);
+    uint32_t identityHintLen = strlen((char *)identityH);
     ASSERT_TRUE(HITLS_SetPskIdentityHint(ctx, identityH, identityHintLen) == HITLS_SUCCESS);
 
 exit:
@@ -3872,13 +3870,13 @@ exit:
 
 /* @
 * @test UT_TLS_CM_SETCLOSECHECKKEYUSAGE_API_TC001
-* @title HITLS_SetCloseCheckKeyUsage interface test
+* @title HITLS_SetCheckKeyUsage interface test
 * @precon nan
 * @brief
 * 1. Apply for and initialize config and ctx.
-* 2. Invoke the HITLS_SetCloseCheckKeyUsage interface and set the input parameter of the HITLS_Ctx to NULL.
-* 3. Invoke the HITLS_SetCloseCheckKeyUsage interface and set the input parameter of the isClose to true.
-* 4. Invoke the HITLS_SetCloseCheckKeyUsage interface and set the input parameter of the isClose to false.
+* 2. Invoke the HITLS_SetCheckKeyUsage interface and set the input parameter of the HITLS_Ctx to NULL.
+* 3. Invoke the HITLS_SetCheckKeyUsage interface and set the input parameter of the isClose to true.
+* 4. Invoke the HITLS_SetCheckKeyUsage interface and set the input parameter of the isClose to false.
 * @expect
 * 1. Initialization succeeded.
 * 2. The interface returns HITLS_NULL_INPUT.
@@ -3894,9 +3892,9 @@ void UT_TLS_CM_SETCLOSECHECKKEYUSAGE_API_TC001()
     HITLS_Ctx *ctx = HITLS_New(config);
     ASSERT_TRUE(ctx != NULL);
 
-    ASSERT_EQ(HITLS_SetCloseCheckKeyUsage(NULL, true), HITLS_NULL_INPUT);
-    ASSERT_EQ(HITLS_SetCloseCheckKeyUsage(ctx, true), HITLS_SUCCESS);
-    ASSERT_EQ(HITLS_SetCloseCheckKeyUsage(ctx, false), HITLS_SUCCESS);
+    ASSERT_EQ(HITLS_SetCheckKeyUsage(NULL, true), HITLS_NULL_INPUT);
+    ASSERT_EQ(HITLS_SetCheckKeyUsage(ctx, true), HITLS_SUCCESS);
+    ASSERT_EQ(HITLS_SetCheckKeyUsage(ctx, false), HITLS_SUCCESS);
 exit:
     HITLS_CFG_FreeConfig(config);
     HITLS_Free(ctx);
@@ -4017,7 +4015,7 @@ HITLS_CFG_GetSecurityLevel
 3、Invoke HITLS_CFG_GetSecurityLevel to obtain the default security level. The expected result 1 is obtained
 4、Check the obtained security level. The expected result 2 is obtained
 * @expect  1、return HITLS_SUCCESS
-2、The security level is DEFAULT_SECURITYLEVEL
+2、The security level is 1
 @ */
 /* BEGIN_CASE */
 void UT_TLS_CM_SECURITY_SECURITYLEVEL_API_TC001()
@@ -4032,9 +4030,9 @@ void UT_TLS_CM_SECURITY_SECURITYLEVEL_API_TC001()
     ASSERT_TRUE(ctx != NULL);
 
     ASSERT_TRUE(HITLS_GetSecurityLevel(ctx, &level) == HITLS_SUCCESS);
-    ASSERT_TRUE(level == DEFAULT_SECURITYLEVEL);
+    ASSERT_TRUE(level == 1);
     ASSERT_TRUE(HITLS_CFG_GetSecurityLevel(Config, &level) == HITLS_SUCCESS);
-    ASSERT_TRUE(level == DEFAULT_SECURITYLEVEL);
+    ASSERT_TRUE(level == 1);
 exit:
     HITLS_CFG_FreeConfig(Config);
     HITLS_Free(ctx);
@@ -4327,17 +4325,17 @@ exit:
 void UT_TLS_CM_SET_SESSIONIDCTX_API_TC001(int version)
 {
     FRAME_Init();
-    uint8_t key[] = "748ab9f3dc1a23";
+    char *key = "748ab9f3dc1a23";
     HITLS_Config *config = GetHitlsConfigViaVersion(version);
     ASSERT_TRUE(config != NULL);
 
     HITLS_Ctx *ctx = HITLS_New(config);
     ASSERT_TRUE(ctx != NULL);
     uint32_t keyLen = strlen(key);
-    ASSERT_TRUE(HITLS_CFG_SetSessionIdCtx(NULL, key, keyLen)== HITLS_NULL_INPUT);
-    ASSERT_TRUE(HITLS_CFG_SetSessionIdCtx(config, key, keyLen)!= HITLS_NULL_INPUT);
-    ASSERT_TRUE(HITLS_SetSessionIdCtx(NULL, key, keyLen)== HITLS_NULL_INPUT);
-    ASSERT_TRUE(HITLS_SetSessionIdCtx(ctx, key, keyLen)!= HITLS_NULL_INPUT);
+    ASSERT_TRUE(HITLS_CFG_SetSessionIdCtx(NULL, (const uint8_t *)key, keyLen)== HITLS_NULL_INPUT);
+    ASSERT_TRUE(HITLS_CFG_SetSessionIdCtx(config, (const uint8_t *)key, keyLen)!= HITLS_NULL_INPUT);
+    ASSERT_TRUE(HITLS_SetSessionIdCtx(NULL, (const uint8_t *)key, keyLen)== HITLS_NULL_INPUT);
+    ASSERT_TRUE(HITLS_SetSessionIdCtx(ctx, (const uint8_t *)key, keyLen)!= HITLS_NULL_INPUT);
 
 exit:
     HITLS_CFG_FreeConfig(config);
@@ -4486,7 +4484,7 @@ void UT_HITLS_CM_HITLS_GetPostHandshakeAuthSupport_TC001(int tlsVersion)
     FRAME_Init();
     HITLS_Config *config = NULL;
     HITLS_Ctx *ctx = NULL;
-    uint8_t isSupport = 0;
+    uint32_t isSupport = 0;
 
     ASSERT_TRUE(HITLS_GetPostHandshakeAuthSupport(NULL, NULL) == HITLS_NULL_INPUT);
     config = GetHitlsConfigViaVersion(tlsVersion);
@@ -4495,7 +4493,7 @@ void UT_HITLS_CM_HITLS_GetPostHandshakeAuthSupport_TC001(int tlsVersion)
     ASSERT_TRUE(ctx != NULL);
 
     ASSERT_TRUE(HITLS_GetEncryptThenMac(ctx, NULL) == HITLS_NULL_INPUT);
-    ASSERT_TRUE(HITLS_SetEncryptThenMac(ctx, &isSupport) == HITLS_SUCCESS);
+    ASSERT_TRUE(HITLS_SetEncryptThenMac(ctx, isSupport) == HITLS_SUCCESS);
 exit:
     HITLS_CFG_FreeConfig(config);
     HITLS_Free(ctx);

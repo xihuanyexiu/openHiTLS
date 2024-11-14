@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include "hitls_build.h"
@@ -334,12 +341,12 @@ static int32_t MillerRabinPrimeVerify(const BN_BigNum *bn, BN_Optimizer *opt)
     ret = BnCheck(bnSubOne, bnSubThree, divisor, rnd, mont);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto err;
+        goto ERR;
     }
     ret = BnSubGet(bnSubOne, bnSubThree, bn);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto err;
+        goto ERR;
     }
     // 1. Extract the power p of factor 2 in bnSubOne.
     p = GetP(bnSubOne);
@@ -347,10 +354,10 @@ static int32_t MillerRabinPrimeVerify(const BN_BigNum *bn, BN_Optimizer *opt)
     ret = BN_Rshift(divisor, bnSubOne, p);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto err;
+        goto ERR;
     }
     ret = MillerRabinCheckCore(bn, mont, rnd, divisor, bnSubOne, bnSubThree, p, opt);
-err:
+ERR:
     BN_MontDestroy(mont);
     OptimizerEnd(opt);
     return ret;
@@ -371,7 +378,7 @@ int32_t BN_PrimeCheck(const BN_BigNum *bn, BN_Optimizer *opt)
         return CRYPT_BN_NOR_CHECK_PRIME;
     }
     // Check whether the number is negative.
-    if (bn->sign == 1) {
+    if (BN_ISNEG(bn->flag)) {
         BSL_ERR_PUSH_ERROR(CRYPT_BN_NOR_CHECK_PRIME);
         return CRYPT_BN_NOR_CHECK_PRIME;
     }

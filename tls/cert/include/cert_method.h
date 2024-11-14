@@ -1,10 +1,18 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
+
 #ifndef CERT_METHOD_H
 #define CERT_METHOD_H
 
@@ -15,6 +23,30 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+enum HITLS_CertCallBack {
+    HITLS_CERT_CALLBACK_STORE_NEW = 0,
+    HITLS_CERT_CALLBACK_STORE_DUP,
+    HITLS_CERT_CALLBACK_STORE_FREE,
+    HITLS_CERT_CALLBACK_STORE_CTRL,
+    HITLS_CERT_CALLBACK_BUILD_CERT_CHAIN,
+    HITLS_CERT_CALLBACK_VERIFY_CERT_CHAIN,
+    HITLS_CERT_CALLBACK_CERT_ENCODE,
+    HITLS_CERT_CALLBACK_CERT_PARSE,
+    HITLS_CERT_CALLBACK_CERT_DUP,
+    HITLS_CERT_CALLBACK_CERT_REF,
+    HITLS_CERT_CALLBACK_CERT_FREE,
+    HITLS_CERT_CALLBACK_CERT_CTRL,
+    HITLS_CERT_CALLBACK_KEY_PARSE,
+    HITLS_CERT_CALLBACK_KEY_DUP,
+    HITLS_CERT_CALLBACK_KEY_FREE,
+    HITLS_CERT_CALLBACK_KEY_CTRL,
+    HITLS_CERT_CALLBACK_CREATE_SIGN,
+    HITLS_CERT_CALLBACK_VERIFY_SIGN,
+    HITLS_CERT_CALLBACK_ENCRYPT,
+    HITLS_CERT_CALLBACK_DECRYPT,
+    HITLS_CERT_CALLBACK_CHECK_PRIVATE_KEY,
+};
 
 /**
  * @brief Create a certificate store.
@@ -209,7 +241,7 @@ int32_t SAL_CERT_KeyCtrl(HITLS_Config *config, HITLS_CERT_Key *key, HITLS_CERT_C
  *
  * @retval HITLS_SUCCESS                succeeded.
  */
-int32_t SAL_CERT_CheckPrivateKey(const HITLS_Config *config, HITLS_CERT_X509 *cert, HITLS_CERT_Key *key);
+int32_t SAL_CERT_CheckPrivateKey(HITLS_Config *config, HITLS_CERT_X509 *cert, HITLS_CERT_Key *key);
 
 #ifdef __cplusplus
 }

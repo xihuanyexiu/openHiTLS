@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include "hitls_build.h"
@@ -20,7 +27,6 @@
 #include "sal_net.h"
 #include "uio_base.h"
 #include "uio_abstraction.h"
-#include "uio_tcp.h"
 
 typedef struct {
     int32_t fd;
@@ -66,18 +72,6 @@ static int32_t TcpSocketDestroy(BSL_UIO *uio)
         BSL_UIO_SetCtx(uio, NULL);
     }
     return BSL_SUCCESS;
-}
-
-int32_t TcpWrite(BSL_UIO *uio, const void *buf, uint32_t len, uint32_t *writeLen)
-{
-    *writeLen = 0;
-    return uio->method.write(uio, buf, len, writeLen);
-}
-
-int32_t TcpRead(BSL_UIO *uio, void *buf, uint32_t len, uint32_t *readLen)
-{
-    *readLen = 0;
-    return uio->method.read(uio, buf, len, readLen);
 }
 
 static int32_t TcpSocketWrite(BSL_UIO *uio, const void *buf, uint32_t len, uint32_t *writeLen)

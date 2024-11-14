@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /**
@@ -92,7 +99,7 @@ uint32_t HITLS_CFG_GetTicketNums(HITLS_Config *config);
  * If the number is greater than or equal to 1, only one ticket is sent after the session is resumed.
  * When this parameter is set to 0, tickets will not be sent for the complete handshake and session recovery.
  *
- * @param   config     [OUT] ctx context
+ * @param   ctx        [OUT] ctx context
  * @param   ticketNums [IN] Number of sent new session tickets.
  * @retval  HITLS_SUCCESS, if successful.
  * @retval  HITLS_NULL_INPUT, ctx is null.
@@ -128,7 +135,7 @@ typedef int32_t (*HITLS_NewSessionCb) (HITLS_Ctx *ctx, HITLS_Session *session);
  * @retval  HITLS_SUCCESS, if successful.
  * @retval  HITLS_NULL_INPUT, config is null.
  */
-int32_t HITLS_CFG_SetNewSessionCb(HITLS_Config *config, HITLS_NewSessionCb newSessionCb);
+int32_t HITLS_CFG_SetNewSessionCb(HITLS_Config *config, const HITLS_NewSessionCb newSessionCb);
 
 #define HITLS_TICKET_KEY_RET_NEED_ALERT    (-1)   // callback fails. A fatal error occurs.
                                                   // You need to send an alert
@@ -396,6 +403,17 @@ HITLS_Session *HITLS_GetDupSession(HITLS_Ctx *ctx);
 
 /**
  * @ingroup hitls_session
+ * @brief   Obtain the sign type of the peer
+ *
+ * @param   ctx [IN] TLS connection handle
+ * @param   sigType [OUT] sign type.
+ * @retval  HITLS_SUCCESS, if successful.
+ * @retval  For other error codes, see hitls_error.h.
+ */
+int32_t HITLS_GetPeerSignatureType(const HITLS_Ctx *ctx, HITLS_SignAlgo *sigType);
+
+/**
+ * @ingroup hitls_session
  * @brief   Apply for a new session.
  *
  * @param   void
@@ -496,7 +514,7 @@ int32_t HITLS_SESS_SetCipherSuite(HITLS_Session *sess, uint16_t cipherSuite);
  * @retval  HITLS_SUCCESS, if successful.
  * @retval  For other error codes, see hitls_error.h.
  */
-int32_t HITLS_SESS_GetCipherSuite(HITLS_Session *sess, uint16_t *cipherSuite);
+int32_t HITLS_SESS_GetCipherSuite(const HITLS_Session *sess, uint16_t *cipherSuite);
 
 /**
  * @ingroup hitls_session

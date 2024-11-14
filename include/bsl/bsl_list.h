@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /**
@@ -24,6 +31,7 @@ extern "C" {
 #endif
 
 /* for handling ASN.1 SET OF type */
+
 /**
  * @ingroup bsl_list
  *
@@ -142,27 +150,10 @@ typedef void *(*BSL_LIST_PFUNC_DUP)(const void *);
     do {                                       \
         BSL_LIST_DeleteAll((pList), pFreeFunc); \
         if (NULL != (pList)) {             \
-            BSL_SAL_FREE(pList);                  \
-            (pList) = NULL;                    \
-            (void)(pList);                     \
+            BSL_SAL_Free(pList);                  \
         }                                      \
     } while (0)
 
-/**
- * @ingroup bsl_list
- *
- * Delete all the nodes in the list and then frees the header.
- * But it does not delete the data pointers inside the list nodes.
- * It is used only after sort to delete the input list to the sort function.
- */
-#define BSL_LIST_FREE_AFTER_SORT(pList)    \
-    do {                                   \
-        BSL_LIST_DeleteAllAfterSort(pList); \
-        if (NULL != (pList)) {         \
-            BSL_SAL_FREE(pList);              \
-            (pList) = NULL;                \
-        }                                  \
-    } while (0)
 
 #define SEC_INT_ERROR (-2)
 

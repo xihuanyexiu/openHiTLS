@@ -1,10 +1,18 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
+
 #ifndef BN_BASIC_H
 #define BN_BASIC_H
 
@@ -20,9 +28,13 @@ extern "C" {
 
 #define BN_UINT_BITS ((uint32_t)sizeof(BN_UINT) << 3)
 #define BITS_TO_BN_UNIT(bits) (((bits) + BN_UINT_BITS - 1) / BN_UINT_BITS)
+#define BITS_TO_BYTES(bits) (((bits) + 7) / 8)
+#define BN_CLRNEG(n)        ((n) &= 0x7FFFFFFF)
+#define BN_SETNEG(n)        ((n) |= CRYPT_BN_FLAG_ISNEGTIVE)
+#define BN_ISNEG(n)         (((n) & CRYPT_BN_FLAG_ISNEGTIVE) != 0)
+#define BN_GETNEG(n)        ((n) & CRYPT_BN_FLAG_ISNEGTIVE)
 
 struct BigNum {
-    bool sign; /* *< BigNum sign: negtive(true) or not(false) */
     uint32_t size; /* *< BigNum size (count of BN_UINT) */
     uint32_t room; /* *< BigNum max size (count of BN_UINT) */
     uint32_t flag; /* *< BigNum flag */

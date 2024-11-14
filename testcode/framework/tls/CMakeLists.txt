@@ -1,10 +1,15 @@
-# ---------------------------------------------------------------------------------------------
-#  This file is part of the openHiTLS project.
-#  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
-#  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
-#  for license information.
-# ---------------------------------------------------------------------------------------------
-
+# This file is part of the openHiTLS project.
+#
+# openHiTLS is licensed under the Mulan PSL v2.
+# You can use this software according to the terms and conditions of the Mulan PSL v2.
+# You may obtain a copy of Mulan PSL v2 at:
+#
+#     http://license.coscl.org.cn/MulanPSL2
+#
+# THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+# EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+# MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+# See the Mulan PSL v2 for more details.
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 PROJECT(TLS_FRAME)
@@ -34,11 +39,15 @@ include_directories(${SECUREC_INCLUDE}
                     ${HITLS_SRC}/bsl/async/include
                     ${HITLS_SRC}/bsl/uio/include
                     ${HITLS_SRC}/bsl/uio/src
+                    ${HITLS_SRC}/x509/x509_cert/include
+                    ${HITLS_SRC}/tls/cert/hitls_x509_adapt
                     ${HITLS_SRC}/tls/include
                     ${HITLS_SRC}/tls/cert/cert_self
                     ${HITLS_SRC}/tls/cert/include
                     ${HITLS_SRC}/tls/config/include
+                    ${HITLS_SRC}/tls/cm/include
                     ${HITLS_SRC}/tls/record/include
+                    ${HITLS_SRC}/tls/record/src
                     ${HITLS_SRC}/tls/handshake/cookie/include
                     ${HITLS_SRC}/tls/handshake/common/include
                     ${HITLS_SRC}/tls/crypt/include/
@@ -75,6 +84,7 @@ aux_source_directory(${PROJECT_SOURCE_DIR}/rpc/src RPC_SRC)
 aux_source_directory(${PROJECT_SOURCE_DIR}/transfer/src TRANSFER_SRC)
 aux_source_directory(${PROJECT_SOURCE_DIR}/callback/src CALLBACK_SRC)
 aux_source_directory(${PROJECT_SOURCE_DIR}/func_wrapper/src WRAPPER_SRC)
+SET(WRAPPER_SRC ${WRAPPER_SRC} ${HITLS_SRC}/testcode/framework/stub/stub_replace.c)
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
@@ -89,3 +99,4 @@ add_library(${DT_LIBNAME}
 add_library(${WRAPPER_LIBNAME}
     STATIC
     ${WRAPPER_SRC})
+   

@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include <stdio.h>
@@ -27,7 +34,8 @@
 #include "uio_base.h"
 #include "hlt_type.h"
 #include "socket_common.h"
-
+#include "bsl_uio.h"
+#include "uio_abstraction.h"
 #define SUCCESS 0
 #define ERROR (-1)
 
@@ -91,6 +99,7 @@ static int32_t SctpGetSendStreamNum(int32_t fd, uint16_t *sendStreamNum)
  */
 int32_t SctpConnect(char *targetIP, int targetPort, bool isBlock)
 {
+    (void)targetIP;
     int32_t fd = 0;
     int32_t ret;
     struct sockaddr_in sockAddr;
@@ -146,7 +155,7 @@ int32_t SctpConnect(char *targetIP, int targetPort, bool isBlock)
         ret = sctp_connectx(fd, (struct sockaddr*)&sockAddr, 1, &assoc_id);
         tryNum++;
         usleep(1000);                      // 1000microseconds
-    } while ((ret != 0)&&(tryNum < 6000));  // 6000 indicates that the connection is attempted within 6 seconds
+    } while ((ret != 0) && (tryNum < 6000)); // 6000 indicates that the connection is attempted within 6 seconds
     if (ret != 0) {
         LOG_ERROR("Sctp Connect Fail, ret is %d error id: %d\n", ret, errno);
         goto ERR;
@@ -245,6 +254,7 @@ ERR:
 
 int32_t SctpAccept(char* ip, int listenFd, bool isBlock)
 {
+    (void)ip;
     int32_t ret;
     struct sockaddr_in sockAddr;
 
@@ -392,4 +402,45 @@ BSL_UIO_Method *SctpGetDefaultMethod(void)
     g_SctpUioMethodDefault.read = SelectSctpRead;
     g_SctpUioMethodDefault.ctrl = SelectSctpCtrl;
     return &g_SctpUioMethodDefault;
+}
+
+/**
+ * @brief   Implement the write interface, specifying whether the flow is out of order and the flow ID
+ *
+ * @param   uio [IN] the point to the UIO.
+ * @param   buf [IN] Transmitted data
+ * @param   len [IN] Send length
+ * @param   writeLen [IN] Length of the successfully sent message
+ * @return  BSL_SUCCESS succeeded
+            BSL_UIO_FAIL    failure
+            BSL_UIO_IO_EXCEPTION   IOexception
+ */
+int32_t SctpDefaultWrite(BSL_UIO *uio, const void *buf, uint32_t len, uint32_t *writeLen)
+{
+    /* set flags */
+    // is set to SCTP_UNORD:00-20:00, the messages are sent in disorder. 
+    // Whether the messages are sent in disorder is defined by the user
+    const uint32_t flags = SCTP_SACK_IMMEDIATELY;
+    uint16_t sendStreamId = 0;
+    int32_t ret = uio->method.ctrl(uio, BSL_UIO_SCTP_GET_SEND_STREAM_ID, sizeof(sendStreamId), &sendStreamId);
+    if (ret != BSL_SUCCESS) {
+        LOG_ERROR("error: get sctp send stream id fail %d", ret);
+        return ret;
+    }
+    int32_t fd = BSL_UIO_GetFd(uio);
+    if (fd < 0) {
+        LOG_ERROR("error: get fd fail");
+        return BSL_UIO_IO_EXCEPTION;
+    }
+    ret = sctp_sendmsg(fd, buf, len, NULL, 0, 0, flags, sendStreamId, 0, 0);
+    if (ret < 0) {
+        /* Fatal error */
+        LOG_ERROR("SCTP ERROR IS %d", errno);
+        return BSL_UIO_IO_EXCEPTION;
+    } else if (ret == 0) {
+        return BSL_UIO_IO_EXCEPTION;
+    }
+    *writeLen = ret;
+
+    return BSL_SUCCESS;
 }

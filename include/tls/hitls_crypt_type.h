@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /**
@@ -11,6 +18,7 @@
  * @ingroup hitls
  * @brief  Algorithm related interfaces to be registered
  */
+
 #ifndef HITLS_CRYPT_TYPE_H
 #define HITLS_CRYPT_TYPE_H
 
@@ -40,6 +48,15 @@ typedef void HITLS_HASH_Ctx;
  * based on the algorithm library.
  */
 typedef void HITLS_HMAC_Ctx;
+
+/**
+ * @ingroup hitls_crypt_type
+ * @brief   cipher context. The user converts the cipher context into the corresponding structure
+ * based on the algorithm library.
+ */
+typedef void HITLS_Cipher_Ctx;
+
+typedef struct BslList HITLS_CIPHER_List;
 
 /**
  * @ingroup hitls_crypt_type
@@ -130,10 +147,10 @@ typedef enum {
     HITLS_KEY_EXCH_ECDH,
     HITLS_KEY_EXCH_DH,
     HITLS_KEY_EXCH_RSA,
-    HITLS_KEY_EXCH_ECDHE_PSK,
-    HITLS_KEY_EXCH_DHE_PSK,
-    HITLS_KEY_EXCH_RSA_PSK,
     HITLS_KEY_EXCH_PSK,
+    HITLS_KEY_EXCH_DHE_PSK,
+    HITLS_KEY_EXCH_ECDHE_PSK,
+    HITLS_KEY_EXCH_RSA_PSK,
     HITLS_KEY_EXCH_ECC, /* sm2 encrypt */
     HITLS_KEY_EXCH_BUTT = 255
 } HITLS_KeyExchAlgo;
@@ -144,12 +161,12 @@ typedef enum {
  */
 typedef enum {
     HITLS_SIGN_RSA_PKCS1_V15,
-    HITLS_SIGN_DSA,                 /**< Signature algorithm: DSA */
+    HITLS_SIGN_DSA,                 /* Signature algorithm: DSA */
     HITLS_SIGN_ECDSA,
     HITLS_SIGN_RSA_PSS_RSAE,
+    HITLS_SIGN_RSA_PSS_PSS,
     HITLS_SIGN_ED25519,
     HITLS_SIGN_ED448,
-    HITLS_SIGN_RSA_PSS_PSS,
     HITLS_SIGN_SM2,
     HITLS_SIGN_BUTT = 255
 } HITLS_SignAlgo;
@@ -165,7 +182,7 @@ typedef enum {
 
 /**
  * @ingroup hitls_crypt_type
- * @brief   Elliptic curve ID.
+ * @brief   Named Group enumerated value
  */
 typedef enum {
     HITLS_EC_GROUP_SECP256R1 = 23,
@@ -175,7 +192,6 @@ typedef enum {
     HITLS_EC_GROUP_BRAINPOOLP384R1 = 27,
     HITLS_EC_GROUP_BRAINPOOLP512R1 = 28,
     HITLS_EC_GROUP_CURVE25519 = 29,
-    HITLS_EC_GROUP_CURVE448 = 30,
     HITLS_EC_GROUP_SM2 = 41,
     HITLS_FF_DHE_2048 = 256,
     HITLS_FF_DHE_3072 = 257,
@@ -216,13 +232,14 @@ typedef struct {
     HITLS_CipherAlgo algo;              /**< Symmetric encryption algorithm. */
     const uint8_t *key;                 /**< Symmetry key. */
     uint32_t keyLen;                    /**< Symmetry key length. */
-    const uint8_t *hmacKey;             /**< Hmac key. */
-    uint32_t hmacKeyLen;                /**< Hmac key length. */
     const uint8_t *iv;                  /**< IV. */
     uint32_t ivLen;                     /**< IV length. */
     uint8_t *aad;                       /**< Aad: AEAD: one of the input parameters for encryption and decryption.
                                              additional data. */
     uint32_t aadLen;                    /**< Aad length. */
+    const uint8_t *hmacKey;             /**< Hmac key. */
+    uint32_t hmacKeyLen;                /**< Hmac key length. */
+    HITLS_Cipher_Ctx **ctx;             /**< HITLS_Cipher_Ctx handle */
 } HITLS_CipherParameters;
 
 /**
@@ -230,14 +247,14 @@ typedef struct {
  * @brief   sm2  ecdhe negotiation key parameters
  */
 typedef struct {
-    HITLS_CRYPT_Key *tmpPriKey;        /**<  Local temporary private key. */
-    uint8_t *tmpPeerPubkey;            /**<  Peer temporary public key. */
-    uint32_t tmpPeerPubKeyLen;         /**< Length of the peer temporary public key. */
-    HITLS_CRYPT_Key *priKey;           /**<  Local private key, which is used for SM2 algorithm negotiation.
+    HITLS_CRYPT_Key *tmpPriKey;        /* Local temporary private key. */
+    uint8_t *tmpPeerPubkey;            /* Peer temporary public key. */
+    uint32_t tmpPeerPubKeyLen;         /* Length of the peer temporary public key. */
+    HITLS_CRYPT_Key *priKey;           /* Local private key, which is used for SM2 algorithm negotiation.
                                           It is the private key of the encryption certificate. */
-    HITLS_CRYPT_Key *peerPubKey;       /**< Peer public key, which is used for SM2 algorithm negotiation.
+    HITLS_CRYPT_Key *peerPubKey;       /* Peer public key, which is used for SM2 algorithm negotiation.
                                           It is the public key in the encryption certificate. */
-    bool isClient;                     /**< Client ID, which is used by the SM2 algorithm negotiation key. */
+    bool isClient;                     /* Client ID, which is used by the SM2 algorithm negotiation key. */
 } HITLS_Sm2GenShareKeyParameters;
 
 /**
@@ -245,11 +262,11 @@ typedef struct {
  * @brief   HKDF-Extract Input
  */
 typedef struct {
-    HITLS_HashAlgo hashAlgo;    /**< Hash algorithm. */
-    const uint8_t *salt;        /**< Salt value. */
-    uint32_t saltLen;           /**< Salt value length. */
-    const uint8_t *ikm;         /**< Input Keying Material. */
-    uint32_t ikmLen;            /**< Ikm length. */
+    HITLS_HashAlgo hashAlgo;    /* Hash algorithm. */
+    const uint8_t *salt;        /* Salt value. */
+    uint32_t saltLen;           /* Salt value length. */
+    const uint8_t *inputKeyMaterial;         /* Input Keying Material. */
+    uint32_t inputKeyMaterialLen;            /* Ikm length. */
 } HITLS_CRYPT_HkdfExtractInput;
 
 /**
@@ -257,12 +274,13 @@ typedef struct {
  * @brief   HKDF-Expand Input
  */
 typedef struct {
-    HITLS_HashAlgo hashAlgo;    /**< Hash algorithm. */
-    const uint8_t *prk;         /**< A pseudorandom key of at least HashLen octets. */
-    uint32_t prkLen;            /**< Prk length. */
-    const uint8_t *info;        /**< Extended data. */
-    uint32_t infoLen;           /**< Extend the data length. */
+    HITLS_HashAlgo hashAlgo;    /* Hash algorithm. */
+    const uint8_t *prk;         /* A pseudorandom key of at least HashLen octets. */
+    uint32_t prkLen;            /* Prk length. */
+    const uint8_t *info;        /* Extended data. */
+    uint32_t infoLen;           /* Extend the data length. */
 } HITLS_CRYPT_HkdfExpandInput;
+
 
 #ifdef __cplusplus
 }

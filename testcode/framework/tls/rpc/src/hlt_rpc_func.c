@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include <stdlib.h>
@@ -31,7 +38,7 @@ pthread_mutex_t g_cmdMutex = PTHREAD_MUTEX_INITIALIZER;
         }                             \
     } while (0)
 
-void InitCmdIndex()
+void InitCmdIndex(void)
 {
     g_cmdIndex = 0;
 }
@@ -70,7 +77,7 @@ int HLT_RpcTlsNewCtx(HLT_Process *peerProcess, TLS_VERSION tlsVersion, bool isCl
 
     ASSERT_RETURN(ret > 0, "sprintf_s Error");
 
-    ret = ControlChannelWrite(srcProcess->controlChannelFd,  peerProcess->srcDomainPath, &dataBuf);
+    ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
 
     ret = WaitResult(&expectCmdData, cmdIndex, __FUNCTION__);
@@ -100,9 +107,10 @@ int HLT_RpcTlsSetCtx(HLT_Process *peerProcess, int ctxId, HLT_Ctx_Config *config
     "%s|%s|%s|%d|"
     "%d|%s|%d|%s|"
     "%s|%s|%s|%s|"
-    "%s|%d|%d|%s|"
+    "%s|%d|%d|"
     "%u|%d|%d|"
-    "%d|%d|",
+    "%d|%d|%d|"
+    "%d|%u|%d|",
     g_cmdIndex, __FUNCTION__, ctxId,
     config->minVersion, config->maxVersion, config->cipherSuites, config->tls13CipherSuites,
     config->pointFormats, config->groups, config->signAlgorithms, config->isSupportRenegotiation,
@@ -111,9 +119,10 @@ int HLT_RpcTlsSetCtx(HLT_Process *peerProcess, int ctxId, HLT_Ctx_Config *config
     config->signCert, config->signPrivKey, config->psk, config->isSupportSessionTicket,
     config->setSessionCache, config->ticketKeyCb, config->isFlightTransmitEnable, config->serverName,
     config->sniDealCb, config->sniArg, config->alpnList, config->alpnSelectCb,
-    config->alpnUserData, config->securitylevel, config->isSupportDhAuto, config->noSecRenegotiationCb,
+    config->alpnUserData, config->securitylevel, config->isSupportDhAuto,
     config->keyExchMode, config->SupportType, config->isSupportPostHandshakeAuth,
-    config->needCheckKeyUsage, config->isSupportVerifyNone);
+    config->readAhead, config->needCheckKeyUsage, config->isSupportVerifyNone,
+    config->allowClientRenegotiate, config->emptyRecordsNum, config->allowLegacyRenegotiate);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
@@ -291,7 +300,6 @@ int HLT_RpcTlsConnectUnBlock(HLT_Process *peerProcess, int sslId)
 {
     uint64_t cmdIndex;
     Process *srcProcess = NULL;
-    CmdData expectCmdData = {0};
     ControlChannelBuf dataBuf;
 
     ASSERT_RETURN(peerProcess->remoteFlag == 1, "Only Remote Process Support Call HLT_RpcTlsConnect");
@@ -315,7 +323,6 @@ int HLT_RpcTlsConnectUnBlock(HLT_Process *peerProcess, int sslId)
 int HLT_RpcGetTlsConnectResult(int cmdIndex)
 {
     int ret;
-    char *endPtr = NULL;
     CmdData expectCmdData = {0};
     // Waiting for the result returned by the peer
     ret = WaitResult(&expectCmdData, cmdIndex, "HLT_RpcTlsConnect");
@@ -369,7 +376,6 @@ int HLT_RpcTlsReadUnBlock(HLT_Process *peerProcess, int sslId, uint8_t *data, ui
     int ret;
     uint64_t cmdIndex;
     Process *srcProcess = NULL;
-    CmdData expectCmdData = {0};
     ControlChannelBuf dataBuf;
 
     ASSERT_RETURN(peerProcess->remoteFlag == 1, "Only Remote Process Support Call HLT_RpcTlsRead");
@@ -443,7 +449,6 @@ int HLT_RpcTlsWriteUnBlock(HLT_Process *peerProcess, int sslId, uint8_t *data, u
     int ret;
     uint64_t cmdIndex;
     Process *srcProcess = NULL;
-    CmdData expectCmdData = {0};
     ControlChannelBuf dataBuf;
 
     ASSERT_RETURN(peerProcess->remoteFlag == 1, "Only Remote Process Support Call HLT_RpcTlsWrite");

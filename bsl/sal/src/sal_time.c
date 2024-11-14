@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include "hitls_build.h"
@@ -14,19 +21,29 @@
 #include "bsl_errno.h"
 #include "sal_time.h"
 
-static BslTimeFunc g_fnSysTimeFunc = NULL;
+static BSL_SAL_TimeCallback g_timeCallback = {0};
+
+int32_t SAL_TimeCallback_Ctrl(BSL_SAL_CB_FUNC_TYPE type, void *funcCb)
+{
+    if (type > BSL_SAL_TIME_TICKS_PER_SEC_CB_FUNC || type < BSL_SAL_TIME_GET_SYS_TIME_CB_FUNC) {
+        return BSL_SAL_TIME_NO_REG_FUNC;
+    }
+    uint32_t offset = (uint32_t)(type - BSL_SAL_TIME_GET_SYS_TIME_CB_FUNC);
+    ((void **)&g_timeCallback)[offset] = funcCb;
+    return BSL_SUCCESS;
+}
 
 void BSL_SAL_SysTimeFuncReg(BslTimeFunc func)
 {
     if (func != NULL) {
-        g_fnSysTimeFunc = func;
+        g_timeCallback.pfGetSysTime = func;
     }
     return;
 }
 
 void BSL_SysTimeFuncUnReg(void)
 {
-    g_fnSysTimeFunc = NULL;
+    g_timeCallback.pfGetSysTime = NULL;
     return;
 }
 
@@ -108,20 +125,26 @@ uint32_t BSL_DateToStrConvert(const BSL_TIME *dateTime, char *timeStr, size_t le
     if (BSL_DateTimeCheck(dateTime) != true) {
         return BSL_INTERNAL_EXCEPTION;
     }
-
+    if (g_timeCallback.pfDateToStrConvert != NULL && g_timeCallback.pfDateToStrConvert != TIME_DateToStrConvert) {
+        return g_timeCallback.pfDateToStrConvert(dateTime, timeStr, len);
+    }
+#ifdef HITLS_BSL_SAL_LINUX
     return TIME_DateToStrConvert(dateTime, timeStr, len);
+#else
+    return BSL_SAL_TIME_NO_REG_FUNC;
+#endif
 }
 
-BslUnixTime BSL_SAL_CurrentSysTimeGet(void)
+int64_t BSL_SAL_CurrentSysTimeGet(void)
 {
-    BslTimeFunc sysTimeFunc = g_fnSysTimeFunc;
-
-    /* Current system time */
-    if (sysTimeFunc != NULL) {
-        return sysTimeFunc();
-    } else {
-        return TIME_GetSysTime();
+    if (g_timeCallback.pfGetSysTime != NULL && g_timeCallback.pfGetSysTime != TIME_GetSysTime) {
+        return g_timeCallback.pfGetSysTime();
     }
+#ifdef HITLS_BSL_SAL_LINUX
+    return TIME_GetSysTime();
+#else
+    return BSL_SAL_TIME_NO_REG_FUNC;
+#endif
 }
 
 static uint32_t BslDateTimeCmpCheck(const BSL_TIME *dateA, int64_t *utcTimeA,
@@ -141,7 +164,7 @@ static uint32_t BslDateTimeCmpCheck(const BSL_TIME *dateA, int64_t *utcTimeA,
     return BSL_SUCCESS;
 }
 
-uint32_t BSL_SAL_DateTimeCompare(const BSL_TIME *dateA, const BSL_TIME *dateB, int64_t *diffSec)
+int32_t BSL_SAL_DateTimeCompare(const BSL_TIME *dateA, const BSL_TIME *dateB, int64_t *diffSec)
 {
     int64_t utcTimeA = 0;
     int64_t utcTimeB = 0;
@@ -179,7 +202,7 @@ static uint32_t TimeCmp(uint32_t a, uint32_t b)
     return BSL_TIME_CMP_EQUAL;
 }
 
-uint32_t BSL_SAL_DateTimeCompareByUs(const BSL_TIME *dateA, const BSL_TIME *dateB)
+int32_t BSL_SAL_DateTimeCompareByUs(const BSL_TIME *dateA, const BSL_TIME *dateB)
 {
     int64_t diffSec = 0;
     uint32_t ret;
@@ -228,7 +251,7 @@ uint32_t BSL_DateTimeAddUs(BSL_TIME *dateR, const BSL_TIME *dateA, uint32_t us)
     return BSL_SUCCESS;
 }
 
-uint32_t BSL_SAL_DateToUtcTimeConvert(const BSL_TIME *dateTime, int64_t *utcTime)
+int32_t BSL_SAL_DateToUtcTimeConvert(const BSL_TIME *dateTime, int64_t *utcTime)
 {
     uint32_t ret = BSL_INTERNAL_EXCEPTION;
 
@@ -338,20 +361,70 @@ bool BSL_DateTimeCheck(const BSL_TIME *dateTime)
     return ret;
 }
 
-uint32_t BSL_SAL_UtcTimeToDateConvert(int64_t utcTime, BSL_TIME *sysTime)
+int32_t BSL_SAL_UtcTimeToDateConvert(int64_t utcTime, BSL_TIME *sysTime)
 {
     if (sysTime == NULL || utcTime > BSL_UTCTIME_MAX) {
         return BSL_SAL_ERR_BAD_PARAM;
     }
+    if (g_timeCallback.pfUtcTimeToDateConvert != NULL &&
+        g_timeCallback.pfUtcTimeToDateConvert != TIME_UtcTimeToDateConvert) {
+        return g_timeCallback.pfUtcTimeToDateConvert(utcTime, sysTime);
+    }
+#ifdef HITLS_BSL_SAL_LINUX
     return TIME_UtcTimeToDateConvert(utcTime, sysTime);
+#else
+    return BSL_SAL_TIME_NO_REG_FUNC;
+#endif
 }
 
-uint32_t BSL_SAL_SysTimeGet(BSL_TIME *sysTime)
+int32_t BSL_SAL_SysTimeGet(BSL_TIME *sysTime)
 {
     if (sysTime == NULL) {
         return BSL_SAL_ERR_BAD_PARAM;
     }
+    if (g_timeCallback.pfSysTimeGet != NULL && g_timeCallback.pfSysTimeGet != TIME_SysTimeGet) {
+        return g_timeCallback.pfSysTimeGet(sysTime);
+    }
+#ifdef HITLS_BSL_SAL_LINUX
     return TIME_SysTimeGet(sysTime);
+#else
+    return BSL_SAL_TIME_NO_REG_FUNC;
+#endif
+}
+
+void BSL_SAL_Sleep(uint32_t time)
+{
+    if (g_timeCallback.pfSleep != NULL && g_timeCallback.pfSleep != BSL_SAL_Sleep) {
+        g_timeCallback.pfSleep(time);
+        return;
+    }
+#ifdef HITLS_BSL_SAL_LINUX
+    SAL_Sleep(time);
+#endif
+}
+
+long BSL_SAL_Tick(void)
+{
+    if (g_timeCallback.pfTick != NULL && g_timeCallback.pfTick != BSL_SAL_Tick) {
+        return g_timeCallback.pfTick();
+    }
+#ifdef HITLS_BSL_SAL_LINUX
+    return SAL_Tick();
+#else
+    return BSL_SAL_TIME_NO_REG_FUNC;
+#endif
+}
+
+long BSL_SAL_TicksPerSec(void)
+{
+    if (g_timeCallback.pfTicksPerSec != NULL && g_timeCallback.pfTicksPerSec != BSL_SAL_TicksPerSec) {
+        return g_timeCallback.pfTicksPerSec();
+    }
+#ifdef HITLS_BSL_SAL_LINUX
+    return SAL_TicksPerSec();
+#else
+    return BSL_SAL_TIME_NO_REG_FUNC;
+#endif
 }
 
 #endif /* HITLS_BSL_SAL_TIME */

@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include "hitls_build.h"
@@ -793,4 +800,25 @@ int32_t CRYPT_DH_Ctrl(CRYPT_DH_Ctx *ctx, CRYPT_PkeyCtrl opt, void *val, uint32_t
     BSL_ERR_PUSH_ERROR(CRYPT_DH_UNSUPPORTED_CTRL_OPTION);
     return CRYPT_DH_UNSUPPORTED_CTRL_OPTION;
 }
+
+/**
+ * @ingroup dh
+ * @brief dh get security bits
+ *
+ * @param ctx [IN] dh Context structure
+ *
+ * @retval security bits
+ */
+int32_t CRYPT_DH_GetSecBits(const CRYPT_DH_Ctx *ctx)
+{
+    if (ctx == NULL || ctx->para == NULL || ctx->para->p == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return 0;
+    }
+    if (ctx->para->q == NULL) {
+        return BN_SecBit(BN_Bits(ctx->para->p), -1);
+    }
+    return BN_SecBit(BN_Bits(ctx->para->p), BN_Bits(ctx->para->q));
+}
+
 #endif /* HITLS_CRYPTO_DH */

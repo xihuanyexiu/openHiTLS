@@ -1,13 +1,21 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /* BEGIN_HEADER */
 /* INCLUDE_BASE test_suite_tls13_consistency_rfc8446 */
+
 #include <stdio.h>
 #include "stub_replace.h"
 #include "hitls.h"
@@ -105,12 +113,12 @@ exit:
 
 #define TEST_SERVERNAME_LENGTH 20
 #define BUF_SIZE_DTO_TEST 18432
-#define ROOT_PEM "%s/root.pem:%s/intca.pem"
-#define INTCA_PEM "%s/intca.pem"
-#define SERVER_PEM "%s/server.pem"
-#define SERVER_KEY_PEM "%s/server.key.pem"
-#define CLIENT_PEM "%s/client.pem"
-#define CLIENT_KEY_PEM "%s/client.key.pem"
+#define ROOT_DER "%s/ca.der:%s/inter.der"
+#define INTCA_DER "%s/inter.der"
+#define SERVER_DER "%s/server.der"
+#define SERVER_KEY_DER "%s/server.key.der"
+#define CLIENT_DER "%s/client.der"
+#define CLIENT_KEY_DER "%s/client.key.der"
 #define IP_ADDR_MAX_LEN 16
 #define BYTE_SIZE 8
 #define SNI_TYPE 2
@@ -124,13 +132,13 @@ static int SetCertPath(HLT_Ctx_Config *ctxConfig, const char *certStr, bool isSe
     char eeCertPath[30];
     char privKeyPath[30];
 
-    ret = sprintf_s(caCertPath, sizeof(caCertPath), ROOT_PEM, certStr, certStr);
+    ret = sprintf_s(caCertPath, sizeof(caCertPath), ROOT_DER, certStr, certStr);
     ASSERT_TRUE(ret > 0);
-    ret = sprintf_s(chainCertPath, sizeof(chainCertPath), INTCA_PEM, certStr);
+    ret = sprintf_s(chainCertPath, sizeof(chainCertPath), INTCA_DER, certStr);
     ASSERT_TRUE(ret > 0);
-    ret = sprintf_s(eeCertPath, sizeof(eeCertPath), isServer ? SERVER_PEM : CLIENT_PEM, certStr);
+    ret = sprintf_s(eeCertPath, sizeof(eeCertPath), isServer ? SERVER_DER : CLIENT_DER, certStr);
     ASSERT_TRUE(ret > 0);
-    ret = sprintf_s(privKeyPath, sizeof(privKeyPath), isServer ? SERVER_KEY_PEM : CLIENT_KEY_PEM, certStr);
+    ret = sprintf_s(privKeyPath, sizeof(privKeyPath), isServer ? SERVER_KEY_DER : CLIENT_KEY_DER, certStr);
     ASSERT_TRUE(ret > 0);
     HLT_SetCaCertPath(ctxConfig, (char *)caCertPath);
     HLT_SetChainCertPath(ctxConfig, (char *)chainCertPath);
@@ -196,7 +204,7 @@ void HITLS_TLS1_2_Config_SDV_23_0_5_0430(int version, int connType)
     HLT_Ctx_Config *clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
     ASSERT_TRUE(clientCtxConfig != NULL);
 
-    HLT_SetCertPath(clientCtxConfig, "ecdsa_sha256/root.pem", "NULL", "NULL", "NULL", "NULL", "NULL");
+    HLT_SetCertPath(clientCtxConfig, "ecdsa_sha256/ca.der", "NULL", "NULL", "NULL", "NULL", "NULL");
 
     clientRes = HLT_ProcessTlsInit(localProcess, version, clientCtxConfig, NULL);
     ASSERT_TRUE(clientRes != NULL);
@@ -683,7 +691,7 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_SVERSION_FUNC_TC002(int version, int conn
     ASSERT_EQ(HLT_RpcTlsConnect(remoteProcess, clientRes->sslId), HITLS_MSG_HANDLE_UNSUPPORT_VERSION);
     ASSERT_EQ(HLT_RpcTlsGetAlertFlag(remoteProcess, clientRes->sslId), ALERT_FLAG_SEND);
     ASSERT_EQ(HLT_RpcTlsGetAlertLevel(remoteProcess, clientRes->sslId), ALERT_LEVEL_FATAL);
-    ASSERT_EQ(HLT_RpcTlsGetAlertDescription(remoteProcess, clientRes->sslId), ALERT_PROTOCOL_VERSION);
+    ASSERT_EQ(HLT_RpcTlsGetAlertDescription(remoteProcess, clientRes->sslId), ALERT_ILLEGAL_PARAMETER);
 
 exit:
     ClearWrapper();
@@ -758,36 +766,12 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_SVERSION_FUNC_TC003()
     ASSERT_EQ(HLT_RpcTlsConnect(remoteProcess, clientRes->sslId), HITLS_MSG_HANDLE_UNSUPPORT_EXTENSION_TYPE);
     ASSERT_EQ(HLT_RpcTlsGetAlertFlag(remoteProcess, clientRes->sslId), ALERT_FLAG_SEND);
     ASSERT_EQ(HLT_RpcTlsGetAlertLevel(remoteProcess, clientRes->sslId), ALERT_LEVEL_FATAL);
-    ASSERT_EQ(HLT_RpcTlsGetAlertDescription(remoteProcess, clientRes->sslId), ALERT_UNSUPPORTED_EXTENSION);
+    ASSERT_EQ(HLT_RpcTlsGetAlertDescription(remoteProcess, clientRes->sslId), ALERT_ILLEGAL_PARAMETER);
 exit:
     HLT_CleanFrameHandle();
     HLT_FreeAllProcess();
 }
 /* END_CASE */
-
-
-static void Test_Server_SVersion5(HITLS_Ctx *ctx, uint8_t *data, uint32_t *len, uint32_t bufSize, void *user)
-{
-    (void)ctx;
-    (void)user;
-    FRAME_Type frameType = {0};
-    frameType.versionType = HITLS_VERSION_TLS12;
-    FRAME_Msg frameMsg = {0};
-    frameMsg.recType.data = REC_TYPE_HANDSHAKE;
-    frameMsg.length.data = *len;
-    frameMsg.recVersion.data = HITLS_VERSION_TLS12;
-    uint32_t parseLen = 0;
-    FRAME_ParseMsgBody(&frameType, data, *len, &frameMsg, &parseLen);
-    ASSERT_EQ(parseLen, *len);
-    ASSERT_EQ(frameMsg.body.hsMsg.type.data, CLIENT_HELLO);
-    frameMsg.body.hsMsg.body.clientHello.version.data = 0x0304;
-
-    memset_s(data, bufSize, 0, bufSize);
-    FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
-exit:
-    FRAME_CleanMsg(&frameType, &frameMsg);
-    return;
-}
 
 static void Test_Server_SVersion6(HITLS_Ctx *ctx, uint8_t *data, uint32_t *len, uint32_t bufSize, void *user)
 {
@@ -1055,7 +1039,7 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_PSKTICKET_FUNC_TC001(int version, int con
     ASSERT_TRUE(remoteProcess != NULL);
 
     int32_t serverConfigId = HLT_RpcTlsNewCtx(remoteProcess, version, false);
-    void *clientConfig = HLT_TlsNewCtx(version, true);
+    void *clientConfig = HLT_TlsNewCtx(version);
     ASSERT_TRUE(clientConfig != NULL);
 
     HLT_Ctx_Config *clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");

@@ -1,10 +1,18 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
+
 /* BEGIN_HEADER */
 /* INCLUDE_BASE test_suite_tls12_consistency_rfc5246 */
 /* END_HEADER */
@@ -193,64 +201,6 @@ exit:
 /* END_CASE */
 
 /**
- * Set the certificate signature certSig to DSA_SHA256.
- * Set ciphersuite to HITLS_DHE_DSS_WITH_AES_128_GCM_SHA256.
- * If the signature type in the cipher suite matches that in the certificate, the connection is successfully established.
- */
-/* BEGIN_CASE */
-void SDV_TLS_TLS12_RFC5246_CONSISTENCY_CIPHERSUITE_SIG_MATCH_CERT_SIG_TC001()
-{
-    HLT_Tls_Res *serverRes = NULL;
-    HLT_Tls_Res *clientRes = NULL;
-    HLT_Process *localProcess = NULL;
-    HLT_Process *remoteProcess = NULL;
-    int ret = 0;
-
-    localProcess = HLT_InitLocalProcess(HITLS);
-    ASSERT_TRUE(localProcess != NULL);
-    remoteProcess = HLT_LinkRemoteProcess(HITLS, TCP, g_uiPort, false);
-    ASSERT_TRUE(remoteProcess != NULL);
-
-    HLT_Ctx_Config *serverCtxConfig = HLT_NewCtxConfig(NULL, "SERVER");
-    ASSERT_TRUE(serverCtxConfig != NULL);
-
-    HLT_SetCertPath(serverCtxConfig, "dss_sha256/dsaCa.pem", "dss_sha256/dsaSecond.pem", "dss_sha256/dsaApp.pem",
-        "dss_sha256/dsaApp.key", "NULL", "NULL");
-    HLT_SetCipherSuites(serverCtxConfig, "HITLS_DHE_DSS_WITH_AES_128_GCM_SHA256");
-
-    serverRes = HLT_ProcessTlsAccept(localProcess, TLS1_2, serverCtxConfig, NULL);
-    ASSERT_TRUE(serverRes != NULL);
-
-    HLT_Ctx_Config *clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
-    ASSERT_TRUE(clientCtxConfig != NULL);
-
-    HLT_SetCertPath(clientCtxConfig, "dss_sha256/dsaCa.pem", "dss_sha256/dsaSecond.pem", "NULL", "NULL", "NULL",
-        "NULL");
-    HLT_SetCipherSuites(clientCtxConfig, "HITLS_DHE_DSS_WITH_AES_128_GCM_SHA256");
-    HLT_SetSignature(clientCtxConfig, "CERT_SIG_SCHEME_DSA_SHA256");
-
-    clientRes = HLT_ProcessTlsConnect(remoteProcess, TLS1_2, clientCtxConfig, NULL);
-    ASSERT_TRUE(clientRes != NULL);
-
-    ret = HLT_GetTlsAcceptResult(serverRes);
-    ASSERT_TRUE(ret == 0);
-
-    ret = HLT_ProcessTlsWrite(localProcess, serverRes, (uint8_t *)"Hello World", strlen("Hello World"));
-    ASSERT_TRUE(ret == 0);
-
-    uint8_t readBuf[1000] = {0};
-    uint32_t readLen;
-    ret = HLT_ProcessTlsRead(remoteProcess, clientRes, readBuf, 1000, &readLen);
-    ASSERT_TRUE(ret == 0);
-    ASSERT_TRUE(readLen == strlen("Hello World"));
-    ASSERT_TRUE(memcmp("Hello World", readBuf, readLen) == 0);
-
-exit:
-    HLT_FreeAllProcess();
-}
-/* END_CASE */
-
-/**
  * Configure the certificate signature as CERT_SIG_SCHEME_RSA_PKCS1_SHA256.
  * Set the algorithm suite to HITLS_DHE_DSS_WITH_AES_128_GCM_SHA256.
  * The signature type in the cipher suite does not match that in the certificate,
@@ -275,8 +225,8 @@ void SDV_TLS_TLS12_RFC5246_CONSISTENCY_CIPHERSUITE_SIG_MATCH_CERT_SIG_TC002()
     HLT_Ctx_Config *serverCtxConfig = HLT_NewCtxConfig(NULL, "SERVER");
     ASSERT_TRUE(serverCtxConfig != NULL);
 
-    HLT_SetCertPath(serverCtxConfig, "rsa_sha256/root.pem:rsa_sha256/intca.pem", "rsa_sha256/intca.pem",
-        "rsa_sha256/server.pem", "rsa_sha256/server.key.pem", "NULL", "NULL");
+    HLT_SetCertPath(serverCtxConfig, "rsa_sha256/ca.der:rsa_sha256/inter.der", "rsa_sha256/inter.der",
+        "rsa_sha256/server.der", "rsa_sha256/server.key.der", "NULL", "NULL");
     HLT_SetCipherSuites(serverCtxConfig, "HITLS_DHE_RSA_WITH_AES_128_GCM_SHA256");
 
     serverRes = HLT_ProcessTlsAccept(remoteProcess, TLS1_2, serverCtxConfig, NULL);
@@ -285,10 +235,10 @@ void SDV_TLS_TLS12_RFC5246_CONSISTENCY_CIPHERSUITE_SIG_MATCH_CERT_SIG_TC002()
     HLT_Ctx_Config *clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
     ASSERT_TRUE(clientCtxConfig != NULL);
 
-    HLT_SetCertPath(clientCtxConfig, "rsa_sha256/root.pem:rsa_sha256/intca.pem", "NULL", "NULL", "NULL", "NULL",
+    HLT_SetCertPath(clientCtxConfig, "rsa_sha256/ca.der:rsa_sha256/inter.der", "NULL", "NULL", "NULL", "NULL",
         "NULL");
-    // Set the algorithm suite to HITLS_DHE_DSS_WITH_AES_128_GCM_SHA256.
-    HLT_SetCipherSuites(clientCtxConfig, "HITLS_DHE_DSS_WITH_AES_128_GCM_SHA256");
+    // Set the algorithm suite to HITLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA.
+    HLT_SetCipherSuites(clientCtxConfig, "HITLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA");
 
     clientRes = HLT_ProcessTlsConnect(localProcess, TLS1_2, clientCtxConfig, NULL);
     ASSERT_TRUE(clientRes == NULL);
@@ -298,50 +248,6 @@ exit:
 }
 /* END_CASE */
 
-/* BEGIN_CASE */
-void SDV_TLS_TLS12_RFC5246_CONSISTENCY_CIPHERSUITE_SIG_MATCH_CERT_SIG_TC003()
-{
-    HLT_Tls_Res *serverRes = NULL;
-    HLT_Tls_Res *clientRes = NULL;
-    HLT_Process *localProcess = NULL;
-    HLT_Process *remoteProcess = NULL;
-
-    // Create the local process and peer process.
-    localProcess = HLT_InitLocalProcess(HITLS);
-    ASSERT_TRUE(localProcess != NULL);
-    remoteProcess = HLT_LinkRemoteProcess(HITLS, TCP, g_uiPort, false);
-    ASSERT_TRUE(remoteProcess != NULL);
-
-    // Configure link information on the server.
-    HLT_Ctx_Config *serverCtxConfig = HLT_NewCtxConfig(NULL, "SERVER");
-    ASSERT_TRUE(serverCtxConfig != NULL);
-
-    HLT_SetCertPath(serverCtxConfig, "dss_sha256/dsaCa.pem", "dss_sha256/dsaSecond.pem", "dss_sha256/dsaApp.pem",
-        "dss_sha256/dsaApp.key", "NULL", "NULL");
-    HLT_SetCipherSuites(serverCtxConfig, "HITLS_DHE_DSS_WITH_AES_128_GCM_SHA256");
-
-    // The server listens on the TLS link.
-    serverRes = HLT_ProcessTlsAccept(remoteProcess, TLS1_2, serverCtxConfig, NULL);
-    ASSERT_TRUE(serverRes != NULL);
-
-    // Configure link information on the client.
-    HLT_Ctx_Config *clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
-    ASSERT_TRUE(clientCtxConfig != NULL);
-
-    HLT_SetCertPath(clientCtxConfig, "dss_sha256/dsaCa.pem", "dss_sha256/dsaSecond.pem", "NULL", "NULL", "NULL",
-        "NULL");
-    HLT_SetCipherSuites(clientCtxConfig, "HITLS_DHE_DSS_WITH_AES_128_GCM_SHA256:HITLS_DHE_RSA_WITH_AES_128_GCM_SHA256");
-    // Set the signature extension in the client hello message.
-    HLT_SetSignature(clientCtxConfig, "CERT_SIG_SCHEME_RSA_PKCS1_SHA256");
-
-    // The client fails to establish a TLS link.
-    clientRes = HLT_ProcessTlsConnect(localProcess, TLS1_2, clientCtxConfig, NULL);
-    ASSERT_TRUE(clientRes == NULL);
-
-exit:
-    HLT_FreeAllProcess();
-}
-/* END_CASE */
 
 /* @
 * @test  SDV_TLS_TLS12_RFC5246_CONSISTENCY_KEYUSAGE_CERT_TC001
@@ -369,8 +275,8 @@ void SDV_TLS_TLS12_RFC5246_CONSISTENCY_KEYUSAGE_CERT_TC001()
     HLT_Ctx_Config *serverCtxConfig = HLT_NewCtxConfig(NULL, "SERVER");
     ASSERT_TRUE(serverCtxConfig != NULL);
 
-    HLT_SetCertPath(serverCtxConfig, "rsa_sha512/root.pem", "rsa_sha512/intca.pem",
-        "rsa_sha512/usageKeyEncipher.crt", "rsa_sha512/usageKeyEncipher.key", "NULL", "NULL");
+    HLT_SetCertPath(serverCtxConfig, "rsa_sha512/root.der", "rsa_sha512/intca.der",
+        "rsa_sha512/usageKeyEncipher.der", "rsa_sha512/usageKeyEncipher.key.der", "NULL", "NULL");
     HLT_SetCipherSuites(serverCtxConfig, "HITLS_RSA_WITH_AES_256_GCM_SHA384");
 
     serverRes = HLT_ProcessTlsAccept(remoteProcess, TLS1_2, serverCtxConfig, NULL);
@@ -379,8 +285,8 @@ void SDV_TLS_TLS12_RFC5246_CONSISTENCY_KEYUSAGE_CERT_TC001()
     HLT_Ctx_Config *clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
     ASSERT_TRUE(clientCtxConfig != NULL);
 
-    HLT_SetCertPath(clientCtxConfig, "rsa_sha512/root.pem", "rsa_sha512/intca.pem",
-        "rsa_sha512/server.pem", "rsa_sha512/server.key.pem",  "NULL", "NULL");
+    HLT_SetCertPath(clientCtxConfig, "rsa_sha512/root.der", "rsa_sha512/intca.der",
+        "rsa_sha512/server.der", "rsa_sha512/server.key.der",  "NULL", "NULL");
     clientCtxConfig->needCheckKeyUsage = true;
 
     clientRes = HLT_ProcessTlsConnect(localProcess, TLS1_2, clientCtxConfig, NULL);
@@ -414,8 +320,8 @@ void SDV_TLS_TLS12_RFC5246_CONSISTENCY_KEYUSAGE_CERT_TC002()
     HLT_Ctx_Config *serverCtxConfig = HLT_NewCtxConfig(NULL, "SERVER");
     ASSERT_TRUE(serverCtxConfig != NULL);
 
-    HLT_SetCertPath(serverCtxConfig, "rsa_sha512/root.pem", "rsa_sha512/intca.pem",
-        "rsa_sha512/usagedigitalSign.crt", "rsa_sha512/usagedigitalSign.key", "NULL", "NULL");
+    HLT_SetCertPath(serverCtxConfig, "rsa_sha512/root.der", "rsa_sha512/intca.der",
+        "rsa_sha512/usagedigitalSign.der", "rsa_sha512/usagedigitalSign.key.der", "NULL", "NULL");
 
     serverRes = HLT_ProcessTlsAccept(remoteProcess, TLS1_2, serverCtxConfig, NULL);
     ASSERT_TRUE(serverRes != NULL);
@@ -423,8 +329,8 @@ void SDV_TLS_TLS12_RFC5246_CONSISTENCY_KEYUSAGE_CERT_TC002()
     HLT_Ctx_Config *clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
     ASSERT_TRUE(clientCtxConfig != NULL);
 
-    HLT_SetCertPath(clientCtxConfig, "rsa_sha512/root.pem", "rsa_sha512/intca.pem",
-        "rsa_sha512/server.pem", "rsa_sha512/server.key.pem",  "NULL", "NULL");
+    HLT_SetCertPath(clientCtxConfig, "rsa_sha512/root.der", "rsa_sha512/intca.der",
+        "rsa_sha512/server.der", "rsa_sha512/server.key.der",  "NULL", "NULL");
     clientCtxConfig->needCheckKeyUsage = true;
 
     clientRes = HLT_ProcessTlsConnect(localProcess, TLS1_2, clientCtxConfig, NULL);

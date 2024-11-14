@@ -1,10 +1,18 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
+
 #ifndef REC_UNPROCESSED_MSG_H
 #define REC_UNPROCESSED_MSG_H
 
@@ -16,7 +24,7 @@
 extern "C" {
 #endif
 
-#ifndef HITLS_NO_DTLS12
+#ifdef HITLS_TLS_PROTO_DTLS12
 
 typedef struct {
     RecHdr hdr;                     /* record header */
@@ -48,9 +56,9 @@ void UnprocessedAppMsgListDeinit(UnprocessedAppMsg *appMsgList);
 
 int32_t UnprocessedAppMsgListAppend(UnprocessedAppMsg *appMsgList, const RecHdr *hdr, const uint8_t *recordBody);
 
-UnprocessedAppMsg *UnprocessedAppMsgGet(UnprocessedAppMsg *appMsgList);
+UnprocessedAppMsg *UnprocessedAppMsgGet(UnprocessedAppMsg *appMsgList, uint16_t curEpoch);
 
-#endif // HITLS_NO_DTLS12
+#endif // HITLS_TLS_PROTO_DTLS12
 
 #ifdef __cplusplus
 }

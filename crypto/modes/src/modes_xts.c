@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include "hitls_build.h"
@@ -111,40 +118,6 @@ int32_t MODE_XTS_SetDecryptKey(MODE_XTS_Ctx *ctx, const uint8_t *key, uint32_t l
     return CRYPT_SUCCESS;
 }
 
-#ifdef HITLS_BIG_ENDIAN
-// AES XTS IEEE P1619/D16 Annex C
-// Pseudocode for XTS-AES-128 and XTS-AES-256 Encryption
-void GF128Mul(uint8_t *a, uint32_t len)
-{
-    uint8_t in;
-    uint8_t out = 0;
-    in = 0;
-    // xts blocksize MODE_XTS_BLOCKSIZE
-    for (uint32_t j = 0; j < len; j++) {
-        out = (a[j] >> 7) & 1;  // >> 7
-        a[j] = (uint8_t)((a[j] << 1) + in) & 0xFFu;  // << 1
-        in = out;
-    }
-    if (out > 0) {
-        a[0] ^= 0x87;  // 0x87 gf 128
-    }
-}
-#else
-// AES XTS IEEE P1619/D16 5.2
-// Multiplication by a primitive element α
-void GF128Mul(uint8_t *a, uint32_t len)
-{
-    (void)len;
-    uint64_t *t = (uint64_t *)a;
-    uint8_t c = (t[1] >> 63) & 0xff; // 63 is the last bit of the last eight bytes.
-    t[1] = t[1] << 1 | t[0] >> 63; // 63 is the last bit of the first eight bytes
-    t[0] = t[0] << 1;
-    if (c != 0) {
-        t[0] ^= 0x87;
-    }
-}
-#endif
-
 void GF128Mul_GM(uint8_t *a, uint32_t len)
 {
     uint8_t in = 0;
@@ -197,7 +170,7 @@ int32_t BlocksCrypt(MODE_XTS_Ctx *ctx, const uint8_t **in, uint8_t **out, uint32
         if (ctx->algId == CRYPT_SYM_SM4) {
             GF128Mul_GM(ctx->tweak, blockSize);
         } else {
-            GF128Mul(ctx->tweak, blockSize);
+            return CRYPT_NOT_SUPPORT;
         }
     }
     *in = tmpIn;
@@ -230,9 +203,9 @@ int32_t MODE_XTS_Encrypt(MODE_XTS_Ctx *ctx, const uint8_t *in, uint8_t *out, uin
     XTS_UPDATE_VALUES(tmpLen, tmpIn, tmpOut, blockSize);
 
         if (ctx->algId == CRYPT_SYM_SM4) {
-        GF128Mul_GM(ctx->tweak, blockSize);
+            GF128Mul_GM(ctx->tweak, blockSize);
         } else {
-        GF128Mul(ctx->tweak, blockSize);
+            return CRYPT_NOT_SUPPORT;
         }
     if (tmpLen == 0) {
         return CRYPT_SUCCESS;
@@ -290,7 +263,7 @@ int32_t MODE_XTS_Decrypt(MODE_XTS_Ctx *ctx, const uint8_t *in, uint8_t *out, uin
         if (ctx->algId == CRYPT_SYM_SM4) {
             GF128Mul_GM(ctx->tweak, blockSize);
         } else {
-            GF128Mul(ctx->tweak, blockSize);
+            return CRYPT_NOT_SUPPORT;
         }
         return CRYPT_SUCCESS;
     }
@@ -300,7 +273,7 @@ int32_t MODE_XTS_Decrypt(MODE_XTS_Ctx *ctx, const uint8_t *in, uint8_t *out, uin
     if (ctx->algId == CRYPT_SYM_SM4) {
         GF128Mul_GM(ctx->tweak, blockSize);
     } else {
-        GF128Mul(ctx->tweak, blockSize);
+        return CRYPT_NOT_SUPPORT;
     }
     ret = BlockCrypt(ctx, tmpIn, ctx->tweak, pp, false);
     RETURN_RET_IF(ret != CRYPT_SUCCESS, ret);

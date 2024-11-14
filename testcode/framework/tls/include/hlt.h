@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #ifndef HLT_H
@@ -25,7 +32,7 @@ HLT_Process* InitPeerProcess(TLS_TYPE tlsType, HILT_TransportType connType, int 
 #define HLT_LinkRemoteProcess(tlsType, connType, port, isBlock) InitPeerProcess(tlsType, connType, port, isBlock)
 
 // Clear all process resources
-void HLT_FreeAllProcess();
+void HLT_FreeAllProcess(void);
 int HLT_FreeResFormSsl(const void *ssl);
 
 // Create a local data connection
@@ -38,12 +45,15 @@ void HLT_CloseFd(int fd, int linkType);
 int HLT_SetVersion(HLT_Ctx_Config* ctxConfig, uint16_t minVersion, uint16_t maxVersion);
 int HLT_SetSecurityLevel(HLT_Ctx_Config *ctxConfig, int32_t level);
 int HLT_SetRenegotiationSupport(HLT_Ctx_Config* ctxConfig, bool support);
-int HLT_SetNoSecRenegotiationCb(HLT_Ctx_Config *ctxConfig, char* NoSecRenegotiationCb);
+int HLT_SetLegacyRenegotiateSupport(HLT_Ctx_Config* ctxConfig, bool support);
+int HLT_SetClientRenegotiateSupport(HLT_Ctx_Config* ctxConfig, bool support);
+int HLT_SetEmptyRecordsNum(HLT_Ctx_Config *ctxConfig, uint32_t emptyNum);
 int HLT_SetFlightTransmitSwitch(HLT_Ctx_Config *ctxConfig, bool support);
 int HLT_SetClientVerifySupport(HLT_Ctx_Config* ctxConfig, bool support);
 int HLT_SetNoClientCertSupport(HLT_Ctx_Config* ctxConfig, bool support);
 int HLT_SetPostHandshakeAuth(HLT_Ctx_Config *ctxConfig, bool support);
 int HLT_SetExtenedMasterSecretSupport(HLT_Ctx_Config* ctxConfig, bool support);
+int HLT_SetEncryptThenMac(HLT_Ctx_Config *ctxConfig, int support);
 int HLT_SetCipherSuites(HLT_Ctx_Config* ctxConfig, const char* cipherSuites);
 int HLT_SetTls13CipherSuites(HLT_Ctx_Config *ctxConfig, const char *cipherSuites);
 int HLT_SetEcPointFormats(HLT_Ctx_Config* ctxConfig, const char* pointFormat);
@@ -79,7 +89,7 @@ int HLT_LibraryInit(TLS_TYPE tlsType);
 // The local process invokes TLS functions
 HLT_Tls_Res* HLT_ProcessTlsInit(HLT_Process *process, TLS_VERSION tlsVersion,
     HLT_Ctx_Config *ctxConfig, HLT_Ssl_Config *sslConfig);
-void* HLT_TlsNewCtx(TLS_VERSION tlsVersion, bool isClient);
+void* HLT_TlsNewCtx(TLS_VERSION tlsVersion);
 HLT_Ctx_Config* HLT_NewCtxConfig(char* setFile, const char* key);
 HLT_Ctx_Config* HLT_NewCtxConfigTLCP(char *setFile, const char *key, bool isClient);
 int HLT_TlsSetCtx(void* ctx, HLT_Ctx_Config* config);
@@ -156,6 +166,7 @@ int HLT_ProcessTlsWrite(HLT_Process *process, HLT_Tls_Res* tlsRes, uint8_t *data
 int HLT_TlsSetMtu(void *ssl, uint16_t mtu);
 int HLT_TlsGetErrorCode(void *ssl);
 
+bool IsEnableSctpAuth(void);
 #ifdef __cplusplus
 }
 #endif

@@ -1,10 +1,18 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
+
 #ifndef CRYPT_BN_H
 #define CRYPT_BN_H
 
@@ -39,6 +47,7 @@ extern "C" {
 typedef enum {
     CRYPT_BN_FLAG_OPTIMIZER = 0x01,      /**< Flag of BigNum, indicating the BigNum obtained from the optimizer */
     CRYPT_BN_FLAG_CONSTTIME = 0x02,      /**< Flag of BigNum, indicating the constant time execution. */
+    CRYPT_BN_FLAG_ISNEGTIVE = 0x80000000,  /**< Flag of BigNum, indicating the bignum is negtive. */
 } CRYPT_BN_FLAG;
 
 typedef struct BnMont BN_Mont;
@@ -153,7 +162,7 @@ int32_t BN_SetSign(BN_BigNum *a, bool sign);
  * @brief BigNum copy
  *
  * @param r [OUT] BigNum
- * @param a [IN] BigNum
+ * @param a [IN] BigNum, a != r.
  *
  * @retval CRYPT_SUCCESS            succeeded.
  * @retval CRYPT_NULL_INPUT         Invalid null pointer
@@ -1061,6 +1070,34 @@ int32_t BN_ModSm2EccMul(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b,
  */
 int32_t BN_ModSm2EccSqr(
     BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *mod, BN_Optimizer *opt);
+
+/**
+ * @ingroup bn
+ * @brief Return the number of security bits provided by a specific algorithm and specific key size
+ *
+ * @param pubLen [IN] size of the public key
+ * @param prvlen [IN] size of the private key
+ * @retval [OUT] output the result
+ */
+int32_t BN_SecBit(int32_t publen, int32_t prvlen);
+#endif
+
+#ifdef HITLS_CRYPTO_PAILLIER
+/**
+ * @ingroup bn
+ * @brief BigNum Calculate the least common multiple
+ * @par Description: lcm(a, b) (a, b!=0)
+ *
+ * @param r     [OUT] least common multiple
+ * @param a     [IN] BigNum
+ * @param b     [IN] BigNum
+ * @param opt   [IN] Optimizer
+ *
+ * @retval CRYPT_SUCCESS
+ * @retval CRYPT_NULL_INPUT             Invalid null pointer
+ * @retval CRYPT_MEM_ALLOC_FAIL         Memory allocation failure
+ */
+int32_t BN_Lcm(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b, BN_Optimizer *opt);
 #endif
 
 #ifdef __cplusplus

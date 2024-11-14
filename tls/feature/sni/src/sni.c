@@ -1,11 +1,19 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
-
+#include "hitls_build.h"
+#ifdef HITLS_TLS_FEATURE_SNI
 #include <ctype.h>
 #include <stdint.h>
 #include <string.h>
@@ -14,6 +22,7 @@
 #include "hitls_config.h"
 #include "hitls_sni.h"
 #include "session.h"
+#include "tls_binlog_id.h"
 #include "tls.h"
 #include "hs.h"
 #include "sni.h"
@@ -21,6 +30,7 @@
 const char *HITLS_GetServerName(const HITLS_Ctx *ctx, const int type)
 {
     if (ctx == NULL || type != HITLS_SNI_HOSTNAME_TYPE) {
+        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16756, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "input null", 0, 0, 0, 0);
         return NULL;
     }
     bool isClient = ctx->isClient;
@@ -33,10 +43,12 @@ const char *HITLS_GetServerName(const HITLS_Ctx *ctx, const int type)
     if (!isClient) {
         /* Before Handshake */
         if (ctx->state == CM_STATE_IDLE) {
+            BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16757, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
+                "ctx->state is CM_STATE_IDLE", 0, 0, 0, 0);
             return NULL;
         }
         /* During or after handshake */
-        /* TLS protocol version < TLS1.2 session resumption */
+        /* TLS protocol version < TLS1.3 session resumption */
         if ((version < HITLS_VERSION_TLS13 || version == HITLS_VERSION_DTLS12) && isResume && ctx->session != NULL) {
             return (char *)hostName;
         }
@@ -81,7 +93,9 @@ int32_t SNI_StrcaseCmp(const char *s1, const char *s2)
     if (s1 == NULL && s2 == NULL) {
         return 0;
     }
-
+    if (s1 == NULL || s2 == NULL) {
+        return ret;
+    }
     const char *a = s1;
     const char *b = s2;
     int32_t len1 = (int32_t)strlen(s1);
@@ -101,3 +115,4 @@ int32_t SNI_StrcaseCmp(const char *s1, const char *s2)
 
     return ret;
 }
+#endif /* HITLS_TLS_FEATURE_SNI */

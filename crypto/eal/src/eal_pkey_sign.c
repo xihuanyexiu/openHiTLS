@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include "hitls_build.h"
@@ -60,8 +67,8 @@ int32_t CRYPT_EAL_PkeySignData(const CRYPT_EAL_PkeyCtx *pkey, const uint8_t *has
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_PKEY, pkey->id, CRYPT_EAL_ALG_NOT_SUPPORT);
         return CRYPT_EAL_ALG_NOT_SUPPORT;
     }
-    // ed25519/ed448/sm2/sm9 does not support signing hash data
-    if (pkey->id == CRYPT_PKEY_ED25519 || pkey->id == CRYPT_PKEY_ED448 || pkey->id == CRYPT_PKEY_SM2) {
+    // ed25519/sm2/sm9 does not support signing hash data
+    if (pkey->id == CRYPT_PKEY_ED25519 || pkey->id == CRYPT_PKEY_SM2) {
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_PKEY, pkey->id, CRYPT_EAL_ALG_NOT_SUPPORT);
         return CRYPT_EAL_ALG_NOT_SUPPORT;
     }
@@ -84,12 +91,6 @@ static int32_t PkeySignCore(const CRYPT_EAL_PkeyCtx *pkey, CRYPT_MD_AlgId id,
         if (id != CRYPT_MD_SHA512) {
             EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_PKEY, pkey->id, CRYPT_CURVE25519_HASH_METH_ERROR);
             return CRYPT_CURVE25519_HASH_METH_ERROR;
-        }
-        ret = pkey->method->sign(pkey->key, data, dataLen, sign, signLen);
-    } else if (pkey->id == CRYPT_PKEY_ED448) { // ed448 directly sign the plaintext data.
-        if (id != CRYPT_MD_SHAKE256) {
-            EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_PKEY, pkey->id, CRYPT_CURVE448_HASH_METH_ERROR);
-            return CRYPT_CURVE448_HASH_METH_ERROR;
         }
         ret = pkey->method->sign(pkey->key, data, dataLen, sign, signLen);
     } else if (pkey->id == CRYPT_PKEY_SM2) { // sm2: directly verify the plaintext data.
@@ -139,12 +140,6 @@ static int32_t PkeyVerifyCore(const CRYPT_EAL_PkeyCtx *pkey, CRYPT_MD_AlgId id,
         if (id != CRYPT_MD_SHA512) {
             EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_PKEY, pkey->id, CRYPT_CURVE25519_HASH_METH_ERROR);
             return CRYPT_CURVE25519_HASH_METH_ERROR;
-        }
-        ret = pkey->method->verify(pkey->key, data, dataLen, sign, signLen);
-    } else if (pkey->id == CRYPT_PKEY_ED448) { // ed448 directly verify the plaintext data.
-        if (id != CRYPT_MD_SHAKE256) {
-            EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_PKEY, pkey->id, CRYPT_CURVE448_HASH_METH_ERROR);
-            return CRYPT_CURVE448_HASH_METH_ERROR;
         }
         ret = pkey->method->verify(pkey->key, data, dataLen, sign, signLen);
     } else if (pkey->id == CRYPT_PKEY_SM2) { // sm2: directly verify the plaintext.
@@ -199,8 +194,8 @@ int32_t CRYPT_EAL_PkeyVerifyData(const CRYPT_EAL_PkeyCtx *pkey, const uint8_t *h
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_PKEY, pkey->id, CRYPT_EAL_ALG_NOT_SUPPORT);
         return CRYPT_EAL_ALG_NOT_SUPPORT;
     }
-    // ed25519/ed448: does not support signing hash data
-    if (pkey->id == CRYPT_PKEY_ED25519 || pkey->id == CRYPT_PKEY_ED448) {
+    // ed25519: does not support signing hash data
+    if (pkey->id == CRYPT_PKEY_ED25519) {
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_PKEY, pkey->id, CRYPT_EAL_ALG_NOT_SUPPORT);
         return CRYPT_EAL_ALG_NOT_SUPPORT;
     }

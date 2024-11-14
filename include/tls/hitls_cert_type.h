@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /**
@@ -69,7 +76,8 @@ typedef struct BslList HITLS_CERT_Chain;
  */
 typedef enum {
     CERT_STORE_CTRL_SET_VERIFY_DEPTH,   /**< Set the certificate verification depth. */
-    CERT_STORE_CTRL_ADD_CERT_LIST,      /**< Add ca and chain certificate to store */
+    CERT_STORE_CTRL_DEEP_COPY_ADD_CERT_LIST,      /**< Add ca and chain certificate to store */
+    CERT_STORE_CTRL_SHALLOW_COPY_ADD_CERT_LIST,
 
     CERT_CTRL_GET_ENCODE_LEN,           /**< Obtain the length of the certificate code. */
     CERT_CTRL_GET_PUB_KEY,              /**< Obtaining the Certificate Public Key (Release Required). */
@@ -132,13 +140,9 @@ typedef enum {
     TLS_CERT_KEY_TYPE_ECDSA,
     TLS_CERT_KEY_TYPE_ED25519,
     TLS_CERT_KEY_TYPE_ED448,
-#ifndef HITLS_NO_TLCP11
     TLS_CERT_KEY_TYPE_SM2 = 9, /**<  9 is sign type, 10 is enc type */
     TLS_CERT_KEY_TYPE_ENC_SM2 = 10,
     TLS_CERT_KEY_TYPE_NUM = 11,
-#else
-    TLS_CERT_KEY_TYPE_NUM = 9,
-#endif
     TLS_CERT_KEY_TYPE_UNKNOWN = 255
 } HITLS_CERT_KeyType;
 

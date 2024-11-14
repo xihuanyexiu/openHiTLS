@@ -1,12 +1,19 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
-
 /* INCLUDE_BASE test_suite_sdv_eal_ecc */
+
 /* BEGIN_HEADER */
 /* END_HEADER */
 #define ECDH_MAX_BIT_LEN 521
@@ -161,8 +168,7 @@ exit:
  *       (3) opt = CRYPT_CTRL_SET_ECC_POINT_FORMAT, expected result 4
  *       (4) opt = CRYPT_CTRL_SET_ECC_USE_COFACTOR_MODE, expected result 5
  *       (5) opt = CRYPT_CTRL_SET_SM2_USER_ID, expected result 6
- *       (6) opt = CRYPT_CTRL_SET_ED448_HASH_METHOD, expected result 7
- *       (7) opt = CRYPT_CTRL_SET_RSA_PADDING, expected result 8
+ *       (6) opt = CRYPT_CTRL_SET_RSA_PADDING, expected result 8
  * @expect
  *    1. Success, and the context is not NULL.
  *    2. CRYPT_ECC_PKEY_ERR_UNSUPPORTED_CTRL_OPTION
@@ -170,8 +176,7 @@ exit:
  *    4. CRYPT_SUCCESS
  *    5. CRYPT_SUCCESS
  *    6. CRYPT_ECC_PKEY_ERR_UNSUPPORTED_CTRL_OPTION
- *    7. CRYPT_EAL_ALG_NOT_SUPPORT
- *    8. CRYPT_ECC_PKEY_ERR_UNSUPPORTED_CTRL_OPTION
+ *    7. CRYPT_ECC_PKEY_ERR_UNSUPPORTED_CTRL_OPTION
  */
 /* BEGIN_CASE */
 void SDV_CRYPTO_ECDH_CTRL_API_TC001(int type, int expect)
@@ -675,6 +680,31 @@ void SDV_CRYPTO_ECDH_GET_KEY_BITS_FUNC_TC001(int paraid, int keyBits)
     ASSERT_TRUE(pkey != NULL);
     ASSERT_EQ(CRYPT_EAL_PkeySetParaById(pkey, paraid), CRYPT_SUCCESS);
     ASSERT_TRUE(CRYPT_EAL_PkeyGetKeyBits(pkey) == (uint32_t)keyBits);
+exit:
+    CRYPT_EAL_PkeyFreeCtx(pkey);
+}
+/* END_CASE */
+
+/**
+ * @test   SDV_CRYPTO_ECDH_GET_SEC_BITS_FUNC_TC001
+ * @title  ECDH CRYPT_EAL_PkeyGetSecurityBits test.
+ * @precon nan
+ * @brief
+ *    1. Create the context of the ecdh algorithm, expected result 1
+ *    2. Set ecdh para, expected result 2
+ *    3. Call the CRYPT_EAL_PkeyGetSecurityBits Obtains secbits, expected result 3
+ * @expect
+ *    1. Success, and the context is not null.
+ *    2. CRYPT_SUCCESS
+ *    3. The return value is secBits.
+ */
+/* BEGIN_CASE */
+void SDV_CRYPTO_ECDH_GET_SEC_BITS_FUNC_TC001(int paraid, int secBits)
+{
+    CRYPT_EAL_PkeyCtx *pkey = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ECDH);
+    ASSERT_TRUE(pkey != NULL);
+    ASSERT_EQ(CRYPT_EAL_PkeySetParaById(pkey, paraid), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeyGetSecurityBits(pkey), secBits);
 exit:
     CRYPT_EAL_PkeyFreeCtx(pkey);
 }

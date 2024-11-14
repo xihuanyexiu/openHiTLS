@@ -1,10 +1,18 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
+
 #ifndef HS_H
 #define HS_H
 
@@ -40,18 +48,6 @@ void HS_DeInit(TLS_Ctx *ctx);
  */
 int32_t HS_DoHandshake(TLS_Ctx *ctx);
 
-/**
- * @brief   Processing unexpected handshake messages. After the link is established, this function can be invoked to
- * process the handshake messages received during user data transmission
- * @param   ctx [IN] TLS object
- * @param   data [IN] Handshake message
- * @param   len [IN] Message length
- * @param   state [IN/OUT] in:current link state, out:next link state
- *
- * @retval  HITLS_SUCCESS succeeded. The user can continue sending and receiving data.
- * @retval  For details about other error codes, see hitls_error.h
- */
-int32_t HS_RecvUnexpectedMsgProcess(TLS_Ctx *ctx, const uint8_t *data, uint32_t len, CM_State *state);
 
 /**
  * @brief   Generate the session key
@@ -111,17 +107,8 @@ const char *HS_GetStateStr(uint32_t state);
  * @retval HITLS_SUCCESS succeeded.
  * @retval  For details about other error codes, see hitls_error.h
  */
-int32_t HS_CheckKeyUpdateState(const TLS_Ctx *ctx, uint32_t updateType);
+int32_t HS_CheckKeyUpdateState(TLS_Ctx *ctx, uint32_t updateType);
 
-/**
- * @brief   Process the keyupdate message sending process.
- *
- * @param   ctx [IN] TLS context
- *
- * @retval  HITLS_SUCCESS succeeded.
- * @retval  For details about other error codes, see hitls_error.h
- */
-int32_t HS_SendKeyUpdate(TLS_Ctx *ctx);
 
 /**
  * @brief  Obtain the server_name in the handshake TLS context.
@@ -131,16 +118,6 @@ int32_t HS_SendKeyUpdate(TLS_Ctx *ctx);
  * @return string of server_name in the TLS context during the handshake
  */
 const char *HS_GetServerName(const TLS_Ctx *ctx);
-
-/**
- * @brief Check whether app messages can be received.
- *
- * @param ctx [IN] TLS context
- *
- * @return true: allows receiving; false: does not allow receiving.
- */
-bool HS_IsAppDataAllowed(TLS_Ctx *ctx);
-
 
 int32_t HS_CheckPostHandshakeAuth(TLS_Ctx *ctx);
 

@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #ifndef CRYPT_LOCAL_TYPES_H
@@ -69,7 +76,7 @@ typedef int32_t (*PkeyCrypt)(const void *key, const uint8_t *data, uint32_t data
     uint8_t *out, uint32_t *outLen);
 typedef int32_t (*PkeyCheck)(const void *key);
 typedef int32_t (*PkeyCmp)(const void *key1, const void *key2);
-
+typedef int32_t (*PkeyGetSecBits)(const void *key);
 
 /**
 * @ingroup  EAL
@@ -102,6 +109,7 @@ typedef struct EAL_PkeyMethod {
     PkeyCrypt decrypt;                      // Decrypt.
     PkeyCheck check;                        // Check the consistency of the key pair.
     PkeyCmp cmp;                            // Compare keys and parameters.
+    PkeyGetSecBits getSecBits;              // get key security bits
 } EAL_PkeyMethod;
 
 /**

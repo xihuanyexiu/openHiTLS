@@ -1,10 +1,18 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
+
 #ifndef BSL_BASE64_INTERNAL_H
 #define BSL_BASE64_INTERNAL_H
 
@@ -40,16 +48,6 @@ struct BASE64_ControlBlock {
 #define BASE64_CTX_BUF_SIZE HITLS_BASE64_ENCODE_LENGTH(BASE64_BLOCK_SIZE) + 10
 #define BSL_BASE64_ENC_ENOUGH_LEN(len) (((len) + 2) / 3 * 4 + 1)
 #define BSL_BASE64_DEC_ENOUGH_LEN(len) (((len) + 3) / 4 * 3)
-
-/**
- * @ingroup bsl_base64
- * @brief Obtain the remaining context buf and determine whether to invoke final().
- * @par Description: Obtains the remaining length "num" of the context buf.
- * @param ctx        [IN] Input context.
- * @param num        [OUT] Obtain the remaining length of the buf.
- * @retval If it is success, BSL_SUCCESS is returned. Otherwise, a failure error code is returned.
- */
-uint32_t BSL_Base64GetNum(BSL_Base64Ctx *ctx, uint32_t *num);
 
 #ifdef __cplusplus
 }

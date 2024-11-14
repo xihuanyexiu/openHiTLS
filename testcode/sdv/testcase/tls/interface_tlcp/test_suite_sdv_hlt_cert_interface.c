@@ -1,12 +1,20 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /* BEGIN_HEADER */
+
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
@@ -53,14 +61,14 @@
 #include "bsl_uio.h"
 #include "bsl_obj.h"
 #include "bsl_errno.h"
-#include "hitls_x509_adapter.h"
+#include "hitls_x509_adapt_local.h"
 
 /* END_HEADER */
 
 #define BUF_MAX_SIZE 4096
 int32_t g_uiPort = 18886;
 
-#define DEFAULT_CERT_PATH       "../../testcode/testdata/tls/certificate/"
+#define DEFAULT_CERT_PATH       "../../testcode/testdata/tls/certificate/der/"
 #define CERT_PATH_LEN 120
 #define SUCCESS (0)
 #define ERROR (1)
@@ -69,89 +77,23 @@ int32_t g_uiPort = 18886;
 #define READ_DATA_18432 18432
 #define PASSWDLEN (10)
 #define CERT_PATH_BUFFER (100)
- 
-#define RSA_ROOT_CERT_PEM         "rsa_sha/root.pem"
-#define RSA_CA_CERT_PEM           "rsa_sha/intca.pem"
-#define RSA_ROOT_CERT_PEM_ALL     "../../testcode/testdata/tls/certificate/rsa_sha/root.pem"
-#define RSA_CA_CERT_PEM_ALL       "../../testcode/testdata/tls/certificate/rsa_sha/intca.pem"
-#define RSA_EE_CERT_PEM           "rsa_sha/RSA2048SHA1.pem"
-#define RSA_EE_CERT_PEM_ALL       "../../testcode/testdata/tls/certificate/rsa_sha/RSA2048SHA1.pem"
-#define RSA_PRIV_KEY_PEM          "rsa_sha/RSA2048SHA1.key.pem"
-#define RSA_PRIV_KEY_PEM_ALL      "../../testcode/testdata/tls/certificate/rsa_sha/RSA2048SHA1.key.pem"
-#define RSA_PRIV_KEY_PASSWD_PEM   "rsa_sha/RSA2048SHA1.key.passwd.pem"
-#define RSA_EE_CERT_DER           "rsa_sha/RSA2048SHA1.der"
-#define RSA_PRIV_KEY_DER          "rsa_sha/RSA2048SHA1.key.der"
-#define RSA_PRIV_KEY_PASSWD_PEM_ALL   "../../testcode/testdata/tls/certificate/rsa_sha/RSA2048SHA1.key.passwd.pem"
-#define RSA_EE_CERT_DER_ALL           "../../testcode/testdata/tls/certificate/rsa_sha/RSA2048SHA1.der"
-#define RSA_PRIV_KEY_DER_ALL          "../../testcode/testdata/tls/certificate/rsa_sha/RSA2048SHA1.key.der"
- 
-#define RSA_ROOT_CERT2_PEM         "rsa_sha256/root.pem"
-#define RSA_CA_CERT2_PEM           "rsa_sha256/intca.pem"
-#define RSA_EE_CERT2_PEM           "rsa_sha256/server.pem"
-#define RSA_PRIV_KEY2_PEM          "rsa_sha256/server.key.pem"
- 
-#define RSA_EE_CERT3_PEM           "rsa_cert_chain_20/ee.pem"
-#define RSA_ROOT_CERT3_PEM         "rsa_cert_chain_20/rootCA.pem"
-#define RSA_CA_CERT3_PEM           "rsa_cert_chain_20/CA%d.pem"
-#define RSA_PRIV_KEY3_PEM          "rsa_cert_chain_20/ee.key.pem"
- 
-#define RSA_ROOT_CERT4_PEM         "rsa_cert_chain_5/rootCA.pem"
-#define RSA_ROOT_CERT4_PEM1        "rsa_cert_chain_5/rootCA.pem"
-#define RSA_CA_CERT4_PEM           "rsa_cert_chain_5/CA%d.pem"
-#define RSA_EE_CERT4_PEM           "rsa_cert_chain_5/ee.pem"
-#define RSA_EE_CERT4_PEM1          "rsa_cert_chain_5/ee.pem"
-#define RSA_PRIV_KEY4_PEM          "rsa_cert_chain_5/ee.key.pem"
-#define RSA_PRIV_KEY4_PEM1         "rsa_cert_chain_5/ee.key.pem"
- 
-#define RSA_ROOT_CERT5_PEM         "rsa_cert_chain_0/rootCA.pem"
-#define RSA_ROOT_CERT5_PEM1        "rsa_cert_chain_0/rootCA.pem"
-#define RSA_EE_CERT5_PEM           "rsa_cert_chain_0/ee.pem"
-#define RSA_EE_CERT5_PEM1          "rsa_cert_chain_0/ee.pem"
-#define RSA_PRIV_KEY5_PEM          "rsa_cert_chain_0/ee.key.pem"
-#define RSA_PRIV_KEY5_PEM1          "rsa_cert_chain_0/ee.key.pem"
-#define RSA_ROOT_CERT2_PEM_ALL         "../../testcode/testdata/tls/certificate/rsa_sha256/root.pem"
-#define RSA_CA_CERT2_PEM_ALL           "../../testcode/testdata/tls/certificate/rsa_sha256/intca.pem"
-#define RSA_EE_CERT2_PEM_ALL           "../../testcode/testdata/tls/certificate/rsa_sha256/server.pem"
-#define RSA_PRIV_KEY2_PEM_ALL          "../../testcode/testdata/tls/certificate/rsa_sha256/server.key.pem"
- 
-#define RSA_EE_CERT3_PEM_ALL           "../../testcode/testdata/tls/certificate/rsa_cert_chain_20/ee.pem"
-#define RSA_ROOT_CERT3_PEM_ALL         "../../testcode/testdata/tls/certificate/rsa_cert_chain_20/rootCA.pem"
-#define RSA_CA_CERT3_PEM_ALL           "../../testcode/testdata/tls/certificate/rsa_cert_chain_20/CA%d.pem"
-#define RSA_PRIV_KEY3_PEM_ALL          "../../testcode/testdata/tls/certificate/rsa_cert_chain_20/ee.key.pem"
- 
-#define RSA_ROOT_CERT4_PEM_ALL         "../../testcode/testdata/tls/certificate/rsa_cert_chain_5/rootCA.pem"
-#define RSA_ROOT_CERT4_PEM1_ALL        "../../testcode/testdata/tls/certificate/rsa_cert_chain_5/rootCA.pem"
-#define RSA_CA_CERT4_PEM_ALL           "../../testcode/testdata/tls/certificate/rsa_cert_chain_5/CA%d.pem"
-#define RSA_EE_CERT4_PEM_ALL           "../../testcode/testdata/tls/certificate/rsa_cert_chain_5/ee.pem"
-#define RSA_EE_CERT4_PEM1_ALL          "../../testcode/testdata/tls/certificate/rsa_cert_chain_5/ee.pem"
-#define RSA_PRIV_KEY4_PEM_ALL          "../../testcode/testdata/tls/certificate/rsa_cert_chain_5/ee.key.pem"
-#define RSA_PRIV_KEY4_PEM1_ALL         "../../testcode/testdata/tls/certificate/rsa_cert_chain_5/ee.key.pem"
- 
-#define RSA_ROOT_CERT5_PEM_ALL         "../../testcode/testdata/tls/certificate/rsa_cert_chain_0/rootCA.pem"
-#define RSA_ROOT_CERT5_PEM1_ALL        "../../testcode/testdata/tls/certificate/rsa_cert_chain_0/rootCA.pem"
-#define RSA_EE_CERT5_PEM_ALL           "../../testcode/testdata/tls/certificate/rsa_cert_chain_0/ee.pem"
-#define RSA_EE_CERT5_PEM1_ALL          "../../testcode/testdata/tls/certificate/rsa_cert_chain_0/ee.pem"
-#define RSA_PRIV_KEY5_PEM_ALL          "../../testcode/testdata/tls/certificate/rsa_cert_chain_0/ee.key.pem"
-#define RSA_PRIV_KEY5_PEM1_ALL          "../../testcode/testdata/tls/certificate/rsa_cert_chain_0/ee.key.pem"
- 
-#define ECDSA_ROOT_CERT_PEM        "ecdsa/root.pem"
-#define ECDSA_ROOT_CERT_PEM_ALL    "../../testcode/testdata/tls/certificate/ecdsa/root.pem"
-#define ECDSA_CA_CERT_PEM          "ecdsa/intca.pem"
-#define ECDSA_CA_CERT_PEM_ALL      "../../testcode/testdata/tls/certificate/ecdsa/intca.pem"
-#define ECDSA_EE_CERT_PEM          "ecdsa/ec_app256SHA256.pem"
-#define ECDSA_PRIV_KEY_PEM         "ecdsa/ec_app256SHA256.key.pem"
-#define ECDSA_EE_CERT_PEM_ALL          "../../testcode/testdata/tls/certificate/ecdsa/ec_app256SHA256.pem"
-#define ECDSA_PRIV_KEY_PEM_ALL         "../../testcode/testdata/tls/certificate/ecdsa/ec_app256SHA256.key.pem"
- 
-#define ECDSA_RSA_ROOT_CERT_PEM    "ecdsa_rsa_cert/rootCA.pem"
-#define ECDSA_RSA_CA_CERT_PEM      "ecdsa_rsa_cert/CA1.pem"
-#define ECDSA_RSA_EE_CERT_PEM      "ecdsa_rsa_cert/ee.pem"
-#define ECDSA_RSA_PRIV_KEY_PEM     "ecdsa_rsa_cert/ee.key.pem"
 
-#define ECDSA_RSA_ROOT_CERT_PEM_ALL    "../../testcode/testdata/tls/certificate/ecdsa_rsa_cert/rootCA.pem"
-#define ECDSA_RSA_CA_CERT_PEM_ALL      "../../testcode/testdata/tls/certificate/ecdsa_rsa_cert/CA1.pem"
-#define ECDSA_RSA_EE_CERT_PEM_ALL      "../../testcode/testdata/tls/certificate/ecdsa_rsa_cert/ee.pem"
-#define ECDSA_RSA_PRIV_KEY_PEM_ALL     "../../testcode/testdata/tls/certificate/ecdsa_rsa_cert/ee.key.pem"
+#define RSA_ROOT_CERT_DER         "rsa_sha/ca-3072.der"
+#define RSA_CA_CERT_DER           "rsa_sha/inter-3072.der"
+#define RSA_EE_CERT_DER           "rsa_sha/end-sha1.der"
+#define RSA_PRIV_KEY_DER          "rsa_sha/end-sha1.key.der"
+#define RSA_EE_CERT_DER           "rsa_sha/end-sha1.der"
+#define RSA_PRIV_KEY_DER          "rsa_sha/end-sha1.key.der"
+
+#define RSA_ROOT_CERT2_DER         "rsa_sha256/ca.der"
+#define RSA_CA_CERT2_DER           "rsa_sha256/inter.der"
+#define RSA_EE_CERT2_DER           "rsa_sha256/server.der"
+#define RSA_PRIV_KEY2_DER          "rsa_sha256/server.key.der"
+
+#define ECDSA_ROOT_CERT_DER        "ecdsa/ca-nist521.der"
+#define ECDSA_CA_CERT_DER          "ecdsa/inter-nist521.der"
+#define ECDSA_EE_CERT_DER          "ecdsa/end256-sha256.der"
+#define ECDSA_PRIV_KEY_DER         "ecdsa/end256-sha256.key.der"
 
 typedef enum {
     SHALLOW_COPY = 0,
@@ -178,28 +120,28 @@ int GetCertPathFrom(int eeCertType, char **rootCA, char **ca, char **ee, char **
 {
     switch (eeCertType) {
         case RSA_CERT:
-            *rootCA = RSA_ROOT_CERT_PEM;
-            *ca = RSA_CA_CERT_PEM;
-            *ee = RSA_EE_CERT_PEM;
-            *prvKey = RSA_PRIV_KEY_PEM;
+            *rootCA = RSA_ROOT_CERT_DER;
+            *ca = RSA_CA_CERT_DER;
+            *ee = RSA_EE_CERT_DER;
+            *prvKey = RSA_PRIV_KEY_DER;
             return SUCCESS;
         case RSA_CERT_TWO:
-            *rootCA = RSA_ROOT_CERT2_PEM;
-            *ca = RSA_CA_CERT2_PEM;
-            *ee = RSA_EE_CERT2_PEM;
-            *prvKey = RSA_PRIV_KEY2_PEM;
+            *rootCA = RSA_ROOT_CERT2_DER;
+            *ca = RSA_CA_CERT2_DER;
+            *ee = RSA_EE_CERT2_DER;
+            *prvKey = RSA_PRIV_KEY2_DER;
             return SUCCESS;
         case RSA_CERT_THREE:
-            *rootCA = RSA_ROOT_CERT_PEM;
-            *ca = RSA_CA_CERT_PEM;
+            *rootCA = RSA_ROOT_CERT_DER;
+            *ca = RSA_CA_CERT_DER;
             *ee = RSA_EE_CERT_DER;
             *prvKey = RSA_PRIV_KEY_DER;
             return SUCCESS;
         case ECDSA_CERT:
-            *rootCA = ECDSA_ROOT_CERT_PEM;
-            *ca = ECDSA_CA_CERT_PEM;
-            *ee = ECDSA_EE_CERT_PEM;
-            *prvKey = ECDSA_PRIV_KEY_PEM;
+            *rootCA = ECDSA_ROOT_CERT_DER;
+            *ca = ECDSA_CA_CERT_DER;
+            *ee = ECDSA_EE_CERT_DER;
+            *prvKey = ECDSA_PRIV_KEY_DER;
             return SUCCESS;
         default:
             return ERROR;
@@ -349,26 +291,28 @@ void SDV_TLS_CERT_LoadAndDelCert_FUNC_TC001(int delWay)
     char *caFilePath2 = NULL;
     char *eeFilePath2 = NULL;
     char *eeKeyPath2 = NULL;
+    HITLS_CERT_X509 *eeCert3 = NULL;
 
     localProcess = HLT_InitLocalProcess(HITLS);
     ASSERT_TRUE(localProcess != NULL);
-    remoteProcess = HLT_LinkRemoteProcess(HITLS, SCTP, g_uiPort, false);
+    HILT_TransportType connType = SCTP;
+    remoteProcess = HLT_LinkRemoteProcess(HITLS, connType, g_uiPort, false);
     ASSERT_TRUE(remoteProcess != NULL);
 
     HLT_Ctx_Config *clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
     ASSERT_TRUE(clientCtxConfig != NULL);
     TestSetCertPath(clientCtxConfig, "CERT_SIG_SCHEME_ECDSA_SECP256R1_SHA256");
-    rootCAFilePath1 = DEFAULT_CERT_PATH""RSA_ROOT_CERT_PEM;
-    caFilePath1 = DEFAULT_CERT_PATH""RSA_CA_CERT_PEM;
-    eeFilePath1 = DEFAULT_CERT_PATH""RSA_EE_CERT_PEM;
-    eeKeyPath1 = DEFAULT_CERT_PATH""RSA_PRIV_KEY_PEM;
-    rootCAFilePath2 = DEFAULT_CERT_PATH""ECDSA_ROOT_CERT_PEM;
-    caFilePath2 = DEFAULT_CERT_PATH""ECDSA_CA_CERT_PEM;
-    eeFilePath2 = DEFAULT_CERT_PATH""ECDSA_EE_CERT_PEM;
-    eeKeyPath2 = DEFAULT_CERT_PATH""ECDSA_PRIV_KEY_PEM;
+    rootCAFilePath1 = DEFAULT_CERT_PATH""RSA_ROOT_CERT_DER;
+    caFilePath1 = DEFAULT_CERT_PATH""RSA_CA_CERT_DER;
+    eeFilePath1 = DEFAULT_CERT_PATH""RSA_EE_CERT_DER;
+    eeKeyPath1 = DEFAULT_CERT_PATH""RSA_PRIV_KEY_DER;
+    rootCAFilePath2 = DEFAULT_CERT_PATH""ECDSA_ROOT_CERT_DER;
+    caFilePath2 = DEFAULT_CERT_PATH""ECDSA_CA_CERT_DER;
+    eeFilePath2 = DEFAULT_CERT_PATH""ECDSA_EE_CERT_DER;
+    eeKeyPath2 = DEFAULT_CERT_PATH""ECDSA_PRIV_KEY_DER;
 
     ASSERT_EQ(HLT_TlsRegCallback(HITLS_CALLBACK_DEFAULT), SUCCESS);
-    serverConfig = HLT_TlsNewCtx(DTLS1_2, false);
+    serverConfig = HLT_TlsNewCtx(DTLS1_2);
     ASSERT_TRUE(serverConfig != NULL);
     uint16_t group = HITLS_EC_GROUP_SECP256R1;
     ASSERT_EQ(HITLS_CFG_SetGroups(serverConfig, &group, 1), SUCCESS);
@@ -376,15 +320,19 @@ void SDV_TLS_CERT_LoadAndDelCert_FUNC_TC001(int delWay)
     HITLS_CERT_Store *chainStore = HITLS_X509_Adapt_StoreNew();
     ASSERT_TRUE(chainStore != NULL);
     ASSERT_EQ(HITLS_CFG_SetVerifyStore(serverConfig, chainStore, SHALLOW_COPY), SUCCESS);
-    ASSERT_EQ(HITLS_CFG_AddCertToStore(serverConfig, rootCAFilePath2, TLS_CERT_STORE_TYPE_VERIFY), HITLS_SUCCESS);
-    ASSERT_EQ(HITLS_CFG_AddCertToStore(serverConfig, caFilePath2, TLS_CERT_STORE_TYPE_VERIFY), HITLS_SUCCESS);
+    HITLS_CERT_X509 *rootCACert2 = HiTLS_X509_LoadCertFile(rootCAFilePath2);
+    ASSERT_TRUE(rootCACert2 != NULL);
+    ASSERT_EQ(HITLS_CFG_AddCertToStore(serverConfig, rootCACert2, TLS_CERT_STORE_TYPE_VERIFY, false), HITLS_SUCCESS);
+    HITLS_CERT_X509 *caCert2 = HiTLS_X509_LoadCertFile(caFilePath2);
+    ASSERT_TRUE(caCert2 != NULL);
+    ASSERT_EQ(HITLS_CFG_AddCertToStore(serverConfig, caCert2, TLS_CERT_STORE_TYPE_VERIFY, false), HITLS_SUCCESS);
 
     // Loading the device certificate and corresponding private key for the first time
     HITLS_CERT_X509 *eeCert1 = HiTLS_X509_LoadCertFile(eeFilePath2);
     ASSERT_TRUE(eeCert1 != NULL);
     ASSERT_EQ(HITLS_CFG_SetCertificate(serverConfig, eeCert1, SHALLOW_COPY), SUCCESS);
-    HITLS_CERT_Key *prvKey1 = HITLS_X509_Adapt_KeyParse(serverConfig, (const uint8_t *)eeKeyPath2, strlen(eeKeyPath1), 
-        TLS_PARSE_TYPE_FILE, TLS_PARSE_FORMAT_PEM);
+    HITLS_CERT_Key *prvKey1 = HITLS_CFG_ParseKey(serverConfig, (const uint8_t *)eeKeyPath2, strlen(eeKeyPath1),
+        TLS_PARSE_TYPE_FILE, TLS_PARSE_FORMAT_ASN1);
     ASSERT_TRUE(prvKey1 != NULL);
     ASSERT_EQ(HITLS_CFG_SetPrivateKey(serverConfig, prvKey1, SHALLOW_COPY), SUCCESS);
 
@@ -397,11 +345,11 @@ void SDV_TLS_CERT_LoadAndDelCert_FUNC_TC001(int delWay)
     if (delWay == FROM_CONFIG) {
         ASSERT_EQ(HITLS_CFG_RemoveCertAndKey(serverConfig), SUCCESS);
         // Reload the certificate without loading the private key.
-        HITLS_CERT_X509 *eeCert3 = HiTLS_X509_LoadCertFile(eeFilePath2);
+        eeCert3 = HiTLS_X509_LoadCertFile(eeFilePath2);
         ASSERT_TRUE(eeCert3 != NULL);
         ASSERT_EQ(HITLS_CFG_SetCertificate(serverConfig, eeCert3, SHALLOW_COPY), SUCCESS);
-        HITLS_CERT_Key *prvKey2 = HITLS_X509_Adapt_KeyParse(serverConfig, (const uint8_t *)eeKeyPath2, strlen(eeKeyPath2), 
-        TLS_PARSE_TYPE_FILE, TLS_PARSE_FORMAT_PEM);
+        HITLS_CERT_Key *prvKey2 = HITLS_X509_Adapt_KeyParse(serverConfig, (const uint8_t *)eeKeyPath2,
+            strlen(eeKeyPath2), TLS_PARSE_TYPE_FILE, TLS_PARSE_FORMAT_ASN1);
         ASSERT_TRUE(prvKey2 != NULL);
         ASSERT_EQ(HITLS_CFG_SetPrivateKey(serverConfig, prvKey2, SHALLOW_COPY), SUCCESS);
         ASSERT_TRUE(HITLS_CFG_GetPrivateKey(serverConfig) == prvKey2);
@@ -414,11 +362,11 @@ void SDV_TLS_CERT_LoadAndDelCert_FUNC_TC001(int delWay)
         ASSERT_TRUE(HITLS_GetCertificate(serverCtx) != eeCert2);
         ASSERT_EQ(HITLS_RemoveCertAndKey(serverCtx), SUCCESS);
         // Reload the certificate without loading the private key.
-        HITLS_CERT_X509 *eeCert3 = HiTLS_X509_LoadCertFile(eeFilePath2);
+        eeCert3 = HiTLS_X509_LoadCertFile(eeFilePath2);
         ASSERT_TRUE(eeCert3 != NULL);
         ASSERT_EQ(HITLS_SetCertificate(serverCtx, eeCert3, SHALLOW_COPY), SUCCESS);
-        HITLS_CERT_Key *prvKey2 = HITLS_X509_Adapt_KeyParse(serverConfig, (const uint8_t *)eeKeyPath2, strlen(eeKeyPath2), 
-            TLS_PARSE_TYPE_FILE, TLS_PARSE_FORMAT_PEM);
+        HITLS_CERT_Key *prvKey2 = HITLS_X509_Adapt_KeyParse(serverConfig, (const uint8_t *)eeKeyPath2,
+            strlen(eeKeyPath2), TLS_PARSE_TYPE_FILE, TLS_PARSE_FORMAT_ASN1);
         ASSERT_TRUE(prvKey2 != NULL);
         ASSERT_EQ(HITLS_SetPrivateKey(serverCtx, prvKey2, SHALLOW_COPY), SUCCESS);
         ASSERT_TRUE(HITLS_GetCertificate(serverCtx) == eeCert3);

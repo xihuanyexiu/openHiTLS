@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include "hitls_build.h"
@@ -17,6 +24,7 @@
 #include "crypt_util_rand.h"
 #include "securec.h"
 #include "bsl_sal.h"
+#include "bsl_bytes.h"
 #include "bsl_err_internal.h"
 
 #define UINT32_SIZE 4
@@ -927,26 +935,21 @@ int32_t CRYPT_RSA_SetPkcsV15Type2(const uint8_t *in, uint32_t inLen,
 int32_t CRYPT_RSA_VerifyPkcsV15Type2(const uint8_t *in, uint32_t inLen,
     uint8_t *out, uint32_t *outLen)
 {
-    uint32_t i;
     uint32_t zeroIndex = 0;
     uint32_t index = ~(0);
-    uint32_t equals0;
     uint32_t firstZero = Uint32ConstTimeEqual(in[0], 0x00);
     uint32_t firstTwo = Uint32ConstTimeEqual(in[1], 0x02);
     // Check the ps starting from subscript 2.
-    for (i = 2; i < inLen; i++) {
-        equals0 = Uint32ConstTimeIsZero(in[i]);
+    for (uint32_t i = 2; i < inLen; i++) {
+        uint32_t equals0 = Uint32ConstTimeIsZero(in[i]);
         zeroIndex = Uint32ConstTimeSelect(index & equals0, i, zeroIndex);
         index = Uint32ConstTimeSelect(equals0, 0, index);
     }
 
-    uint32_t valid = firstZero;
-    valid &= firstTwo;
-
-    valid &= ~index;
+    uint32_t valid = firstZero & firstTwo & (~index);
     // Pad output format: EM = 00 || 02 || PS || 00 || M; where M is a message, and PS must be >= 8.
     // Therefore, the subscript of the second 0 must be greater than or equal to 10.
-    valid &= Uint32ConstTimeGt(zeroIndex, 10);
+    valid &= Uint32ConstTimeGe(zeroIndex, 10);
 
     zeroIndex++;
     if (valid == 0) {
@@ -964,4 +967,36 @@ int32_t CRYPT_RSA_VerifyPkcsV15Type2(const uint8_t *in, uint32_t inLen,
 
     return CRYPT_SUCCESS;
 }
-#endif // HITLS_CRYPTO_RSA
+
+int32_t CRYPT_RSA_VerifyPkcsV15Type2TLS(const uint8_t *in, uint32_t inLen, uint8_t *out, uint32_t *outLen)
+{
+    uint32_t masterSecretLen = *outLen;
+    uint32_t zeroIndex = 0;
+    uint32_t index = ~(0);
+    uint32_t fist = Uint32ConstTimeEqual(in[0], 0x00);
+    uint32_t second = Uint32ConstTimeEqual(in[1], 0x02);
+    for (uint32_t i = 2; i < inLen; i++) {
+        uint32_t equals0 = Uint32ConstTimeIsZero(in[i]);
+        zeroIndex = Uint32ConstTimeSelect(index & equals0, i, zeroIndex);
+        index = Uint32ConstTimeSelect(equals0, 0, index);
+    }
+
+    uint32_t valid = fist & second & (~index);
+    // Pad output format: EM = 00 || 02 || PS || 00 || M; where M is a message, and PS must be >= 8.
+    // Therefore, the subscript of the second 0 must be greater than or equal to 10.
+    valid &= Uint32ConstTimeGe(zeroIndex, 10);
+    zeroIndex++;
+    uint32_t secretLen = inLen - zeroIndex;
+    valid &= ~(Uint32ConstTimeGt(secretLen, *outLen));
+    for (uint32_t i = 0; i < masterSecretLen; i++) {
+        uint32_t mask = valid & Uint32ConstTimeLt(i, secretLen);
+        uint32_t inIndex = mask & zeroIndex;
+        out[i] = Uint8ConstTimeSelect(mask, *(in + inIndex + i), 0);
+    }
+    *outLen = secretLen;
+
+    // if the 'plaintext' is PKCS15 , the valid should be 0xffffffff, else should be 0
+    // so return 0 for success, else return 0xffffffff
+    return ~valid;
+}
+#endif /* HITLS_CRYPTO_RSA */

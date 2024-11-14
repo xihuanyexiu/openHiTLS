@@ -1,14 +1,37 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
+
 /* BEGIN_HEADER */
+
 #include <stdlib.h>
 #include <semaphore.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/select.h>
+#include <sys/time.h>
+#include <linux/ioctl.h>
 #include "securec.h"
 #include "bsl_sal.h"
 #include "alert.h"
@@ -34,20 +57,6 @@
 #include "stub_replace.h"
 #include "session_type.h"
 #include "cert_callback.h"
-#include <stdio.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <sys/select.h>
-#include <sys/time.h>
-#include <linux/ioctl.h>
 #include "bsl_sal.h"
 #include "sal_net.h"
 #include "parse_msg.h"
@@ -62,12 +71,12 @@
 
 #define Port 7788
 #define READ_BUF_SIZE 18432
-#define ROOT_PEM "%s/root.pem:%s/intca.pem"
-#define INTCA_PEM "%s/intca.pem"
-#define SERVER_PEM "%s/server.pem"
-#define SERVER_KEY_PEM "%s/server.key.pem"
-#define CLIENT_PEM "%s/client.pem"
-#define CLIENT_KEY_PEM "%s/client.key.pem"
+#define ROOT_DER "%s/ca.der:%s/inter.der"
+#define INTCA_DER "%s/inter.der"
+#define SERVER_DER "%s/server.der"
+#define SERVER_KEY_DER "%s/server.key.der"
+#define CLIENT_DER "%s/client.der"
+#define CLIENT_KEY_DER "%s/client.key.der"
 #define RENEGOTIATE_FAIL 1
 #define MAX_CERT_LIST 4294967295
 #define MIN_CERT_LIST 0
@@ -163,13 +172,13 @@ static int SetCertPath(HLT_Ctx_Config *ctxConfig, const char *certStr, bool isSe
     char eeCertPath[30];
     char privKeyPath[30];
 
-    int32_t ret = sprintf_s(caCertPath, sizeof(caCertPath), ROOT_PEM, certStr, certStr);
+    int32_t ret = sprintf_s(caCertPath, sizeof(caCertPath), ROOT_DER, certStr, certStr);
     ASSERT_TRUE(ret > 0);
-    ret = sprintf_s(chainCertPath, sizeof(chainCertPath), INTCA_PEM, certStr);
+    ret = sprintf_s(chainCertPath, sizeof(chainCertPath), INTCA_DER, certStr);
     ASSERT_TRUE(ret > 0);
-    ret = sprintf_s(eeCertPath, sizeof(eeCertPath), isServer ? SERVER_PEM : CLIENT_PEM, certStr);
+    ret = sprintf_s(eeCertPath, sizeof(eeCertPath), isServer ? SERVER_DER : CLIENT_DER, certStr);
     ASSERT_TRUE(ret > 0);
-    ret = sprintf_s(privKeyPath, sizeof(privKeyPath), isServer ? SERVER_KEY_PEM : CLIENT_KEY_PEM, certStr);
+    ret = sprintf_s(privKeyPath, sizeof(privKeyPath), isServer ? SERVER_KEY_DER : CLIENT_KEY_DER, certStr);
     ASSERT_TRUE(ret > 0);
     HLT_SetCaCertPath(ctxConfig, (char *)caCertPath);
     HLT_SetChainCertPath(ctxConfig, (char *)chainCertPath);
@@ -227,7 +236,7 @@ void SDV_TLS_CFG_SET_GET_VERIFYNONESUPPORT_FUNC_TC001(int version, int connType)
     HLT_Ctx_Config *clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
     ASSERT_TRUE(clientCtxConfig != NULL);
 
-    HLT_SetCertPath(clientCtxConfig, "ecdsa_sha256/root.pem", "NULL", "NULL", "NULL", "NULL", "NULL");
+    HLT_SetCertPath(clientCtxConfig, "ecdsa_sha256/ca.der", "NULL", "NULL", "NULL", "NULL", "NULL");
     HLT_SetCipherSuites(serverCtxConfig, "HITLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256");
 
     clientRes = HLT_ProcessTlsInit(remoteProcess, version, clientCtxConfig, NULL);

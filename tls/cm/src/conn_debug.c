@@ -1,11 +1,20 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
+#include "hitls_build.h"
+#ifdef HITLS_TLS_FEATURE_INDICATOR
 #include <stddef.h>
 #include "tls.h"
 #include "hitls_error.h"
@@ -15,7 +24,6 @@
 int32_t HITLS_SetInfoCb(HITLS_Ctx *ctx, HITLS_InfoCb callback)
 {
     if (ctx == NULL) {
-        BSL_ERR_PUSH_ERROR(HITLS_NULL_INPUT);
         return HITLS_NULL_INPUT;
     }
 
@@ -36,7 +44,6 @@ int32_t HITLS_CFG_SetInfoCb(HITLS_Config *config, HITLS_InfoCb callback)
 {
     /* support NULL callback */
     if (config == NULL) {
-        BSL_ERR_PUSH_ERROR(HITLS_NULL_INPUT);
         return HITLS_NULL_INPUT;
     }
 
@@ -52,11 +59,9 @@ HITLS_InfoCb HITLS_CFG_GetInfoCb(const HITLS_Config *config)
     return config->infoCb;
 }
 
-
 int32_t HITLS_SetMsgCb(HITLS_Ctx *ctx, HITLS_MsgCb callback)
 {
     if (ctx == NULL) {
-        BSL_ERR_PUSH_ERROR(HITLS_NULL_INPUT);
         return HITLS_NULL_INPUT;
     }
 
@@ -67,7 +72,6 @@ int32_t HITLS_CFG_SetMsgCb(HITLS_Config *config, HITLS_MsgCb callback)
 {
     /* support NULL callback */
     if (config == NULL) {
-        BSL_ERR_PUSH_ERROR(HITLS_NULL_INPUT);
         return HITLS_NULL_INPUT;
     }
 
@@ -78,7 +82,6 @@ int32_t HITLS_CFG_SetMsgCb(HITLS_Config *config, HITLS_MsgCb callback)
 int32_t HITLS_CFG_SetMsgCbArg(HITLS_Config *config, void *arg)
 {
     if (config == NULL) {
-        BSL_ERR_PUSH_ERROR(HITLS_NULL_INPUT);
         return HITLS_NULL_INPUT;
     }
 
@@ -86,3 +89,4 @@ int32_t HITLS_CFG_SetMsgCbArg(HITLS_Config *config, void *arg)
 
     return HITLS_SUCCESS;
 }
+#endif

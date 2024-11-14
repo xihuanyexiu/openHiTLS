@@ -1,13 +1,21 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /* BEGIN_HEADER */
 /* INCLUDE_BASE test_suite_tls13_consistency_rfc8446 */
+
 #include <stdio.h>
 #include "stub_replace.h"
 #include "hitls.h"
@@ -286,7 +294,7 @@ void UT_TLS13_RFC8446_FFDHE_TC001()
     ASSERT_TRUE(remoteProcess != NULL);
 
     int32_t serverConfigId = HLT_RpcTlsNewCtx(remoteProcess, version, false);
-    void *clientConfig = HLT_TlsNewCtx(version, true);
+    void *clientConfig = HLT_TlsNewCtx(version);
     ASSERT_TRUE(clientConfig != NULL);
 
     HLT_Ctx_Config *clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
@@ -389,7 +397,8 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_DHE_GROUP_FUNC_TC001(int group)
     ASSERT_EQ(client->ssl->negotiatedInfo.negotiatedGroup, group);
 
     uint8_t data[] = "Hello World";
-    ASSERT_TRUE(HITLS_Write(client->ssl, data, strlen("Hello World")) == HITLS_SUCCESS);
+    uint32_t writeLen;
+    ASSERT_TRUE(HITLS_Write(client->ssl, data, strlen("Hello World"), &writeLen) == HITLS_SUCCESS);
     ASSERT_TRUE(FRAME_TrasferMsgBetweenLink(client, server) == HITLS_SUCCESS);
 
     uint8_t readBuf[MAX_BUF_SIZE] = {0};
@@ -459,7 +468,8 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_DHE_GROUP_FUNC_TC002(int group)
     ASSERT_EQ(client->ssl->negotiatedInfo.tls13BasicKeyExMode , TLS13_KE_MODE_PSK_WITH_DHE);
 
     uint8_t data[] = "Hello World";
-    ASSERT_TRUE(HITLS_Write(client->ssl, data, strlen("Hello World")) == HITLS_SUCCESS);
+    uint32_t writeLen;
+    ASSERT_TRUE(HITLS_Write(client->ssl, data, strlen("Hello World"), &writeLen) == HITLS_SUCCESS);
     ASSERT_TRUE(FRAME_TrasferMsgBetweenLink(client, server) == HITLS_SUCCESS);
 
     uint8_t readBuf[MAX_BUF_SIZE] = {0};
@@ -531,7 +541,8 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_DHE_GROUP_FUNC_TC003(int group)
     ASSERT_EQ(client->ssl->negotiatedInfo.tls13BasicKeyExMode , TLS13_CERT_AUTH_WITH_DHE);
 
     uint8_t data[] = "Hello World";
-    ASSERT_TRUE(HITLS_Write(client->ssl, data, strlen("Hello World")) == HITLS_SUCCESS);
+    uint32_t writeLen;
+    ASSERT_TRUE(HITLS_Write(client->ssl, data, strlen("Hello World"), &writeLen) == HITLS_SUCCESS);
     ASSERT_TRUE(FRAME_TrasferMsgBetweenLink(client, server) == HITLS_SUCCESS);
 
     uint8_t readBuf[MAX_BUF_SIZE] = {0};

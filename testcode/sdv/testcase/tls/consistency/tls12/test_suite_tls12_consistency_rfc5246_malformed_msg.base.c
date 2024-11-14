@@ -1,12 +1,20 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2024 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
-#include "securec.h"
+
 #include <semaphore.h>
+#include "securec.h"
 #include "hitls_error.h"
 #include "frame_tls.h"
 #include "frame_link.h"
@@ -233,7 +241,7 @@ int32_t DefaultCfgStatusPark(HandshakeTestInfo *testInfo)
     if (testInfo->config == NULL) {
         return HITLS_INTERNAL_EXCEPTION;
     }
-    HITLS_CFG_SetCloseCheckKeyUsage(testInfo->config, false);
+    HITLS_CFG_SetCheckKeyUsage(testInfo->config, false);
     uint16_t groups[] = {HITLS_EC_GROUP_SECP256R1};
     HITLS_CFG_SetGroups(testInfo->config, groups, sizeof(groups) / sizeof(uint16_t));
     uint16_t signAlgs[] = {CERT_SIG_SCHEME_RSA_PKCS1_SHA256, CERT_SIG_SCHEME_ECDSA_SECP256R1_SHA256};
@@ -602,7 +610,7 @@ int32_t DefaultCfgStatusParkWithSuite(HandshakeTestInfo *testInfo)
     if (testInfo->config == NULL) {
         return HITLS_INTERNAL_EXCEPTION;
     }
-    HITLS_CFG_SetCloseCheckKeyUsage(testInfo->config, false);
+    HITLS_CFG_SetCheckKeyUsage(testInfo->config, false);
     uint16_t cipherSuits[] = {HITLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256};
     HITLS_CFG_SetCipherSuites(testInfo->config, cipherSuits, sizeof(cipherSuits) / sizeof(uint16_t));
     testInfo->config->isSupportExtendMasterSecret = testInfo->isSupportExtendMasterSecret;
@@ -677,50 +685,6 @@ typedef struct {
     ALERT_Description expectDescription;  // Expected alert description of the tested end.
 } TestExpect;
 
-void TEST_UnexpectMsg(HLT_FrameHandle *frameHandle, TestExpect *testExpect, bool isSupportClientVerify)
-{
-    HLT_Tls_Res *serverRes = NULL;
-    HLT_Tls_Res *clientRes = NULL;
-    HLT_Process *localProcess = NULL;
-    HLT_Process *remoteProcess = NULL;
-    HLT_Ctx_Config *serverConfig = NULL;
-    ALERT_Info alertInfo = {0};
-    // Create a process.
-    localProcess = HLT_InitLocalProcess(HITLS);
-    ASSERT_TRUE(localProcess != NULL);
-    remoteProcess = HLT_LinkRemoteProcess(HITLS, TCP, PORT, true);
-    ASSERT_TRUE(remoteProcess != NULL);
-    // Enable the dual-ended check.
-    serverConfig = HLT_NewCtxConfig(NULL, "SERVER");
-    ASSERT_TRUE(serverConfig != NULL);
-    ASSERT_TRUE(HLT_SetClientVerifySupport(serverConfig, isSupportClientVerify) == 0);
-    HLT_Ctx_Config *clientConfig = HLT_NewCtxConfig(NULL, "CLIENT");
-    ASSERT_TRUE(clientConfig != NULL);
-    ASSERT_TRUE(HLT_SetClientVerifySupport(clientConfig, isSupportClientVerify) == 0);
-
-    // The server listens on the TLS link.
-    serverRes = HLT_ProcessTlsAccept(remoteProcess, TLS1_2, serverConfig, NULL);
-    ASSERT_TRUE(serverRes != NULL);
-    // Client initialization
-    clientRes = HLT_ProcessTlsInit(localProcess, TLS1_2, clientConfig, NULL);
-    ASSERT_TRUE(clientRes != NULL);
-    // Conduct negotiation.
-    ASSERT_TRUE(frameHandle != NULL);
-    frameHandle->ctx = clientRes->ssl;
-    HLT_SetFrameHandle(frameHandle);
-    ASSERT_EQ(HLT_TlsConnect(clientRes->ssl), testExpect->connectExpect);
-    HLT_CleanFrameHandle();
-
-    ALERT_GetInfo(clientRes->ssl, &alertInfo);
-    ASSERT_TRUE(alertInfo.level == testExpect->expectLevel);
-    ASSERT_EQ(alertInfo.description, testExpect->expectDescription);
-    ASSERT_EQ(HLT_RpcGetTlsAcceptResult(serverRes->acceptId), testExpect->acceptExpect);
-
-exit:
-    HLT_CleanFrameHandle();
-    HLT_FreeAllProcess();
-}
-
 // Replace the sent message with ClientKeyExchange.
 void TEST_SendUnexpectClientKeyExchangeMsg(void *msg, void *data)
 {
@@ -769,32 +733,6 @@ void TEST_SendUnexpectCertificateMsg(void *msg, void *data)
 
     frameType->recordType = REC_TYPE_HANDSHAKE;
     frameType->handshakeType = CERTIFICATE;
-    frameType->keyExType = HITLS_KEY_EXCH_ECDHE;
-    if (memcpy_s(msg, sizeof(FRAME_Msg), &newFrameMsg, sizeof(newFrameMsg)) != EOK) {
-        Print("TEST_SendUnexpectCertificateMsg memcpy_s Error!");
-    }
-}
-
-// Replace the message to be sent with the CERTIFICATION_VERIFY message.
-void TEST_SendUnexpectCertificateVerifyMsg(void *msg, void *data)
-{
-    FRAME_Type *frameType = (FRAME_Type *)data;
-    FRAME_Msg *frameMsg = (FRAME_Msg *)msg;
-    FRAME_Msg newFrameMsg = {0};
-    HS_MsgType hsTypeTmp = frameType->handshakeType;
-    REC_Type recTypeTmp = frameType->recordType;
-    frameType->handshakeType = CERTIFICATE_VERIFY;
-    FRAME_Init();  // Callback for changing the certificate algorithm, which is used to generate negotiation handshake
-                   // messages.
-    FRAME_GetDefaultMsg(frameType, &newFrameMsg);
-    HLT_TlsRegCallback(HITLS_CALLBACK_DEFAULT);  // recovery callback
-    // Release the original msg.
-    frameType->handshakeType = hsTypeTmp;
-    frameType->recordType = recTypeTmp;
-    FRAME_CleanMsg(frameType, frameMsg);
-    // Change message.
-    frameType->recordType = REC_TYPE_HANDSHAKE;
-    frameType->handshakeType = CERTIFICATE_VERIFY;
     frameType->keyExType = HITLS_KEY_EXCH_ECDHE;
     if (memcpy_s(msg, sizeof(FRAME_Msg), &newFrameMsg, sizeof(newFrameMsg)) != EOK) {
         Print("TEST_SendUnexpectCertificateMsg memcpy_s Error!");

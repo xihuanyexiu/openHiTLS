@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #ifndef HS_KX_H
@@ -16,6 +23,15 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define MASTER_SECRET_LABEL "CLIENT_RANDOM"
+#define CLIENT_EARLY_LABEL "CLIENT_EARLY_TRAFFIC_SECRET"
+#define CLIENT_HANDSHAKE_LABEL "CLIENT_HANDSHAKE_TRAFFIC_SECRET"
+#define SERVER_HANDSHAKE_LABEL "SERVER_HANDSHAKE_TRAFFIC_SECRET"
+#define CLIENT_APPLICATION_LABEL "CLIENT_TRAFFIC_SECRET_0"
+#define SERVER_APPLICATION_LABEL "SERVER_TRAFFIC_SECRET_0"
+#define EARLY_EXPORTER_SECRET_LABEL "EARLY_EXPORTER_SECRET"
+#define EXPORTER_SECRET_LABEL "EXPORTER_SECRET"
 
 /* The maximum premaster secret calculated by using the PSK may be:
  * |uint16_t|MAX_PRE_MASTER_SECRET_SIZE|uint16_t|HS_PSK_MAX_LEN| */
@@ -131,8 +147,8 @@ int32_t HS_ProcessServerKxMsgIdentityHint(TLS_Ctx *ctx, const ServerKeyExchangeM
  */
 int32_t HS_TLS13DeriveSecret(CRYPT_KeyDeriveParameters *deriveInfo, bool isHashed, uint8_t *outSecret, uint32_t outLen);
 
-int32_t HS_TLS13DeriveBinderKey(HITLS_HashAlgo hashAlgo, bool isExternalPsk, const uint8_t *earlySecret,
-    uint32_t secretLen, uint8_t *binderKey, uint32_t keyLen);
+int32_t HS_TLS13DeriveBinderKey(HITLS_HashAlgo hashAlgo, bool isExternalPsk, uint8_t *earlySecret, uint32_t secretLen,
+    uint8_t *binderKey, uint32_t keyLen);
 
 /**
  * @brief TLS1.3 Calculate the early secret.
@@ -148,7 +164,7 @@ int32_t HS_TLS13DeriveBinderKey(HITLS_HashAlgo hashAlgo, bool isExternalPsk, con
  * @retval HITLS_CRYPT_ERR_HKDF_EXTRACT HKDF-Extract calculation failure
  */
 int32_t HS_TLS13DeriveEarlySecret(
-    HITLS_HashAlgo hashAlgo, const uint8_t *psk, uint32_t pskLen, uint8_t *earlySecret, uint32_t *outLen);
+    HITLS_HashAlgo hashAlgo, uint8_t *psk, uint32_t pskLen, uint8_t *earlySecret, uint32_t *outLen);
 
 /**
  * @brief TLS1.3 Calculate the secret in the next phase.
@@ -167,8 +183,8 @@ int32_t HS_TLS13DeriveEarlySecret(
  * @retval HITLS_CRYPT_ERR_HKDF_EXPAND HKDF-Expand calculation fails.
  * @retval HITLS_CRYPT_ERR_HKDF_EXTRACT HKDF-Extract calculation failure
  */
-int32_t HS_TLS13DeriveNextStageSecret(HITLS_HashAlgo hashAlgo, const uint8_t *inSecret, uint32_t inLen,
-    const uint8_t *givenSecret, uint32_t givenLen, uint8_t *outSecret, uint32_t *outLen);
+int32_t HS_TLS13DeriveNextStageSecret(HITLS_HashAlgo hashAlgo, uint8_t *inSecret, uint32_t inLen, uint8_t *givenSecret,
+    uint32_t givenLen, uint8_t *outSecret, uint32_t *outLen);
 
 /**
  * @brief TLS1.3 Calculate the FinishedKey.
@@ -184,8 +200,8 @@ int32_t HS_TLS13DeriveNextStageSecret(HITLS_HashAlgo hashAlgo, const uint8_t *in
  * @retval HITLS_CRYPT_ERR_DIGEST hash calculation failed.
  * @retval HITLS_CRYPT_ERR_HKDF_EXPAND HKDF-Expand calculation fails.
  */
-int32_t HS_TLS13DeriveFinishedKey(HITLS_HashAlgo hashAlgo, const uint8_t *baseKey, uint32_t baseKeyLen,
-    uint8_t *finishedkey, uint32_t finishedkeyLen);
+int32_t HS_TLS13DeriveFinishedKey(
+    HITLS_HashAlgo hashAlgo, uint8_t *baseKey, uint32_t baseKeyLen, uint8_t *finishedkey, uint32_t finishedkeyLen);
 
 /**
  * @brief TLS1.3 Switch the traffickey.
@@ -288,8 +304,8 @@ int32_t HS_TLS13DeriveResumptionMasterSecret(TLS_Ctx *ctx);
  * @retval HITLS_CRYPT_ERR_DIGEST hash calculation fails.
  * @retval HITLS_CRYPT_ERR_HKDF_EXPAND HKDF-Expand calculation fails.
  */
-int32_t HS_TLS13DeriveResumePsk(const TLS_Ctx *ctx, const uint8_t *ticketNonce, uint32_t ticketNonceSize,
-    uint8_t *resumePsk, uint32_t resumePskLen);
+int32_t HS_TLS13DeriveResumePsk(
+    TLS_Ctx *ctx, const uint8_t *ticketNonce, uint32_t ticketNonceSize, uint8_t *resumePsk, uint32_t resumePskLen);
 
 int32_t HS_TLS13DeriveHandshakeTrafficSecret(TLS_Ctx *ctx);
 

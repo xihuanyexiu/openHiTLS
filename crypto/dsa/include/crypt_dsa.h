@@ -1,10 +1,18 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
+
 #ifndef CRYPT_DSA_H
 #define CRYPT_DSA_H
 
@@ -275,6 +283,17 @@ int32_t CRYPT_DSA_Cmp(const CRYPT_DSA_Ctx *a, const CRYPT_DSA_Ctx *b);
  * @retval CRYPT_SUCCESS    obtained successfully.
  */
 int32_t CRYPT_DSA_Ctrl(CRYPT_DSA_Ctx *ctx, CRYPT_PkeyCtrl opt, void *val, uint32_t len);
+
+
+/**
+ * @ingroup DSA
+ * @brief DSA get security bits
+ *
+ * @param ctx [IN] DSA Context structure
+ *
+ * @retval security bits
+ */
+int32_t CRYPT_DSA_GetSecBits(const CRYPT_DSA_Ctx *ctx);
 
 #ifdef __cplusplus
 }

@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 #include "hitls_build.h"
@@ -33,7 +40,7 @@ static void UpdateSize(BN_BigNum *r, uint32_t modSize)
         }
     }
     r->size = size;
-    r->sign = false;
+    BN_CLRNEG(r->flag);
 }
 
 #define P521SIZE SIZE_OF_BNUINT(521)
@@ -940,7 +947,6 @@ int32_t BN_ModNistEccMul(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b,
     BN_BigNum rMul = {
         .data = tData,
         .size = 0,
-        .sign = false,
         .room = P521SIZE << 1
     };
     uint32_t size = mod->size << 1;
@@ -999,7 +1005,6 @@ int32_t BN_ModNistEccSqr(
     BN_BigNum rSqr = {
         .data = tData,
         .size = 0,
-        .sign = false,
         .room = P521SIZE << 1
     };
     uint32_t size = mod->size << 1;
@@ -1040,7 +1045,6 @@ int32_t BN_ModSm2EccMul(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b,
     BN_BigNum rMul = {
         .data = tData,
         .size = 0,
-        .sign = false,
         .room = P256SIZE << 1
     };
     uint32_t size = mod->size << 1;
@@ -1066,7 +1070,6 @@ int32_t BN_ModSm2EccSqr(
     BN_BigNum rSqr = {
         .data = tData,
         .size = 0,
-        .sign = false,
         .room = P256SIZE << 1
     };
     uint32_t size = mod->size << 1;

@@ -1,9 +1,16 @@
-/*---------------------------------------------------------------------------------------------
- *  This file is part of the openHiTLS project.
- *  Copyright © 2023 Huawei Technologies Co.,Ltd. All rights reserved.
- *  Licensed under the openHiTLS Software license agreement 1.0. See LICENSE in the project root
- *  for license information.
- *---------------------------------------------------------------------------------------------
+/*
+ * This file is part of the openHiTLS project.
+ *
+ * openHiTLS is licensed under the Mulan PSL v2.
+ * You can use this software according to the terms and conditions of the Mulan PSL v2.
+ * You may obtain a copy of Mulan PSL v2 at:
+ *
+ *     http://license.coscl.org.cn/MulanPSL2
+ *
+ * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+ * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+ * See the Mulan PSL v2 for more details.
  */
 
 /**
@@ -30,7 +37,7 @@ extern "C" {
  */
 typedef enum {
     HITLS_SNI_HOSTNAME_TYPE,
-    HITLS_SNI_BUTT = 255                        /**< Maximum enumerated value. */
+    HITLS_SNI_BUTT = 255                    /* Maximum enumerated value */
 } SNI_Type;
 
 #define HITLS_ACCEPT_SNI_ERR_OK  0              /* Accepts the request and continues handshake. */
@@ -111,7 +118,7 @@ int32_t HITLS_CFG_SetServerNameCb(HITLS_Config *config, HITLS_SniDealCb callback
  * @ingroup hitls_sni
  * @brief   Set the server_name parameters required during SNI negotiation on the server.
  *
- * @param   ctx  [OUT] ctx context
+ * @param   config  [OUT] Config context
  * @param   arg  [IN] Set parameters related to server_name.
  * @retval  HITLS_SUCCESS, if successful.
  *          For details about other error codes, see hitls_error.h.
@@ -133,7 +140,7 @@ int32_t HITLS_CFG_GetServerNameCb(HITLS_Config *config, HITLS_SniDealCb *callbac
  * @ingroup hitls_sni
  * @brief   Obtain the server_name required during SNI negotiation on the server, related Parameter arg.
  *
- * @param   ctx  [IN] ctx context
+ * @param   config  [IN] Config context
  * @param   arg  [IN] [OUT] Set parameters related to server_name.arg
  * @retval  HITLS_SUCCESS, if successful.
  *          For details about other error codes, see hitls_error.h.
