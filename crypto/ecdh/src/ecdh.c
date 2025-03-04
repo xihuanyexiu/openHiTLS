@@ -27,6 +27,8 @@
 #include "crypt_ecc_pkey.h"
 #include "crypt_ecdh.h"
 #include "sal_atomic.h"
+#include "crypt_local_types.h"
+#include "crypt_params_key.h"
 
 CRYPT_ECDH_Ctx *CRYPT_ECDH_NewCtx(void)
 {
@@ -60,7 +62,7 @@ CRYPT_EcdhPara *CRYPT_ECDH_NewParaById(CRYPT_PKEY_ParaId id)
     return ECC_NewPara(id);
 }
 
-CRYPT_EcdhPara *CRYPT_ECDH_NewPara(const CRYPT_EccPara *eccPara)
+CRYPT_EcdhPara *CRYPT_ECDH_NewPara(const BSL_Param *eccPara)
 {
     if (eccPara == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
@@ -87,22 +89,16 @@ void CRYPT_ECDH_FreePara(CRYPT_EcdhPara *para)
     ECC_FreePara(para);
 }
 
-int32_t CRYPT_ECDH_GetPara(const CRYPT_ECDH_Ctx *ctx, CRYPT_EccPara *para)
+int32_t CRYPT_ECDH_GetPara(const CRYPT_ECDH_Ctx *ctx, BSL_Param *param)
 {
-    return ECC_GetPara(ctx, para);
+    return ECC_GetPara(ctx, param);
 }
 
-int32_t CRYPT_ECDH_SetPara(CRYPT_ECDH_Ctx *ctx, const CRYPT_EcdhPara *para)
+int32_t CRYPT_ECDH_SetParaEx(CRYPT_ECDH_Ctx *ctx, CRYPT_EcdhPara *para)
 {
     if (ctx == NULL || para == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
-    }
-
-    CRYPT_EcdhPara *dstPara = ECC_DupPara(para);
-    if (dstPara == NULL) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
     }
 
     // updating public and private keys
@@ -112,7 +108,30 @@ int32_t CRYPT_ECDH_SetPara(CRYPT_ECDH_Ctx *ctx, const CRYPT_EcdhPara *para)
     ctx->pubkey = NULL;
 
     ECC_FreePara(ctx->para);
-    ctx->para = dstPara;
+    ctx->para = para;
+
+    return CRYPT_SUCCESS;
+}
+
+int32_t CRYPT_ECDH_SetPara(CRYPT_ECDH_Ctx *ctx, const BSL_Param *para)
+{
+    if (ctx == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    CRYPT_EcdhPara *ecdhPara = CRYPT_ECDH_NewPara(para);
+    if (ecdhPara == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_EAL_ERR_NEW_PARA_FAIL);
+        return CRYPT_EAL_ERR_NEW_PARA_FAIL;
+    }
+    // updating public and private keys
+    BN_Destroy(ctx->prvkey);
+    ECC_FreePoint(ctx->pubkey);
+    ctx->prvkey = NULL;
+    ctx->pubkey = NULL;
+
+    ECC_FreePara(ctx->para);
+    ctx->para = ecdhPara;
 
     return CRYPT_SUCCESS;
 }
@@ -122,24 +141,24 @@ uint32_t CRYPT_ECDH_GetBits(const CRYPT_ECDH_Ctx *ctx)
     return ECC_PkeyGetBits(ctx);
 }
 
-int32_t CRYPT_ECDH_SetPrvKey(CRYPT_ECDH_Ctx *ctx, const CRYPT_EcdhPrv *prv)
+int32_t CRYPT_ECDH_SetPrvKey(CRYPT_ECDH_Ctx *ctx, const BSL_Param *para)
 {
-    return ECC_PkeySetPrvKey(ctx, prv);
+    return ECC_PkeySetPrvKey(ctx, para);
 }
 
-int32_t CRYPT_ECDH_SetPubKey(CRYPT_ECDH_Ctx *ctx, const CRYPT_EcdhPub *pub)
+int32_t CRYPT_ECDH_SetPubKey(CRYPT_ECDH_Ctx *ctx, const BSL_Param *para)
 {
-    return ECC_PkeySetPubKey(ctx, pub);
+    return ECC_PkeySetPubKey(ctx, para);
 }
 
-int32_t CRYPT_ECDH_GetPrvKey(const CRYPT_ECDH_Ctx *ctx, CRYPT_EcdhPrv *prv)
+int32_t CRYPT_ECDH_GetPrvKey(const CRYPT_ECDH_Ctx *ctx, BSL_Param *para)
 {
-    return ECC_PkeyGetPrvKey(ctx, prv);
+    return ECC_PkeyGetPrvKey(ctx, para);
 }
 
-int32_t CRYPT_ECDH_GetPubKey(const CRYPT_ECDH_Ctx *ctx, CRYPT_EcdhPub *pub)
+int32_t CRYPT_ECDH_GetPubKey(const CRYPT_ECDH_Ctx *ctx, BSL_Param *para)
 {
-    return ECC_PkeyGetPubKey(ctx, pub);
+    return ECC_PkeyGetPubKey(ctx, para);
 }
 
 int32_t CRYPT_ECDH_Gen(CRYPT_ECDH_Ctx *ctx)
@@ -191,7 +210,7 @@ int32_t CRYPT_ECDH_ComputeShareKey(const CRYPT_ECDH_Ctx *ctx, const CRYPT_ECDH_C
     if ((tmpPrvkey == NULL) || (sharePoint == NULL)) {
         ret = CRYPT_MEM_ALLOC_FAIL;
         BSL_ERR_PUSH_ERROR(ret);
-        goto ERR;
+        goto EXIT;
     }
 
     /** When the cofactor mode is enabled, pubkey = prvkey * h * G. When h is 1, no calculation is required.
@@ -200,30 +219,57 @@ int32_t CRYPT_ECDH_ComputeShareKey(const CRYPT_ECDH_Ctx *ctx, const CRYPT_ECDH_C
     ret = ECC_PointMul(ctx->para, sharePoint, ctx->prvkey, pubKey->pubkey);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto ERR;
+        goto EXIT;
     }
 
     ret = ECC_PointCheck(sharePoint);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto ERR;
+        goto EXIT;
     }
 
     ret = ECC_GetPoint(ctx->para, sharePoint, &shareKeyX, NULL);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto ERR;
+        goto EXIT;
     }
     *shareKeyLen = shareKeyX.len;
 
-ERR:
+EXIT:
     ECC_FreePoint(sharePoint);
     BN_Destroy(tmpPrvkey);
     return ret;
 }
 
-int32_t CRYPT_ECDH_Ctrl(CRYPT_ECDH_Ctx *ctx, CRYPT_PkeyCtrl opt, void *val, uint32_t len)
+static int32_t CRYPT_ECDH_GetLen(const CRYPT_ECDH_Ctx *ctx, GetLenFunc func, void *val, uint32_t len)
 {
+    if (val == NULL || len != sizeof(int32_t)) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+
+    *(int32_t *)val = func(ctx);
+    return CRYPT_SUCCESS;
+}
+
+int32_t CRYPT_ECDH_Ctrl(CRYPT_ECDH_Ctx *ctx, int32_t opt, void *val, uint32_t len)
+{
+    if (ctx == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    switch (opt) {
+        case CRYPT_CTRL_GET_PARAM_ID:
+            return CRYPT_ECDH_GetLen(ctx, (GetLenFunc)CRYPT_ECDH_GetParaId, val, len);
+        case CRYPT_CTRL_GET_BITS:
+            return CRYPT_ECDH_GetLen(ctx, (GetLenFunc)CRYPT_ECDH_GetBits, val, len);
+        case CRYPT_CTRL_GET_SECBITS:
+            return CRYPT_ECDH_GetLen(ctx, (GetLenFunc)CRYPT_ECDH_GetSecBits, val, len);
+        case CRYPT_CTRL_SET_PARAM_BY_ID:
+            return CRYPT_ECDH_SetParaEx(ctx, CRYPT_ECDH_NewParaById(*(CRYPT_PKEY_ParaId *)val));
+        default:
+            break;
+    }
     return ECC_PkeyCtrl(ctx, opt, val, len);
 }
 

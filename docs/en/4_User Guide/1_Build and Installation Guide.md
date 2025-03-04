@@ -19,7 +19,7 @@ Method 1
 
 1. Download the openHiTLS code, including the service code, build script, and test code.
 
-   Repository address: https://gitee.com/openhitls/openhitls.git
+   Repository address: https://gitcode.com/openhitls/openhitls.git
 2. openHiTLS depends on the libboundscheck library. Before building openHiTLS, download the library to **openHiTLS/platform/Secure\_C**.
 
    Repository address: https://gitee.com/openeuler/libboundscheck.git
@@ -29,7 +29,7 @@ Method 2
 Run the **git submodule** command to download the source code and dependent SecureC library:
 
 ```
-git clone --recurse-submodules https://gitee.com/openhitls/openhitls.git
+git clone --recurse-submodules https://gitcode.com/openhitls/openhitls.git
 ```
 
 ## 3. Building and Installing openHiTLS
@@ -52,7 +52,8 @@ The openHiTLS code directory structure is as follows:
    ├── script
    ├── testcode
    ├── tls
-   └── x509
+   └── pki
+   └── auth
 ```
 Where:
 
@@ -63,7 +64,8 @@ Where:
 - tls: stores the code related to secure transmission
 - platform: stores other dependent codes
 - testcode: stores the test project code
-- x509: provides the X509 certificate function
+- pki: stores the PKI related code
+- auth: stores the auth related code
 
 **Call CMake to build the source code. The detailed method is as follows:**
 
@@ -79,7 +81,7 @@ openHiTLS provides the CMake build mode, which can be configured using **configu
 |--output_dir |Specifies the output path of the compilation target.|python3 configure.py --output_dir output|
 |--feature_config|Specifies the compilation feature configuration file.|python3 configure.py --feature_config path/to/xxx.json|
 |--compile_config|Specifies the compilation parameter configuration file.|python3 configure.py --compile_config path/to/xxx.json|
-|--enable|Specifies build features.|python3 configure.py --enable hitls_crypto hitls_tls hitls_pse|
+|--enable|Specifies build features.<br>Please refer to [Feature Description](./4_Configuration%20guide.md#1-Feature%20Description) to get supported features|python3 configure.py --enable hitls_crypto hitls_tls hitls_pse|
 |--disable|disable buld features|python3 configure.py --disable sal_thread |
 |--enable-sctp|enable sctp which is DTLS depended on|python3 configure.py --enable-sctp|
 |--asm_type|Indicates the assembly type.|python3 configure.py --lib_type  static --asm_type armv8|

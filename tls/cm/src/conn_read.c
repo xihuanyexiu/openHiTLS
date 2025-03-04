@@ -228,7 +228,7 @@ static int32_t PreprocessUnexpectHsMsg(HITLS_Ctx *ctx)
 
 static void ConsumeHandshakeMessage(HITLS_Ctx *ctx)
 {
-    bool isDtls = IS_DTLS_VERSION(ctx->config.tlsConfig.maxVersion);
+    bool isDtls = IS_SUPPORT_DATAGRAM(ctx->config.tlsConfig.originVersionMask);
     uint32_t headerLen = isDtls ? DTLS_HS_MSG_HEADER_SIZE : HS_MSG_HEADER_SIZE;
     int32_t ret = ReadHsMessage(ctx, headerLen);
     if (ret != HITLS_SUCCESS) {
@@ -386,7 +386,6 @@ static int32_t ReadEventInClosedState(HITLS_Ctx *ctx, uint8_t *data, uint32_t bu
 }
 static int32_t ReadProcess(HITLS_Ctx *ctx, uint8_t *data, uint32_t bufSize, uint32_t *readLen)
 {
-    int32_t ret = HITLS_SUCCESS;
     ReadEventProcess readEventProcess[CM_STATE_END] = {
         ReadEventInIdleState,
         ReadEventInHandshakingState,
@@ -406,8 +405,7 @@ static int32_t ReadProcess(HITLS_Ctx *ctx, uint8_t *data, uint32_t bufSize, uint
     }
 
     ReadEventProcess proc = readEventProcess[GetConnState(ctx)];
-    ret = proc(ctx, data, bufSize, readLen);
-    return ret;
+    return proc(ctx, data, bufSize, readLen);
 }
 
 int32_t HITLS_Read(HITLS_Ctx *ctx, uint8_t *data, uint32_t bufSize, uint32_t *readLen)

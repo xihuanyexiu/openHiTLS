@@ -23,7 +23,10 @@
 #include "bsl_sal.h"
 #include "securec.h"
 #include "bsl_err_internal.h"
-
+#include "eal_pkey_local.h"
+#include "eal_md_local.h"
+#include "bsl_params.h"
+#include "crypt_params_key.h"
 
 // rsa-decrypt Calculation used by Chinese Remainder Theorem(CRT). intermediate variables:
 typedef struct {
@@ -129,14 +132,14 @@ static int32_t CalcMontExp(const BN_BigNum *n, const BN_BigNum *eOrd,
     if (optimizer == NULL || mont == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
         ret = CRYPT_MEM_ALLOC_FAIL;
-        goto ERR;
+        goto EXIT;
     }
     if (consttime) {
         ret = BN_MontExpConsttime(result, input, eOrd, mont, optimizer);
     } else {
         ret = BN_MontExp(result, input, eOrd, mont, optimizer);
     }
-ERR:
+EXIT:
     BN_OptimizerDestroy(optimizer);
     BN_MontDestroy(mont);
     return ret;
@@ -231,41 +234,41 @@ static int32_t NormalDecProcedure(
     /* cP = M mod P where inp = M = Message */
     ret = BN_Mod(procedure.cP, message, priKey->p, procedure.optimizer);
     if (ret != CRYPT_SUCCESS) {
-        goto ERR;
+        goto EXIT;
     }
     /* cQ = M mod Q where inp = M = Message */
     ret = BN_Mod(procedure.cQ, message, priKey->q, procedure.optimizer);
     if (ret != CRYPT_SUCCESS) {
-        goto ERR;
+        goto EXIT;
     }
     /* mP = cP^dP mod p */
     ret = BN_MontExpConsttime(procedure.mP, procedure.cP, priKey->dP, procedure.montP, procedure.optimizer);
     if (ret != CRYPT_SUCCESS) {
-        goto ERR;
+        goto EXIT;
     }
     /* mQ = cQ^dQ mod q */
     ret = BN_MontExpConsttime(procedure.mQ, procedure.cQ, priKey->dQ, procedure.montQ, procedure.optimizer);
     if (ret != CRYPT_SUCCESS) {
-        goto ERR;
+        goto EXIT;
     }
     /* result = (mP - mQ) mod p */
     ret = BN_ModSub(result, procedure.mP, procedure.mQ, priKey->p, procedure.optimizer);
     if (ret != CRYPT_SUCCESS) {
-        goto ERR;
+        goto EXIT;
     }
     /* result = result * qInv mod p */
     ret = BN_ModMul(result, result, priKey->qInv, priKey->p, procedure.optimizer);
     if (ret != CRYPT_SUCCESS) {
-        goto ERR;
+        goto EXIT;
     }
     /* result = result * q */
     ret = BN_Mul(result, result, priKey->q, procedure.optimizer);
     if (ret != CRYPT_SUCCESS) {
-        goto ERR;
+        goto EXIT;
     }
     /* result = result + mQ */
     ret = BN_Add(result, result, procedure.mQ);
-ERR:
+EXIT:
     RsaDecProcedureFree(&procedure);
     return ret;
 }
@@ -283,7 +286,6 @@ static int32_t RSA_GetSub(
     ret = BN_SubLimb(r2, q, 1);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        return ret;
     }
     return ret;
 }
@@ -307,7 +309,6 @@ static int32_t RSA_GetL(
     ret = BN_Div(l, NULL, l, u, opt);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        return ret;
     }
     return ret;
 }
@@ -326,27 +327,26 @@ static BN_BigNum *RSA_GetPublicExp(const BN_BigNum *d, const BN_BigNum *p,
     if (l == NULL || r1 == NULL || r2 == NULL || u == NULL || e == NULL) {
         ret = CRYPT_NULL_INPUT;
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
+        goto EXIT;
     }
 
     ret = RSA_GetSub(p, q, r1, r2);
     // The push error in GetSub can be used to locate the fault. Therefore, it is not added here.
     if (ret != CRYPT_SUCCESS) {
-        goto END;
+        goto EXIT;
     }
 
     ret = RSA_GetL(l, u, r1, r2, opt);
     // The push error in GetL can be used to locate the fault. Therefore, it is not added here.
     if (ret != CRYPT_SUCCESS) {
-        goto END;
+        goto EXIT;
     }
 
     ret = BN_ModInv(e, d, l, opt);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
     }
-END:
+EXIT:
     BN_Destroy(r1);
     BN_Destroy(r2);
     BN_Destroy(l);
@@ -372,9 +372,9 @@ static int32_t RSA_InitBlind(CRYPT_RSA_Ctx *ctx, BN_Optimizer *opt)
         needDestoryE = true;
     }
 
-    ctx->blind = RSA_BlindNewCtx();
+    ctx->scBlind = RSA_BlindNewCtx();
 
-    int32_t ret = RSA_BlindCreateParam(ctx->blind, e, ctx->prvKey->n, opt);
+    int32_t ret = RSA_BlindCreateParam(ctx->scBlind, e, ctx->prvKey->n, opt);
     if (needDestoryE) {
         BN_Destroy(e);
     }
@@ -384,18 +384,14 @@ static int32_t RSA_InitBlind(CRYPT_RSA_Ctx *ctx, BN_Optimizer *opt)
 static int32_t RSA_BlindProcess(CRYPT_RSA_Ctx *ctx, BN_BigNum *message, BN_Optimizer *opt)
 {
     int32_t ret;
-    if (ctx->blind == NULL) {
+    if (ctx->scBlind == NULL) {
         ret = RSA_InitBlind(ctx, opt);
         if (ret != CRYPT_SUCCESS) {
             return ret;
         }
     }
 
-    ret = RSA_BlindCovert(ctx->blind, message, ctx->prvKey->n, opt);
-    if (ret != CRYPT_SUCCESS) {
-        return ret;
-    }
-    return ret;
+    return RSA_BlindCovert(ctx->scBlind, message, ctx->prvKey->n, opt);
 }
 
 static int32_t RSA_AllocAndCheck(const CRYPT_RSA_Ctx *ctx, const uint8_t *input, uint32_t inputLen,
@@ -451,7 +447,7 @@ static int32_t RSA_PrvProcess(
 
     // unblinding
     if ((ctx->flags & CRYPT_RSA_BLINDING) != 0) {
-        ret = RSA_BlindInvert(ctx->blind, result, ctx->prvKey->n, opt);
+        ret = RSA_BlindInvert(ctx->scBlind, result, ctx->prvKey->n, opt);
         if (ret != CRYPT_SUCCESS) {
             BSL_ERR_PUSH_ERROR(ret);
             return ret;
@@ -497,11 +493,11 @@ int32_t CRYPT_RSA_PrvDec(const CRYPT_RSA_Ctx *ctx, const uint8_t *input, uint32_
 
     ret = RSA_PrvProcess(ctx, message, result, opt);
     if (ret != CRYPT_SUCCESS) {
-        goto ERR;
+        goto EXIT;
     }
 
     ret = ResultToOut(bits, result, out, outLen);
-ERR:
+EXIT:
     BN_OptimizerDestroy(opt);
     BN_Destroy(result);
     BN_Destroy(message);
@@ -539,6 +535,13 @@ static int32_t SignInputCheck(const CRYPT_RSA_Ctx *ctx, const uint8_t *input, ui
         // No padding type is set.
         BSL_ERR_PUSH_ERROR(CRYPT_RSA_PAD_NO_SET_ERROR);
         return CRYPT_RSA_PAD_NO_SET_ERROR;
+    }
+    if ((ctx->flags & CRYPT_RSA_BSSA) != 0) {
+        if (BN_BITS_TO_BYTES(bits) != inputLen) {
+            BSL_ERR_PUSH_ERROR(CRYPT_RSA_ERR_INPUT_VALUE);
+            return CRYPT_RSA_ERR_INPUT_VALUE;
+        }
+        return CRYPT_SUCCESS;
     }
     if (GetHashLen(ctx) != inputLen) {
         // Inconsistent length
@@ -582,12 +585,58 @@ static int32_t PssPad(CRYPT_RSA_Ctx *ctx, const uint8_t *input, uint32_t inputLe
     return ret;
 }
 
-int32_t CRYPT_RSA_Sign(CRYPT_RSA_Ctx *ctx, const uint8_t *data, uint32_t dataLen,
-    uint8_t *sign, uint32_t *signLen)
+static int32_t BlindSign(CRYPT_RSA_Ctx *ctx, const uint8_t *data, uint32_t dataLen, uint8_t *sign, uint32_t *signLen)
+{
+    int32_t ret;
+    uint32_t bits = CRYPT_RSA_GetBits(ctx);
+    uint32_t sLen = BN_BITS_TO_BYTES(bits);
+    uint32_t mLen = BN_BITS_TO_BYTES(bits);
+    uint8_t *s = BSL_SAL_Malloc(sLen);
+    uint8_t *m = BSL_SAL_Malloc(mLen);
+    if (s == NULL || m == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
+        ret = CRYPT_MEM_ALLOC_FAIL;
+        goto EXIT;
+    }
+
+    /* Step 1: Compute blind signature using RSA private key operation */
+    ret = CRYPT_RSA_PrvDec(ctx, data, dataLen, s, &sLen);
+    if (ret != CRYPT_SUCCESS) {
+        goto EXIT;
+    }
+
+    /* Step 2: Verify the signature by applying the public key operation
+     * This step ensures the signature is valid under the RSA key pair */
+    ret = CRYPT_RSA_PubEnc(ctx, s, sLen, m, &mLen);
+    if (ret != CRYPT_SUCCESS) {
+        goto EXIT;
+    }
+
+    /* Step 3: Verify that the result matches the input blinded message
+     * This ensures the signature operation was performed correctly */
+    if (dataLen != mLen || memcmp(data, m, mLen) != 0) {
+        ret = CRYPT_RSA_NOR_VERIFY_FAIL;
+        BSL_ERR_PUSH_ERROR(ret);
+        goto EXIT;
+    }
+
+    /* Copy the blind signature to output buffer */
+    (void)memcpy_s(sign, *signLen, s, sLen);
+    *signLen = sLen;
+EXIT:
+    BSL_SAL_FREE(m);
+    BSL_SAL_FREE(s);
+    return ret;
+}
+
+int32_t CRYPT_RSA_SignData(CRYPT_RSA_Ctx *ctx, const uint8_t *data, uint32_t dataLen, uint8_t *sign, uint32_t *signLen)
 {
     int32_t ret = SignInputCheck(ctx, data, dataLen, sign, signLen);
     if (ret != CRYPT_SUCCESS) {
         return ret;
+    }
+    if ((ctx->flags & CRYPT_RSA_BSSA) != 0) {
+        return BlindSign(ctx, data, dataLen, sign, signLen);
     }
     uint32_t bits = CRYPT_RSA_GetBits(ctx);
     uint32_t padLen = BN_BITS_TO_BYTES(bits);
@@ -598,8 +647,7 @@ int32_t CRYPT_RSA_Sign(CRYPT_RSA_Ctx *ctx, const uint8_t *data, uint32_t dataLen
     }
     switch (ctx->pad.type) {
         case EMSA_PKCSV15:
-            ret = CRYPT_RSA_SetPkcsV15Type1(ctx->pad.para.pkcsv15.mdId, data,
-                dataLen, pad, padLen);
+            ret = CRYPT_RSA_SetPkcsV15Type1(ctx->pad.para.pkcsv15.mdId, data, dataLen, pad, padLen);
             break;
         case EMSA_PSS:
             ret = PssPad(ctx, data, dataLen, pad, padLen);
@@ -607,19 +655,157 @@ int32_t CRYPT_RSA_Sign(CRYPT_RSA_Ctx *ctx, const uint8_t *data, uint32_t dataLen
         default: // This branch cannot be entered because it's been verified before.
             ret = CRYPT_RSA_PAD_NO_SET_ERROR;
             BSL_ERR_PUSH_ERROR(ret);
-            goto ERR;
+            goto EXIT;
     }
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto ERR;
+        goto EXIT;
     }
     ret = CRYPT_RSA_PrvDec(ctx, pad, padLen, sign, signLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
     }
-ERR:
+EXIT:
     (void)memset_s(pad, padLen, 0, padLen);
     BSL_SAL_FREE(pad);
+    return ret;
+}
+
+int32_t CRYPT_RSA_Sign(CRYPT_RSA_Ctx *ctx, int32_t algId, const uint8_t *data, uint32_t dataLen,
+    uint8_t *sign, uint32_t *signLen)
+{
+    uint8_t hash[64]; // 64 is max hash len
+    uint32_t hashLen = sizeof(hash) / sizeof(hash[0]);
+    int32_t ret = EAL_Md(algId, data, dataLen, hash, &hashLen);
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+        return ret;
+    }
+    return CRYPT_RSA_SignData(ctx, hash, hashLen, sign, signLen);
+}
+
+static int32_t BlindInputCheck(const CRYPT_RSA_Ctx *ctx, const uint8_t *input, uint32_t inputLen,
+    const uint8_t *out, const uint32_t *outLen)
+{
+    if (ctx == NULL || input == NULL || inputLen == 0 || out == NULL || outLen == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    if (ctx->pubKey == NULL) {
+        // Check whether the private key information exists.
+        BSL_ERR_PUSH_ERROR(CRYPT_RSA_ERR_NO_PUBKEY_INFO);
+        return CRYPT_RSA_ERR_NO_PUBKEY_INFO;
+    }
+    uint32_t bits = CRYPT_RSA_GetBits(ctx);
+    if ((*outLen) < BN_BITS_TO_BYTES(bits)) {
+        BSL_ERR_PUSH_ERROR(CRYPT_RSA_BUFF_LEN_NOT_ENOUGH);
+        return CRYPT_RSA_BUFF_LEN_NOT_ENOUGH;
+    }
+    if (ctx->pad.type != EMSA_PSS) {
+        BSL_ERR_PUSH_ERROR(CRYPT_RSA_PADDING_NOT_SUPPORTED);
+        return CRYPT_RSA_PADDING_NOT_SUPPORTED;
+    }
+    return CRYPT_SUCCESS;
+}
+
+static RSA_BlindParam *BssaParamNew()
+{
+    RSA_BlindParam *param = BSL_SAL_Calloc(1u, sizeof(RSA_BlindParam));
+    if (param == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
+        return NULL;
+    }
+    param->para.bssa = RSA_BlindNewCtx();
+    if (param->para.bssa == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
+        BSL_SAL_FREE(param);
+        return NULL;
+    }
+    param->type = RSABSSA;
+    return param;
+}
+
+static int32_t BssaBlind(CRYPT_RSA_Ctx *ctx, const uint8_t *input, uint32_t inputLen,
+    uint8_t *out, uint32_t *outLen)
+{
+    int32_t ret;
+    uint32_t bits = CRYPT_RSA_GetBits(ctx);
+    uint32_t padLen = BN_BITS_TO_BYTES(bits);
+    RSA_BlindParam *param = NULL;
+    BN_BigNum *e = ctx->pubKey->e;
+    BN_BigNum *n = ctx->pubKey->n;
+    RSA_Blind *blind = NULL;
+    uint8_t *pad = BSL_SAL_Malloc(padLen);
+    BN_Optimizer *opt = BN_OptimizerCreate();
+    BN_BigNum *enMsg = BN_Create(bits);
+    BN_BigNum *gcd = BN_Create(bits);
+    if (pad == NULL || opt == NULL || enMsg == NULL || gcd == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
+        ret = CRYPT_MEM_ALLOC_FAIL;
+        goto ERR;
+    }
+   // encoded_msg = EMSA-PSS-ENCODE(msg, bit_len(n))
+    GOTO_ERR_IF(PssPad(ctx, input, inputLen, pad, padLen), ret);
+    GOTO_ERR_IF(BN_Bin2Bn(enMsg, pad, padLen), ret);
+
+    // Check if bigNumOut and n are coprime using GCD
+    GOTO_ERR_IF(BN_Gcd(gcd, enMsg, n, opt), ret);
+
+    // Check if gcd is 1
+    if (!BN_IsOne(gcd)) {
+        BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);
+        ret = CRYPT_INVALID_ARG;
+        goto ERR;
+    }
+
+    param = ctx->blindParam;
+    if (param == NULL) {
+        param = BssaParamNew();
+        if (param == NULL) {
+            goto ERR;
+        }
+        GOTO_ERR_IF(RSA_BlindCreateParam(param->para.bssa, e, n, opt), ret);
+    }
+    blind = param->para.bssa;
+    GOTO_ERR_IF(BN_ModMul(enMsg, enMsg, blind->r, n, opt), ret);
+    GOTO_ERR_IF(ResultToOut(bits, enMsg, out, outLen), ret);
+    ctx->blindParam = param;
+ERR:
+    if (ret != CRYPT_SUCCESS && ctx->blindParam == NULL && param != NULL) {
+        RSA_BlindFreeCtx(param->para.bssa);
+        BSL_SAL_Free(param);
+    }
+    BN_Destroy(enMsg);
+    BN_Destroy(gcd);
+    BSL_SAL_FREE(pad);
+    BN_OptimizerDestroy(opt);
+    return ret;
+}
+
+int32_t CRYPT_RSA_Blind(CRYPT_RSA_Ctx *ctx, int32_t algId, const uint8_t *input, uint32_t inputLen,
+    uint8_t *out, uint32_t *outLen)
+{
+    int32_t ret = BlindInputCheck(ctx, input, inputLen, out, outLen);
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
+    }
+    if ((int32_t)ctx->pad.para.pss.mdId != algId) {
+        BSL_ERR_PUSH_ERROR(CRYPT_RSA_ERR_MD_ALGID);
+        return CRYPT_RSA_ERR_MD_ALGID;
+    }
+    uint8_t hash[64]; // 64 is max hash len
+    uint32_t hashLen = sizeof(hash) / sizeof(hash[0]);
+    ret = EAL_Md(algId, input, inputLen, hash, &hashLen);
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+        return ret;
+    }
+    if ((ctx->flags & CRYPT_RSA_BSSA) != 0) {
+        ret = BssaBlind(ctx, hash, hashLen, out, outLen);
+    } else {
+        BSL_ERR_PUSH_ERROR(CRYPT_RSA_ERR_BLIND_TYPE);
+        ret = CRYPT_RSA_ERR_BLIND_TYPE;
+    }
     return ret;
 }
 
@@ -648,7 +834,7 @@ static int32_t VerifyInputCheck(const CRYPT_RSA_Ctx *ctx, const uint8_t *data, u
     return CRYPT_SUCCESS;
 }
 
-int32_t CRYPT_RSA_Verify(CRYPT_RSA_Ctx *ctx, const uint8_t *data, uint32_t dataLen,
+int32_t CRYPT_RSA_VerifyData(CRYPT_RSA_Ctx *ctx, const uint8_t *data, uint32_t dataLen,
     const uint8_t *sign, uint32_t signLen)
 {
     uint8_t *pad = NULL;
@@ -668,7 +854,7 @@ int32_t CRYPT_RSA_Verify(CRYPT_RSA_Ctx *ctx, const uint8_t *data, uint32_t dataL
     ret = CRYPT_RSA_PubEnc(ctx, sign, signLen, pad, &padLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto ERR;
+        goto EXIT;
     }
     saltLen = (uint32_t)ctx->pad.para.pss.saltLen;
     switch (ctx->pad.type) {
@@ -677,9 +863,9 @@ int32_t CRYPT_RSA_Verify(CRYPT_RSA_Ctx *ctx, const uint8_t *data, uint32_t dataL
                 data, dataLen);
             break;
         case EMSA_PSS:
-            if (ctx->pad.para.pss.saltLen == SALTLEN_PSS_HASHLEN_TYPE) { // saltLen is -1
+            if (ctx->pad.para.pss.saltLen == CRYPT_RSA_SALTLEN_TYPE_HASHLEN) { // saltLen is -1
                 saltLen = (uint32_t)ctx->pad.para.pss.mdMeth->mdSize;
-            } else if (ctx->pad.para.pss.saltLen == SALTLEN_PSS_MAXLEN_TYPE) { // saltLen is -2
+            } else if (ctx->pad.para.pss.saltLen == CRYPT_RSA_SALTLEN_TYPE_MAXLEN) { // saltLen is -2
                 saltLen = (uint32_t)(padLen - ctx->pad.para.pss.mdMeth->mdSize - 2); // salt, obtains DRBG
             }
             ret = CRYPT_RSA_VerifyPss(ctx->pad.para.pss.mdMeth, ctx->pad.para.pss.mgfMeth,
@@ -688,11 +874,82 @@ int32_t CRYPT_RSA_Verify(CRYPT_RSA_Ctx *ctx, const uint8_t *data, uint32_t dataL
         default: // This branch cannot be entered because it's been verified before.
             ret = CRYPT_RSA_PAD_NO_SET_ERROR;
             BSL_ERR_PUSH_ERROR(ret);
-            goto ERR;
+            break;
     }
-ERR:
+EXIT:
     (void)memset_s(pad, padLen, 0, padLen);
     BSL_SAL_FREE(pad);
+    return ret;
+}
+
+int32_t CRYPT_RSA_Verify(CRYPT_RSA_Ctx *ctx, int32_t algId, const uint8_t *data, uint32_t dataLen,
+    const uint8_t *sign, uint32_t signLen)
+{
+    uint8_t hash[64]; // 64 is max hash len
+    uint32_t hashLen = sizeof(hash) / sizeof(hash[0]);
+    int32_t ret = EAL_Md(algId, data, dataLen, hash, &hashLen);
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+        return ret;
+    }
+    return CRYPT_RSA_VerifyData(ctx, hash, hashLen, sign, signLen);
+}
+
+static int32_t BssaUnBlind(const CRYPT_RSA_Ctx *ctx, const uint8_t *input, uint32_t inputLen,
+    uint8_t *out, uint32_t *outLen)
+{
+    uint32_t bits = CRYPT_RSA_GetBits(ctx);
+    uint32_t sigLen = BN_BITS_TO_BYTES(bits);
+    if (inputLen != sigLen) {
+        BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);
+        return CRYPT_INVALID_ARG;
+    }
+    int32_t ret;
+    RSA_Blind *blind = NULL;
+    BN_BigNum *n = ctx->pubKey->n;
+    BN_Optimizer *opt = BN_OptimizerCreate();
+    BN_BigNum *z = BN_Create(bits);
+    BN_BigNum *s = BN_Create(bits);
+    if (opt == NULL || z == NULL || s == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
+        ret = CRYPT_MEM_ALLOC_FAIL;
+        goto ERR;
+    }
+    if (ctx->blindParam == NULL || ctx->blindParam->para.bssa == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_RSA_ERR_NO_BLIND_INFO);
+        ret = CRYPT_RSA_ERR_NO_BLIND_INFO;
+        goto ERR;
+    }
+    if (ctx->blindParam->type != RSABSSA) {
+        BSL_ERR_PUSH_ERROR(CRYPT_RSA_ERR_BLIND_TYPE);
+        ret = CRYPT_RSA_ERR_BLIND_TYPE;
+        goto ERR;
+    }
+    blind = ctx->blindParam->para.bssa;
+    GOTO_ERR_IF(BN_Bin2Bn(z, input, inputLen), ret);
+    GOTO_ERR_IF(BN_ModMul(s, z, blind->rInv, n, opt), ret);
+    GOTO_ERR_IF(ResultToOut(bits, s, out, outLen), ret);
+ERR:
+    BN_Destroy(z);
+    BN_Destroy(s);
+    BN_OptimizerDestroy(opt);
+    return ret;
+}
+
+int32_t CRYPT_RSA_UnBlind(const CRYPT_RSA_Ctx *ctx, const uint8_t *input, uint32_t inputLen,
+    uint8_t *out, uint32_t *outLen)
+{
+    int32_t ret;
+    ret = BlindInputCheck(ctx, input, inputLen, out, outLen);
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
+    }
+    if ((ctx->flags & CRYPT_RSA_BSSA) != 0) {
+        ret = BssaUnBlind(ctx, input, inputLen, out, outLen);
+    } else {
+        BSL_ERR_PUSH_ERROR(CRYPT_RSA_ERR_BLIND_TYPE);
+        ret = CRYPT_RSA_ERR_BLIND_TYPE;
+    }
     return ret;
 }
 
@@ -745,7 +1002,7 @@ int32_t CRYPT_RSA_Encrypt(CRYPT_RSA_Ctx *ctx, const uint8_t *data, uint32_t data
             ret = CRYPT_RSA_SetPkcsV15Type2(data, dataLen, pad, padLen);
             if (ret != CRYPT_SUCCESS) {
                 BSL_ERR_PUSH_ERROR(ret);
-                goto ERR;
+                goto EXIT;
             }
             break;
         case RSAES_OAEP:
@@ -753,28 +1010,28 @@ int32_t CRYPT_RSA_Encrypt(CRYPT_RSA_Ctx *ctx, const uint8_t *data, uint32_t data
                 ctx->pad.para.oaep.mgfMeth, data, dataLen, ctx->label.data, ctx->label.len, pad, padLen);
             if (ret != CRYPT_SUCCESS) {
                 BSL_ERR_PUSH_ERROR(ret);
-                goto ERR;
+                goto EXIT;
             }
             break;
         case RSA_NO_PAD:
             if (dataLen != padLen) {
                 ret = CRYPT_RSA_ERR_ENC_INPUT_NOT_ENOUGH;
                 BSL_ERR_PUSH_ERROR(CRYPT_RSA_ERR_ENC_INPUT_NOT_ENOUGH);
-                goto ERR;
+                goto EXIT;
             }
             (void)memcpy_s(pad, padLen, data, dataLen);
             break;
         default:
             ret = CRYPT_RSA_PAD_NO_SET_ERROR;
             BSL_ERR_PUSH_ERROR(ret);
-            goto ERR;
+            goto EXIT;
     }
 
     ret = CRYPT_RSA_PubEnc(ctx, pad, padLen, out, outLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
     }
-ERR:
+EXIT:
     (void)memset_s(pad, padLen, 0, padLen);
     BSL_SAL_FREE(pad);
     return ret;
@@ -821,7 +1078,7 @@ int32_t CRYPT_RSA_Decrypt(CRYPT_RSA_Ctx *ctx, const uint8_t *data, uint32_t data
     ret = CRYPT_RSA_PrvDec(ctx, data, dataLen, pad, &padLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto ERR;
+        goto EXIT;
     }
 
     switch (ctx->pad.type) {
@@ -839,16 +1096,16 @@ int32_t CRYPT_RSA_Decrypt(CRYPT_RSA_Ctx *ctx, const uint8_t *data, uint32_t data
             if (memcpy_s(out, *outLen, pad, padLen) != EOK) {
                 ret = CRYPT_RSA_BUFF_LEN_NOT_ENOUGH;
                 BSL_ERR_PUSH_ERROR(CRYPT_RSA_BUFF_LEN_NOT_ENOUGH);
-                goto ERR;
+                break;
             }
             *outLen = padLen;
             break;
         default:
             ret = CRYPT_RSA_PAD_NO_SET_ERROR;
             BSL_ERR_PUSH_ERROR(ret);
-            goto ERR;
+            break;
     }
-ERR:
+EXIT:
     BSL_SAL_CleanseData(pad, padLen);
     BSL_SAL_FREE(pad);
     return ret;
@@ -860,7 +1117,7 @@ static int32_t SetEmsaPkcsV15(CRYPT_RSA_Ctx *ctx, void *val, uint32_t len)
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-    if (len != sizeof(CRYPT_RSA_PkcsV15Para)) {
+    if (len != sizeof(int32_t)) {
         BSL_ERR_PUSH_ERROR(CRYPT_RSA_SET_EMS_PKCSV15_LEN_ERROR);
         return CRYPT_RSA_SET_EMS_PKCSV15_LEN_ERROR;
     }
@@ -868,82 +1125,58 @@ static int32_t SetEmsaPkcsV15(CRYPT_RSA_Ctx *ctx, void *val, uint32_t len)
         CRYPT_MD_SHA384, CRYPT_MD_SHA512, CRYPT_MD_SM3, CRYPT_MD_SHA1, CRYPT_MD_MD5
     };
 
-    CRYPT_RSA_PkcsV15Para *pad = val;
-    if (ParamIdIsValid(pad->mdId, SIGN_MD_ID_LIST, sizeof(SIGN_MD_ID_LIST) / sizeof(SIGN_MD_ID_LIST[0])) == false) {
+    int32_t mdId = *(int32_t *)val;
+    if (ParamIdIsValid(mdId, SIGN_MD_ID_LIST, sizeof(SIGN_MD_ID_LIST) / sizeof(SIGN_MD_ID_LIST[0])) == false) {
         // This hash algorithm is not supported.
         BSL_ERR_PUSH_ERROR(CRYPT_RSA_ERR_MD_ALGID);
         return CRYPT_RSA_ERR_MD_ALGID;
     }
     (void)memset_s(&(ctx->pad), sizeof(RSAPad), 0, sizeof(RSAPad));
-    (void)memcpy_s(&(ctx->pad.para.pkcsv15), sizeof(CRYPT_RSA_PkcsV15Para), val, sizeof(CRYPT_RSA_PkcsV15Para));
     ctx->pad.type = EMSA_PKCSV15;
-    ctx->pad.para.pkcsv15.mdId = pad->mdId;
+    ctx->pad.para.pkcsv15.mdId = mdId;
     return CRYPT_SUCCESS;
 }
 
-static int32_t SetEmsaPss(CRYPT_RSA_Ctx *ctx, void *val, uint32_t len)
+static int32_t SetEmsaPss(CRYPT_RSA_Ctx *ctx, RSA_PadingPara *pad)
 {
-    if (val == NULL) {
-        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
-        return CRYPT_NULL_INPUT;
-    }
-    if (len != sizeof(RSA_PadingPara)) {
-        BSL_ERR_PUSH_ERROR(CRYPT_RSA_SET_EMS_PSS_LEN_ERROR);
-        return CRYPT_RSA_SET_EMS_PSS_LEN_ERROR;
-    }
-
-    RSA_PadingPara *pad = val;
-    if (pad->mdMeth == NULL || pad->mgfMeth == NULL) {
-        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
-        return CRYPT_NULL_INPUT;
-    }
     uint32_t bits = CRYPT_RSA_GetBits(ctx);
     if (bits == 0) {
         // The valid key information does not exist.
         BSL_ERR_PUSH_ERROR(CRYPT_RSA_NO_KEY_INFO);
         return CRYPT_RSA_NO_KEY_INFO;
     }
-    if (pad->saltLen < SALTLEN_PSS_AUTOLEN_TYPE) {
+    if (pad->saltLen < CRYPT_RSA_SALTLEN_TYPE_AUTOLEN) {
         BSL_ERR_PUSH_ERROR(CRYPT_RSA_ERR_SALT_LEN);
         return  CRYPT_RSA_ERR_SALT_LEN;
     }
     uint32_t saltLen = (uint32_t)pad->saltLen;
-    if (pad->saltLen == SALTLEN_PSS_HASHLEN_TYPE) {
+    if (pad->saltLen == CRYPT_RSA_SALTLEN_TYPE_HASHLEN) {
         saltLen = pad->mdMeth->mdSize;
     }
     uint32_t bytes = BN_BITS_TO_BYTES(bits);
     // The minimum specification supported by RSA is 1K,
     // and the maximum hash length supported by the hash algorithm is 64 bytes.
     // Therefore, specifying the salt length as the maximum available length is satisfied.
-    if (pad->saltLen != SALTLEN_PSS_MAXLEN_TYPE && pad->saltLen != SALTLEN_PSS_AUTOLEN_TYPE &&
+    if (pad->saltLen != CRYPT_RSA_SALTLEN_TYPE_MAXLEN && pad->saltLen != CRYPT_RSA_SALTLEN_TYPE_AUTOLEN &&
         saltLen > bytes - pad->mdMeth->mdSize - 2) { // maximum length of the salt is padLen-mdMethod->GetDigestSize-2
         // The configured salt length does not meet the specification.
         BSL_ERR_PUSH_ERROR(CRYPT_RSA_ERR_PSS_SALT_LEN);
         return CRYPT_RSA_ERR_PSS_SALT_LEN;
     }
     (void)memset_s(&(ctx->pad), sizeof(RSAPad), 0, sizeof(RSAPad));
-    (void)memcpy_s(&(ctx->pad.para.pss), sizeof(RSA_PadingPara), val, sizeof(RSA_PadingPara));
+    (void)memcpy_s(&(ctx->pad.para.pss), sizeof(RSA_PadingPara), pad, sizeof(RSA_PadingPara));
     ctx->pad.type = EMSA_PSS;
     ctx->pad.para.pss.mdId = pad->mdId;
     ctx->pad.para.pss.mgfId = pad->mgfId;
     return CRYPT_SUCCESS;
 }
 
-static int32_t SetOaep(CRYPT_RSA_Ctx *ctx, const void *val, uint32_t len)
+void SetOaep(CRYPT_RSA_Ctx *ctx, const RSA_PadingPara *val)
 {
-    if (val == NULL) {
-        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
-        return CRYPT_NULL_INPUT;
-    }
-    if (len != sizeof(RSA_PadingPara)) {
-        BSL_ERR_PUSH_ERROR(CRYPT_RSA_SET_RSAES_OAEP_LEN_ERROR);
-        return CRYPT_RSA_SET_RSAES_OAEP_LEN_ERROR;
-    }
-
     (void)memset_s(&(ctx->pad), sizeof(RSAPad), 0, sizeof(RSAPad));
     (void)memcpy_s(&(ctx->pad.para.oaep), sizeof(RSA_PadingPara), val, sizeof(RSA_PadingPara));
     ctx->pad.type = RSAES_OAEP;
-    return CRYPT_SUCCESS;
+    return;
 }
 
 static int32_t SetOaepLabel(CRYPT_RSA_Ctx *ctx, const void *val, uint32_t len)
@@ -977,13 +1210,13 @@ static int32_t SetRsaesPkcsV15(CRYPT_RSA_Ctx *ctx, const void *val, uint32_t len
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-    if (len != sizeof(CRYPT_RSA_PkcsV15Para)) {
+    if (len != sizeof(int32_t)) {
         BSL_ERR_PUSH_ERROR(CRYPT_RSA_SET_EMS_PKCSV15_LEN_ERROR);
         return CRYPT_RSA_SET_EMS_PKCSV15_LEN_ERROR;
     }
 
     (void)memset_s(&(ctx->pad), sizeof(RSAPad), 0, sizeof(RSAPad));
-    (void)memcpy_s(&(ctx->pad.para.pkcsv15), sizeof(CRYPT_RSA_PkcsV15Para), val, sizeof(CRYPT_RSA_PkcsV15Para));
+    ctx->pad.para.pkcsv15.mdId = *(const int32_t *)val;
     ctx->pad.type = RSAES_PKCSV15;
     return CRYPT_SUCCESS;
 }
@@ -1028,17 +1261,44 @@ static int32_t SetSalt(CRYPT_RSA_Ctx *ctx, void *val, uint32_t len)
 
 static int32_t GetSaltLen(CRYPT_RSA_Ctx *ctx, void *val, uint32_t len)
 {
-    (void)len;
-    int32_t *valTmp = val;
-    if (valTmp == NULL) {
+    if (val == NULL || len == 0) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-    if (ctx->pad.type != EMSA_PSS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_RSA_ERR_ALGID);
-        return CRYPT_RSA_ERR_ALGID;
+    if (len != sizeof(int32_t)) {
+        BSL_ERR_PUSH_ERROR(CRYPT_RSA_GET_SALT_LEN_ERROR);
+        return CRYPT_RSA_GET_SALT_LEN_ERROR;
     }
-    *valTmp = ctx->pad.para.pss.saltLen;
+    if (ctx->prvKey == NULL && ctx->pubKey == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_RSA_NO_KEY_INFO);
+        return CRYPT_RSA_NO_KEY_INFO;
+    }
+    if (ctx->pad.type != EMSA_PSS) {
+        BSL_ERR_PUSH_ERROR(CRYPT_RSA_GET_SALT_NOT_PSS_ERROR);
+        return CRYPT_RSA_GET_SALT_NOT_PSS_ERROR;
+    }
+    int32_t *ret = val;
+    int32_t valTmp;
+    RSA_PadingPara *pad = &(ctx->pad.para.pss);
+    if (pad->mdMeth == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_RSA_ERR_PSS_PARAMS);
+        return CRYPT_RSA_ERR_PSS_PARAMS;
+    }
+    uint32_t bytes = BN_BITS_TO_BYTES(CRYPT_RSA_GetBits(ctx));
+    if (pad->saltLen == CRYPT_RSA_SALTLEN_TYPE_HASHLEN) { // saltLen is -1
+        valTmp = (int32_t)pad->mdMeth->mdSize;
+    } else if (pad->saltLen == CRYPT_RSA_SALTLEN_TYPE_MAXLEN ||
+        pad->saltLen == CRYPT_RSA_SALTLEN_TYPE_AUTOLEN) {
+        // RFC 8017: Max(salt length) = ceil(bits/8) - mdSize - 2
+        valTmp = (int32_t)(bytes - pad->mdMeth->mdSize - 2);
+    } else {
+        valTmp = (int32_t)pad->saltLen;
+    }
+    if (valTmp < 0) {
+        BSL_ERR_PUSH_ERROR(CRYPT_RSA_ERR_SALT_LEN);
+        return CRYPT_RSA_ERR_SALT_LEN;
+    }
+    *ret = valTmp;
     return CRYPT_SUCCESS;
 }
 
@@ -1150,7 +1410,7 @@ static int32_t SetRsaPad(CRYPT_RSA_Ctx *ctx, const void *val, const uint32_t len
         return CRYPT_RSA_SET_FLAG_LEN_ERROR;
     }
 
-    int32_t pad = *(int32_t *)val;
+    int32_t pad = *(const int32_t *)val;
     if (pad < EMSA_PKCSV15 || pad > RSA_NO_PAD) {
         BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);
         return CRYPT_INVALID_ARG;
@@ -1160,7 +1420,180 @@ static int32_t SetRsaPad(CRYPT_RSA_Ctx *ctx, const void *val, const uint32_t len
     return CRYPT_SUCCESS;
 }
 
-int32_t CRYPT_RSA_Ctrl(CRYPT_RSA_Ctx *ctx, CRYPT_PkeyCtrl opt, void *val, uint32_t len)
+static int32_t MdIdCheckSha1Sha2(CRYPT_MD_AlgId id)
+{
+    if (id < CRYPT_MD_MD5 || id > CRYPT_MD_SHA512) {
+        BSL_ERR_PUSH_ERROR(CRYPT_EAL_ERR_ALGID);
+        return CRYPT_EAL_ERR_ALGID;
+    }
+    return CRYPT_SUCCESS;
+}
+
+static int32_t SetParamCheck(CRYPT_RSA_Ctx *ctx, const void *val, uint32_t len)
+{
+    if (val == NULL || len == 0) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    if (ctx->pubKey == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_RSA_ERR_NO_PUBKEY_INFO);
+        return CRYPT_RSA_ERR_NO_PUBKEY_INFO;
+    }
+    return CRYPT_SUCCESS;
+}
+
+static int32_t RsaSetBssa(CRYPT_RSA_Ctx *ctx, const void *val, uint32_t len)
+{
+    int32_t ret = SetParamCheck(ctx, val, len);
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
+    }
+    const uint8_t *r = (const uint8_t *)val;
+    BN_Optimizer *opt = BN_OptimizerCreate();
+    if (opt == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
+        return CRYPT_MEM_ALLOC_FAIL;
+    }
+    RSA_Blind *blind = NULL;
+    RSA_BlindParam *param = ctx->blindParam;
+    if (param == NULL) {
+        param = BSL_SAL_Calloc(1u, sizeof(RSA_BlindParam));
+        if (param == NULL) {
+            ret = CRYPT_MEM_ALLOC_FAIL;
+            BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
+            goto ERR;
+        }
+        param->type = RSABSSA;
+    }
+    if (param->para.bssa != NULL) {
+        RSA_BlindFreeCtx(param->para.bssa);
+        param->para.bssa = NULL;
+    }
+    param->para.bssa = RSA_BlindNewCtx();
+    if (param->para.bssa == NULL) {
+        ret = CRYPT_MEM_ALLOC_FAIL;
+        goto ERR;
+    }
+    blind = param->para.bssa;
+    GOTO_ERR_IF( RSA_CreateBlind(blind, 0), ret);
+    GOTO_ERR_IF(BN_Bin2Bn(blind->r, r, len), ret);
+    if (BN_IsZero(blind->r) || BN_Cmp(blind->r, ctx->pubKey->n) >= 0) { // 1 <= r < n.
+        ret = CRYPT_RSA_ERR_BSSA_PARAM;
+        BSL_ERR_PUSH_ERROR(ret);
+        goto ERR;
+    }
+    GOTO_ERR_IF(BN_ModInv(blind->rInv, blind->r, ctx->pubKey->n, opt), ret);
+    GOTO_ERR_IF(BN_ModExp(blind->r, blind->r, ctx->pubKey->e, ctx->pubKey->n, opt), ret);
+    ctx->blindParam = param;
+ERR:
+    if (ret != CRYPT_SUCCESS && ctx->blindParam == NULL && param != NULL) {
+        RSA_BlindFreeCtx(param->para.bssa);
+        BSL_SAL_FREE(param);
+    }
+    BN_OptimizerDestroy(opt);
+    return ret;
+}
+
+static int32_t RsaSetOaep(CRYPT_RSA_Ctx *ctx, BSL_Param *param)
+{
+    int32_t ret;
+    uint32_t len = 0;
+    RSA_PadingPara padPara = {0};
+    const BSL_Param *temp = NULL;
+    if (param == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    if ((temp = BSL_PARAM_FindConstParam(param, CRYPT_PARAM_RSA_MD_ID)) != NULL) {
+        len = sizeof(padPara.mdId);
+        GOTO_ERR_IF(BSL_PARAM_GetValue(temp, CRYPT_PARAM_RSA_MD_ID,
+            BSL_PARAM_TYPE_INT32, &padPara.mdId, &len), ret);
+    }
+    if ((temp = BSL_PARAM_FindConstParam(param, CRYPT_PARAM_RSA_MGF1_ID)) != NULL) {
+        len = sizeof(padPara.mgfId);
+        GOTO_ERR_IF(BSL_PARAM_GetValue(temp, CRYPT_PARAM_RSA_MGF1_ID,
+            BSL_PARAM_TYPE_INT32, &padPara.mgfId, &len), ret);
+    }
+    ret = MdIdCheckSha1Sha2(padPara.mdId);
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+        return ret;
+    }
+    ret = MdIdCheckSha1Sha2(padPara.mgfId);
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+        return ret;
+    }
+    padPara.mdMeth = EAL_MdFindMethod(padPara.mdId);
+    padPara.mgfMeth = EAL_MdFindMethod(padPara.mgfId);
+    if (padPara.mdMeth == NULL || padPara.mgfMeth == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_EAL_ERR_ALGID);
+        return CRYPT_EAL_ERR_ALGID;
+    }
+    SetOaep(ctx, &padPara);
+ERR:
+    return ret;
+}
+
+static int32_t RsaSetPss(CRYPT_RSA_Ctx *ctx, BSL_Param *param)
+{
+    int32_t ret;
+    uint32_t len = 0;
+    RSA_PadingPara padPara = {0};
+    const BSL_Param *temp = NULL;
+    if (param == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    if ((temp = BSL_PARAM_FindConstParam(param, CRYPT_PARAM_RSA_MD_ID)) != NULL) {
+        len = sizeof(padPara.mdId);
+        GOTO_ERR_IF(BSL_PARAM_GetValue(temp, CRYPT_PARAM_RSA_MD_ID, BSL_PARAM_TYPE_INT32, &padPara.mdId, &len), ret);
+    }
+    if ((temp = BSL_PARAM_FindConstParam(param, CRYPT_PARAM_RSA_MGF1_ID)) != NULL) {
+        len = sizeof(padPara.mgfId);
+        GOTO_ERR_IF(BSL_PARAM_GetValue(temp, CRYPT_PARAM_RSA_MGF1_ID, BSL_PARAM_TYPE_INT32, &padPara.mgfId, &len), ret);
+    }
+    if ((temp = BSL_PARAM_FindConstParam(param, CRYPT_PARAM_RSA_SALTLEN)) != NULL) {
+        len = sizeof(padPara.saltLen);
+        GOTO_ERR_IF(BSL_PARAM_GetValue(temp, CRYPT_PARAM_RSA_SALTLEN,
+            BSL_PARAM_TYPE_INT32, &padPara.saltLen, &len), ret);
+    }
+    ret = MdIdCheckSha1Sha2(padPara.mdId);
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+        return ret;
+    }
+    ret = MdIdCheckSha1Sha2(padPara.mgfId);
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+        return ret;
+    }
+    padPara.mdMeth = EAL_MdFindMethod(padPara.mdId);
+    padPara.mgfMeth = EAL_MdFindMethod(padPara.mgfId);
+    if (padPara.mdMeth == NULL || padPara.mgfMeth == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_EAL_ERR_ALGID);
+        return CRYPT_EAL_ERR_ALGID;
+    }
+    ret = SetEmsaPss(ctx, &padPara);
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+    }
+ERR:
+    return ret;
+}
+
+static int32_t CRYPT_RSA_GetLen(const CRYPT_RSA_Ctx *ctx, GetLenFunc func, void *val, uint32_t len)
+{
+    if (val == NULL || len != sizeof(int32_t)) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+
+    *(int32_t *)val = func(ctx);
+    return CRYPT_SUCCESS;
+}
+
+int32_t CRYPT_RSA_Ctrl(CRYPT_RSA_Ctx *ctx, int32_t opt, void *val, uint32_t len)
 {
     if (ctx == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
@@ -1169,11 +1602,9 @@ int32_t CRYPT_RSA_Ctrl(CRYPT_RSA_Ctx *ctx, CRYPT_PkeyCtrl opt, void *val, uint32
     switch (opt) {
         case CRYPT_CTRL_SET_RSA_EMSA_PKCSV15:
             return SetEmsaPkcsV15(ctx, val, len);
-        case CRYPT_CTRL_SET_RSA_EMSA_PSS:
-            return SetEmsaPss(ctx, val, len);
         case CRYPT_CTRL_SET_RSA_SALT:
             return SetSalt(ctx, val, len);
-        case CRYPT_CTRL_GET_RSA_SALT:
+        case CRYPT_CTRL_GET_RSA_SALTLEN:
             return GetSaltLen(ctx, val, len);
         case CRYPT_CTRL_GET_RSA_PADDING:
             return GetPadding(ctx, val, len);
@@ -1181,9 +1612,6 @@ int32_t CRYPT_RSA_Ctrl(CRYPT_RSA_Ctx *ctx, CRYPT_PkeyCtrl opt, void *val, uint32
             return GetMd(ctx, val, len);
         case CRYPT_CTRL_GET_RSA_MGF:
             return GetMgf(ctx, val, len);
-
-        case CRYPT_CTRL_SET_RSA_RSAES_OAEP:
-            return SetOaep(ctx, val, len);
         case CRYPT_CTRL_SET_RSA_OAEP_LABEL:
             return SetOaepLabel(ctx, val, len);
         case CRYPT_CTRL_SET_RSA_RSAES_PKCSV15:
@@ -1198,6 +1626,18 @@ int32_t CRYPT_RSA_Ctrl(CRYPT_RSA_Ctx *ctx, CRYPT_PkeyCtrl opt, void *val, uint32
             return SetRsaPad(ctx, val, len);
         case CRYPT_CTRL_UP_REFERENCES:
             return RsaUpReferences(ctx, val, len);
+        case CRYPT_CTRL_GET_BITS:
+            return CRYPT_RSA_GetLen(ctx, (GetLenFunc)CRYPT_RSA_GetBits, val, len);
+        case CRYPT_CTRL_GET_SIGNLEN:
+            return CRYPT_RSA_GetLen(ctx, (GetLenFunc)CRYPT_RSA_GetSignLen, val, len);
+        case CRYPT_CTRL_GET_SECBITS:
+            return CRYPT_RSA_GetLen(ctx, (GetLenFunc)CRYPT_RSA_GetSecBits, val, len);
+        case CRYPT_CTRL_SET_RSA_EMSA_PSS:
+            return RsaSetPss(ctx, val);
+        case CRYPT_CTRL_SET_RSA_RSAES_OAEP:
+            return RsaSetOaep(ctx, val);
+        case CRYPT_CTRL_SET_RSA_BSSA_FACTOR_R:
+            return RsaSetBssa(ctx, val, len);
         default:
             BSL_ERR_PUSH_ERROR(CRYPT_RSA_CTRL_NOT_SUPPORT_ERROR);
             return CRYPT_RSA_CTRL_NOT_SUPPORT_ERROR;

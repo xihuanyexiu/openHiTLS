@@ -21,14 +21,6 @@
 #ifndef HITLS_CONFIG_CHECK_H
 #define HITLS_CONFIG_CHECK_H
 
-#if defined(HITLS_BSL_SAL_MEM) || defined(HITLS_BSL_SAL_LOCK) || defined(HITLS_BSL_SAL_THREAD) || \
-    defined(HITLS_BSL_SAL_TIME) || defined(HITLS_BSL_SAL_FILE) || defined(HITLS_BSL_SAL_NET) ||   \
-    defined(HITLS_BSL_SAL_STR)
-    #ifndef HITLS_BSL_SAL_LINUX
-    #error "[HiTLS] sal_* only work with HITLS_BSL_SAL_LINUX."
-    #endif
-#endif
-
 #if defined(HITLS_CRYPTO_HMAC) && !defined(HITLS_CRYPTO_MD)
 #error "[HiTLS] The hmac must work with hash."
 #endif
@@ -591,6 +583,18 @@ chacha20poly1305, chacha20, rsa"
 #error "[HiTLS] cipher suite HITLS_TLS_SUITE_ECC_SM4_CBC_SM3 must work with sm3, cbc, sm4, sm2"
 #endif
 #endif
+#if defined(HITLS_TLS_SUITE_ECDHE_SM4_GCM_SM3)
+#if !defined(HITLS_CRYPTO_SM3) || !defined(HITLS_CRYPTO_GCM) || !defined(HITLS_CRYPTO_SM4) || \
+    !defined(HITLS_CRYPTO_SM2) || !defined(HITLS_CRYPTO_ECDH)
+#error "[HiTLS] cipher suite HITLS_TLS_SUITE_ECDHE_SM4_GCM_SM3 must work with sm3, gcm, sm4, sm2, ecdh"
+#endif
+#endif
+#if defined(HITLS_TLS_SUITE_ECC_SM4_GCM_SM3)
+#if !defined(HITLS_CRYPTO_SM3) || !defined(HITLS_CRYPTO_GCM) || !defined(HITLS_CRYPTO_SM4) || \
+    !defined(HITLS_CRYPTO_SM2)
+#error "[HiTLS] cipher suite HITLS_TLS_SUITE_ECC_SM4_GCM_SM3 must work with sm3, gcm, sm4, sm2"
+#endif
+#endif
 
 #if defined(HITLS_TLS_SUITE_AES_128_GCM_SHA256) || defined(HITLS_TLS_SUITE_AES_256_GCM_SHA384) || \
     defined(HITLS_TLS_SUITE_CHACHA20_POLY1305_SHA256) || defined(HITLS_TLS_SUITE_AES_128_CCM_SHA256) || \
@@ -600,4 +604,20 @@ chacha20poly1305, chacha20, rsa"
     #error "[HiTLS] tls13 ciphersuite must work with suite_auth_rsa or suite_auth_ecdsa or suite_auth_psk"
     #endif
 #endif
+
+#if defined(HITLS_CRYPTO_HPKE)
+#if !defined(HITLS_CRYPTO_AES) && !defined(HITLS_CRYPTO_CHACHA20POLY1305)
+#error "[HiTLS] The hpke must work with aes or chacha20poly1305."
+#endif
+
+#if !defined(HITLS_CRYPTO_CHACHA20POLY1305) && defined(HITLS_CRYPTO_AES) && !defined(HITLS_CRYPTO_GCM)
+#error "[HiTLS] The hpke must work with aes-gcm."
+#endif
+
+#if !defined(HITLS_CRYPTO_CURVE_NISTP256) && !defined(HITLS_CRYPTO_CURVE_NISTP384) && \
+    !defined(HITLS_CRYPTO_CURVE_NISTP521) && !defined(HITLS_CRYPTO_X25519)
+#error "[HiTLS] The hpke must work with p256 or p384 or p521 or x25519."
+#endif
+#endif /* HITLS_CRYPTO_HPKE */
+
 #endif /* HITLS_CONFIG_CHECK_H */

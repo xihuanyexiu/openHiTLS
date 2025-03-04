@@ -24,9 +24,10 @@
 #include "curve25519_local.h"
 #include "crypt_util_rand.h"
 #include "crypt_types.h"
+#include "eal_md_local.h"
+#include "crypt_params_key.h"
 
-
-CRYPT_CURVE25519_Ctx *CRYPT_CURVE25519_NewCtx(void)
+CRYPT_CURVE25519_Ctx *CRYPT_X25519_NewCtx(void)
 {
     CRYPT_CURVE25519_Ctx *ctx = NULL;
     ctx = (CRYPT_CURVE25519_Ctx *)BSL_SAL_Malloc(sizeof(CRYPT_CURVE25519_Ctx));
@@ -38,6 +39,27 @@ CRYPT_CURVE25519_Ctx *CRYPT_CURVE25519_NewCtx(void)
 
     ctx->keyType = CURVE25519_NOKEY;
     ctx->hashMethod = NULL;
+    BSL_SAL_ReferencesInit(&(ctx->references));
+    return ctx;
+}
+
+CRYPT_CURVE25519_Ctx *CRYPT_ED25519_NewCtx(void)
+{
+    CRYPT_CURVE25519_Ctx *ctx = NULL;
+    ctx = (CRYPT_CURVE25519_Ctx *)BSL_SAL_Malloc(sizeof(CRYPT_CURVE25519_Ctx));
+    if (ctx == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
+        return NULL;
+    }
+    (void)memset_s(ctx, sizeof(CRYPT_CURVE25519_Ctx), 0, sizeof(CRYPT_CURVE25519_Ctx));
+
+    ctx->hashMethod = EAL_MdFindMethod(CRYPT_MD_SHA512);
+    if (ctx->hashMethod == NULL) {
+        CRYPT_CURVE25519_FreeCtx(ctx);
+        BSL_ERR_PUSH_ERROR(CRYPT_EAL_ERR_ALGID);
+        return NULL;
+    }
+    ctx->keyType = CURVE25519_NOKEY;
     BSL_SAL_ReferencesInit(&(ctx->references));
     return ctx;
 }
@@ -61,25 +83,51 @@ CRYPT_CURVE25519_Ctx *CRYPT_CURVE25519_DupCtx(CRYPT_CURVE25519_Ctx *ctx)
     return newCtx;
 }
 
-int32_t CRYPT_CURVE25519_Ctrl(CRYPT_CURVE25519_Ctx *pkey, CRYPT_PkeyCtrl opt, void *val, uint32_t len)
+static int32_t CRYPT_CURVE25519_GetLen(CRYPT_CURVE25519_Ctx *ctx, GetLenFunc func, void *val, uint32_t len)
 {
-    if (pkey == NULL || val == NULL) {
+    if (val == NULL || len != sizeof(int32_t)) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-    if (opt == CRYPT_CTRL_UP_REFERENCES && len == (uint32_t)sizeof(int)) {
-        return BSL_SAL_AtomicUpReferences(&(pkey->references), (int *)val);
-    }
 
-    if (opt == CRYPT_CTRL_SET_ED25519_HASH_METHOD && len == sizeof(EAL_MdMethod)) {
-        const EAL_MdMethod *hashMethod = (const EAL_MdMethod *)val;
-        // SHA512 digest size is 64, no other hash has 64 md size
-        if (hashMethod->mdSize != 64) {
-            BSL_ERR_PUSH_ERROR(CRYPT_CURVE25519_HASH_METH_ERROR);
-            return CRYPT_CURVE25519_HASH_METH_ERROR;
-        }
-        pkey->hashMethod = (const EAL_MdMethod *)hashMethod;
-        return CRYPT_SUCCESS;
+    *(int32_t *)val = func(ctx);
+    return CRYPT_SUCCESS;
+}
+
+int32_t CRYPT_CURVE25519_Ctrl(CRYPT_CURVE25519_Ctx *pkey, int32_t opt, void *val, uint32_t len)
+{
+    if (pkey == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    switch (opt) {
+        case CRYPT_CTRL_GET_BITS:
+            return CRYPT_CURVE25519_GetLen(pkey, (GetLenFunc)CRYPT_CURVE25519_GetBits, val, len);
+        case CRYPT_CTRL_GET_SIGNLEN:
+            return CRYPT_CURVE25519_GetLen(pkey, (GetLenFunc)CRYPT_CURVE25519_GetSignLen, val, len);
+        case CRYPT_CTRL_GET_SECBITS:
+            return CRYPT_CURVE25519_GetLen(pkey, (GetLenFunc)CRYPT_CURVE25519_GetSecBits, val, len);
+        case CRYPT_CTRL_UP_REFERENCES:
+            if (val == NULL || len != (uint32_t)sizeof(int)) {
+                BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);
+                return CRYPT_INVALID_ARG;
+            }
+            return BSL_SAL_AtomicUpReferences(&(pkey->references), (int *)val);
+#ifdef HITLS_CRYPTO_X25519
+        case CRYPT_CTRL_GEN_X25519_PUBLICKEY:
+            if ((pkey->keyType & CURVE25519_PUBKEY) != 0) {
+                return CRYPT_SUCCESS;
+            }
+            if ((pkey->keyType & CURVE25519_PRVKEY) == 0) {
+                BSL_ERR_PUSH_ERROR(CRYPT_CURVE25519_NO_PRVKEY);
+                return CRYPT_CURVE25519_NO_PRVKEY;
+            }
+            CRYPT_X25519_PublicFromPrivate(pkey->prvKey, pkey->pubKey);
+            pkey->keyType |= CURVE25519_PUBKEY;
+            return CRYPT_SUCCESS;
+#endif
+        default:
+            break;
     }
     BSL_ERR_PUSH_ERROR(CRYPT_CURVE25519_UNSUPPORTED_CTRL_OPTION);
     return CRYPT_CURVE25519_UNSUPPORTED_CTRL_OPTION;
@@ -100,13 +148,18 @@ void CRYPT_CURVE25519_FreeCtx(CRYPT_CURVE25519_Ctx *pkey)
     BSL_SAL_FREE(pkey);
 }
 
-int32_t CRYPT_CURVE25519_SetPubKey(CRYPT_CURVE25519_Ctx *pkey, const CRYPT_Curve25519Pub *pub)
+int32_t CRYPT_CURVE25519_SetPubKey(CRYPT_CURVE25519_Ctx *pkey, const BSL_Param *para)
 {
-    if (pkey == NULL || pub == NULL || pub->data == NULL) {
+    if (pkey == NULL || para == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-    if (pub->len != CRYPT_CURVE25519_KEYLEN) {
+    const BSL_Param *pub = BSL_PARAM_FindConstParam(para, CRYPT_PARAM_CURVE25519_PUBKEY);
+    if (pub == NULL || pub->value == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    if (pub->valueLen != CRYPT_CURVE25519_KEYLEN) {
         BSL_ERR_PUSH_ERROR(CRYPT_CURVE25519_KEYLEN_ERROR);
         return CRYPT_CURVE25519_KEYLEN_ERROR;
     }
@@ -114,20 +167,24 @@ int32_t CRYPT_CURVE25519_SetPubKey(CRYPT_CURVE25519_Ctx *pkey, const CRYPT_Curve
     /* The keyLen has been checked and does not have the overlong problem.
        The pkey memory is dynamically allocated and does not overlap with the pubkey memory. */
     /* There is no failure case for memcpy_s. */
-    (void)memcpy_s(pkey->pubKey, CRYPT_CURVE25519_KEYLEN, pub->data, pub->len);
+    (void)memcpy_s(pkey->pubKey, CRYPT_CURVE25519_KEYLEN, pub->value, pub->valueLen);
     pkey->keyType |= CURVE25519_PUBKEY;
 
     return CRYPT_SUCCESS;
 }
 
-int32_t CRYPT_CURVE25519_SetPrvKey(CRYPT_CURVE25519_Ctx *pkey, const CRYPT_Curve25519Prv *prv)
+int32_t CRYPT_CURVE25519_SetPrvKey(CRYPT_CURVE25519_Ctx *pkey, const BSL_Param *para)
 {
-    if (pkey == NULL || prv == NULL || prv->data == NULL) {
+    if (pkey == NULL || para == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-
-    if (prv->len != CRYPT_CURVE25519_KEYLEN) {
+    const BSL_Param *prv = BSL_PARAM_FindConstParam(para, CRYPT_PARAM_CURVE25519_PRVKEY);
+    if (prv == NULL || prv->value == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    if (prv->valueLen != CRYPT_CURVE25519_KEYLEN) {
         BSL_ERR_PUSH_ERROR(CRYPT_CURVE25519_KEYLEN_ERROR);
         return CRYPT_CURVE25519_KEYLEN_ERROR;
     }
@@ -135,20 +192,24 @@ int32_t CRYPT_CURVE25519_SetPrvKey(CRYPT_CURVE25519_Ctx *pkey, const CRYPT_Curve
     /* The keyLen has been checked and does not have the overlong problem.
        The pkey memory is dynamically allocated and does not overlap with the pubkey memory. */
     /* There is no failure case for memcpy_s. */
-    (void)memcpy_s(pkey->prvKey, CRYPT_CURVE25519_KEYLEN, prv->data, prv->len);
+    (void)memcpy_s(pkey->prvKey, CRYPT_CURVE25519_KEYLEN, prv->value, prv->valueLen);
     pkey->keyType |= CURVE25519_PRVKEY;
 
     return CRYPT_SUCCESS;
 }
 
-int32_t CRYPT_CURVE25519_GetPubKey(const CRYPT_CURVE25519_Ctx *pkey, CRYPT_Curve25519Pub *pub)
+int32_t CRYPT_CURVE25519_GetPubKey(const CRYPT_CURVE25519_Ctx *pkey, BSL_Param *para)
 {
-    if (pkey == NULL || pub == NULL || pub->data == NULL) {
+    if (pkey == NULL || para == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-
-    if (pub->len < CRYPT_CURVE25519_KEYLEN) {
+    BSL_Param *pub = BSL_PARAM_FindParam(para, CRYPT_PARAM_CURVE25519_PUBKEY);
+    if (pub == NULL || pub->value == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    if (pub->valueLen < CRYPT_CURVE25519_KEYLEN) {
         BSL_ERR_PUSH_ERROR(CRYPT_CURVE25519_KEYLEN_ERROR);
         return CRYPT_CURVE25519_KEYLEN_ERROR;
     }
@@ -161,20 +222,24 @@ int32_t CRYPT_CURVE25519_GetPubKey(const CRYPT_CURVE25519_Ctx *pkey, CRYPT_Curve
     /* The keyLen has been checked and does not have the overlong problem.
        The pkey memory is dynamically allocated and does not overlap with the pubkey memory. */
     /* There is no failure case for memcpy_s. */
-    (void)memcpy_s(pub->data, pub->len, pkey->pubKey, CRYPT_CURVE25519_KEYLEN);
+    (void)memcpy_s(pub->value, pub->valueLen, pkey->pubKey, CRYPT_CURVE25519_KEYLEN);
 
-    pub->len = CRYPT_CURVE25519_KEYLEN;
+    pub->useLen = CRYPT_CURVE25519_KEYLEN;
     return CRYPT_SUCCESS;
 }
 
-int32_t CRYPT_CURVE25519_GetPrvKey(const CRYPT_CURVE25519_Ctx *pkey, CRYPT_Curve25519Prv *prv)
+int32_t CRYPT_CURVE25519_GetPrvKey(const CRYPT_CURVE25519_Ctx *pkey, BSL_Param *para)
 {
-    if (pkey == NULL || prv == NULL || prv->data == NULL) {
+    if (pkey == NULL || para == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-
-    if (prv->len < CRYPT_CURVE25519_KEYLEN) {
+    BSL_Param *prv = BSL_PARAM_FindParam(para, CRYPT_PARAM_CURVE25519_PRVKEY);
+    if (prv == NULL || prv->value == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    if (prv->valueLen < CRYPT_CURVE25519_KEYLEN) {
         BSL_ERR_PUSH_ERROR(CRYPT_CURVE25519_KEYLEN_ERROR);
         return CRYPT_CURVE25519_KEYLEN_ERROR;
     }
@@ -187,9 +252,9 @@ int32_t CRYPT_CURVE25519_GetPrvKey(const CRYPT_CURVE25519_Ctx *pkey, CRYPT_Curve
     /* The keyLen has been checked and does not have the overlong problem.
        The pkey memory is dynamically allocated and does not overlap with the pubkey memory. */
     /* There is no failure case for memcpy_s. */
-    (void)memcpy_s(prv->data, prv->len, pkey->prvKey, CRYPT_CURVE25519_KEYLEN);
+    (void)memcpy_s(prv->value, prv->valueLen, pkey->prvKey, CRYPT_CURVE25519_KEYLEN);
 
-    prv->len = CRYPT_CURVE25519_KEYLEN;
+    prv->useLen = CRYPT_CURVE25519_KEYLEN;
     return CRYPT_SUCCESS;
 }
 
@@ -207,33 +272,31 @@ static int32_t PrvKeyHash(const uint8_t *prvKey, uint32_t prvKeyLen, uint8_t *pr
     int32_t ret;
     uint32_t hashLen = prvHashLen;
 
-    mdCtx = BSL_SAL_Malloc(hashMethod->ctxSize);
+    mdCtx = hashMethod->newCtx();
     if (mdCtx == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
         return CRYPT_MEM_ALLOC_FAIL;
     }
 
-    ret = hashMethod->init(mdCtx);
+    ret = hashMethod->init(mdCtx, NULL);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
+        goto EXIT;
     }
 
     ret = hashMethod->update(mdCtx, prvKey, prvKeyLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
+        goto EXIT;
     }
 
     ret = hashMethod->final(mdCtx, prvKeyHash, &hashLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
     }
 
-END:
-    hashMethod->deinit(mdCtx);
-    BSL_SAL_FREE(mdCtx);
+EXIT:
+    hashMethod->freeCtx(mdCtx);
     return ret;
 }
 
@@ -244,39 +307,37 @@ static int32_t GetRHash(uint8_t r[CRYPT_CURVE25519_SIGNLEN], const uint8_t prefi
     int32_t ret;
     uint32_t hashLen = CRYPT_CURVE25519_SIGNLEN;
 
-    mdCtx = BSL_SAL_Malloc(hashMethod->ctxSize);
+    mdCtx = hashMethod->newCtx();
     if (mdCtx == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
         return CRYPT_MEM_ALLOC_FAIL;
     }
 
-    ret = hashMethod->init(mdCtx);
+    ret = hashMethod->init(mdCtx, NULL);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
+        goto EXIT;
     }
 
     ret = hashMethod->update(mdCtx, prefix, CRYPT_CURVE25519_KEYLEN);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
+        goto EXIT;
     }
 
     ret = hashMethod->update(mdCtx, msg, msgLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
+        goto EXIT;
     }
 
     ret = hashMethod->final(mdCtx, r, &hashLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
     }
 
-END:
-    hashMethod->deinit(mdCtx);
-    BSL_SAL_FREE(mdCtx);
+EXIT:
+    hashMethod->freeCtx(mdCtx);
     return ret;
 }
 
@@ -288,45 +349,43 @@ static int32_t GetKHash(uint8_t k[CRYPT_CURVE25519_SIGNLEN], const uint8_t r[CRY
     int32_t ret;
     uint32_t hashLen = CRYPT_CURVE25519_SIGNLEN;
 
-    mdCtx = BSL_SAL_Malloc(hashMethod->ctxSize);
+    mdCtx = hashMethod->newCtx();
     if (mdCtx == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
         return CRYPT_MEM_ALLOC_FAIL;
     }
 
-    ret = hashMethod->init(mdCtx);
+    ret = hashMethod->init(mdCtx, NULL);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
+        goto EXIT;
     }
 
     ret = hashMethod->update(mdCtx, r, CRYPT_CURVE25519_KEYLEN);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
+        goto EXIT;
     }
 
     ret = hashMethod->update(mdCtx, pubKey, CRYPT_CURVE25519_KEYLEN);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
+        goto EXIT;
     }
 
     ret = hashMethod->update(mdCtx, msg, msgLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
+        goto EXIT;
     }
 
     ret = hashMethod->final(mdCtx, k, &hashLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
     }
 
-END:
-    hashMethod->deinit(mdCtx);
-    BSL_SAL_FREE(mdCtx);
+EXIT:
+    hashMethod->freeCtx(mdCtx);
     return ret;
 }
 
@@ -352,9 +411,13 @@ static int32_t SignInputCheck(const CRYPT_CURVE25519_Ctx *pkey, const uint8_t *m
     return CRYPT_SUCCESS;
 }
 
-int32_t CRYPT_CURVE25519_Sign(CRYPT_CURVE25519_Ctx *pkey, const uint8_t *msg,
+int32_t CRYPT_CURVE25519_Sign(CRYPT_CURVE25519_Ctx *pkey, int32_t algid, const uint8_t *msg,
     uint32_t msgLen, uint8_t *sign, uint32_t *signLen)
 {
+    if (algid != CRYPT_MD_SHA512) {
+        BSL_ERR_PUSH_ERROR(CRYPT_EAL_ERR_ALGID);
+        return CRYPT_EAL_ERR_ALGID;
+    }
     int32_t ret;
     uint8_t prvKeyHash[CRYPT_CURVE25519_SIGNLEN];
     uint8_t r[CRYPT_CURVE25519_SIGNLEN];
@@ -365,13 +428,13 @@ int32_t CRYPT_CURVE25519_Sign(CRYPT_CURVE25519_Ctx *pkey, const uint8_t *msg,
     ret = SignInputCheck(pkey, msg, msgLen, sign, signLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
+        goto EXIT;
     }
 
     ret = PrvKeyHash(pkey->prvKey, CRYPT_CURVE25519_KEYLEN, prvKeyHash, CRYPT_CURVE25519_SIGNLEN, pkey->hashMethod);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
+        goto EXIT;
     }
 
     prvKeyHash[0] &= 0xf8;
@@ -390,7 +453,7 @@ int32_t CRYPT_CURVE25519_Sign(CRYPT_CURVE25519_Ctx *pkey, const uint8_t *msg,
     ret = GetRHash(r, prvKeyHash + CRYPT_CURVE25519_KEYLEN, msg, msgLen, pkey->hashMethod);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
+        goto EXIT;
     }
 
     ModuloL(r);
@@ -400,7 +463,7 @@ int32_t CRYPT_CURVE25519_Sign(CRYPT_CURVE25519_Ctx *pkey, const uint8_t *msg,
     ret = GetKHash(k, outSign, pkey->pubKey, msg, msgLen, pkey->hashMethod);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
+        goto EXIT;
     }
 
     ModuloL(k);
@@ -413,7 +476,7 @@ int32_t CRYPT_CURVE25519_Sign(CRYPT_CURVE25519_Ctx *pkey, const uint8_t *msg,
     (void)memcpy_s(sign, *signLen, outSign, CRYPT_CURVE25519_SIGNLEN);
     *signLen = CRYPT_CURVE25519_SIGNLEN;
 
-END:
+EXIT:
     BSL_SAL_CleanseData(prvKeyHash, sizeof(prvKeyHash));
     BSL_SAL_CleanseData(r, sizeof(r));
     BSL_SAL_CleanseData(k, sizeof(k));
@@ -469,9 +532,13 @@ static bool VerifyCheckSValid(const uint8_t s[CRYPT_CURVE25519_KEYLEN])
     return false;
 }
 
-int32_t CRYPT_CURVE25519_Verify(const CRYPT_CURVE25519_Ctx *pkey, const uint8_t *msg,
+int32_t CRYPT_CURVE25519_Verify(const CRYPT_CURVE25519_Ctx *pkey, int32_t algid, const uint8_t *msg,
     uint32_t msgLen, const uint8_t *sign, uint32_t signLen)
 {
+    if (algid != CRYPT_MD_SHA512) {
+        BSL_ERR_PUSH_ERROR(CRYPT_EAL_ERR_ALGID);
+        return CRYPT_EAL_ERR_ALGID;
+    }
     int32_t ret;
     GeE geA, sG;
     uint8_t kHash[CRYPT_CURVE25519_SIGNLEN];
@@ -482,7 +549,7 @@ int32_t CRYPT_CURVE25519_Verify(const CRYPT_CURVE25519_Ctx *pkey, const uint8_t 
     ret = VerifyInputCheck(pkey, msg, msgLen, sign, signLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
+        return ret;
     }
 
     // r is first half of sign, length 32
@@ -493,19 +560,19 @@ int32_t CRYPT_CURVE25519_Verify(const CRYPT_CURVE25519_Ctx *pkey, const uint8_t 
     if (!VerifyCheckSValid(s)) {
         BSL_ERR_PUSH_ERROR(CRYPT_CURVE25519_VERIFY_FAIL);
         ret = CRYPT_CURVE25519_VERIFY_FAIL;
-        goto END;
+        return ret;
     }
 
     if (PointDecoding(&geA, pkey->pubKey) != 0) {
         BSL_ERR_PUSH_ERROR(CRYPT_CURVE25519_VERIFY_FAIL);
         ret = CRYPT_CURVE25519_INVALID_PUBKEY;
-        goto END;
+        return ret;
     }
 
     ret = GetKHash(kHash, r, pkey->pubKey, msg, msgLen, pkey->hashMethod);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
+        return ret;
     }
 
     CURVE25519_FP_NEGATE(geA.x.data, geA.x.data);
@@ -515,14 +582,10 @@ int32_t CRYPT_CURVE25519_Verify(const CRYPT_CURVE25519_Ctx *pkey, const uint8_t 
     KAMulPlusMulBase(&sG, kHash, &geA, s);
     PointEncoding(&sG, localR, CRYPT_CURVE25519_KEYLEN);
 
-    if (memcmp(localR, r, CRYPT_CURVE25519_KEYLEN) == 0) {
-        ret = CRYPT_SUCCESS;
-    } else {
+    if (memcmp(localR, r, CRYPT_CURVE25519_KEYLEN) != 0) {
         ret = CRYPT_CURVE25519_VERIFY_FAIL;
         BSL_ERR_PUSH_ERROR(ret);
     }
-
-END:
     return ret;
 }
 
@@ -551,7 +614,7 @@ int32_t CRYPT_ED25519_GenKey(CRYPT_CURVE25519_Ctx *pkey)
     ret = PrvKeyHash(prvKey, CRYPT_CURVE25519_KEYLEN, prvKeyHash, CRYPT_CURVE25519_SIGNLEN, pkey->hashMethod);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
+        goto EXIT;
     }
 
     prvKeyHash[0] &= 0xf8;
@@ -570,7 +633,7 @@ int32_t CRYPT_ED25519_GenKey(CRYPT_CURVE25519_Ctx *pkey)
     (void)memcpy_s(pkey->prvKey, CRYPT_CURVE25519_KEYLEN, prvKey, CRYPT_CURVE25519_KEYLEN);
     pkey->keyType = CURVE25519_PRVKEY | CURVE25519_PUBKEY;
 
-END:
+EXIT:
     BSL_SAL_CleanseData(prvKey, sizeof(prvKey));
     BSL_SAL_CleanseData(prvKeyHash, sizeof(prvKeyHash));
     return ret;

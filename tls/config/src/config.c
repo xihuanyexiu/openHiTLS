@@ -115,6 +115,8 @@ static void ShallowCopy(HITLS_Ctx *ctx, const HITLS_Config *srcConfig)
      * Other parameters except CipherSuite, PointFormats, Group, SignAlgorithms, Psk, SessionId, CertMgr, and SessMgr
      * are shallowly copied, and some of them reference globalConfig.
      */
+    destConfig->libCtx = LIBCTX_FROM_CONFIG(srcConfig);
+    destConfig->attrName = ATTRIBUTE_FROM_CONFIG(srcConfig);
     destConfig->minVersion = srcConfig->minVersion;
     destConfig->maxVersion = srcConfig->maxVersion;
     destConfig->isQuietShutdown = srcConfig->isQuietShutdown;
@@ -193,6 +195,9 @@ static void ShallowCopy(HITLS_Ctx *ctx, const HITLS_Config *srcConfig)
 #endif
 #ifdef HITLS_TLS_FEATURE_FLIGHT
     destConfig->isFlightTransmitEnable = srcConfig->isFlightTransmitEnable;
+#endif
+#ifdef HITLS_TLS_PROTO_DTLS12
+    destConfig->isHelloVerifyReqEnable = srcConfig->isHelloVerifyReqEnable;
 #endif
 }
 
@@ -500,13 +505,64 @@ HITLS_Config *CreateConfig(void)
 #ifdef HITLS_TLS_PROTO_DTLS12
 HITLS_Config *HITLS_CFG_NewDTLS12Config(void)
 {
+    return HITLS_CFG_ProviderNewDTLS12Config(NULL, NULL);
+}
+
+HITLS_Config *HITLS_CFG_ProviderNewDTLS12Config(HITLS_Lib_Ctx *libCtx, const char *attrName)
+{
     HITLS_Config *newConfig = CreateConfig();
     if (newConfig == NULL) {
         return NULL;
     }
-    /* Initialize the version */
     newConfig->version |= DTLS12_VERSION_BIT;   // Enable DTLS 1.2
-    if (DefaultConfig(HITLS_VERSION_DTLS12, newConfig) != HITLS_SUCCESS) {
+    if (DefaultConfig(libCtx, attrName, HITLS_VERSION_DTLS12, newConfig) != HITLS_SUCCESS) {
+        BSL_SAL_FREE(newConfig);
+        return NULL;
+    }
+    newConfig->originVersionMask = newConfig->version;
+    return newConfig;
+}
+
+#endif
+
+#ifdef HITLS_TLS_PROTO_DTLCP11
+HITLS_Config *HITLS_CFG_NewDTLCPConfig(void)
+{
+    return HITLS_CFG_ProviderNewDTLCPConfig(NULL, NULL);
+}
+
+HITLS_Config *HITLS_CFG_ProviderNewDTLCPConfig(HITLS_Lib_Ctx *libCtx, const char *attrName)
+{
+    HITLS_Config *newConfig = CreateConfig();
+    if (newConfig == NULL) {
+        return NULL;
+    }
+    
+    newConfig->version |= DTLCP11_VERSION_BIT;   // Enable DTLCP 1.1
+    if (DefaultConfig(libCtx, attrName, HITLS_VERSION_TLCP_DTLCP11, newConfig) != HITLS_SUCCESS) {
+        BSL_SAL_FREE(newConfig);
+        return NULL;
+    }
+    newConfig->originVersionMask = newConfig->version;
+    return newConfig;
+}
+
+#endif
+
+#ifdef HITLS_TLS_PROTO_TLCP11
+HITLS_Config *HITLS_CFG_NewTLCPConfig(void)
+{
+    return HITLS_CFG_ProviderNewTLCPConfig(NULL, NULL);
+}
+
+HITLS_Config *HITLS_CFG_ProviderNewTLCPConfig(HITLS_Lib_Ctx *libCtx, const char *attrName)
+{
+    HITLS_Config *newConfig = CreateConfig();
+    if (newConfig == NULL) {
+        return NULL;
+    }
+    newConfig->version |= TLCP11_VERSION_BIT;   // Enable TLCP 1.1
+    if (DefaultConfig(libCtx, attrName, HITLS_VERSION_TLCP_DTLCP11, newConfig) != HITLS_SUCCESS) {
         BSL_SAL_FREE(newConfig);
         return NULL;
     }
@@ -515,23 +571,13 @@ HITLS_Config *HITLS_CFG_NewDTLS12Config(void)
 }
 #endif
 
-#ifdef HITLS_TLS_PROTO_TLCP11
-HITLS_Config *HITLS_CFG_NewTLCPConfig(void)
-{
-    HITLS_Config *newConfig = CreateConfig();
-    if (newConfig == NULL) {
-        return NULL;
-    }
-    if (DefaultConfig(HITLS_VERSION_TLCP11, newConfig) != HITLS_SUCCESS) {
-        BSL_SAL_FREE(newConfig);
-        return NULL;
-    }
-    return newConfig;
-}
-#endif
-
 #ifdef HITLS_TLS_PROTO_TLS12
 HITLS_Config *HITLS_CFG_NewTLS12Config(void)
+{
+    return HITLS_CFG_ProviderNewTLS12Config(NULL, NULL);
+}
+
+HITLS_Config *HITLS_CFG_ProviderNewTLS12Config(HITLS_Lib_Ctx *libCtx, const char *attrName)
 {
     HITLS_Config *newConfig = CreateConfig();
     if (newConfig == NULL) {
@@ -539,7 +585,7 @@ HITLS_Config *HITLS_CFG_NewTLS12Config(void)
     }
     /* Initialize the version */
     newConfig->version |= TLS12_VERSION_BIT;   // Enable TLS 1.2
-    if (DefaultConfig(HITLS_VERSION_TLS12, newConfig) != HITLS_SUCCESS) {
+    if (DefaultConfig(libCtx, attrName, HITLS_VERSION_TLS12, newConfig) != HITLS_SUCCESS) {
         BSL_SAL_FREE(newConfig);
         return NULL;
     }
@@ -551,12 +597,20 @@ HITLS_Config *HITLS_CFG_NewTLS12Config(void)
 #ifdef HITLS_TLS_PROTO_ALL
 HITLS_Config *HITLS_CFG_NewTLSConfig(void)
 {
+    return HITLS_CFG_ProviderNewTLSConfig(NULL, NULL);
+}
+
+HITLS_Config *HITLS_CFG_ProviderNewTLSConfig(HITLS_Lib_Ctx *libCtx, const char *attrName)
+{
     HITLS_Config *newConfig = CreateConfig();
     if (newConfig == NULL) {
         return NULL;
     }
-    /* Initialize the version */
-    newConfig->version |= TLS_VERSION_MASK;       // Enable All Versions
+    newConfig->version |= TLS_VERSION_MASK;
+
+    newConfig->libCtx = libCtx;
+    newConfig->attrName = attrName;
+
     if (DefaultTlsAllConfig(newConfig) != HITLS_SUCCESS) {
         BSL_SAL_FREE(newConfig);
         return NULL;
@@ -568,12 +622,20 @@ HITLS_Config *HITLS_CFG_NewTLSConfig(void)
 #ifdef HITLS_TLS_PROTO_DTLS
 HITLS_Config *HITLS_CFG_NewDTLSConfig(void)
 {
+    return HITLS_CFG_ProviderNewDTLSConfig(NULL, NULL);
+}
+
+HITLS_Config *HITLS_CFG_ProviderNewDTLSConfig(HITLS_Lib_Ctx *libCtx, const char *attrName)
+{
     HITLS_Config *newConfig = CreateConfig();
     if (newConfig == NULL) {
         return NULL;
     }
-    /* Initialize the version */
     newConfig->version |= DTLS_VERSION_MASK;      // Enable All Versions
+
+    newConfig->libCtx = libCtx;
+    newConfig->attrName = attrName;
+
     if (DefaultDtlsAllConfig(newConfig) != HITLS_SUCCESS) {
         BSL_SAL_FREE(newConfig);
         return NULL;
@@ -581,6 +643,7 @@ HITLS_Config *HITLS_CFG_NewDTLSConfig(void)
     newConfig->originVersionMask = newConfig->version;
     return newConfig;
 }
+
 #endif
 
 void HITLS_CFG_FreeConfig(HITLS_Config *config)
@@ -618,8 +681,9 @@ int32_t HITLS_CFG_UpRef(HITLS_Config *config)
 }
 
 #ifdef HITLS_TLS_PROTO_ALL
-static uint32_t MapVersion2VersionBit(uint32_t version)
+uint32_t MapVersion2VersionBit(bool isDatagram, uint16_t version)
 {
+    (void)isDatagram;
     uint32_t ret = 0;
     switch (version) {
         case HITLS_VERSION_TLS12:
@@ -627,6 +691,16 @@ static uint32_t MapVersion2VersionBit(uint32_t version)
             break;
         case HITLS_VERSION_TLS13:
             ret = TLS13_VERSION_BIT;
+            break;
+        case HITLS_VERSION_TLCP_DTLCP11:
+            if (isDatagram) {
+                ret = DTLCP11_VERSION_BIT;
+            } else {
+                ret = TLCP11_VERSION_BIT;
+            }
+            break;
+        case HITLS_VERSION_DTLS12:
+            ret = DTLS12_VERSION_BIT;
             break;
         default:
             break;
@@ -660,7 +734,7 @@ static int ChangeVersionMask(HITLS_Config *config, uint16_t minVersion, uint16_t
         }
 
         for (uint16_t version = minVersion; version <= maxVersion; version++) {
-            versionBit = MapVersion2VersionBit(version);
+            versionBit = MapVersion2VersionBit(IS_SUPPORT_DATAGRAM(originVersionMask), version);
             versionMask |= versionBit;
         }
 
@@ -768,7 +842,7 @@ int32_t HITLS_CFG_SetVersionForbid(HITLS_Config *config, uint32_t noVersion)
     }
     // Now only DTLS1.2 is supported, so single version is not supported (disable to version 0)
     if ((config->originVersionMask & TLS_VERSION_MASK) == TLS_VERSION_MASK) {
-        uint32_t noVersionBit = MapVersion2VersionBit(noVersion);
+        uint32_t noVersionBit = MapVersion2VersionBit(IS_SUPPORT_DATAGRAM(config->originVersionMask), noVersion);
         if ((config->version & (~noVersionBit)) == 0) {
             return HITLS_SUCCESS; // Not all is disabled but the return value is SUCCESS
         }
@@ -936,6 +1010,28 @@ int32_t HITLS_CFG_SetGroups(HITLS_Config *config, const uint16_t *groups, uint32
     config->groupsSize = groupsSize;
     return HITLS_SUCCESS;
 }
+
+#ifdef HITLS_TLS_PROTO_DTLS12
+int32_t HITLS_CFG_SetCookieGenerateCb(HITLS_Config *config, HITLS_CookieGenerateCb callback)
+{
+    if (config == NULL || callback == NULL) {
+        return HITLS_NULL_INPUT;
+    }
+
+    config->cookieGenerateCb = callback;
+    return HITLS_SUCCESS;
+}
+
+int32_t HITLS_CFG_SetCookieVerifyCb(HITLS_Config *config, HITLS_CookieVerifyCb callback)
+{
+    if (config == NULL || callback == NULL) {
+        return HITLS_NULL_INPUT;
+    }
+
+    config->cookieVerifyCb = callback;
+    return HITLS_SUCCESS;
+}
+#endif
 
 #ifdef HITLS_TLS_FEATURE_SNI
 int32_t HITLS_CFG_SetClientHelloCb(HITLS_Config *config, HITLS_ClientHelloCb callback, void *arg)
@@ -1799,6 +1895,31 @@ int32_t HITLS_CFG_GetFlightTransmitSwitch(const HITLS_Config *config, uint8_t *i
 }
 #endif
 
+#ifdef HITLS_TLS_PROTO_DTLS12
+int32_t HITLS_CFG_SetHelloVerifyReqEnable(HITLS_Config *config, bool isEnable)
+{
+    if (config == NULL) {
+        return HITLS_NULL_INPUT;
+    }
+
+    if (isEnable == 0) {
+        config->isHelloVerifyReqEnable = false;
+    } else {
+        config->isHelloVerifyReqEnable = true;
+    }
+    return HITLS_SUCCESS;
+}
+
+int32_t HITLS_CFG_GetHelloVerifyReqEnable(const HITLS_Config *config, bool *isEnable)
+{
+    if (config == NULL || isEnable == NULL) {
+        return HITLS_NULL_INPUT;
+    }
+
+    *isEnable = config->isHelloVerifyReqEnable;
+    return HITLS_SUCCESS;
+}
+#endif
 #ifdef HITLS_TLS_MAINTAIN_KEYLOG
 int32_t HITLS_CFG_SetKeyLogCb(HITLS_Config *config, HITLS_KeyLogCb callback)
 {

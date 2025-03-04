@@ -209,7 +209,7 @@ static void ConfigPmtu(HITLS_Ctx *ctx, BSL_UIO *uio)
     (void)uio;
 #ifdef HITLS_TLS_PROTO_DTLS12
     /* The PMTU needs to be set for DTLS. If the PMTU is not set, use the default value */
-    if ((ctx->config.pmtu == 0) && IS_DTLS_VERSION(ctx->config.tlsConfig.maxVersion)) {
+    if ((ctx->config.pmtu == 0) && IS_SUPPORT_DATAGRAM(ctx->config.tlsConfig.originVersionMask)) {
         ctx->config.pmtu = DTLS_SCTP_PMTU;
     }
 #endif
@@ -439,7 +439,7 @@ HITLS_Session *HITLS_GetDupSession(HITLS_Ctx *ctx)
 int32_t HITLS_GetPeerSignatureType(const HITLS_Ctx *ctx, HITLS_SignAlgo *sigType)
 {
     HITLS_SignAlgo signAlg = HITLS_SIGN_BUTT;
-    HITLS_HashAlgo hashAlg = HITLS_HASH_BUTT;
+    HITLS_HashAlgo hashAlg = HITLS_HASH_NULL;
 
     if (ctx == NULL || sigType == NULL) {
         return HITLS_NULL_INPUT;

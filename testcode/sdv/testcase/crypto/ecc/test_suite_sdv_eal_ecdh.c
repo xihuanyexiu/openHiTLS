@@ -33,7 +33,7 @@
 void SDV_CRYPTO_ECDH_NEW_CTX_API_TC001(void)
 {
     ASSERT_TRUE(EAL_PkeyNewCtx_Api_TC001(CRYPT_PKEY_ECDH) == SUCCESS);
-exit:
+EXIT:
     return;
 }
 /* END_CASE */
@@ -62,7 +62,7 @@ exit:
 void SDV_CRYPTO_ECDH_SET_PARA_BY_ID_API_TC001(void)
 {
     ASSERT_TRUE(EAL_PkeySetParaById_Api_TC001(CRYPT_PKEY_ECDH) == SUCCESS);
-exit:
+EXIT:
     return;
 }
 /* END_CASE */
@@ -146,7 +146,7 @@ void SDV_CRYPTO_ECDH_EXCH_API_TC001(Hex *prvKeyVector, Hex *peerPubKeyVector, He
     ecdhPkey->id = CRYPT_PKEY_ECDH;
     shareKeyLen = shareKeyVector->len;
     ASSERT_EQ(CRYPT_EAL_PkeyComputeShareKey(ecdhPkey, peerEcdhPkey, shareKey, &shareKeyLen), CRYPT_SUCCESS);
-exit:
+EXIT:
     free(shareKey);
     CRYPT_EAL_PkeyFreeCtx(ecdhPkey);
     CRYPT_EAL_PkeyFreeCtx(ecdhPkey2);
@@ -164,25 +164,23 @@ exit:
  *    1. Create the context of the ecdh algorithm, expected result 1
  *    2. Call the CRYPT_EAL_PkeyCtrl method:
  *       (1) opt = CRYPT_CTRL_SET_RSA_RSAES_PKCSV15, expected result 2
- *       (2) opt = CRYPT_CTRL_SET_ED25519_HASH_METHOD, expected result 3
- *       (3) opt = CRYPT_CTRL_SET_ECC_POINT_FORMAT, expected result 4
- *       (4) opt = CRYPT_CTRL_SET_ECC_USE_COFACTOR_MODE, expected result 5
- *       (5) opt = CRYPT_CTRL_SET_SM2_USER_ID, expected result 6
- *       (6) opt = CRYPT_CTRL_SET_RSA_PADDING, expected result 8
+ *       (2) opt = CRYPT_CTRL_SET_ECC_POINT_FORMAT, expected result 3
+ *       (3) opt = CRYPT_CTRL_SET_ECC_USE_COFACTOR_MODE, expected result 4
+ *       (4) opt = CRYPT_CTRL_SET_SM2_USER_ID, expected result 5
+ *       (5) opt = CRYPT_CTRL_SET_RSA_PADDING, expected result 6
  * @expect
  *    1. Success, and the context is not NULL.
  *    2. CRYPT_ECC_PKEY_ERR_UNSUPPORTED_CTRL_OPTION
- *    3. CRYPT_EAL_ALG_NOT_SUPPORT
+ *    3. CRYPT_SUCCESS
  *    4. CRYPT_SUCCESS
- *    5. CRYPT_SUCCESS
+ *    5. CRYPT_ECC_PKEY_ERR_UNSUPPORTED_CTRL_OPTION
  *    6. CRYPT_ECC_PKEY_ERR_UNSUPPORTED_CTRL_OPTION
- *    7. CRYPT_ECC_PKEY_ERR_UNSUPPORTED_CTRL_OPTION
  */
 /* BEGIN_CASE */
 void SDV_CRYPTO_ECDH_CTRL_API_TC001(int type, int expect)
 {
     ASSERT_TRUE(EAL_PkeyCtrl_Api_TC001(CRYPT_PKEY_ECDH, type, expect) == SUCCESS);
-exit:
+EXIT:
     return;
 }
 /* END_CASE */
@@ -213,7 +211,7 @@ exit:
 void SDV_CRYPTO_ECDH_CTRL_API_TC002(void)
 {
     ASSERT_TRUE(EAL_PkeyCtrl_Api_TC002(CRYPT_PKEY_ECDH) == 0);
-exit:
+EXIT:
     return;
 }
 /* END_CASE */
@@ -242,7 +240,7 @@ exit:
 void SDV_CRYPTO_ECDH_CTRL_API_TC003(int eccId, Hex *pubKeyX, Hex *pubKeyY)
 {
     ASSERT_TRUE(EAL_PkeyCtrl_Api_TC003(CRYPT_PKEY_ECDH, eccId, pubKeyX, pubKeyY) == 0);
-exit:
+EXIT:
     return;
 }
 /* END_CASE */
@@ -275,7 +273,7 @@ exit:
 void SDV_CRYPTO_ECDH_GET_PRV_API_TC001(Hex *prvKey)
 {
     ASSERT_TRUE(EAL_PkeyGetPrv_Api_TC001(CRYPT_PKEY_ECDH, prvKey) == 0);
-exit:
+EXIT:
     return;
 }
 /* END_CASE */
@@ -308,7 +306,7 @@ exit:
 void SDV_CRYPTO_ECDH_GET_PUB_API_TC001(Hex *pubKeyX, Hex *pubKeyY)
 {
     ASSERT_TRUE(EAL_PkeyGetPub_Api_TC001(CRYPT_PKEY_ECDH, pubKeyX, pubKeyY) == 0);
-exit:
+EXIT:
     return;
 }
 /* END_CASE */
@@ -341,7 +339,7 @@ exit:
 void SDV_CRYPTO_ECDH_SET_PRV_API_TC001(Hex *prvKey, Hex *errorPrvKey)
 {
     ASSERT_TRUE(EAL_PkeySetPrv_Api_TC001(CRYPT_PKEY_ECDH, prvKey, errorPrvKey) == 0);
-exit:
+EXIT:
     return;
 }
 /* END_CASE */
@@ -365,7 +363,7 @@ exit:
 void SDV_CRYPTO_ECDH_SET_PRV_API_TC002(Hex *prvKey, Hex *pubKeyX, Hex *pubKeyY)
 {
     ASSERT_TRUE(EAL_PkeySetPrv_Api_TC002(CRYPT_PKEY_ECDH, prvKey, pubKeyX, pubKeyY) == 0);
-exit:
+EXIT:
     return;
 }
 /* END_CASE */
@@ -395,7 +393,7 @@ exit:
 void SDV_CRYPTO_ECDH_SET_PUB_API_TC001(Hex *pubKeyVector)
 {
     ASSERT_TRUE(EAL_PkeySetPub_Api_TC001(CRYPT_PKEY_ECDH, pubKeyVector) == 0);
-exit:
+EXIT:
     return;
 }
 /* END_CASE */
@@ -419,7 +417,7 @@ exit:
 void SDV_CRYPTO_ECDH_SET_PUB_API_TC002(Hex *prvKey, Hex *pubKey)
 {
     ASSERT_TRUE(EAL_PkeySetPub_Api_TC002(CRYPT_PKEY_ECDH, prvKey, pubKey) == 0);
-exit:
+EXIT:
     return;
 }
 /* END_CASE */
@@ -438,10 +436,10 @@ exit:
  *    3. CRYPT_ECC_ERR_POINT_CODE
  */
 /* BEGIN_CASE */
-void SDV_CRYPTO_ECDH_SET_PUB_API_TC003(int eccId, Hex *pubKey, Hex *errorPubKey)
+void SDV_CRYPTO_ECDH_SET_PUB_API_TC003(int eccId, Hex *pubKey, Hex *errorPubKey, int isProvider)
 {
-    ASSERT_TRUE(EAL_PkeySetPub_Api_TC003(CRYPT_PKEY_ECDSA, eccId, pubKey, errorPubKey) == 0);
-exit:
+    ASSERT_TRUE(EAL_PkeySetPub_Api_TC003(CRYPT_PKEY_ECDSA, eccId, pubKey, errorPubKey, isProvider) == 0);
+EXIT:
     return;
 }
 /* END_CASE */
@@ -466,7 +464,7 @@ void SDV_CRYPTO_ECDH_GET_PARA_ID_API_TC001(int id)
 {
     ASSERT_TRUE(EAL_PkeyGetParaId_Api_TC001(CRYPT_PKEY_ECDH, id) == 0);
 
-exit:
+EXIT:
     return;
 }
 /* END_CASE */
@@ -492,12 +490,17 @@ exit:
  *    6-7. Both are the same.
  */
 /* BEGIN_CASE */
-void SDV_CRYPTO_ECDH_DUP_CTX_API_TC001(int paraId)
+void SDV_CRYPTO_ECDH_DUP_CTX_API_TC001(int paraId, int isProvider)
 {
     CRYPT_EAL_PkeyCtx *pKeyCtx = NULL;
     CRYPT_EAL_PkeyCtx *newCtx = NULL;
 
-    pKeyCtx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ECDH);
+    if (isProvider == 1) {
+        pKeyCtx = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_ECDH,
+            CRYPT_EAL_PKEY_KEYMGMT_OPERATE, "provider=default");
+    } else {
+        pKeyCtx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ECDH);
+    }
     ASSERT_TRUE(pKeyCtx != NULL);
     ASSERT_TRUE(CRYPT_EAL_PkeySetParaById(pKeyCtx, (CRYPT_PKEY_ParaId)paraId) == CRYPT_SUCCESS);
 
@@ -509,7 +512,7 @@ void SDV_CRYPTO_ECDH_DUP_CTX_API_TC001(int paraId)
     ASSERT_EQ(newCtx->references.count, 1);
     ASSERT_TRUE(CRYPT_EAL_PkeyGetId(pKeyCtx) == CRYPT_EAL_PkeyGetId(newCtx));
     ASSERT_TRUE(CRYPT_EAL_PkeyGetParaId(pKeyCtx) == CRYPT_EAL_PkeyGetParaId(newCtx));
-exit:
+EXIT:
     CRYPT_EAL_PkeyFreeCtx(pKeyCtx);
     CRYPT_EAL_PkeyFreeCtx(newCtx);
 }
@@ -542,7 +545,7 @@ exit:
 void SDV_CRYPTO_ECDH_CMP_FUNC_TC001(Hex *pubKeyX, Hex *pubKeyY)
 {
     ASSERT_TRUE(EAL_PkeyCmp_Api_TC001(CRYPT_PKEY_ECDH, pubKeyX, pubKeyY) == 0);
-exit:
+EXIT:
     return;
 }
 /* END_CASE */
@@ -566,7 +569,7 @@ exit:
  */
 /* BEGIN_CASE */
 void SDV_CRYPTO_ECDH_EXCH_FUNC_TC001(
-    int eccId, Hex *prvKeyVector, Hex *pubKeyX, Hex *pubKeyY, int pointFormat, Hex *shareKeyVector)
+    int eccId, Hex *prvKeyVector, Hex *pubKeyX, Hex *pubKeyY, int pointFormat, Hex *shareKeyVector, int isProvider)
 {
     int ret;
     CRYPT_EAL_PkeyCtx *ecdhPkey = NULL;
@@ -580,7 +583,12 @@ void SDV_CRYPTO_ECDH_EXCH_FUNC_TC001(
     TestMemInit();
     ASSERT_EQ(TestRandInit(), CRYPT_SUCCESS);
 
-    ecdhPkey = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ECDH);
+    if (isProvider == 1) {
+        ecdhPkey = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_ECDH,
+            CRYPT_EAL_PKEY_KEYMGMT_OPERATE + CRYPT_EAL_PKEY_EXCH_OPERATE, "provider=default");
+    } else {
+        ecdhPkey = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ECDH);
+    }
     peerEcdhPubPkey = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ECDH);
     ASSERT_TRUE(ecdhPkey != NULL && peerEcdhPubPkey != NULL);
 
@@ -606,7 +614,7 @@ void SDV_CRYPTO_ECDH_EXCH_FUNC_TC001(
     ASSERT_EQ(CRYPT_EAL_PkeyComputeShareKey(ecdhPkey, peerEcdhPubPkey, shareKey, &shareKeyLen), CRYPT_SUCCESS);
     ASSERT_TRUE_AND_LOG("Compare ShareKey Len", shareKeyLen == shareKeyVector->len);
     ASSERT_COMPARE("Compare ShareKey", shareKey, shareKeyLen, shareKeyVector->x, shareKeyVector->len);
-exit:
+EXIT:
     CRYPT_EAL_PkeyFreeCtx(ecdhPkey);
     CRYPT_EAL_PkeyFreeCtx(peerEcdhPubPkey);
     CRYPT_EAL_RandDeinit();
@@ -632,7 +640,7 @@ exit:
 void SDV_CRYPTO_ECDH_GET_PARA_FUNC_TC001(Hex *p, Hex *a, Hex *b, Hex *x, Hex *y, Hex *n, Hex *h)
 {
     ASSERT_TRUE(EAL_PkeyGetPara_Func_TC001(CRYPT_PKEY_ECDH, p, a, b, x, y, n, h) == 0);
-exit:
+EXIT:
     return;
 }
 /* END_CASE */
@@ -657,9 +665,10 @@ exit:
  *    7. The getted key and vector are the same.
  */
 /* BEGIN_CASE */
-void SDV_CRYPTO_ECDH_GEN_KEY_FUNC_TC001(int eccId, Hex *prvKeyVector, Hex *pubKeyX, Hex *pubKeyY, int pointFormat)
+void SDV_CRYPTO_ECDH_GEN_KEY_FUNC_TC001(
+    int eccId, Hex *prvKeyVector, Hex *pubKeyX, Hex *pubKeyY, int pointFormat, int isProvider)
 {
-    Ecc_GenKey(CRYPT_PKEY_ECDH, eccId, prvKeyVector, pubKeyX, pubKeyY, pointFormat);
+    Ecc_GenKey(CRYPT_PKEY_ECDH, eccId, prvKeyVector, pubKeyX, pubKeyY, pointFormat, isProvider);
 }
 /* END_CASE */
 
@@ -674,13 +683,18 @@ void SDV_CRYPTO_ECDH_GEN_KEY_FUNC_TC001(int eccId, Hex *prvKeyVector, Hex *pubKe
  *    2. Equal to keyBits.
  */
 /* BEGIN_CASE */
-void SDV_CRYPTO_ECDH_GET_KEY_BITS_FUNC_TC001(int paraid, int keyBits)
+void SDV_CRYPTO_ECDH_GET_KEY_BITS_FUNC_TC001(int paraid, int keyBits, int isProvider)
 {
-    CRYPT_EAL_PkeyCtx *pkey = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ECDH);
+    CRYPT_EAL_PkeyCtx *pkey = NULL;
+    if (isProvider == 1) {
+        pkey = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_ECDH, CRYPT_EAL_PKEY_KEYMGMT_OPERATE, "provider=default");
+    } else {
+        pkey = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ECDH);
+    }
     ASSERT_TRUE(pkey != NULL);
     ASSERT_EQ(CRYPT_EAL_PkeySetParaById(pkey, paraid), CRYPT_SUCCESS);
     ASSERT_TRUE(CRYPT_EAL_PkeyGetKeyBits(pkey) == (uint32_t)keyBits);
-exit:
+EXIT:
     CRYPT_EAL_PkeyFreeCtx(pkey);
 }
 /* END_CASE */
@@ -705,7 +719,7 @@ void SDV_CRYPTO_ECDH_GET_SEC_BITS_FUNC_TC001(int paraid, int secBits)
     ASSERT_TRUE(pkey != NULL);
     ASSERT_EQ(CRYPT_EAL_PkeySetParaById(pkey, paraid), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeyGetSecurityBits(pkey), secBits);
-exit:
+EXIT:
     CRYPT_EAL_PkeyFreeCtx(pkey);
 }
 /* END_CASE */

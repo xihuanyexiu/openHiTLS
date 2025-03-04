@@ -29,6 +29,7 @@
 #include "cert_mgr.h"
 #include "session_type.h"
 #include "session.h"
+#include "cert_mgr_ctx.h"
 #ifdef HITLS_TLS_FEATURE_SESSION
 #define MAX_PRINTF_BUF 1024
 #define CTIME_BUF 26
@@ -125,10 +126,11 @@ void HITLS_SESS_Free(HITLS_Session *sess)
 
 static HITLS_Session *DeepCopySess(HITLS_Session *src, HITLS_Session *dest)
 {
-    dest->certMgrCtx = SAL_CERT_MgrCtxNew();
+    dest->certMgrCtx = SAL_CERT_MgrCtxProviderNew(LIBCTX_FROM_CERT_MGR_CTX(src->certMgrCtx),
+        ATTRIBUTE_FROM_CERT_MGR_CTX(src->certMgrCtx));
     if (dest->certMgrCtx == NULL) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16717, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "MgrCtxNew fail", 0, 0, 0, 0);
-        goto err;
+        return NULL;
     }
 
     if (src->peerCert != NULL) {
@@ -136,7 +138,7 @@ static HITLS_Session *DeepCopySess(HITLS_Session *src, HITLS_Session *dest)
         if (dest->peerCert == NULL) {
             BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16718, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
                 "PairDup fail", 0, 0, 0, 0);
-            goto err;
+            return NULL;
         }
     }
 
@@ -145,7 +147,7 @@ static HITLS_Session *DeepCopySess(HITLS_Session *src, HITLS_Session *dest)
         if (SESS_SetHostName(dest, src->hostNameSize, src->hostName) != HITLS_SUCCESS) {
             BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16719, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
                 "SetHostName fail", 0, 0, 0, 0);
-            goto err;
+            return NULL;
         }
     }
 #endif
@@ -154,12 +156,10 @@ static HITLS_Session *DeepCopySess(HITLS_Session *src, HITLS_Session *dest)
         if (SESS_SetTicket(dest, src->ticket, src->ticketSize) != HITLS_SUCCESS) {
             BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16722, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
                 "SetTicket fail", 0, 0, 0, 0);
-            goto err;
+            return NULL;
         }
     }
     return dest;
-err:
-    return NULL;
 }
 
 HITLS_Session *SESS_Copy(HITLS_Session *src)
@@ -189,13 +189,11 @@ HITLS_Session *SESS_Copy(HITLS_Session *src)
     if (DeepCopySess(src, dest) == NULL) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16725, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "DeepCopySess fail", 0, 0, 0, 0);
-        goto err;
+        HITLS_SESS_Free(dest);
+        return NULL;
     }
 
     return dest;
-err:
-    HITLS_SESS_Free(dest);
-    return NULL;
 }
 
 /* Just make a simple judgment */
@@ -414,7 +412,7 @@ int32_t HITLS_SESS_GetProtocolVersion(const HITLS_Session *sess, uint16_t *versi
 #ifdef HITLS_TLS_CONNECTION_INFO_NEGOTIATION
 int32_t SESS_SetPeerCert(HITLS_Session *sess, CERT_Pair *peerCert, bool isClient)
 {
-    int32_t ret = 0;
+    int32_t ret = HITLS_SUCCESS;
     if (sess == NULL) {
         BSL_ERR_PUSH_ERROR(HITLS_NULL_INPUT);
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16741, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "sess null", 0, 0, 0, 0);
@@ -429,14 +427,12 @@ int32_t SESS_SetPeerCert(HITLS_Session *sess, CERT_Pair *peerCert, bool isClient
         HITLS_CERT_X509 *tmpCert = SAL_CERT_PairGetX509(peerCert);
         if (tmpCert == NULL) {
             /* If cert in CERT_Pair is empty, the unlocking is returned */
-            ret = HITLS_SUCCESS;
             goto EXIT;
         }
         /* Obtain the chain */
         HITLS_CERT_Chain *tmpChain = SAL_CERT_PairGetChain(peerCert);
         if (tmpChain == NULL) {
             /* If the chain in CERT_Pair is empty, the unlocking is returned */
-            ret = HITLS_SUCCESS;
             goto EXIT;
         }
 
@@ -450,11 +446,8 @@ int32_t SESS_SetPeerCert(HITLS_Session *sess, CERT_Pair *peerCert, bool isClient
         ret = (int32_t)BSL_LIST_AddElement(tmpChain, newSubjectCert, BSL_LIST_POS_BEGIN);
         if (ret != 0) {
             SAL_CERT_X509Free(newSubjectCert);
-            goto EXIT;
         }
     }
-
-    ret = HITLS_SUCCESS;
 EXIT:
     BSL_SAL_ThreadUnlock(sess->lock);
     return ret;

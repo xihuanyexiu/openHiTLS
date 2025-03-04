@@ -38,6 +38,7 @@
 #define SUCCESS 0
 #define ERROR (-1)
 #define BITS_OF_BYTE 8
+#define CRYPT_EAL_PKEY_KEYMGMT_OPERATE 0
 static uint8_t g_kRandBuf[64];
 static uint32_t g_kRandBufLen = 0;
 
@@ -67,7 +68,7 @@ int Compute_Md(CRYPT_MD_AlgId mdId, Hex *msgIn, Hex *mdOut)
     CRYPT_EAL_MdFreeCtx(mdCtx);
     return SUCCESS;
 
-exit:
+EXIT:
     CRYPT_EAL_MdFreeCtx(mdCtx);
     free(mdOut->x);
     mdOut->x = NULL;
@@ -111,19 +112,16 @@ static void Set_DSA_Prv(CRYPT_EAL_PkeyPrv *prv, uint8_t *key, uint32_t keyLen)
     prv->key.dsaPrv.len = keyLen;
 }
 
-int SignEncode(
-    DSA_Sign *dsaSign, uint8_t *vectorSign, uint32_t *vectorSignLen, Hex *R, Hex *S, BN_BigNum **bn_r, BN_BigNum **bn_s)
+int SignEncode(uint8_t *vectorSign, uint32_t *vectorSignLen, Hex *R, Hex *S, BN_BigNum **bnR, BN_BigNum **bnS)
 {
-    *bn_r = BN_Create(R->len * BITS_OF_BYTE);
-    *bn_s = BN_Create(S->len * BITS_OF_BYTE);
-    ASSERT_EQ(BN_Bin2Bn(*bn_r, R->x, R->len), CRYPT_SUCCESS);
-    ASSERT_EQ(BN_Bin2Bn(*bn_s, S->x, S->len), CRYPT_SUCCESS);
-    dsaSign->r = *bn_r;
-    dsaSign->s = *bn_s;
-    ASSERT_EQ(ASN1_SignDataEncode(dsaSign, vectorSign, vectorSignLen), CRYPT_SUCCESS);
+    *bnR = BN_Create(R->len * BITS_OF_BYTE);
+    *bnS = BN_Create(S->len * BITS_OF_BYTE);
+    ASSERT_EQ(BN_Bin2Bn(*bnR, R->x, R->len), CRYPT_SUCCESS);
+    ASSERT_EQ(BN_Bin2Bn(*bnS, S->x, S->len), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_EncodeSign(*bnR, *bnS, vectorSign, vectorSignLen), CRYPT_SUCCESS);
     return CRYPT_SUCCESS;
 
-exit:
+EXIT:
     return ERROR;
 }
 
@@ -148,7 +146,7 @@ exit:
  *    3. CRYPT_EAL_ERR_NEW_PARA_FAIL
  */
 /* BEGIN_CASE */
-void SDV_CRYPTO_DSA_SET_PARA_API_TC001(Hex *p, Hex *q, Hex *g)
+void SDV_CRYPTO_DSA_SET_PARA_API_TC001(Hex *p, Hex *q, Hex *g, int isProvider)
 {
     CRYPT_EAL_PkeyCtx *pkey = NULL;
     uint8_t tmp[1];
@@ -162,7 +160,11 @@ void SDV_CRYPTO_DSA_SET_PARA_API_TC001(Hex *p, Hex *q, Hex *g)
     para.para.dsaPara.gLen = g->len;
 
     TestMemInit();
-    pkey = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_DSA);
+    if (isProvider == 1) {
+        pkey = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_DSA, CRYPT_EAL_PKEY_KEYMGMT_OPERATE, "provider=default");
+    } else {
+        pkey = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_DSA);
+    }
     ASSERT_TRUE(pkey != NULL);
     ASSERT_EQ(CRYPT_EAL_PkeySetPara(pkey, NULL), CRYPT_NULL_INPUT);
 
@@ -192,7 +194,7 @@ void SDV_CRYPTO_DSA_SET_PARA_API_TC001(Hex *p, Hex *q, Hex *g)
         para.para.dsaPara.gLen = 128;
         ASSERT_TRUE_AND_LOG("g!= NULL, gLen != 0", CRYPT_EAL_PkeySetPara(pkey, &para) == CRYPT_EAL_ERR_NEW_PARA_FAIL);
     }
-exit:
+EXIT:
     CRYPT_EAL_PkeyFreeCtx(pkey);
 }
 /* END_CASE */
@@ -218,15 +220,25 @@ exit:
  *    6. CRYPT_SUCCESS
  */
 /* BEGIN_CASE */
-void SDV_CRYPTO_DSA_CMP_API_TC001(Hex *p, Hex *q, Hex *g, Hex *y)
+void SDV_CRYPTO_DSA_CMP_API_TC001(Hex *p, Hex *q, Hex *g, Hex *y, int isProvider)
 {
     CRYPT_EAL_PkeyPara para = {0};
     CRYPT_EAL_PkeyPub pub = {0};
     Set_DSA_Para(&para, NULL, &pub, p, q, g, NULL, y);
 
     TestMemInit();
-    CRYPT_EAL_PkeyCtx *ctx1 = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_DSA);
-    CRYPT_EAL_PkeyCtx *ctx2 = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_DSA);
+    CRYPT_EAL_PkeyCtx *ctx1 = NULL;
+    if (isProvider == 1) {
+        ctx1 = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_DSA, CRYPT_EAL_PKEY_KEYMGMT_OPERATE, "provider=default");
+    } else {
+        ctx1 = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_DSA);
+    }
+    CRYPT_EAL_PkeyCtx *ctx2 = NULL;
+    if (isProvider == 1) {
+        ctx2 = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_DSA, CRYPT_EAL_PKEY_KEYMGMT_OPERATE, "provider=default");
+    } else {
+        ctx2 = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_DSA);
+    }
     ASSERT_TRUE(ctx1 != NULL && ctx2 != NULL);
 
     ASSERT_EQ(CRYPT_EAL_PkeyCmp(ctx1, ctx2), CRYPT_DSA_ERR_KEY_INFO);  // no key and no para
@@ -240,7 +252,7 @@ void SDV_CRYPTO_DSA_CMP_API_TC001(Hex *p, Hex *q, Hex *g, Hex *y)
     ASSERT_EQ(CRYPT_EAL_PkeySetPub(ctx2, &pub), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeyCmp(ctx1, ctx2), CRYPT_SUCCESS);
 
-exit:
+EXIT:
     CRYPT_EAL_PkeyFreeCtx(ctx1);
     CRYPT_EAL_PkeyFreeCtx(ctx2);
 }
@@ -263,21 +275,25 @@ exit:
  *    4. CRYPT_DSA_UNSUPPORTED_CTRL_OPTION
  */
 /* BEGIN_CASE */
-void SDV_CRYPTO_DSA_CTRL_API_TC001(void)
+void SDV_CRYPTO_DSA_CTRL_API_TC001(int isProvider)
 {
     CRYPT_EAL_PkeyCtx *ctx = NULL;
     int32_t ref = 1;
 
     TestMemInit();
-    ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_DSA);
+    if (isProvider == 1) {
+        ctx = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_DSA, CRYPT_EAL_PKEY_KEYMGMT_OPERATE, "provider=default");
+    } else {
+        ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_DSA);
+    }
     ASSERT_TRUE(ctx != NULL);
 
-    ASSERT_EQ(CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_UP_REFERENCES, NULL, sizeof(uint32_t)), CRYPT_NULL_INPUT);
-    ASSERT_EQ(CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_UP_REFERENCES, &ref, 0), CRYPT_DSA_UNSUPPORTED_CTRL_OPTION);
+    ASSERT_EQ(CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_UP_REFERENCES, NULL, sizeof(uint32_t)), CRYPT_INVALID_ARG);
+    ASSERT_EQ(CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_UP_REFERENCES, &ref, 0), CRYPT_INVALID_ARG);
     ASSERT_EQ(
         CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_RSA_PADDING, &ref, sizeof(int32_t)), CRYPT_DSA_UNSUPPORTED_CTRL_OPTION);
 
-exit:
+EXIT:
     CRYPT_EAL_PkeyFreeCtx(ctx);
 }
 /* END_CASE */
@@ -303,7 +319,7 @@ exit:
  *    6. Parameters are equal.
  */
 /* BEGIN_CASE */
-void SDV_CRYPTO_DSA_GET_PARA_API_TC001(Hex *p, Hex *q, Hex *g)
+void SDV_CRYPTO_DSA_GET_PARA_API_TC001(Hex *p, Hex *q, Hex *g, int isProvider)
 {
     uint8_t buf_p[1030] = {0};
     uint32_t bufLen = sizeof(buf_p);
@@ -318,7 +334,12 @@ void SDV_CRYPTO_DSA_GET_PARA_API_TC001(Hex *p, Hex *q, Hex *g)
     Set_DSA_Para(&para1, NULL, NULL, p, q, g, NULL, NULL);
     Set_DSA_Para(&para2, NULL, NULL, &getP, &getQ, &getG, NULL, NULL);
     TestMemInit();
-    CRYPT_EAL_PkeyCtx *pKey = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_DSA);
+    CRYPT_EAL_PkeyCtx *pKey = NULL;
+    if (isProvider == 1) {
+        pKey = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_DSA, CRYPT_EAL_PKEY_KEYMGMT_OPERATE, "provider=default");
+    } else {
+        pKey = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_DSA);
+    }
     ASSERT_TRUE(pKey != NULL);
 
     para2.id = CRYPT_PKEY_RSA;
@@ -338,7 +359,7 @@ void SDV_CRYPTO_DSA_GET_PARA_API_TC001(Hex *p, Hex *q, Hex *g)
     ASSERT_TRUE(para1.para.dsaPara.gLen == para2.para.dsaPara.gLen);
     ASSERT_TRUE(memcmp(para1.para.dsaPara.g, para2.para.dsaPara.g, para1.para.dsaPara.gLen) == 0);
 
-exit:
+EXIT:
     CRYPT_EAL_PkeyFreeCtx(pKey);
 }
 /* END_CASE */
@@ -369,7 +390,7 @@ exit:
  */
 /* BEGIN_CASE */
 void SDV_CRYPTO_DSA_SIGN_VERIFY_FUNC_TC001(
-    int hashId, Hex *P, Hex *Q, Hex *G, Hex *Msg, Hex *X, Hex *Y, Hex *K, Hex *R, Hex *S)
+    int hashId, Hex *P, Hex *Q, Hex *G, Hex *Msg, Hex *X, Hex *Y, Hex *K, Hex *R, Hex *S, int isProvider)
 {
     if (IsMdAlgDisabled(hashId)) {
         SKIP_TEST();
@@ -378,8 +399,8 @@ void SDV_CRYPTO_DSA_SIGN_VERIFY_FUNC_TC001(
     uint8_t *vectorSign = NULL;
     uint8_t *hitlsSign = NULL;
     uint32_t vectorSignLen, hitlsSignOutLen;
-    BN_BigNum *bn_r = NULL;
-    BN_BigNum *bn_s = NULL;
+    BN_BigNum *bnR = NULL;
+    BN_BigNum *bnS = NULL;
     CRYPT_EAL_PkeyCtx *pkey = NULL;
     CRYPT_EAL_PkeyCtx *cpyCtx = NULL;
 
@@ -395,7 +416,12 @@ void SDV_CRYPTO_DSA_SIGN_VERIFY_FUNC_TC001(
     STUB_Replace(&tmpRpInfo, BN_RandRange, STUB_RandRangeK);
 
     TestMemInit();
-    pkey = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_DSA);
+    if (isProvider == 1) {
+        pkey = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_DSA,
+            CRYPT_EAL_PKEY_KEYMGMT_OPERATE + CRYPT_EAL_PKEY_SIGN_OPERATE, "provider=default");
+    } else {
+        pkey = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_DSA);
+    }
     ASSERT_TRUE(pkey != NULL);
     ASSERT_EQ(CRYPT_EAL_PkeySetPara(pkey, &para), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeySetPrv(pkey, &prv), CRYPT_SUCCESS);
@@ -405,10 +431,9 @@ void SDV_CRYPTO_DSA_SIGN_VERIFY_FUNC_TC001(
     ASSERT_TRUE(signLen > 0);
 
     /* Encoding r and s vectors */
-    DSA_Sign dsaSign = {0};
     vectorSign = (uint8_t *)malloc(signLen);
     vectorSignLen = signLen;
-    ASSERT_EQ(SignEncode(&dsaSign, vectorSign, &vectorSignLen, R, S, &bn_r, &bn_s), CRYPT_SUCCESS);
+    ASSERT_EQ(SignEncode(vectorSign, &vectorSignLen, R, S, &bnR, &bnS), CRYPT_SUCCESS);
 
     /* Sign */
     hitlsSign = (uint8_t *)malloc(signLen);
@@ -423,18 +448,23 @@ void SDV_CRYPTO_DSA_SIGN_VERIFY_FUNC_TC001(
     ASSERT_EQ(CRYPT_EAL_PkeyVerify(pkey, hashId, Msg->x, Msg->len, hitlsSign, hitlsSignOutLen), CRYPT_SUCCESS);
 
     /* Copy the ctx and verify the signature. */
-    cpyCtx = BSL_SAL_Calloc(1u, sizeof(CRYPT_EAL_PkeyCtx));
+    if (isProvider == 1) {
+        cpyCtx = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_ED25519,
+            CRYPT_EAL_PKEY_KEYMGMT_OPERATE + CRYPT_EAL_PKEY_SIGN_OPERATE, "provider=default");
+    } else {
+        cpyCtx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ED25519);
+    }
     ASSERT_TRUE(cpyCtx != NULL);
     ASSERT_EQ(CRYPT_EAL_PkeyCopyCtx(cpyCtx, pkey), CRYPT_SUCCESS);
     hitlsSignOutLen = signLen;
     ASSERT_EQ(CRYPT_EAL_PkeySign(cpyCtx, hashId, Msg->x, Msg->len, hitlsSign, &hitlsSignOutLen), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeyVerify(cpyCtx, hashId, Msg->x, Msg->len, hitlsSign, hitlsSignOutLen), CRYPT_SUCCESS);
-exit:
+EXIT:
     STUB_Reset(&tmpRpInfo);
     free(vectorSign);
     free(hitlsSign);
-    BN_Destroy(bn_r);
-    BN_Destroy(bn_s);
+    BN_Destroy(bnR);
+    BN_Destroy(bnS);
     BSL_ERR_RemoveErrorStack(true);
     CRYPT_EAL_PkeyFreeCtx(pkey);
     CRYPT_EAL_PkeyFreeCtx(cpyCtx);
@@ -465,7 +495,7 @@ exit:
  */
 /* BEGIN_CASE */
 void SDV_CRYPTO_DSA_SIGN_VERIFY_DATA_FUNC_TC001(
-    int hashId, Hex *P, Hex *Q, Hex *G, Hex *Msg, Hex *X, Hex *Y, Hex *K, Hex *R, Hex *S)
+    int hashId, Hex *P, Hex *Q, Hex *G, Hex *Msg, Hex *X, Hex *Y, Hex *K, Hex *R, Hex *S, int isProvider)
 {
     if (IsMdAlgDisabled(hashId)) {
         SKIP_TEST();
@@ -474,8 +504,8 @@ void SDV_CRYPTO_DSA_SIGN_VERIFY_DATA_FUNC_TC001(
     uint8_t *vectorSign = NULL;
     uint8_t *hitlsSign = NULL;
     uint32_t vectorSignLen, hitlsSignOutLen;
-    BN_BigNum *bn_r = NULL;
-    BN_BigNum *bn_s = NULL;
+    BN_BigNum *bnR = NULL;
+    BN_BigNum *bnS = NULL;
     CRYPT_EAL_PkeyCtx *pkey = NULL;
     Hex mdOut = {0};
 
@@ -491,7 +521,12 @@ void SDV_CRYPTO_DSA_SIGN_VERIFY_DATA_FUNC_TC001(
     Set_DSA_Para(&para, &prv, &pub, P, Q, G, X, Y);
 
     TestMemInit();
-    pkey = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_DSA);
+    if (isProvider == 1) {
+        pkey = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_DSA,
+            CRYPT_EAL_PKEY_KEYMGMT_OPERATE + CRYPT_EAL_PKEY_SIGN_OPERATE, "provider=default");
+    } else {
+        pkey = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_DSA);
+    }
     ASSERT_TRUE(pkey != NULL);
     ASSERT_EQ(CRYPT_EAL_PkeySetPara(pkey, &para), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeySetPrv(pkey, &prv), CRYPT_SUCCESS);
@@ -501,10 +536,9 @@ void SDV_CRYPTO_DSA_SIGN_VERIFY_DATA_FUNC_TC001(
     ASSERT_TRUE(signLen > 0);
 
     /* Encoding r and s vectors */
-    DSA_Sign dsaSign;
     vectorSign = (uint8_t *)malloc(signLen);
     vectorSignLen = signLen;
-    ASSERT_EQ(SignEncode(&dsaSign, vectorSign, &vectorSignLen, R, S, &bn_r, &bn_s), CRYPT_SUCCESS);
+    ASSERT_EQ(SignEncode(vectorSign, &vectorSignLen, R, S, &bnR, &bnS), CRYPT_SUCCESS);
 
     /* Calculates the hash of the msg. */
     ASSERT_EQ(Compute_Md(hashId, Msg, &mdOut), SUCCESS);
@@ -520,15 +554,15 @@ void SDV_CRYPTO_DSA_SIGN_VERIFY_DATA_FUNC_TC001(
 
     /* Verify the signature of the hash data. */
     ASSERT_EQ(CRYPT_EAL_PkeyVerifyData(pkey, mdOut.x, mdOut.len, hitlsSign, hitlsSignOutLen), CRYPT_SUCCESS);
-exit:
+EXIT:
     STUB_Reset(&tmpRpInfo);
     if (mdOut.x != NULL) {
         free(mdOut.x);
     }
     free(vectorSign);
     free(hitlsSign);
-    BN_Destroy(bn_r);
-    BN_Destroy(bn_s);
+    BN_Destroy(bnR);
+    BN_Destroy(bnS);
     BSL_ERR_RemoveErrorStack(true);
     CRYPT_EAL_PkeyFreeCtx(pkey);
 }
@@ -559,7 +593,7 @@ exit:
  *    8. CRYPT_SUCCESS
  */
 /* BEGIN_CASE */
-void SDV_CRYPTO_DSA_GEN_FUNC_TC001(Hex *p, Hex *q, Hex *g, Hex *data)
+void SDV_CRYPTO_DSA_GEN_FUNC_TC001(Hex *p, Hex *q, Hex *g, Hex *data, int isProvider)
 {
     CRYPT_EAL_PkeyCtx *ctx = NULL;
     CRYPT_EAL_PkeyPara para = {0};
@@ -571,7 +605,12 @@ void SDV_CRYPTO_DSA_GEN_FUNC_TC001(Hex *p, Hex *q, Hex *g, Hex *data)
     TestMemInit();
     ASSERT_EQ(TestRandInit(), CRYPT_SUCCESS);
 
-    ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_DSA);
+    if (isProvider == 1) {
+        ctx = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_DSA,
+            CRYPT_EAL_PKEY_KEYMGMT_OPERATE + CRYPT_EAL_PKEY_SIGN_OPERATE, "provider=default");
+    } else {
+        ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_DSA);
+    }
     ASSERT_TRUE(ctx != NULL);
 
     ASSERT_EQ(CRYPT_EAL_PkeySetPara(ctx, &para), CRYPT_SUCCESS);
@@ -584,7 +623,7 @@ void SDV_CRYPTO_DSA_GEN_FUNC_TC001(Hex *p, Hex *q, Hex *g, Hex *data)
 
     ASSERT_EQ(CRYPT_EAL_PkeySign(ctx, CRYPT_MD_SHA256, data->x, data->len, sign, &signLen), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeyVerify(ctx, CRYPT_MD_SHA256, data->x, data->len, sign, signLen), CRYPT_SUCCESS);
-exit:
+EXIT:
     CRYPT_EAL_PkeyFreeCtx(ctx);
     free(sign);
     CRYPT_EAL_RandDeinit();
@@ -619,7 +658,7 @@ exit:
  *    10. The two private keys are the same.
  */
 /* BEGIN_CASE */
-void SDV_CRYPTO_DSA_DUP_CTX_FUNC_TC001(Hex *p, Hex *q, Hex *g)
+void SDV_CRYPTO_DSA_DUP_CTX_FUNC_TC001(Hex *p, Hex *q, Hex *g, int isProvider)
 {
     uint8_t *key1 = NULL;
     uint8_t *key2 = NULL;
@@ -633,7 +672,11 @@ void SDV_CRYPTO_DSA_DUP_CTX_FUNC_TC001(Hex *p, Hex *q, Hex *g)
     Set_DSA_Para(&para, NULL, NULL, p, q, g, NULL, NULL);
 
     TestMemInit();
-    ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_DSA);
+    if (isProvider == 1) {
+        ctx = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_DSA, CRYPT_EAL_PKEY_KEYMGMT_OPERATE, "provider=default");
+    } else {
+        ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_DSA);
+    }
     ASSERT_TRUE(ctx != NULL);
 
     ASSERT_EQ(TestRandInit(), CRYPT_SUCCESS);
@@ -665,7 +708,7 @@ void SDV_CRYPTO_DSA_DUP_CTX_FUNC_TC001(Hex *p, Hex *q, Hex *g)
     ASSERT_EQ(CRYPT_EAL_PkeyGetPrv(dupCtx, &prv2), CRYPT_SUCCESS);
     ASSERT_COMPARE("Compare private key", key1, prv1.key.dsaPrv.len, key2, prv2.key.dsaPrv.len);
 
-exit:
+EXIT:
     CRYPT_EAL_RandDeinit();
     CRYPT_EAL_PkeyFreeCtx(ctx);
     CRYPT_EAL_PkeyFreeCtx(dupCtx);
@@ -714,7 +757,7 @@ void SDV_CRYPTO_DSA_KEY_PAIR_CHECK_FUNC_TC001(Hex *P, Hex *Q, Hex *G, Hex *X, He
     ASSERT_EQ(TestRandInit(), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeyPairCheck(pubCtx, prvCtx), expectRet);
 
-exit:
+EXIT:
     CRYPT_EAL_RandDeinit();
     CRYPT_EAL_PkeyFreeCtx(pubCtx);
     CRYPT_EAL_PkeyFreeCtx(prvCtx);
@@ -732,9 +775,14 @@ exit:
  *    2. Equal to keyBits.
  */
 /* BEGIN_CASE */
-void SDV_CRYPTO_DSA_GET_KEY_BITS_FUNC_TC001(int id, int keyBits, Hex *P, Hex *Q, Hex *G)
+void SDV_CRYPTO_DSA_GET_KEY_BITS_FUNC_TC001(int id, int keyBits, Hex *P, Hex *Q, Hex *G, int isProvider)
 {
-    CRYPT_EAL_PkeyCtx *pkey = CRYPT_EAL_PkeyNewCtx(id);
+    CRYPT_EAL_PkeyCtx *pkey = NULL;
+    if (isProvider == 1) {
+        pkey = CRYPT_EAL_ProviderPkeyNewCtx(NULL, id, CRYPT_EAL_PKEY_KEYMGMT_OPERATE, "provider=default");
+    } else {
+        pkey = CRYPT_EAL_PkeyNewCtx(id);
+    }
     ASSERT_TRUE(pkey != NULL);
     CRYPT_EAL_PkeyPara para;
     para.id = CRYPT_PKEY_DSA;
@@ -747,7 +795,7 @@ void SDV_CRYPTO_DSA_GET_KEY_BITS_FUNC_TC001(int id, int keyBits, Hex *P, Hex *Q,
 
     ASSERT_TRUE(CRYPT_EAL_PkeySetPara(pkey, &para) == CRYPT_SUCCESS);
     ASSERT_TRUE(CRYPT_EAL_PkeyGetKeyBits(pkey) == (uint32_t)keyBits);
-exit:
+EXIT:
     CRYPT_EAL_PkeyFreeCtx(pkey);
 }
 /* END_CASE */
@@ -781,7 +829,7 @@ void SDV_CRYPTO_DSA_GET_SEC_BITS_FUNC_TC001(int id, int secBits, Hex *P, Hex *Q,
 
     ASSERT_TRUE(CRYPT_EAL_PkeySetPara(pkey, &para) == CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeyGetSecurityBits(pkey), secBits);
-exit:
+EXIT:
     CRYPT_EAL_PkeyFreeCtx(pkey);
 }
 /* END_CASE */

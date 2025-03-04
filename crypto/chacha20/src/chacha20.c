@@ -23,7 +23,6 @@
 #include "crypt_chacha20.h"
 #include "chacha20_local.h"
 
-
 #define KEYSET 0x01
 #define NONCESET 0x02
 
@@ -224,7 +223,7 @@ int32_t CRYPT_CHACHA20_Update(CRYPT_CHACHA20_Ctx *ctx, const uint8_t *in,
     return CRYPT_SUCCESS;
 }
 
-int32_t CRYPT_CHACHA20_Ctrl(CRYPT_CHACHA20_Ctx *ctx, CRYPT_CipherCtrl opt,
+int32_t CRYPT_CHACHA20_Ctrl(CRYPT_CHACHA20_Ctx *ctx, int32_t opt,
     void *val, uint32_t len)
 {
     switch (opt) {
@@ -241,5 +240,15 @@ int32_t CRYPT_CHACHA20_Ctrl(CRYPT_CHACHA20_Ctx *ctx, CRYPT_CipherCtrl opt,
             BSL_ERR_PUSH_ERROR(CRYPT_CHACHA20_CTRLTYPE_ERROR);
             return CRYPT_CHACHA20_CTRLTYPE_ERROR;
     }
+}
+
+void CRYPT_CHACHA20_Clean(CRYPT_CHACHA20_Ctx *ctx)
+{
+    if (ctx == NULL) {
+        return;
+    }
+    
+    memset_s(ctx, sizeof(CRYPT_CHACHA20_Ctx), 0, sizeof(CRYPT_CHACHA20_Ctx));
+    return;
 }
 #endif // HITLS_CRYPTO_CHACHA20

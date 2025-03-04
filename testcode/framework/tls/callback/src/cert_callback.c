@@ -75,8 +75,8 @@ void BinLogVarLenFunc(uint32_t logId, uint32_t logLevel, uint32_t logType, void 
 
 void RegDefaultMemCallback(void)
 {
-    BSL_SAL_MemCallback memMthod = {(void *(*)(uint32_t size))(uintptr_t)malloc, free};
-    BSL_SAL_RegMemCallback(&memMthod);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC_CB_FUNC, malloc);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE_CB_FUNC, free);
     BSL_ERR_Init();
     BSL_LOG_SetBinLogLevel(BSL_LOG_LEVEL_DEBUG);
 #ifdef TLS_DEBUG
@@ -137,7 +137,7 @@ void *HiTLS_X509_LoadCertListToStore(const char *fileList)
             HITLS_X509_Adapt_StoreFree(store);
             return NULL;
         }
-        ret = HITLS_X509_Adapt_StoreCtrl(NULL, store, CERT_STORE_CTRL_SHALLOW_COPY_ADD_CERT_LIST, cert, NULL);
+        ret = HITLS_X509_Adapt_StoreCtrl(NULL, store, CERT_STORE_CTRL_ADD_CERT_LIST, cert, NULL);
         if (ret != SUCCESS) {
             LOG_ERROR("X509_STORE_add_cert Error: path = %s.", certPath);
             HITLS_X509_Adapt_StoreFree(store);

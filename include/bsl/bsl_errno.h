@@ -45,6 +45,7 @@ enum BSL_ERROR {
     BSL_MEMCPY_FAIL,                        /**< Error occurs when calling memcpy_s. */
     BSL_INVALID_ARG,                        /**< Invalid arguments. */
     BSL_DUMP_FAIL,                          /**< Error occurs when duplicating memory */
+    BSL_MEMMOVE_FAIL,
 
     /* The return value of the SAL submodule starts from 0x03010001. */
     BSL_SAL_ERR_UNKNOWN = 0x03010001,        /**< Unknown error. */
@@ -71,6 +72,14 @@ enum BSL_ERROR {
 
     BSL_SAL_TIME_NO_REG_FUNC,
 
+    BSL_SAL_ERR_DL_NOT_FOUND,                /**< dl not found. */
+    BSL_SAL_ERR_DL_LOAD_FAIL,                /**< Error occured when loading dynamic library. */
+    BSL_SAL_ERR_DL_UNLOAAD_FAIL,             /**< Error occured when unloading dynamic library. */
+    BSL_SAL_ERR_DL_NON_FUNCTION,             /**< dl doesn't find function. */
+    BSL_SAL_ERR_DL_LOOKUP_METHOD,            /**< Error occurred when looking up dl method. */
+    BSL_SAL_ERR_DL_PATH_EXCEED,              /**< Path exceeds the maximum length. */
+    BSL_SAL_DL_NO_REG_FUNC,                  /**< No registration function. */
+
     /* The return value of the LOG submodule starts from 0x03020001. */
     BSL_LOG_ERR_BAD_PARAM = 0x03020001,      /**< Bad parameter. */
 
@@ -93,6 +102,9 @@ enum BSL_ERROR {
     BSL_UIO_MEM_ALLOC_FAIL,
     BSL_UIO_IO_EOF,                         /**< I/O object has reached EOF */
     BSL_UIO_UNINITIALIZED,                  /**< UIO object is uninitialized */
+    BSL_UIO_WRITE_NOT_ALLOWED,
+    BSL_UIO_MEM_GROW_FAIL,
+    BSL_UIO_MEM_NOT_NULL,
 
     /* The return value of the LIST submodule starts from 0x03070001. */
     BSL_LIST_INVALID_LIST_CURRENT = 0x03060001, /**< Current node pointer is NULL */
@@ -125,6 +137,9 @@ enum BSL_ERROR {
     BSL_ASN1_ERR_ENCODE_BIT_STRING,
     BSL_ASN1_ERR_ENCODE_UTC_TIME,
     BSL_ASN1_ERR_ENCODE_GENERALIZED_TIME,
+    BSL_ASN1_ERR_PRINTF,
+    BSL_ASN1_ERR_PRINTF_IO_ERR,
+    BSL_ASN1_ERR_LEN_OVERFLOW,
 
     /* The return value of the BASE64 submodule starts from 0x030a0001. */
     BSL_BASE64_INVALID = 0x03080001,
@@ -143,6 +158,11 @@ enum BSL_ERROR {
     BSL_PEM_INVALID = 0x03090001,
     BSL_PEM_DATA_NOT_ENOUGH,
     BSL_PEM_SYMBOL_NOT_FOUND,
+
+    BSL_PARAMS_INVALID_KEY = 0x030A0001,
+    BSL_PARAMS_INVALID_TYPE,
+    BSL_PARAMS_LEN_NOT_ENOUGH,
+    BSL_PARAMS_MISMATCH,
 };
 
 #ifdef __cplusplus

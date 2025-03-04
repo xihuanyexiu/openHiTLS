@@ -50,9 +50,7 @@ static HITLS_CRYPT_Key *GenerateDhEphemeralKey(HITLS_CRYPT_Key *priKey)
     }
     return SAL_CRYPT_GenerateDhKeyByParams(p, pLen, g, gLen);
 }
-#endif /* HITLS_TLS_CONFIG_MANUAL_DH */
 
-#ifdef HITLS_TLS_CONFIG_MANUAL_DH
 static HITLS_CRYPT_Key *GetDhKeyByDhTmp(TLS_Ctx *ctx)
 {
     HITLS_CRYPT_Key *key = NULL;
@@ -273,7 +271,7 @@ int32_t ServerSendServerKeyExchangeProcess(TLS_Ctx *ctx)
     /* Make sure the client will always send a certificate message, because ECDHE relies on the client's encrypted
      * certificate, even if the client does not require authentication (isSupportClientVerify equals false). */
 #ifdef HITLS_TLS_PROTO_TLCP11
-    if (ctx->negotiatedInfo.version == HITLS_VERSION_TLCP11 &&
+    if (ctx->negotiatedInfo.version == HITLS_VERSION_TLCP_DTLCP11 &&
         ctx->negotiatedInfo.cipherSuiteInfo.cipherSuite == HITLS_ECDHE_SM4_CBC_SM3) {
         return HS_ChangeState(ctx, TRY_SEND_CERTIFICATE_REQUEST);
     }

@@ -257,18 +257,18 @@ int32_t HS_ProcessClientKxMsgRsa(TLS_Ctx *ctx, const ClientKeyExchangeMsg *clien
     int32_t ret = HITLS_SUCCESS;
     HS_Ctx *hsCtx = ctx->hsCtx;
     KeyExchCtx *keyExchCtx = hsCtx->kxCtx;
-    uint8_t *premasterSecret = BSL_SAL_Calloc(1u, clientKxMsg->dataSize);
+    uint32_t secretLen = clientKxMsg->dataSize < MASTER_SECRET_LEN ? MASTER_SECRET_LEN : clientKxMsg->dataSize;
+    uint8_t *premasterSecret = BSL_SAL_Calloc(1u, secretLen);
     if (premasterSecret == NULL) {
         BSL_ERR_PUSH_ERROR(HITLS_MEMALLOC_FAIL);
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15524, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "Decrypt RSA-Encrypted Premaster Secret error: out of memory.", 0, 0, 0, 0);
         return HITLS_MEMALLOC_FAIL;
     }
-    uint32_t secretLen = clientKxMsg->dataSize;
-
     uint8_t premaster[MASTER_SECRET_LEN];
     ret = SAL_CRYPT_Rand(premaster, MASTER_SECRET_LEN);
     if (ret != HITLS_SUCCESS) {
+        BSL_SAL_FREE(premasterSecret);
         return ret;
     }
 
@@ -413,25 +413,25 @@ static int32_t GeneratePskPreMasterSecret(TLS_Ctx *ctx, uint8_t *pmsBuf, uint32_
     if (ret != EOK) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16831, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "key exchange algo is %d, memcpy fail", ctx->hsCtx->kxCtx->keyExchAlgo, 0, 0, 0);
-        goto memFail;
+        goto ERR;
     }
 
     if (AppendPsk(&tmpPskPmsBufTmp[offset], MAX_PRE_MASTER_SECRET_SIZE - offset, psk, pskLen) != HITLS_SUCCESS) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16832, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "AppendPsk fail", 0, 0, 0, 0);
-        goto memFail;
+        goto ERR;
     }
     offset += (sizeof(uint16_t) + pskLen);
 
     if (memcpy_s(pmsBuf, pmsBufLen, tmpPskPmsBufTmp, offset) != EOK) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16833, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "memcpy fail", 0, 0, 0, 0);
-        goto memFail;
+        goto ERR;
     }
     *pmsUsedLen = offset;
 
     (void)memset_s(tmpPskPmsBufTmp, MAX_PRE_MASTER_SECRET_SIZE, 0, MAX_PRE_MASTER_SECRET_SIZE);
 
     return HITLS_SUCCESS;
-memFail:
+ERR:
     (void)memset_s(tmpPskPmsBufTmp, MAX_PRE_MASTER_SECRET_SIZE, 0, MAX_PRE_MASTER_SECRET_SIZE);
     BSL_ERR_PUSH_ERROR(HITLS_MEMCPY_FAIL);
     return HITLS_MEMCPY_FAIL;
@@ -490,7 +490,7 @@ static int32_t GenPremasterSecretFromEcdhe(TLS_Ctx *ctx, uint8_t *preMasterSecre
 {
 #ifdef HITLS_TLS_PROTO_TLCP11
     int32_t ret = HITLS_SUCCESS;
-    if (ctx->negotiatedInfo.version == HITLS_VERSION_TLCP11) {
+    if (ctx->negotiatedInfo.version == HITLS_VERSION_TLCP_DTLCP11) {
         HITLS_Config *config = &ctx->config.tlsConfig;
         CERT_MgrCtx *certMgrCtx = config->certMgrCtx;
         HITLS_CERT_Key *priKey = SAL_CERT_GetCurrentPrivateKey(certMgrCtx, true);
@@ -577,7 +577,9 @@ int32_t HS_GenerateMasterSecret(TLS_Ctx *ctx)
 {
     int32_t ret = HITLS_SUCCESS;
     uint8_t preMasterSecret[MAX_PRE_MASTER_SECRET_SIZE] = {0};
-    uint32_t preMasterSecretLen = MAX_PRE_MASTER_SECRET_SIZE;
+    /* key exchange algorithm contains psk, preMasterSecret: |uint16_t|MAX_OTHER_SECRET_SIZE|uint16_t|HS_PSK_MAX_LEN|
+       key exchange algorithm not contains psk, preMasterSecret: |MAX_OTHER_SECRET_SIZE| */
+    uint32_t preMasterSecretLen = MAX_OTHER_SECRET_SIZE;
 
     ret = GenPreMasterSecret(ctx, preMasterSecret, &preMasterSecretLen);
     if (ret != HITLS_SUCCESS) {
@@ -678,7 +680,7 @@ int32_t HS_ResumeKeyEstablish(TLS_Ctx *ctx)
         ctx->method.sendAlert(ctx, ALERT_LEVEL_FATAL, ALERT_INTERNAL_ERROR);
         return ret;
     }
-#ifdef HITLS_TLS_PROTO_DTLS12
+#if defined(HITLS_TLS_PROTO_DTLS12) && defined(HITLS_BSL_UIO_SCTP)
     ret = HS_SetSctpAuthKey(ctx);
     if (ret != HITLS_SUCCESS) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16839, BSL_LOG_LEVEL_FATAL, BSL_LOG_BINLOG_TYPE_RUN,

@@ -63,8 +63,8 @@ int32_t GenClientHelloMandatoryCtx(TLS_Ctx *tlsCtx, FRAME_Msg *msg)
         tlsCtx->hsCtx->sessionIdSize = clientHello->sessionIdSize;
     }
 
-#ifndef HITLS_NO_DTLS12
-    if (IS_DTLS_VERSION(clientHello->version) && clientHello->cookieLen > 0) {
+#ifdef HITLS_TLS_PROTO_DTLS12
+    if (IS_SUPPORT_DATAGRAM(tlsConfig->originVersionMask) && clientHello->cookieLen > 0) {
         tlsCtx->negotiatedInfo.cookieSize = clientHello->cookieLen;
         tlsCtx->negotiatedInfo.cookie = (uint8_t *)BSL_SAL_Dump(clientHello->cookie, clientHello->cookieLen);
         if (tlsCtx->negotiatedInfo.cookie == NULL) {
@@ -128,13 +128,13 @@ int32_t PackClientHelloMsg(FRAME_Msg *msg)
 
     int32_t ret = GenClientHelloMandatoryCtx(tlsCtx, msg);
     if (ret != HITLS_SUCCESS) {
-        goto FREE_MEM;
+        goto EXIT;
     }
 
     // extended information
     ret = GenClientHelloExtensionCtx(tlsCtx, msg);
     if (ret != HITLS_SUCCESS) {
-        goto FREE_MEM;
+        goto EXIT;
     }
 
     uint32_t usedLen = 0;
@@ -143,7 +143,7 @@ int32_t PackClientHelloMsg(FRAME_Msg *msg)
         msg->len += usedLen;
     }
 
-FREE_MEM:
+EXIT:
     HITLS_Free(tlsCtx);
     return ret;
 }
@@ -161,14 +161,14 @@ int32_t PackServerHelloMsg(FRAME_Msg *msg)
     int32_t ret = 0;
     ret = memcpy_s(tlsCtx->hsCtx->serverRandom, HS_RANDOM_SIZE, serverHello->randomValue, HS_RANDOM_SIZE);
     if (ret != EOK) {
-        goto FREE_MEM;
+        goto EXIT;
     }
 
     if (serverHello->sessionIdSize > 0) {    // SessionId
         tlsCtx->hsCtx->sessionId = (uint8_t *)BSL_SAL_Dump(serverHello->sessionId, serverHello->sessionIdSize);
         if (tlsCtx->hsCtx->sessionId == NULL) {
             ret = HITLS_MEMALLOC_FAIL;
-            goto FREE_MEM;
+            goto EXIT;
         }
         tlsCtx->hsCtx->sessionIdSize = serverHello->sessionIdSize;
     }
@@ -182,7 +182,7 @@ int32_t PackServerHelloMsg(FRAME_Msg *msg)
         msg->len += usedLen;
     }
 
-FREE_MEM:
+EXIT:
     HITLS_Free(tlsCtx);
     return ret;
 }
@@ -310,14 +310,14 @@ int32_t PackFinishMsg(FRAME_Msg *msg)
     tlsCtx->hsCtx->verifyCtx = (VerifyCtx*)BSL_SAL_Calloc(1u, sizeof(VerifyCtx));
     if (tlsCtx->hsCtx->verifyCtx == NULL) {
         ret = HITLS_MEMALLOC_FAIL;
-        goto FREE_MEM;
+        goto EXIT;
     }
 
     tlsCtx->hsCtx->verifyCtx->verifyDataSize = finished->verifyDataSize;
     ret = memcpy_s(tlsCtx->hsCtx->verifyCtx->verifyData, MAX_SIGN_SIZE,
         finished->verifyData, finished->verifyDataSize);
     if (ret != EOK) {
-        goto FREE_MEM;
+        goto EXIT;
     }
 
     uint32_t usedLen = 0;
@@ -326,7 +326,7 @@ int32_t PackFinishMsg(FRAME_Msg *msg)
         msg->len += usedLen;
     }
 
-FREE_MEM:
+EXIT:
     HITLS_Free(tlsCtx);
     return ret;
 }
@@ -408,8 +408,8 @@ int32_t PackRecordHeader(FRAME_Msg *msg)
     BSL_Uint16ToByte(msg->version, &msg->buffer[offset]);
     offset += sizeof(uint16_t);
 
-#ifndef HITLS_NO_DTLS12
-    if (IS_DTLS_VERSION(msg->version)) {
+#ifdef HITLS_TLS_PROTO_DTLS12
+    if (IS_TRANSTYPE_DATAGRAM(msg->transportType)) {
         BSL_Uint64ToByte(msg->epochSeq, &msg->buffer[offset]);
         offset += sizeof(uint64_t);
     }

@@ -133,7 +133,7 @@ int32_t SM4_XTS_En(uint8_t* cipher, const uint8_t* plain, const uint32_t* dataRk
     }
     left = dataLen % CRYPT_SM4_BLOCKSIZE_16;
 
-    // MODE_XTS_Ctrl has TW = Enc_K2(iv) done
+    // MODES_XTS_Ctrl has TW = Enc_K2(iv) done
     memcpy_s(t, CRYPT_SM4_BLOCKSIZE_16, tweak, CRYPT_SM4_BLOCKSIZE);
 
     if (dataLen >= CRYPT_SM4_BLOCKSIZE_16) {
@@ -227,7 +227,7 @@ int32_t SM4_XTS_De(uint8_t* plain, const uint8_t* cipher, const uint32_t* dataRk
     }
     left = dataLen % CRYPT_SM4_BLOCKSIZE_16;
 
-    // MODE_XTS_Ctrl has TW = Enc_K2(iv) done
+    // MODES_XTS_Ctrl has TW = Enc_K2(iv) done
     (void)memcpy_s(t, CRYPT_SM4_BLOCKSIZE_16, tweak, CRYPT_SM4_BLOCKSIZE);
 
     if (dataLen >= CRYPT_SM4_BLOCKSIZE_16) {
@@ -383,7 +383,7 @@ int32_t CRYPT_SM4_CBC_Encrypt(CRYPT_SM4_Ctx *ctx, const uint8_t *in, uint8_t *ou
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-    if (len < CRYPT_SM4_BLOCKSIZE) {
+    if (len % CRYPT_SM4_BLOCKSIZE != 0) {
         BSL_ERR_PUSH_ERROR(CRYPT_SM4_DATALEN_ERROR);
         return CRYPT_SM4_DATALEN_ERROR;
     }

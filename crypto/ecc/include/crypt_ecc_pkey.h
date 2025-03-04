@@ -22,7 +22,9 @@
 #include "crypt_bn.h"
 #include "crypt_ecc.h"
 #include "crypt_algid.h"
+#include "bsl_params.h"
 #include "sal_atomic.h"
+#include "bsl_params.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -82,7 +84,7 @@ uint32_t ECC_PkeyGetBits(const ECC_Pkey *ctx);
  * @retval CRYPT_SUCCESS
  * @retval Other            failure
  */
-int32_t ECC_GetPara(const ECC_Pkey *pkey, CRYPT_EccPara *eccPara);
+int32_t ECC_GetPara(const ECC_Pkey *pkey, BSL_Param *eccPara);
 
 /**
  * @ingroup ecc
@@ -117,48 +119,48 @@ int32_t ECC_PkeyGen(ECC_Pkey *ctx);
  * @brief ECC Set the private key data.
  *
  * @param ctx [OUT] ECC context structure
- * @param prv [IN] Private key data
+ * @param para [IN] Private key data
  *
  * @retval CRYPT_NULL_INPUT     Error null pointer input
  * @retval CRYPT_MEM_ALLOC_FAIL Memory allocation failure
  * @retval BN error.            An error occurs in the internal BigNum operation.
  * @retval CRYPT_SUCCESS        Set successfully.
  */
-int32_t ECC_PkeySetPrvKey(ECC_Pkey *ctx, const CRYPT_EccPrv *prv);
+int32_t ECC_PkeySetPrvKey(ECC_Pkey *ctx, const BSL_Param *para);
 
 /**
  * @ingroup ecc
  * @brief ECC Set the public key data.
  *
  * @param ctx [OUT] ECC context structure
- * @param pub [IN] Public key data
+ * @param para [IN] Public key data
  *
  * @retval CRYPT_NULL_INPUT     Error null pointer input
  * @retval CRYPT_MEM_ALLOC_FAIL Memory allocation failure
  * @retval BN error.            An error occurs in the internal BigNum operation.
  * @retval CRYPT_SUCCESS        Set successfully.
  */
-int32_t ECC_PkeySetPubKey(ECC_Pkey *ctx, const CRYPT_EccPub *pub);
+int32_t ECC_PkeySetPubKey(ECC_Pkey *ctx, const BSL_Param *para);
 /**
  * @ingroup ecc
  * @brief ECC Obtain the private key data.
  *
  * @param ctx [IN] ECC context structure
- * @param prv [OUT] Private key data
+ * @param para [OUT] Private key data
  *
  * @retval CRYPT_NULL_INPUT         Invalid null pointer input
  * @retval ECC_Pkey_KEYINFO_ERROR   The key information is incorrect.
  * @retval BN error.                An error occurred in the internal BigNum calculation.
  * @retval CRYPT_SUCCESS            Obtained successfully.
  */
-int32_t ECC_PkeyGetPrvKey(const ECC_Pkey *ctx, CRYPT_EccPrv *prv);
+int32_t ECC_PkeyGetPrvKey(const ECC_Pkey *ctx, BSL_Param *para);
 
 /**
  * @ingroup ecc
  * @brief ECC Obtain the public key data.
  *
  * @param ctx [IN] ECC context structure
- * @param pub [OUT] Public key data
+ * @param para [OUT] Public key data
  *
  * @retval CRYPT_NULL_INPUT             Invalid null pointer input
  * @retval ECC_Pkey_BUFF_LEN_NOT_ENOUGH The buffer length is insufficient.
@@ -166,7 +168,7 @@ int32_t ECC_PkeyGetPrvKey(const ECC_Pkey *ctx, CRYPT_EccPrv *prv);
  * @retval BN error.                    An error occurs in the internal BigNum operation.
  * @retval CRYPT_SUCCESS                Obtained successfully.
  */
-int32_t ECC_PkeyGetPubKey(const ECC_Pkey *ctx, CRYPT_EccPub *pub);
+int32_t ECC_PkeyGetPubKey(const ECC_Pkey *ctx, BSL_Param *para);
 
 /**
  * @ingroup ecc
@@ -181,7 +183,7 @@ int32_t ECC_PkeyGetPubKey(const ECC_Pkey *ctx, CRYPT_EccPub *pub);
  * @retval CRYPT_NULL_INPUT                      If any input parameter is empty
  * @retval ECC_Pkey_ERR_UNSUPPORTED_CTRL_OPTION  opt mode not supported
  */
-int32_t ECC_PkeyCtrl(ECC_Pkey *ctx, CRYPT_PkeyCtrl opt, void *val, uint32_t len);
+int32_t ECC_PkeyCtrl(ECC_Pkey *ctx, int32_t opt, void *val, uint32_t len);
 
 /**
  * @ingroup ecc

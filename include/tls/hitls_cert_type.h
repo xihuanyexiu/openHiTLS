@@ -23,6 +23,7 @@
 #define HITLS_CERT_TYPE_H
 
 #include <stdint.h>
+#include "bsl_obj.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,12 +40,6 @@ typedef void HITLS_CERT_X509;
  * @brief   Describes the certificate key
  */
 typedef void HITLS_CERT_Key;
-
-/**
- * @ingroup hitls_cert_type
- * @brief   Describes the user key type
- */
-typedef void HITLS_CERT_USER_Key;
 
 /**
  * @ingroup hitls_cert_type
@@ -76,8 +71,7 @@ typedef struct BslList HITLS_CERT_Chain;
  */
 typedef enum {
     CERT_STORE_CTRL_SET_VERIFY_DEPTH,   /**< Set the certificate verification depth. */
-    CERT_STORE_CTRL_DEEP_COPY_ADD_CERT_LIST,      /**< Add ca and chain certificate to store */
-    CERT_STORE_CTRL_SHALLOW_COPY_ADD_CERT_LIST,
+    CERT_STORE_CTRL_ADD_CERT_LIST,      /**< Add ca and chain certificate to store */
 
     CERT_CTRL_GET_ENCODE_LEN,           /**< Obtain the length of the certificate code. */
     CERT_CTRL_GET_PUB_KEY,              /**< Obtaining the Certificate Public Key (Release Required). */
@@ -134,16 +128,13 @@ typedef enum {
  * @brief   Certificate Public Key Type
  */
 typedef enum {
-    TLS_CERT_KEY_TYPE_RSA,
-    TLS_CERT_KEY_TYPE_RSA_PSS,
-    TLS_CERT_KEY_TYPE_DSA,
-    TLS_CERT_KEY_TYPE_ECDSA,
-    TLS_CERT_KEY_TYPE_ED25519,
-    TLS_CERT_KEY_TYPE_ED448,
-    TLS_CERT_KEY_TYPE_SM2 = 9, /**<  9 is sign type, 10 is enc type */
-    TLS_CERT_KEY_TYPE_ENC_SM2 = 10,
-    TLS_CERT_KEY_TYPE_NUM = 11,
-    TLS_CERT_KEY_TYPE_UNKNOWN = 255
+    TLS_CERT_KEY_TYPE_UNKNOWN = BSL_CID_UNKNOWN,
+    TLS_CERT_KEY_TYPE_RSA = BSL_CID_RSA,
+    TLS_CERT_KEY_TYPE_RSA_PSS = BSL_CID_RSASSAPSS,
+    TLS_CERT_KEY_TYPE_DSA = BSL_CID_DSA,
+    TLS_CERT_KEY_TYPE_ECDSA = BSL_CID_ECDSA,
+    TLS_CERT_KEY_TYPE_ED25519 = BSL_CID_ED25519,
+    TLS_CERT_KEY_TYPE_SM2 = BSL_CID_SM2
 } HITLS_CERT_KeyType;
 
 /**

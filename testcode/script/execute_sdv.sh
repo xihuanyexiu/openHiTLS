@@ -38,11 +38,13 @@ generate_asan_log() {
                     echo "The ASAN log contains only ucontext warning content. Ignore it."
                 else
                     echo "ASAN ERROR. Exit with ucontext check failure."
+                    cat ${i}
                     exit 1
                 fi
                 continue
             else
                 echo "ASAN ERROR. Exit with failure."
+                cat ${i}
                 exit 1
             fi
         done
@@ -62,7 +64,14 @@ run_test() {
     if [ ${#testsuite_array[*]} -ne 0 ] && [ ${#testcase_array[*]} -eq 0 ];then
         for i in ${testsuite_array[@]}
         do
-            ./${i} NO_DETAIL
+            if [ "${i}" = "test_suite_sdv_eal_provider_load" ]; then
+                # 针对特定测试套件设置 LD_LIBRARY_PATH
+                echo "Running ${i} with LD_LIBRARY_PATH set to ../testdata/provider/path1"
+                env LD_LIBRARY_PATH="../testdata/provider/path1:${LD_LIBRARY_PATH}" ./${i} NO_DETAIL
+            else
+                # 其他测试套件正常运行
+                ./${i} NO_DETAIL
+            fi
         done
     fi
 
@@ -142,7 +151,12 @@ run_all() {
             # Run tests in parallel.
             read -u5
             {
-                ./$i NO_DETAIL || (read -u8 && echo "1 $i" >&8)
+                if [ "${i}" = "test_suite_sdv_eal_provider_load" ]; then
+                    echo "Running ${i} with LD_LIBRARY_PATH set to ../testdata/provider/path1"
+                    env LD_LIBRARY_PATH="../testdata/provider/path1:${LD_LIBRARY_PATH}" ./${i} NO_DETAIL || (read -u8 && echo "1 $i" >&8)
+                else
+                    ./${i} NO_DETAIL || (read -u8 && echo "1 $i" >&8)
+                fi
                 echo >&5
             } &
         done
@@ -161,7 +175,12 @@ run_all() {
     else
         for i in $SUITES
         do
-            ./$i NO_DETAIL
+            if [ "${i}" = "test_suite_sdv_eal_provider_load" ]; then
+                echo "Running ${i} with LD_LIBRARY_PATH set to ../testdata/provider/path1"
+                env LD_LIBRARY_PATH="../testdata/provider/path1:${LD_LIBRARY_PATH}" ./${i} NO_DETAIL
+            else
+                ./${i} NO_DETAIL
+            fi
         done
     fi
 
@@ -219,6 +238,25 @@ parse_option()
     done
 }
 
+run_demos()
+{
+    pushd ${HITLS_ROOT_DIR}/testcode/demo/build
+    executales=$(find ./ -maxdepth 1 -type f -perm -a=x )
+    for e in $executales
+    do
+        if [[ ! "$e" == *"client"* ]] && [[ ! "$e" == *"server"* ]]; then
+            echo "${e} start"
+            eval "${e}"
+        fi
+    done
+
+    # run server and client in order.
+    ./server &
+    sleep 1
+    ./client
+    popd
+}
+
 clean()
 {
     rm -rf ${HITLS_ROOT_DIR}/testcode/output/log/*
@@ -236,4 +274,5 @@ elif [ ${paramNum} -eq 1 ] && [ $is_concurrent = 0 ]; then
 else
     run_test
 fi
+run_demos
 gen_test_report

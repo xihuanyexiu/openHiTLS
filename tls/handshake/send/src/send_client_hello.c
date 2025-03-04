@@ -90,7 +90,7 @@ static int32_t ClientPrepareSession(TLS_Ctx *ctx)
 static int32_t ClientChangeStateAfterSendClientHello(TLS_Ctx *ctx)
 {
 #ifdef HITLS_TLS_FEATURE_SESSION
-    if (ctx->session != NULL && IS_DTLS_VERSION(ctx->config.tlsConfig.maxVersion)) {
+    if (ctx->session != NULL && IS_SUPPORT_DATAGRAM(ctx->config.tlsConfig.originVersionMask)) {
         /* In the DTLS scenario, enable the receiving of CCS messages to prevent CCS message disorder during session
          * resumption */
         ctx->method.ctrlCCS(ctx, CCS_CMD_RECV_READY);
@@ -166,7 +166,7 @@ static bool Tls13SelectGroup(TLS_Ctx *ctx, uint16_t *group)
     uint16_t version = (ctx->negotiatedInfo.version == 0) ?
         ctx->config.tlsConfig.maxVersion : ctx->negotiatedInfo.version;
     for (uint32_t i = 0; i < tlsConfig->groupsSize; ++i) {
-        if (GroupConformToVersion(version, tlsConfig->groups[i])) {
+        if (GroupConformToVersion(ctx, version, tlsConfig->groups[i])) {
             *group = tlsConfig->groups[i];
             return true;
         }
@@ -233,11 +233,7 @@ static int32_t Tls13ClientPrepareKeyShare(TLS_Ctx *ctx, uint32_t tls13BasicKeyEx
         /* Send the client hello message for the first time and fill in the group in the key share extension */
         keyShare->group = selectGroup;
     }
-    int32_t ret = Tls13ClientGenKeyPair(ctx->hsCtx->kxCtx, selectGroup);
-    if (ret != HITLS_SUCCESS) {
-        return ret;
-    }
-    return HITLS_SUCCESS;
+    return Tls13ClientGenKeyPair(ctx->hsCtx->kxCtx, selectGroup);
 }
 
 static int32_t Tls13ClientPrepareSession(TLS_Ctx *ctx)

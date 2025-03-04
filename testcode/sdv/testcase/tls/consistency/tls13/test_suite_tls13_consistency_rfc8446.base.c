@@ -215,6 +215,7 @@ void SetFrameType(FRAME_Type *frametype, uint16_t versionType, REC_Type recordTy
     frametype->recordType = recordType;
     frametype->handshakeType = handshakeType;
     frametype->keyExType = keyExType;
+    frametype->transportType = BSL_UIO_TCP;
 }
 
 FieldState *GetDataAddress(FRAME_Msg *data, void *member)
@@ -242,7 +243,7 @@ void Test_MisClientHelloExtension(HITLS_Ctx *ctx, uint8_t *data, uint32_t *len, 
     memset_s(data, bufSize, 0, bufSize);
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
     ASSERT_NE(parseLen, *len);
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     return;
 }
