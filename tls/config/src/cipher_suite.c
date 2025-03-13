@@ -1443,7 +1443,7 @@ static const CipherSuiteInfo g_cipherSuiteList[] = {
         .hashAlg = HITLS_HASH_SM3,
         .signScheme = CERT_SIG_SCHEME_SM2_SM3,
         KEY_BLOCK_PARTITON_LENGTH(16u, 16u, 32u, 16u, 16u, 32u),
-        VERSION_SCOPE(HITLS_VERSION_TLCP11, HITLS_VERSION_TLCP11, 0, 0),
+        VERSION_SCOPE(HITLS_VERSION_TLCP_DTLCP11, HITLS_VERSION_TLCP_DTLCP11, 0, 0),
         .cipherType = HITLS_CBC_CIPHER,
         .strengthBits = 128},
 #endif
@@ -1459,8 +1459,40 @@ static const CipherSuiteInfo g_cipherSuiteList[] = {
         .hashAlg = HITLS_HASH_SM3,
         .signScheme = CERT_SIG_SCHEME_SM2_SM3,
         KEY_BLOCK_PARTITON_LENGTH(16u, 16u, 32u, 16u, 16u, 32u),
-        VERSION_SCOPE(HITLS_VERSION_TLCP11, HITLS_VERSION_TLCP11, 0, 0),
+        VERSION_SCOPE(HITLS_VERSION_TLCP_DTLCP11, HITLS_VERSION_TLCP_DTLCP11, 0, 0),
         .cipherType = HITLS_CBC_CIPHER,
+        .strengthBits = 128},
+#endif
+#ifdef HITLS_TLS_SUITE_ECDHE_SM4_GCM_SM3
+    {.enable = true,
+        .name = CIPHER_NAME("HITLS_ECDHE_SM4_GCM_SM3"),
+        .stdName = CIPHER_NAME("TLS_ECDHE_SM4_GCM_SM3"),
+        .cipherSuite = HITLS_ECDHE_SM4_GCM_SM3,
+        .cipherAlg = HITLS_CIPHER_SM4_GCM,
+        .kxAlg = HITLS_KEY_EXCH_ECDHE,
+        .authAlg = HITLS_AUTH_SM2,
+        .macAlg = HITLS_MAC_AEAD,
+        .hashAlg = HITLS_HASH_SM3,
+        .signScheme = CERT_SIG_SCHEME_SM2_SM3,
+        KEY_BLOCK_PARTITON_LENGTH(4u, 16u, 0u, 0u, 8u, 16u),
+        VERSION_SCOPE(HITLS_VERSION_TLCP_DTLCP11, HITLS_VERSION_TLCP_DTLCP11, 0, 0),
+        .cipherType = HITLS_AEAD_CIPHER,
+        .strengthBits = 128},
+#endif
+#ifdef HITLS_TLS_SUITE_ECC_SM4_GCM_SM3
+    {.enable = true,
+        .name = CIPHER_NAME("HITLS_ECC_SM4_GCM_SM3"),
+        .stdName = CIPHER_NAME("TLS_ECC_SM4_GCM_SM3"),
+        .cipherSuite = HITLS_ECC_SM4_GCM_SM3,
+        .cipherAlg = HITLS_CIPHER_SM4_GCM,
+        .kxAlg = HITLS_KEY_EXCH_ECC,
+        .authAlg = HITLS_AUTH_SM2,
+        .macAlg = HITLS_MAC_AEAD,
+        .hashAlg = HITLS_HASH_SM3,
+        .signScheme = CERT_SIG_SCHEME_SM2_SM3,
+        KEY_BLOCK_PARTITON_LENGTH(4u, 16u, 0u, 0u, 8u, 16u),
+        VERSION_SCOPE(HITLS_VERSION_TLCP_DTLCP11, HITLS_VERSION_TLCP_DTLCP11, 0, 0),
+        .cipherType = HITLS_AEAD_CIPHER,
         .strengthBits = 128},
 #endif
 #endif
@@ -1474,13 +1506,13 @@ const SignSchemeInfo g_signSchemeList[] = {
     { CERT_SIG_SCHEME_RSA_PKCS1_SHA512, HITLS_SIGN_RSA_PKCS1_V15, HITLS_HASH_SHA_512 },
     { CERT_SIG_SCHEME_RSA_PKCS1_SHA1, HITLS_SIGN_RSA_PKCS1_V15, HITLS_HASH_SHA1 },
 
-    { CERT_SIG_SCHEME_RSA_PSS_RSAE_SHA256, HITLS_SIGN_RSA_PSS_RSAE, HITLS_HASH_SHA_256 },
-    { CERT_SIG_SCHEME_RSA_PSS_RSAE_SHA384, HITLS_SIGN_RSA_PSS_RSAE, HITLS_HASH_SHA_384 },
-    { CERT_SIG_SCHEME_RSA_PSS_RSAE_SHA512, HITLS_SIGN_RSA_PSS_RSAE, HITLS_HASH_SHA_512 },
+    { CERT_SIG_SCHEME_RSA_PSS_RSAE_SHA256, HITLS_SIGN_RSA_PSS, HITLS_HASH_SHA_256 },
+    { CERT_SIG_SCHEME_RSA_PSS_RSAE_SHA384, HITLS_SIGN_RSA_PSS, HITLS_HASH_SHA_384 },
+    { CERT_SIG_SCHEME_RSA_PSS_RSAE_SHA512, HITLS_SIGN_RSA_PSS, HITLS_HASH_SHA_512 },
 
-    { CERT_SIG_SCHEME_RSA_PSS_PSS_SHA256, HITLS_SIGN_RSA_PSS_PSS, HITLS_HASH_SHA_256 },
-    { CERT_SIG_SCHEME_RSA_PSS_PSS_SHA384, HITLS_SIGN_RSA_PSS_PSS, HITLS_HASH_SHA_384 },
-    { CERT_SIG_SCHEME_RSA_PSS_PSS_SHA512, HITLS_SIGN_RSA_PSS_PSS, HITLS_HASH_SHA_512 },
+    { CERT_SIG_SCHEME_RSA_PSS_PSS_SHA256, HITLS_SIGN_RSA_PSS, HITLS_HASH_SHA_256 },
+    { CERT_SIG_SCHEME_RSA_PSS_PSS_SHA384, HITLS_SIGN_RSA_PSS, HITLS_HASH_SHA_384 },
+    { CERT_SIG_SCHEME_RSA_PSS_PSS_SHA512, HITLS_SIGN_RSA_PSS, HITLS_HASH_SHA_512 },
 #endif
 
 #ifdef HITLS_TLS_SUITE_AUTH_ECDSA
@@ -1492,7 +1524,6 @@ const SignSchemeInfo g_signSchemeList[] = {
     { CERT_SIG_SCHEME_ECDSA_SHA1, HITLS_SIGN_ECDSA, HITLS_HASH_SHA1 },
 
     { CERT_SIG_SCHEME_ED25519, HITLS_SIGN_ED25519, HITLS_HASH_SHA_512 },
-    { CERT_SIG_SCHEME_ED448, HITLS_SIGN_ED448, HITLS_HASH_SHA_512 },
 #endif
 
 #ifdef HITLS_TLS_SUITE_AUTH_DSS
@@ -1567,6 +1598,8 @@ const CipherSuiteCertType g_cipherSuiteAndCertTypes[] = {
     { HITLS_DHE_DSS_WITH_AES_256_GCM_SHA384, CERT_TYPE_DSS_SIGN },
     { HITLS_ECDHE_SM4_CBC_SM3, CERT_TYPE_SM2_SIGN },
     { HITLS_ECC_SM4_CBC_SM3, CERT_TYPE_SM2_SIGN },
+    { HITLS_ECDHE_SM4_GCM_SM3, CERT_TYPE_SM2_SIGN },
+    { HITLS_ECC_SM4_GCM_SM3, CERT_TYPE_SM2_SIGN },
 };
 
 const SignSchemeInfo *CFG_GetSignSchemeList(uint32_t *len)
@@ -1716,7 +1749,7 @@ bool CFG_GetSignParamBySchemes(uint16_t version, HITLS_SignHashAlgo scheme, HITL
 {
     bool ret = false;
 #ifdef HITLS_TLS_PROTO_TLCP11
-    if (version == HITLS_VERSION_TLCP11) {
+    if (version == HITLS_VERSION_TLCP_DTLCP11) {
         for (uint32_t i = 0; i < (sizeof(g_signSchemeListGm) / sizeof(g_signSchemeListGm[0])); i++) {
             if (scheme == g_signSchemeListGm[i].scheme) {
                 *signAlg = g_signSchemeListGm[i].signAlg;
@@ -1798,8 +1831,8 @@ static const uint8_t* ProtocolToString(uint16_t version)
         case HITLS_VERSION_DTLS12:
             ret = "DTLSv1.2";
             break;
-        case HITLS_VERSION_TLCP11:
-            ret = "TLCP1.1";
+        case HITLS_VERSION_TLCP_DTLCP11:
+            ret = "(D)TLCP1.1";
             break;
         default:
             ret = "unknown";
@@ -1914,9 +1947,6 @@ static const uint8_t* HashAlgToString(HITLS_HashAlgo hashAlg)
             break;
         case HITLS_HASH_SHA_512:
             ret = "SHA512";
-            break;
-        case HITLS_HASH_MD5_SHA1:
-            ret = "MD5SHA1";
             break;
         case HITLS_HASH_SM3:
             ret = "SM3";

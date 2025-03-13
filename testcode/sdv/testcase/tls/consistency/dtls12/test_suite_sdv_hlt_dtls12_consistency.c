@@ -63,7 +63,7 @@ void Hello(void *ssl)
 {
     const char *writeBuf = "Hello world";
     ASSERT_TRUE(HLT_TlsWrite(ssl, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
-exit:
+EXIT:
     return;
 }
 
@@ -146,7 +146,7 @@ void SDV_TLS_DTLS_CONSISTENCY_RFC5246_UNEXPETED_REORD_TYPE_TC001()
     HLT_RpcCloseFd(remoteProcess, sockFd.peerFd, remoteProcess->connType);
     HLT_CloseFd(sockFd.srcFd, localProcess->connType);
 
-exit:
+EXIT:
     ClearWrapper();
     HLT_CleanFrameHandle();
     HITLS_SESS_Free(session);
@@ -186,6 +186,9 @@ static int32_t DtlsSctpUioWriteException(BSL_UIO *uio, const void *buf, uint32_t
 /* BEGIN_CASE */
 void SDV_TLS_DTLS_WRITE_APP_FAILED_TC001(int version, int connType)
 {
+    if (connType == SCTP && !IsEnableSctpAuth()){
+        return;
+    }
     bool certverifyflag = true;
 
     HLT_Tls_Res *serverRes = NULL;
@@ -226,7 +229,7 @@ void SDV_TLS_DTLS_WRITE_APP_FAILED_TC001(int version, int connType)
     ASSERT_TRUE(HLT_ProcessTlsRead(remoteProcess, clientRes, readBuf, sizeof(readBuf), &readLen) == 0);
     ASSERT_TRUE(readLen == strlen("Hello World2"));
     ASSERT_TRUE(memcmp("Hello World2", readBuf, readLen) == 0);
-exit:
+EXIT:
     HLT_FreeAllProcess();
 }
 /* END_CASE */

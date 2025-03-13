@@ -31,7 +31,11 @@
 #include "crypt_errno.h"
 #include "hitls_error.h"
 #include "hitls_build.h"
+
 #include "crypt_default.h"
+#include "bsl_params.h"
+#include "crypt_params_key.h"
+#include "config_type.h"
 
 #ifndef HITLS_CRYPTO_EAL
 #error "Missing definition of HITLS_CRYPTO_EAL"
@@ -453,7 +457,7 @@ static int32_t SpecialModeEncryptPreSolve(CRYPT_EAL_CipherCtx *ctx, const HITLS_
 static int32_t GetCipherInitCtx(const HITLS_CipherParameters *cipher, CRYPT_EAL_CipherCtx **ctx, bool enc)
 {
     if (*ctx != NULL) {
-        return CRYPT_EAL_CipherReinit(*ctx, (uint8_t *)cipher->iv, cipher->ivLen);
+        return CRYPT_EAL_CipherReinit(*ctx, cipher->iv, cipher->ivLen);
     }
     CRYPT_CIPHER_AlgId id = GetCipherAlgId(cipher->algo);
     if (id == CRYPT_CIPHER_MAX) {
@@ -740,36 +744,11 @@ CRYPT_EAL_PkeyCtx *GeneratePkeyByParaId(CRYPT_PKEY_AlgId algId, CRYPT_PKEY_ParaI
 CRYPT_EAL_PkeyCtx *GenerateKeyByNamedGroup(HITLS_NamedGroup groupId)
 {
 #ifdef HITLS_CRYPTO_PKEY
-    switch (groupId) {
-        case HITLS_EC_GROUP_SECP256R1:
-            return GeneratePkeyByParaId(CRYPT_PKEY_ECDH, CRYPT_ECC_NISTP256);
-        case HITLS_EC_GROUP_SECP384R1:
-            return GeneratePkeyByParaId(CRYPT_PKEY_ECDH, CRYPT_ECC_NISTP384);
-        case HITLS_EC_GROUP_SECP521R1:
-            return GeneratePkeyByParaId(CRYPT_PKEY_ECDH, CRYPT_ECC_NISTP521);
-        case HITLS_EC_GROUP_CURVE25519:
-            return GeneratePkeyByParaId(CRYPT_PKEY_X25519, CRYPT_PKEY_PARAID_MAX);
-        case HITLS_EC_GROUP_BRAINPOOLP256R1:
-            return GeneratePkeyByParaId(CRYPT_PKEY_ECDH, CRYPT_ECC_BRAINPOOLP256R1);
-        case HITLS_EC_GROUP_BRAINPOOLP384R1:
-            return GeneratePkeyByParaId(CRYPT_PKEY_ECDH, CRYPT_ECC_BRAINPOOLP384R1);
-        case HITLS_EC_GROUP_BRAINPOOLP512R1:
-            return GeneratePkeyByParaId(CRYPT_PKEY_ECDH, CRYPT_ECC_BRAINPOOLP512R1);
-        case HITLS_EC_GROUP_SM2:
-            return GeneratePkeyByParaId(CRYPT_PKEY_SM2, CRYPT_ECC_SM2);
-        case HITLS_FF_DHE_2048:
-            return GeneratePkeyByParaId(CRYPT_PKEY_DH, CRYPT_DH_RFC7919_2048);
-        case HITLS_FF_DHE_3072:
-            return GeneratePkeyByParaId(CRYPT_PKEY_DH, CRYPT_DH_RFC7919_3072);
-        case HITLS_FF_DHE_4096:
-            return GeneratePkeyByParaId(CRYPT_PKEY_DH, CRYPT_DH_RFC7919_4096);
-        case HITLS_FF_DHE_6144:
-            return GeneratePkeyByParaId(CRYPT_PKEY_DH, CRYPT_DH_RFC7919_6144);
-        case HITLS_FF_DHE_8192:
-            return GeneratePkeyByParaId(CRYPT_PKEY_DH, CRYPT_DH_RFC7919_8192);
-        default:
-            break;
+    const TLS_GroupInfo *groupInfo = ConfigGetGroupInfo(NULL, groupId);
+    if (groupInfo == NULL) {
+        return NULL;
     }
+    return GeneratePkeyByParaId(groupInfo->algId, groupInfo->paraId);
 #else
     (void)groupId;
 #endif
@@ -1057,10 +1036,10 @@ int32_t CRYPT_DEFAULT_CalcSM2SharedSecret(HITLS_Sm2GenShareKeyParameters *sm2Par
     }
     ret = CalcSM2SecretPre(peerCtx, sm2Params, &peerPub);
     if (ret != CRYPT_SUCCESS) {
-        goto Exit;
+        goto EXIT;
     }
     ret = CRYPT_EAL_PkeyComputeShareKey(selfCtx, peerCtx, sharedSecret, sharedSecretLen);
-Exit:
+EXIT:
     CRYPT_EAL_PkeyFreeCtx(peerCtx);
     return ret;
 #else
@@ -1096,29 +1075,27 @@ int32_t CRYPT_DEFAULT_CalcSharedSecret(HITLS_CRYPT_Key *key, uint8_t *peerPubkey
         if (paraId == CRYPT_PKEY_PARAID_MAX) {
             ret = CRYPT_EAL_ERR_ALGID;
             (void)RETURN_ERROR_NUMBER_PROCESS(ret, BINLOG_ID16679, "paraId error");
-            goto Exit;
+            goto EXIT;
         }
         ret = CRYPT_EAL_PkeySetParaById(peerPk, paraId);
         if (ret != CRYPT_SUCCESS) {
             (void)RETURN_ERROR_NUMBER_PROCESS(ret, BINLOG_ID16680, "SetParaById fail");
-            goto Exit;
+            goto EXIT;
         }
     }
 
     ret = CRYPT_EAL_PkeySetPub(peerPk, &pub);
     if (ret != CRYPT_SUCCESS) {
         (void)RETURN_ERROR_NUMBER_PROCESS(ret, BINLOG_ID16681, "SetPub fail");
-        goto Exit;
+        goto EXIT;
     }
 
     ret = CRYPT_EAL_PkeyComputeShareKey(key, peerPk, sharedSecret, sharedSecretLen);
     if (ret != CRYPT_SUCCESS) {
         (void)RETURN_ERROR_NUMBER_PROCESS(ret, BINLOG_ID16682, "ComputeShareKey fail");
-        goto Exit;
     }
 
-    ret = HITLS_SUCCESS;
-Exit:
+EXIT:
     CRYPT_EAL_PkeyFreeCtx(peerPk);
     return ret;
 #else
@@ -1254,16 +1231,34 @@ int32_t CRYPT_DEFAULT_HkdfExtract(const HITLS_CRYPT_HkdfExtractInput *input, uin
         return HITLS_CRYPT_ERR_HMAC;
     }
 
-    ret = CRYPT_EAL_HkdfExtract(id, input->inputKeyMaterial, input->inputKeyMaterialLen,
-        input->salt, input->saltLen, prk, &tmpLen);
+    CRYPT_EAL_KdfCTX *kdfCtx = CRYPT_EAL_KdfNewCtx(CRYPT_KDF_HKDF);
+    if (kdfCtx == NULL) {
+        return HITLS_CRYPT_ERR_HKDF_EXTRACT;
+    }
+    CRYPT_HKDF_MODE mode = CRYPT_KDF_HKDF_MODE_EXTRACT;
+    BSL_Param params[6] = {{0}, {0}, {0}, {0}, {0}, BSL_PARAM_END};
+    (void)BSL_PARAM_InitValue(&params[0], CRYPT_PARAM_KDF_MAC_ID, BSL_PARAM_TYPE_UINT32, &id, sizeof(id));
+    (void)BSL_PARAM_InitValue(&params[1], CRYPT_PARAM_KDF_MODE, BSL_PARAM_TYPE_UINT32, &mode, sizeof(mode));
+    (void)BSL_PARAM_InitValue(&params[2], CRYPT_PARAM_KDF_KEY, BSL_PARAM_TYPE_OCTETS,
+        (void *)(uintptr_t)input->inputKeyMaterial, input->inputKeyMaterialLen);
+    (void)BSL_PARAM_InitValue(&params[3], CRYPT_PARAM_KDF_SALT, BSL_PARAM_TYPE_OCTETS,
+        (void *)(uintptr_t)input->salt, input->saltLen);
+    (void)BSL_PARAM_InitValue(&params[4], CRYPT_PARAM_KDF_EXLEN, BSL_PARAM_TYPE_UINT32_PTR, &tmpLen, sizeof(tmpLen));
+    ret = CRYPT_EAL_KdfSetParam(kdfCtx, params);
     if (ret != CRYPT_SUCCESS) {
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16688, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
-            "HkdfExtract fail", 0, 0, 0, 0);
-        return ret;
+        goto EXIT;
+    }
+
+    ret = CRYPT_EAL_KdfDerive(kdfCtx, prk, tmpLen);
+    if (ret != CRYPT_SUCCESS) {
+        goto EXIT;
     }
 
     *prkLen = tmpLen;
-    return HITLS_SUCCESS;
+    ret = HITLS_SUCCESS;
+EXIT:
+    CRYPT_EAL_KdfFreeCtx(kdfCtx);
+    return ret;
 #else
     (void)input;
     (void)prk;
@@ -1275,14 +1270,32 @@ int32_t CRYPT_DEFAULT_HkdfExtract(const HITLS_CRYPT_HkdfExtractInput *input, uin
 int32_t CRYPT_DEFAULT_HkdfExpand(const HITLS_CRYPT_HkdfExpandInput *input, uint8_t *okm, uint32_t okmLen)
 {
 #ifdef HITLS_CRYPTO_HKDF
+    int32_t ret;
     CRYPT_MAC_AlgId id = GetHmacAlgId(input->hashAlgo);
     if (id == CRYPT_MAC_MAX) {
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16689, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
-            "GetHmacAlgId fail", 0, 0, 0, 0);
         return HITLS_CRYPT_ERR_HMAC;
     }
 
-    return CRYPT_EAL_HkdfExpand(id, input->prk, input->prkLen, input->info, input->infoLen, okm, okmLen);
+    CRYPT_EAL_KdfCTX *kdfCtx = CRYPT_EAL_KdfNewCtx(CRYPT_KDF_HKDF);
+    if (kdfCtx == NULL) {
+        return HITLS_CRYPT_ERR_HKDF_EXPAND;
+    }
+    CRYPT_HKDF_MODE mode = CRYPT_KDF_HKDF_MODE_EXPAND;
+    BSL_Param params[5] = {{0}, {0}, {0}, {0}, BSL_PARAM_END};
+    (void)BSL_PARAM_InitValue(&params[0], CRYPT_PARAM_KDF_MAC_ID, BSL_PARAM_TYPE_UINT32, &id, sizeof(id));
+    (void)BSL_PARAM_InitValue(&params[1], CRYPT_PARAM_KDF_MODE, BSL_PARAM_TYPE_UINT32, &mode, sizeof(mode));
+    (void)BSL_PARAM_InitValue(&params[2], CRYPT_PARAM_KDF_PRK, BSL_PARAM_TYPE_OCTETS,
+        (void *)(uintptr_t)input->prk, input->prkLen);
+    (void)BSL_PARAM_InitValue(&params[3], CRYPT_PARAM_KDF_INFO, BSL_PARAM_TYPE_OCTETS,
+        (void *)(uintptr_t)input->info, input->infoLen);
+    ret = CRYPT_EAL_KdfSetParam(kdfCtx, params);
+    if (ret != CRYPT_SUCCESS) {
+        goto EXIT;
+    }
+    ret = CRYPT_EAL_KdfDerive(kdfCtx, okm, okmLen);
+EXIT:
+    CRYPT_EAL_KdfFreeCtx(kdfCtx);
+    return ret;
 #else
     (void)input;
     (void)okm;

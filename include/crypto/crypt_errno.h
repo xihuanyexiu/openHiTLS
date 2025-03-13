@@ -44,7 +44,8 @@ enum CRYPT_ERROR {
     CRYPT_NO_REGIST_RAND,               /**< The global random number is not registered.*/
     CRYPT_ERR_ALGID,                    /**< Incorrect algorithm ID. */
     CRYPT_INVALID_ARG,                  /**< Invalid input parameter. */
-    CRYPT_NOT_SUPPORT,
+    CRYPT_NOT_SUPPORT,                  /**< unsupported operation. */
+    CRYPT_INCONSISTENT_OPERATION,       /**< Inconsistent  operation. */
 
     CRYPT_BN_BUFF_LEN_NOT_ENOUGH = 0x01020001, /**< Insufficient buffer length. */
     CRYPT_BN_SPACE_NOT_ENOUGH,          /**< Insufficient big number space. */
@@ -108,8 +109,18 @@ enum CRYPT_ERROR {
                                              during PSS signature. */
     CRYPT_RSA_ERR_ENC_INPUT_NOT_ENOUGH, /**< The plaintext length is too short for RSA NO PAD encryption. */
     CRYPT_RSA_PUBKEY_NOT_EQUAL,         /**< RSA public keys are not equal. */
+    CRYPT_RSA_ERR_BLIND_TYPE,           /**< Invalid RSA blinding type. Only RSA-BSSA is currently supported. */
+    CRYPT_RSA_ERR_NO_BLIND_INFO,        /**< RSA blinding information is missing.
+                                            The blind/unblind operation requires previous blinding parameters. */
+    CRYPT_RSA_ERR_NO_PUBKEY_INFO,       /**< The rsa pub key is missing. */
+    CRYPT_RSA_PADDING_NOT_SUPPORTED,    /**< The specified RSA padding mode is not supported in blinding. */
+    CRYPT_RSA_GET_SALT_LEN_ERROR,       /**< The input length of getting salt-len is incorrect. */
+    CRYPT_RSA_GET_SALT_NOT_PSS_ERROR,   /**< When the padding type of the key is not pss, and get the salt len. */
+    CRYPT_RSA_ERR_PSS_PARAMS,            /**< The parameter is error when the padding type of the key is pss. */
+    CRYPT_RSA_ERR_BSSA_PARAM,          /**< The parameter of bssa is invalid. */
 
     CRYPT_EAL_BUFF_LEN_NOT_ENOUGH = 0x01040001, /**< Insufficient buffer length. */
+    CRYPT_EAL_BUFF_LEN_TOO_LONG,        /**< Insufficient buffer length. */
     CRYPT_EAL_ERR_ALGID,                /**< Incorrect algorithm ID. */
     CRYPT_EAL_ALG_NOT_SUPPORT,          /**< Algorithm not supported, algorithm behavior not supported. */
     CRYPT_EAL_ERR_NEW_PARA_FAIL,        /**< Failed to generate parameters. */
@@ -130,17 +141,15 @@ enum CRYPT_ERROR {
                                              if this requirement is not met,an error will be reported.
                                              For ISO7816, the first bit of padding data is 0x80, and the other bits
                                              are 0, if this requirement is not met, an error will be reported. */
-    CRYPT_EAL_PADDING_NOT_SUPPORT,      /**< Unsupported padding. */
     CRYPT_EAL_CIPHER_CTRL_ERROR,        /**< CRYPT_EAL_CipherCtrl interface unsupported CTRL type. */
-    CRYPT_EAL_CIPHER_FIANL_WITH_AEAD_ERROR,  /**< An error occurs when the final operation is performed on the
-                                                  AEAD algorithm. */
+    CRYPT_EAL_CIPHER_ERR_NEWCTX,
     CRYPT_EAL_PKEY_CTRL_ERROR,          /**< When the CRYPT_EAL_PkeyCtrl interface performs CTRL,
                                              the function is not supported or the input length is incorrect. */
     CRYPT_EAL_PKEY_DUP_ERROR,           /**< Pkey context duplicate failure. */
     CRYPT_EAL_PKEY_CMP_DIFF_KEY_TYPE,   /**< Pkey comparison failure: different algorithm types. */
     CRYPT_EAL_ERR_PART_OVERLAP,         /**< Some memory overlap. */
     CRYPT_EAL_INTO_TYPE_NOT_SUPPORT,    /**< The info type is not supported. */
-	CRYPT_EAL_ALG_ASM_NOT_SUPPORT,      /**< Algorithm assembly is not supported. */
+    CRYPT_EAL_ALG_ASM_NOT_SUPPORT,      /**< Algorithm assembly is not supported. */
 
     CRYPT_SHA2_INPUT_OVERFLOW = 0x01050001, /**< The length of the input data exceeds the maximum
                                                      processing range of SHA2. */
@@ -152,6 +161,7 @@ enum CRYPT_ERROR {
     CRYPT_DRBG_FAIL_GET_NONCE,          /**< Failed to obtain the nonce. */
     CRYPT_DRBG_ALG_NOT_SUPPORT,         /**< Does not support the given algorithm. */
     CRYPT_DRBG_INVALID_LEN,             /**< Incorrect data length. */
+    CRYPT_DRBG_PARAM_ERROR,             /**< Incorrect input parameter. */
 
     CRYPT_CURVE25519_NO_PUBKEY = 0x01070001,         /**< No public key. */
     CRYPT_CURVE25519_NO_PRVKEY,                      /**< No private key. */
@@ -191,6 +201,7 @@ enum CRYPT_ERROR {
 
     CRYPT_HMAC_OUT_BUFF_LEN_NOT_ENOUGH = 0x010B0001, /**< The length of the buffer that storing
                                                           the output result is insufficient. */
+    CRYPT_ECC_HMAC_ERR_UNSUPPORTED_CTRL_OPTION,  /**< Unsupport the control type. */
 
     CRYPT_DH_BUFF_LEN_NOT_ENOUGH = 0x010C0001,   /**< The buffer length is insufficient. */
     CRYPT_DH_PARA_ERROR,                         /**< The value of the key parameter does not meet
@@ -262,7 +273,8 @@ enum CRYPT_ERROR {
                                                           on which the pattern depends on. */
     CRYPT_MODES_METHODS_NOT_SUPPORT,                 /**< Mode depends does not support the behavior. */
 	CRYPT_MODES_FEEDBACKSIZE_NOT_SUPPORT,            /**< The algorithm does not support the setting of feedbacksize. */
-
+    CRYPT_MODES_ERR_STREAM_FINAL,                    /**< streaming encryption not support final */
+    CRYPT_MODES_PADDING_NOT_SUPPORT,                 /**< Unsupported padding. */
     CRYPT_HKDF_DKLEN_OVERFLOW = 0x01100001,          /**< The length of the derived key exceeds the maximum. */
     CRYPT_HKDF_NOT_SUPPORTED,                        /**< Unsupport HKDF algorithm. */
     CRYPT_HKDF_PARAM_ERROR,                          /**< Incorrect input parameter. */
@@ -298,6 +310,9 @@ enum CRYPT_ERROR {
     CRYPT_ECC_PKEY_ERR_SIGN_LEN,                     /**< Invalid sign length  */
 
     CRYPT_ECC_KEY_PUBKEY_NOT_EQUAL,                   /**< ECC public keys are not equal. */
+    CRYPT_ECC_INVERSE_INPUT_ZERO,                     /** Modulo inverse input is 0. */
+    CRYPT_ECC_POINT_MUL_ERR_K_LEN,                    /** The scalar length exceeds the curve specification
+                                                          when using the dot multiplication function */
 
     CRYPT_SHA3_OUT_BUFF_LEN_NOT_ENOUGH = 0x01140001,  /**< Insufficient buffer length for storing output results. */
 
@@ -325,6 +340,7 @@ enum CRYPT_ERROR {
                                                            maximum processing range of the MD5. */
     CRYPT_MD5_OUT_BUFF_LEN_NOT_ENOUGH,                /**< The length of the buffer that storing the
                                                            output result is insufficient. */
+    CRYPT_MD_ERR_NEWCTX,                              /**< create md ctx failed. */
 
     CRYPT_SM2_BUFF_LEN_NOT_ENOUGH = 0x011B0001,       /**< Insufficient buffer length. */
     CRYPT_SM2_NO_PUBKEY,                              /**< SM2 the public key is not set. */
@@ -348,6 +364,7 @@ enum CRYPT_ERROR {
                                                             the decoding requirements. */
     CRYPT_SM2_ID_TOO_LARGE,                           /**< User id to large. */
     CRYPT_KDFTLS12_NOT_SUPPORTED = 0x011C0001,        /**< Unsupport the KDFTLS12 algorithm. */
+    CRYPT_KDFTLS12_PARAM_ERROR,
 
     CRYPT_DECODE_ASN1_BUFF_NUM_NOT_ENOUGH = 0x011D0001,  /**< The input number of BSL_ANS1_Buffer is not enough. */
     CRYPT_DECODE_UNSUPPORTED_PUBKEY_TYPE,                /**< Unsupported pubkey type */
@@ -367,19 +384,39 @@ enum CRYPT_ERROR {
     CRYPT_DECODE_PKCS7_INVALIDE_ENCRYPTDATA_TYPE,        /**< Invaild pkcs7-encryptedData. */
     CRYPT_DECODE_UNSUPPORTED_PKCS7_TYPE,                 /**< Unsupported pkcs7 type */
     CRYPT_DECODE_UNSUPPORTED_ENCRYPT_TYPE,               /**< Unsupported encrypt type */
+    CRYPT_DECODE_BUFF_NOT_ENOUGH,                        /**< The input buffer space is not enough */
+    CRYPT_DECODE_ASN1_BUFF_LEN_ZERO,                     /**< The decoding length of asn1 buffer is zero. */
 
     CRYPT_ENCODE_NO_SUPPORT_TYPE = 0x011E0001,           /**< encode no support key type. */
     CRYPT_ENCODE_NO_SUPPORT_FORMAT,                      /**< encode no support key format. */
     CRYPT_ENCODE_ERR_RSA_PAD,                            /**< rsa pad err. */
-    
+    CRYPT_ENCODE_BUFF_NOT_ENOUGH,                        /**< The input buffer space is not enough */
+    CRYPT_ENCODE_ERR_SIGN_LEN_OVERFLOW,                  /**< The r and s length is too large. */
+    CRYPT_ENCODE_ERR_SM2_ENCRYPT_DATA_LEN_OVERFLOW,      /**< The sm2 encrypt data length is too large. */
+
     CRYPT_PAILLIER_BUFF_LEN_NOT_ENOUGH = 0x011F0001, /**< The buffer length is insufficient. */
     CRYPT_PAILLIER_NO_KEY_INFO,              /**< Lacks valid key information. */
     CRYPT_PAILLIER_ERR_KEY_BITS,             /**< Incorrect key length. */
     CRYPT_PAILLIER_ERR_ENC_BITS,             /**< Incorrect length of the encrypted plaintext of the public key. */
     CRYPT_PAILLIER_ERR_DEC_BITS,             /**< Incorrect length of the decrypted ciphertext of the private key. */
     CRYPT_PAILLIER_ERR_INPUT_VALUE,          /**< Some special values, which are used as input errors. */
-};
+    CRYPT_PAILLIER_CTRL_NOT_SUPPORT_ERROR,   /**< The Ctrl type is not supported When RSA is used for Ctrl. */
 
+    CRYPT_PROVIDER_ERR_UNEXPECTED_IMPL = 0x01200001,     /**< Unexpected impl */
+    CRYPT_PROVIDER_ERR_IMPL_NULL,
+    CRYPT_PROVIDER_NOT_FOUND,                            /**< Provider not found. */
+    CRYPT_PROVIDER_ERR_NEWCTX,
+    CRYPT_PROVIDER_NOT_SUPPORT,
+    CRYPT_PROVIDER_ERR_ATTRIBUTE,
+    CRYPT_PROVIDER_INVALID_LIB_CTX,
+
+    CRYPT_HPKE_ERR_GEN_ASYM_KEY = 0x01210001,            /**< HPKE Generate asymmetric key error. */
+    CRYPT_HPKE_ERR_AEAD_TAG,                             /**< Failed to verify AEAD tag when decrypt. */
+    CRYPT_HPKE_ERR_CALL,                                 /**< It is not appropriate to call this function. */
+    CRYPT_HPKE_FAILED_FETCH_CIPHER,                      /**< Failed to fetch cipher. */
+    CRYPT_HPKE_FAILED_FETCH_PKEY,                        /**< Failed to fetch pkey. */
+    CRYPT_HPKE_FAILED_FETCH_KDF,                         /**< Failed to fetch kdf. */
+};
 #ifdef __cplusplus
 }
 #endif

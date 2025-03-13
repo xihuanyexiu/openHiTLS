@@ -36,13 +36,7 @@
 #endif /* HITLS_TLS_FEATURE_INDICATOR */
 #include "transcript_hash.h"
 #include "recv_process.h"
-#ifdef HITLS_TLS_PROTO_DTLS12
-static void Dtls12UninstallDto(TLS_Ctx *ctx)
-{
-    (void)ctx;
-    return;
-}
-#endif
+
 static int32_t HandshakeDone(TLS_Ctx *ctx)
 {
     (void)ctx;
@@ -63,8 +57,7 @@ static int32_t HandshakeDone(TLS_Ctx *ctx)
         }
     }
 #endif /* HITLS_TLS_FEATURE_FLIGHT */
-#ifdef HITLS_TLS_PROTO_DTLS12
-    Dtls12UninstallDto(ctx);
+#if defined(HITLS_TLS_PROTO_DTLS12) && defined(HITLS_BSL_UIO_SCTP)
 
     if (!BSL_UIO_GetUioChainTransportType(ctx->uio, BSL_UIO_SCTP)) {
         return HITLS_SUCCESS;
@@ -88,7 +81,7 @@ static int32_t HandshakeDone(TLS_Ctx *ctx)
     }
 
     ret = HS_DeletePreviousSctpAuthKey(ctx);
-#endif
+#endif /* HITLS_TLS_PROTO_DTLS12 && HITLS_BSL_UIO_SCTP */
 
     return ret;
 }
@@ -100,6 +93,7 @@ static bool IsHsSendState(HITLS_HandshakeState state)
         case TRY_SEND_CLIENT_HELLO:
         case TRY_SEND_HELLO_RETRY_REQUEST:
         case TRY_SEND_SERVER_HELLO:
+        case TRY_SEND_HELLO_VERIFY_REQUEST:
         case TRY_SEND_ENCRYPTED_EXTENSIONS:
         case TRY_SEND_CERTIFICATE:
         case TRY_SEND_SERVER_KEY_EXCHANGE:
@@ -125,6 +119,7 @@ static bool IsHsRecvState(HITLS_HandshakeState state)
     switch (state) {
         case TRY_RECV_CLIENT_HELLO:
         case TRY_RECV_SERVER_HELLO:
+        case TRY_RECV_HELLO_VERIFY_REQUEST:
         case TRY_RECV_ENCRYPTED_EXTENSIONS:
         case TRY_RECV_CERTIFICATE:
         case TRY_RECV_SERVER_KEY_EXCHANGE:

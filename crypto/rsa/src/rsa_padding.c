@@ -34,30 +34,29 @@ static int32_t CalcHash(const EAL_MdMethod *hashMethod, const CRYPT_Data *hashDa
     uint8_t *out, uint32_t outlen)
 {
     uint32_t hLen = outlen;
-    void *mdCtx = BSL_SAL_Malloc(hashMethod->ctxSize);
+    void *mdCtx = hashMethod->newCtx();
     if (mdCtx == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
         return CRYPT_MEM_ALLOC_FAIL;
     }
-    int32_t ret = hashMethod->init(mdCtx);
+    int32_t ret = hashMethod->init(mdCtx, NULL);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto ERR;
+        goto EXIT;
     }
     for (uint32_t i = 0; i < size; i++) {
         ret = hashMethod->update(mdCtx, hashData[i].data, hashData[i].len);
         if (ret != CRYPT_SUCCESS) {
             BSL_ERR_PUSH_ERROR(ret);
-            goto ERR;
+            goto EXIT;
         }
     }
     ret = hashMethod->final(mdCtx, out, &hLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
     }
-ERR:
-    hashMethod->deinit(mdCtx);
-    BSL_SAL_FREE(mdCtx);
+EXIT:
+    hashMethod->freeCtx(mdCtx);
     return ret;
 }
 
@@ -84,17 +83,17 @@ static int32_t Mgf(const EAL_MdMethod *hashMethod, const uint8_t *seed, const ui
         PUT_UINT32_BE(i, counter, 0);
         ret = CalcHash(hashMethod, hashData, sizeof(hashData) / sizeof(hashData[0]), md, hashLen);
         if (ret != CRYPT_SUCCESS) {
-            goto ERR;
+            goto EXIT;
         }
         // Output the leading maskLen octets of T as the octet string mask
         partLen = (outLen + hashLen <= maskLen) ? hashLen : (maskLen - outLen);
         if (memcpy_s(mask + outLen, maskLen - outLen, md, partLen) != EOK) {
             ret = CRYPT_SECUREC_FAIL;
             BSL_ERR_PUSH_ERROR(ret);
-            goto ERR;
+            goto EXIT;
         }
     }
-ERR:
+EXIT:
     BSL_SAL_CleanseData(md, sizeof(md));
     return ret;
 }
@@ -135,7 +134,7 @@ static int32_t PssEncodeLengthCheck(uint32_t modBits, uint32_t hLen,
         BSL_ERR_PUSH_ERROR(CRYPT_RSA_BUFF_LEN_NOT_ENOUGH);
         return CRYPT_RSA_BUFF_LEN_NOT_ENOUGH;
     }
-    if (saltLen == (uint32_t)SALTLEN_PSS_AUTOLEN_TYPE) {
+    if (saltLen == (uint32_t)CRYPT_RSA_SALTLEN_TYPE_AUTOLEN) {
         return CRYPT_SUCCESS;
     }
     if (saltLen > RSA_MAX_MODULUS_LEN) {
@@ -157,9 +156,10 @@ static int32_t PssEncodeLengthCheck(uint32_t modBits, uint32_t hLen,
 int32_t GenPssSalt(CRYPT_Data *salt, const EAL_MdMethod *mdMethod, int32_t saltLen, uint32_t padBuffLen)
 {
     uint32_t hashLen = mdMethod->mdSize;
-    if (saltLen == SALTLEN_PSS_HASHLEN_TYPE) { // saltLen is -1
+    if (saltLen == CRYPT_RSA_SALTLEN_TYPE_HASHLEN) { // saltLen is -1
         salt->len = hashLen;
-    } else if (saltLen == SALTLEN_PSS_MAXLEN_TYPE || saltLen == SALTLEN_PSS_AUTOLEN_TYPE) { // saltLen is -2 or -3
+    } else if (saltLen == CRYPT_RSA_SALTLEN_TYPE_MAXLEN ||
+        saltLen == CRYPT_RSA_SALTLEN_TYPE_AUTOLEN) { // saltLen is -2 or -3
         salt->len = padBuffLen - hashLen - 2; // salt, obtains from the DRBG
     } else {
         salt->len = (uint32_t)saltLen;
@@ -312,7 +312,7 @@ static int32_t GetAndVerifyDB(const EAL_MdMethod *mgfMethod, const CRYPT_Data *e
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
-    if (tmpSaltLen == (uint32_t)SALTLEN_PSS_AUTOLEN_TYPE) {
+    if (tmpSaltLen == (uint32_t)CRYPT_RSA_SALTLEN_TYPE_AUTOLEN) {
         ret = GetVerifySaltLen(emData->data, dbBuff->data, maskedDBLen, msBit, &tmpSaltLen);
         if (ret != CRYPT_SUCCESS) {
             return ret;
@@ -625,12 +625,12 @@ static int32_t OaepSetMaskedDB(const EAL_MdMethod *mgfMethod, uint8_t *db, uint8
     ret = Mgf(mgfMethod, seed, hashLen, maskedDB, maskedDBLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
+        goto EXIT;
     }
     for (i = 0; i < maskedDBLen; i++) {
         db[i] ^= maskedDB[i];
     }
-END:
+EXIT:
     BSL_SAL_CleanseData(maskedDB, maskedDBLen);
     BSL_SAL_FREE(maskedDB);
     return ret;
@@ -647,12 +647,12 @@ static int32_t OaepSetSeedMask(const EAL_MdMethod *mgfMethod, uint8_t *db, uint8
     ret = Mgf(mgfMethod, db, maskedDBLen, seedmask, hashLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        goto END;
+        goto EXIT;
     }
     for (i = 0; i < hashLen; i++) {
         seed[i] ^= seedmask[i];
     }
-END:
+EXIT:
     BSL_SAL_CleanseData(seedmask, hashLen);
     return ret;
 }
@@ -738,7 +738,6 @@ int32_t CRYPT_RSA_SetPkcs1Oaep(const EAL_MdMethod *hashMethod, const EAL_MdMetho
     ret = OaepSetSeedMask(mgfMethod, db, seed, padLen, hashLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        return ret;
     }
 
     return ret;

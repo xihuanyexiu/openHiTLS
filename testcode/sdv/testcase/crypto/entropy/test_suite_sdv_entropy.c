@@ -21,7 +21,7 @@
 #include "bsl_sal.h"
 #include "crypt_errno.h"
 #include "entropy.h"
-#include "eal_entropy.h"
+#include "crypt_entropy.h"
 #include "crypt_algid.h"
 
 /* END_HEADER */
@@ -43,7 +43,7 @@ void UT_CRYPTO_ENTROPY_GetCtx(void)
     ASSERT_TRUE(ENTROPY_GetCtx(EAL_EntropyGetECF(CRYPT_MAC_HMAC_SHA256), CRYPT_MAC_HMAC_SHA256) != NULL);
     ASSERT_TRUE(ENTROPY_GetCtx(NULL, CRYPT_MAC_HMAC_SHA256) == NULL);
     ASSERT_TRUE(ENTROPY_GetCtx(EAL_EntropyGetECF(CRYPT_MAC_HMAC_SHA256), 0) == NULL);
-exit:
+EXIT:
     return;
 }
 /* END_CASE */
@@ -68,7 +68,7 @@ void UT_CRYPTO_ENTROPY_GetFei(void)
     uint8_t data[32] = {0};
     ASSERT_EQ(ENTROPY_GetFullEntropyInput(seedCtx, data, 32), CRYPT_SUCCESS);
 
-exit:
+EXIT:
     return;
 }
 /* END_CASE */

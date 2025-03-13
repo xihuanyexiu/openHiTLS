@@ -42,8 +42,6 @@ void PrintLastError(void) {
     printf("failed at file %s at line %d\n", file, line);
 }
 
-BSL_SAL_MemCallback cb = { StdMalloc, free };  // Registered interfaces for memory allocation.
-
 int main(void)
 {
     uint8_t data[10] = {0xe3, 0xb0, 0xc4, 0x42, 0x98, 0xfc, 0x1c, 0x14, 0x1c, 0x14};
@@ -66,9 +64,10 @@ int main(void)
     // Initialize the error code module.
     BSL_ERR_Init();
 
-    // Before calling the algorithm APIs, call the **BSL_SAL_RegMemCallback** function to register the **malloc** and **free** functions. Execute this step only once.
+    // Before calling the algorithm APIs, call the **BSL_SAL_CallBack_Ctrl** function to register the **malloc** and **free** functions. Execute this step only once.
     // If the memory allocation ability of Linux is available, the two functions can be registered using Linux by default.
-    BSL_SAL_RegMemCallback(&cb);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC_CB_FUNC, StdMalloc);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE_CB_FUNC, free);
 
     // Create a context.
     CRYPT_EAL_CipherCtx *ctx = CRYPT_EAL_CipherNewCtx(CRYPT_CIPHER_SM4_CBC);
@@ -82,14 +81,14 @@ int main(void)
     if (ret != CRYPT_SUCCESS) {
         printf("error code is %x\n", ret); // Output the error code. You can find the error information in **crypt_errno.h** based on the error code.
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
     // Set the padding mode.
     ret = CRYPT_EAL_CipherSetPadding(ctx, CRYPT_PADDING_PKCS7);
     if (ret != CRYPT_SUCCESS) {
         printf("error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     // Enter the data to be calculated. This interface can be called for multiple times. The input value of **outLen** is the length of the ciphertext, and the output value is the amount of processed data.
@@ -97,7 +96,7 @@ int main(void)
     if (ret != CRYPT_SUCCESS) {
         printf("error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     outTotalLen += outLen;
@@ -107,7 +106,7 @@ int main(void)
     if (ret != CRYPT_SUCCESS) {
         printf("error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     outTotalLen += outLen;
@@ -128,7 +127,7 @@ int main(void)
     if (ret != CRYPT_SUCCESS) {
         printf("error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     //Set the padding mode, which must be the same as that for encryption.
@@ -136,7 +135,7 @@ int main(void)
     if (ret != CRYPT_SUCCESS) {
         printf("error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     // Enter the ciphertext data.
@@ -144,7 +143,7 @@ int main(void)
     if (ret != CRYPT_SUCCESS) {
         printf("error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
     outTotalLen += outLen;
     outLen = sizeof(plainText) - outTotalLen;
@@ -154,7 +153,7 @@ int main(void)
     if (ret != CRYPT_SUCCESS) {
         printf("error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     outTotalLen += outLen;
@@ -167,11 +166,11 @@ int main(void)
 
     if (outTotalLen != dataLen || memcmp(plainText, data, dataLen) != 0) {
         printf("plaintext comparison failed\n");
-        goto exit;
+        goto EXIT;
     }
     printf("pass \n");
 
-exit:
+EXIT:
     CRYPT_EAL_CipherFreeCtx(ctx);
     BSL_ERR_DeInit();
     return ret;
@@ -207,19 +206,18 @@ void PrintLastError(void) {
     printf("failed at file %s at line %d\n", file, line);
 }
 
-BSL_SAL_MemCallback cb = {StdMalloc, free};
-
 int main(void) {
     int32_t ret;
     BSL_ERR_Init();  // Initialize the error code module.
-    // Before calling the algorithm APIs, call the **BSL_SAL_RegMemCallback** function to register the **malloc** and **free** functions. Execute this step only once.
+    // Before calling the algorithm APIs, call the **BSL_SAL_CallBack_Ctrl** function to register the **malloc** and **free** functions. Execute this step only once.
     // If the memory allocation ability of Linux is available, the two functions can be registered using Linux by default.
-    BSL_SAL_RegMemCallback(&cb);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC_CB_FUNC, StdMalloc);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE_CB_FUNC, free);
     CRYPT_EAL_PkeyCtx *pkey = NULL;
     pkey = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_SM2);
     if (pkey == NULL) {
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     // Initialize the random number.
@@ -227,7 +225,7 @@ int main(void) {
     if (ret != CRYPT_SUCCESS) {
         printf("CRYPT_EAL_RandInit: error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     // Generate a key pair.
@@ -235,7 +233,7 @@ int main(void) {
     if (ret != CRYPT_SUCCESS) {
         printf("CRYPT_EAL_PkeyGen: error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     // Data to be encrypted.
@@ -250,7 +248,7 @@ int main(void) {
     if (ret != CRYPT_SUCCESS) {
         printf("CRYPT_EAL_PkeyEncrypt: error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     // Decrypt data.
@@ -258,7 +256,7 @@ int main(void) {
     if (ret != CRYPT_SUCCESS) {
         printf("CRYPT_EAL_PkeyDecrypt: error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     if (memcmp(dcrypt, data, dataLen) == 0) {
@@ -266,7 +264,7 @@ int main(void) {
     } else {
         ret = -1;
     }
-exit:
+EXIT:
     // Release the context memory.
     CRYPT_EAL_PkeyFreeCtx(pkey);
     CRYPT_EAL_RandDeinit();
@@ -305,7 +303,6 @@ void PrintLastError(void) {
     BSL_ERR_GetLastErrorFileLine(&file, &line);// Obtain the name and number of lines of the error file.
     printf("failed at file %s at line %d\n", file, line);
 }
-BSL_SAL_MemCallback cb = {StdMalloc, free};
 
 int main(void)
 {
@@ -320,13 +317,14 @@ int main(void)
     CRYPT_EAL_PkeyCtx *ctx = NULL;
 
     BSL_ERR_Init(); // Initialize the error code module.
-    // Before calling the algorithm APIs, call the **BSL_SAL_RegMemCallback** function to register the **malloc** and **free** functions. Execute this step only once.
+    // Before calling the algorithm APIs, call the **BSL_SAL_CallBack_Ctrl** function to register the **malloc** and **free** functions. Execute this step only once.
     // If the memory allocation ability of Linux is available, the two functions can be registered using Linux by default.
-    BSL_SAL_RegMemCallback(&cb);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC_CB_FUNC, StdMalloc);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE_CB_FUNC, free);
 
     ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_SM2);
     if (ctx == NULL) {
-        goto exit;
+        goto EXIT;
     }
 
     // Set a user ID.
@@ -334,7 +332,7 @@ int main(void)
     if (ret != CRYPT_SUCCESS) {
         printf("error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     // Initialize the random number.
@@ -342,7 +340,7 @@ int main(void)
     if (ret != CRYPT_SUCCESS) {
         printf("error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     // Generate a key pair.
@@ -350,7 +348,7 @@ int main(void)
     if (ret != CRYPT_SUCCESS) {
         printf("error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     // Sign.
@@ -358,7 +356,7 @@ int main(void)
     if (ret != CRYPT_SUCCESS) {
         printf("error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     // Verify the signature.
@@ -366,12 +364,12 @@ int main(void)
     if (ret != CRYPT_SUCCESS) {
         printf("error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     printf("pass \n");
 
-exit:
+EXIT:
     // Release the context memory.
     CRYPT_EAL_PkeyFreeCtx(ctx);
     CRYPT_EAL_RandDeinit();
@@ -412,8 +410,6 @@ void PrintLastError(void) {
     printf("failed at file %s at line %d\n", file, line);
 }
 
-BSL_SAL_MemCallback cb = {StdMalloc, free};
-
 int main(void)
 {
     int ret;
@@ -439,14 +435,15 @@ int main(void)
     CRYPT_PKEY_ParaId id = CRYPT_ECC_NISTP256;
 
     BSL_ERR_Init(); // Initialize the error code module.
-    // Before calling the algorithm APIs, call the **BSL_SAL_RegMemCallback** function to register the **malloc** and **free** functions. Execute this step only once.
+    // Before calling the algorithm APIs, call the **BSL_SAL_CallBack_Ctrl** function to register the **malloc** and **free** functions. Execute this step only once.
     // If the memory allocation ability of Linux is available, the two functions can be registered using Linux by default.
-    BSL_SAL_RegMemCallback(&cb);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC_CB_FUNC, StdMalloc);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE_CB_FUNC, free);
 
     prvCtx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ECDH);
     pubCtx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ECDH);
     if (prvCtx == NULL || pubCtx == NULL) {
-        goto exit;
+        goto EXIT;
     }
 
     // Set the curve parameters.
@@ -454,7 +451,7 @@ int main(void)
     if (ret != CRYPT_SUCCESS) {
         printf("error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     // Set the private key of one end.
@@ -465,7 +462,7 @@ int main(void)
     if (ret != CRYPT_SUCCESS) {
         printf("error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     // Set the curve parameters.
@@ -473,7 +470,7 @@ int main(void)
     if (ret != CRYPT_SUCCESS) {
         printf("error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     // Set the public key of the other end.
@@ -484,7 +481,7 @@ int main(void)
     if (ret != CRYPT_SUCCESS) {
         printf("error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     // The shared key involves only the X axis. The length of the public key is not compressed in the returned results.
@@ -493,7 +490,7 @@ int main(void)
     if (shareKey == NULL) {
         ret = CRYPT_MEM_ALLOC_FAIL;
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     // Initialize the random number.
@@ -501,7 +498,7 @@ int main(void)
     if (ret != CRYPT_SUCCESS) {
         printf("CRYPT_EAL_RandInit: error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     // Calculate the shared key.
@@ -509,19 +506,19 @@ int main(void)
     if (ret != CRYPT_SUCCESS) {
         printf("error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     // Compare the calculation result with the expected one.
     if (shareLen != sizeof(resSharekey) || memcmp(shareKey, resSharekey, shareLen) != 0) {
         printf("failed to compare test results\n");
         ret = -1;
-        goto exit;
+        goto EXIT;
     }
 
     printf("pass \n");
 
-exit:
+EXIT:
     // Release the context memory.
     CRYPT_EAL_RandDeinit();
     CRYPT_EAL_PkeyFreeCtx(prvCtx);
@@ -550,6 +547,10 @@ The PBKDF2, HKDF, SCRYPT, and KDFTLS12 algorithms can be used for key derivation
 #include "bsl_err.h"
 #include "crypt_algid.h"
 #include "crypt_eal_kdf.h"
+#include "bsl_params.h"
+#include "crypt_params_key.h"
+
+#define PBKDF2_PARAM_LEN (4)
 
 void *StdMalloc(uint32_t len) {
     return malloc((size_t)len);
@@ -561,8 +562,6 @@ void PrintLastError(void) {
     BSL_ERR_GetLastErrorFileLine(&file, &line);
     printf("failed at file %s at line %d\n", file, line);
 }
-
-BSL_SAL_MemCallback cb = {StdMalloc, free};
 
 int main(void)
 {
@@ -586,24 +585,50 @@ int main(void)
     // Initialize the error code module.
     BSL_ERR_Init();
 
-    // Before calling the algorithm APIs, call the **BSL_SAL_RegMemCallback** function to register the **malloc** and **free** functions. Execute this step only once.
-    // If the memory allocation ability of Linux is available, the two functions can be registered using Linux by default.
-    BSL_SAL_RegMemCallback(&cb);
+    /**
+     * Before calling the algorithm APIs,
+     * call the BSL_SAL_CallBack_Ctrl function to register the malloc and free functions.
+     * Execute this step only once. If the memory allocation ability of Linux is available,
+     * the two functions can be registered using Linux by default.
+    */
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC_CB_FUNC, StdMalloc);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE_CB_FUNC, free);
 
-    ret = CRYPT_EAL_Pbkdf2(CRYPT_MAC_HMAC_SHA256, key, sizeof(key), salt, sizeof(salt), iterations, out, outLen);
-    if (ret != CRYPT_SUCCESS) {
-        printf("pbkdf2 error code is %x\n", ret);
+    CRYPT_EAL_KdfCTX *ctx = CRYPT_EAL_KdfNewCtx(CRYPT_KDF_PBKDF2);
+    if (ctx == NULL) {
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
+    CRYPT_MAC_AlgId id = CRYPT_MAC_HMAC_SHA256;
+    BSL_Param params[5] = {{0}, {0}, {0}, {0}, BSL_PARAM_END};
+    (void)BSL_PARAM_InitValue(&params[0], CRYPT_PARAM_KDF_MAC_ID, BSL_PARAM_TYPE_UINT32, &id, sizeof(id));
+    (void)BSL_PARAM_InitValue(&params[1], CRYPT_PARAM_KDF_PASSWORD, BSL_PARAM_TYPE_OCTETS, key, sizeof(key));
+    (void)BSL_PARAM_InitValue(&params[2], CRYPT_PARAM_KDF_SALT, BSL_PARAM_TYPE_OCTETS, salt, sizeof(salt));
+    (void)BSL_PARAM_InitValue(&params[3], CRYPT_PARAM_KDF_ITER, BSL_PARAM_TYPE_UINT32, &iterations, sizeof(iterations));
+    ret = CRYPT_EAL_KdfSetParam(ctx, params);
+    if (ret != CRYPT_SUCCESS) {
+        printf("error code is %x\n", ret);
+        PrintLastError();
+        goto EXIT;
+    }
+
+    ret = CRYPT_EAL_KdfDerive(ctx, out, outLen);
+    if (ret != CRYPT_SUCCESS) {
+        printf("error code is %x\n", ret);
+        PrintLastError();
+        goto EXIT;
+    }
+
     if (memcmp(out, result, sizeof(result)) != 0) {
         printf("failed to compare test results\n");
         ret = -1;
-        goto exit;
+        goto EXIT;
     }
     printf("pass \n");
-exit:
+
+EXIT:
     BSL_ERR_DeInit();
+    CRYPT_EAL_KdfFreeCtx(ctx);
     return ret;
 }
 ```
@@ -615,7 +640,7 @@ exit:
 The DRBG-SHA, DRBG-HMAC, and DRBG-CTR algorithms can be used for random number generation. The interfaces include global random number interfaces and multi-instance random number interfaces.
 
 ```c
-/* 
+/*
 *  Global random number initializing and deinitializing interfaces.
  * The **seedMeth** value of initializing interfaces is the entropy source of the callback, and the **seedCtx** value is the context called back by the user.
 *  Users can set their own entropy source. If it is not set, the default entropy source is used.
@@ -630,7 +655,7 @@ int32_t CRYPT_EAL_RandSeed(void);
 
 /*The deterministic random bit generator (DRBG) context of the multi-instance random number interfaces is returned to the user. This is the main difference between the two types of interfaces.
  * Multiple DRBG contexts can be created. Different contexts do not interfere with each other during entropy source setting and internal status change.*/
-CRYPT_EAL_RndCtx *CRYPT_EAL_DrbgInit(CRYPT_RAND_AlgId id, CRYPT_RandSeedMethod *seedMeth, void *seedCtx, const uint8_t *pers, uint32_t persLen);
+CRYPT_EAL_RndCtx *CRYPT_EAL_DrbgNew(CRYPT_RAND_AlgId id, CRYPT_RandSeedMethod *seedMeth, void *seedCtx);
 void CRYPT_EAL_DrbgDeinit(CRYPT_EAL_RndCtx *ctx);
 ```
 
@@ -661,17 +686,16 @@ void PrintLastError(void) {
     printf("failed at file %s at line %d\n", file, line);
 }
 
-BSL_SAL_MemCallback cb = {StdMalloc, free};
-
 int main(void)
 {
     int ret;
     uint8_t output[100] = {0};
     uint32_t len = 100;
 
-    // Before calling the algorithm APIs, call the **BSL_SAL_RegMemCallback** function to register the **malloc** and **free** functions. Execute this step only once.
+    // Before calling the algorithm APIs, call the **BSL_SAL_CallBack_Ctrl** function to register the **malloc** and **free** functions. Execute this step only once.
     // If the memory allocation ability of Linux is available, the two functions can be registered using Linux by default.
-    BSL_SAL_RegMemCallback(&cb);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC_CB_FUNC, StdMalloc);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE_CB_FUNC, free);
 
     BSL_ERR_Init();// Initialize the error module.
 
@@ -680,7 +704,7 @@ int main(void)
     if (ret != CRYPT_SUCCESS) {
         printf("CRYPT_EAL_RandInit: error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     // Obtain the random number sequence of the **len** value.
@@ -688,7 +712,7 @@ int main(void)
     if (ret != CRYPT_SUCCESS) {
         printf("CRYPT_EAL_Randbytes: error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     printf("random value is: ");  // Output the random number.
@@ -702,7 +726,7 @@ int main(void)
     if (ret != CRYPT_SUCCESS) {
         printf("CRYPT_EAL_RandSeed: error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     // Obtain the random number sequence of the **len** value.
@@ -710,7 +734,7 @@ int main(void)
     if (ret != CRYPT_SUCCESS) {
         printf("CRYPT_EAL_Randbytes: error code is %x\n", ret);
         PrintLastError();
-        goto exit;
+        goto EXIT;
     }
 
     printf("random value is: "); // Output the random number.
@@ -719,7 +743,7 @@ int main(void)
     }
     printf("\n");
 
-exit:
+EXIT:
     // Release the context memory.
     CRYPT_EAL_RandDeinit();
     BSL_ERR_DeInit();

@@ -55,13 +55,13 @@ static uint32_t RecGetDefaultBufferSize(bool isDtls, bool isRead)
 
 static uint32_t RecGetReadBufferSize(const TLS_Ctx *ctx)
 {
-    uint32_t recSize = RecGetDefaultBufferSize(IS_DTLS_VERSION(ctx->config.tlsConfig.maxVersion), true);
+    uint32_t recSize = RecGetDefaultBufferSize(IS_SUPPORT_DATAGRAM(ctx->config.tlsConfig.originVersionMask), true);
     return recSize;
 }
 
 static uint32_t RecGetWriteBufferSize(const TLS_Ctx *ctx)
 {
-    uint32_t recSize = RecGetDefaultBufferSize(IS_DTLS_VERSION(ctx->config.tlsConfig.maxVersion), false);
+    uint32_t recSize = RecGetDefaultBufferSize(IS_SUPPORT_DATAGRAM(ctx->config.tlsConfig.originVersionMask), false);
     return recSize;
 }
 
@@ -90,7 +90,7 @@ static int32_t InnerRecRead(TLS_Ctx *ctx, REC_Type recordType, uint8_t *data, ui
 #endif
 
 #ifdef HITLS_TLS_PROTO_DTLS12
-    if (IS_DTLS_VERSION(ctx->config.tlsConfig.maxVersion)) {
+    if (IS_SUPPORT_DATAGRAM(ctx->config.tlsConfig.originVersionMask)) {
         return DtlsRecordRead(ctx, recordType, data, readLen, num);
     }
 #endif
@@ -123,7 +123,7 @@ static int32_t InnerRecWrite(TLS_Ctx *ctx, REC_Type recordType, const uint8_t *d
     }
 
 #ifdef HITLS_TLS_PROTO_DTLS12
-    if (IS_DTLS_VERSION(ctx->config.tlsConfig.maxVersion)) {
+    if (IS_SUPPORT_DATAGRAM(ctx->config.tlsConfig.originVersionMask)) {
         /* DTLS */
         return DtlsRecordWrite(ctx, recordType, data, num);
     }
@@ -231,19 +231,19 @@ int32_t REC_Init(TLS_Ctx *ctx)
 #endif
     ret = RecBufInit(ctx, newRecCtx);
     if (ret != HITLS_SUCCESS) {
-        goto err;
+        goto ERR;
     }
 
     ret = RecConnStatesInit(newRecCtx);
     if (ret != HITLS_SUCCESS) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15534, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "Record: init connect state fail.", 0, 0, 0, 0);
-        goto err;
+        goto ERR;
     }
 
     ctx->recCtx = newRecCtx;
     return HITLS_SUCCESS;
-err:
+ERR:
     RecDeInit(newRecCtx);
     BSL_SAL_FREE(newRecCtx);
     return ret;
@@ -331,14 +331,14 @@ int32_t REC_InitPendingState(const TLS_Ctx *ctx, const REC_SecParameters *param)
     RecConnState *writeState = RecConnStateNew();
     if (readState == NULL || writeState == NULL) {
         (void)RETURN_ERROR_NUMBER_PROCESS(ret, BINLOG_ID17301, "StateNew fail");
-        goto err;
+        goto ERR;
     }
 
     /* 1.Generate a secret */
     ret = RecConnKeyBlockGen(param, &clientSuitInfo, &serverSuitInfo);
     if (ret != HITLS_SUCCESS) {
         (void)RETURN_ERROR_NUMBER_PROCESS(ret, BINLOG_ID17302, "KeyBlockGen fail");
-        goto err;
+        goto ERR;
     }
 
     /* 2.Set the corresponding read/write pending state */
@@ -347,12 +347,12 @@ int32_t REC_InitPendingState(const TLS_Ctx *ctx, const REC_SecParameters *param)
     ret = RecConnStateSetCipherInfo(writeState, out);
     if (ret != HITLS_SUCCESS) {
         (void)RETURN_ERROR_NUMBER_PROCESS(ret, BINLOG_ID17303, "SetCipherInfo fail");
-        goto err;
+        goto ERR;
     }
     ret = RecConnStateSetCipherInfo(readState, in);
     if (ret != HITLS_SUCCESS) {
         (void)RETURN_ERROR_NUMBER_PROCESS(ret, BINLOG_ID17304, "SetCipherInfo fail");
-        goto err;
+        goto ERR;
     }
 
     /* Clear sensitive information */
@@ -361,7 +361,7 @@ int32_t REC_InitPendingState(const TLS_Ctx *ctx, const REC_SecParameters *param)
     recordCtx->readStates.pendingState = readState;
     recordCtx->writeStates.pendingState = writeState;
     return HITLS_SUCCESS;
-err:
+ERR:
     /* Clear sensitive information */
     FreeDataAndState(&clientSuitInfo, &serverSuitInfo, readState, writeState);
     BSL_ERR_PUSH_ERROR(ret);
@@ -435,7 +435,7 @@ int32_t REC_ActivePendingState(TLS_Ctx *ctx, bool isOut)
     RecConnSetSeqNum(states->currentState, 0);
 
 #ifdef HITLS_TLS_PROTO_DTLS12
-    if (IS_DTLS_VERSION(ctx->config.tlsConfig.maxVersion)) {
+    if (IS_SUPPORT_DATAGRAM(ctx->config.tlsConfig.originVersionMask)) {
         if (isOut) {
             ++recordCtx->writeEpoch;
             RecConnSetEpoch(states->currentState, recordCtx->writeEpoch);

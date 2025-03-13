@@ -29,19 +29,11 @@
 extern "C" {
 #endif /* __cpluscplus */
 
-// When the padding type is PSS, the salt data is obtained by the DRBG and the length is hashlen.
-#define SALTLEN_PSS_HASHLEN_TYPE      (-1)
-// When the padding type is PSS, the salt data is obtained by the DRBG.
-// and the length is padLen - mdMethod->GetDigestSize - 2
-#define SALTLEN_PSS_MAXLEN_TYPE       (-2)
-// get salt length from signature
-#define SALTLEN_PSS_AUTOLEN_TYPE      (-3)
-
 #define HASH_MAX_MDSIZE  (64)
 
 typedef struct RSA_BlindSt {
-    BN_BigNum *a;
-    BN_BigNum *ai;
+    BN_BigNum *r;
+    BN_BigNum *rInv;
 } RSA_Blind;
 
 typedef struct {
@@ -85,25 +77,47 @@ typedef enum {
                           to prevent possible Bleichenbacher attacks */
 } RSA_PadType;
 
+/**
+ * @ingroup crypt_types
+ *
+ * Pkcsv15 padding mode, when RSA is used for signature.
+ */
+typedef struct {
+    CRYPT_MD_AlgId mdId; /**< ID of the hash algorithm during pkcsv15 padding */
+} RSA_PkcsV15Para;
+
 typedef struct {
     RSA_PadType type; /**< padding id */
     union {
-        CRYPT_RSA_PkcsV15Para pkcsv15; /**< pkcsv15 padding mode */
+        RSA_PkcsV15Para pkcsv15; /**< pkcsv15 padding mode */
         RSA_PadingPara pss;         /**< pss padding mode */
         RSA_PadingPara oaep; /**< oaep padding mode */
     } para;                            /**< padding mode combination, including pss and pkcsv15 */
     CRYPT_Data salt; // Used for the KAT test.
 } RSAPad;
 
+typedef enum {
+    RSABSSA = 1, /**< RSA Blind Signature */
+    RSAPBSSA,
+} RSA_BlindType;
+
+typedef struct {
+    RSA_BlindType type; /**< padding id */
+    union {
+        RSA_Blind *bssa;
+    } para;
+} RSA_BlindParam;
+
 struct RSA_Ctx {
     CRYPT_RSA_PrvKey *prvKey;
     CRYPT_RSA_PubKey *pubKey;
     CRYPT_RSA_Para *para;
-    RSA_Blind *blind;
+    RSA_Blind *scBlind; // Preventing side channel attacks
     RSAPad pad;
     uint32_t flags;
     CRYPT_Data label; // Used for oaep padding
     BSL_SAL_RefCount references;
+    RSA_BlindParam *blindParam;
 };
 
 CRYPT_RSA_PrvKey *RSA_NewPrvKey(uint32_t bits);
@@ -169,6 +183,8 @@ int32_t RSA_BlindInvert(RSA_Blind *b, BN_BigNum *data, BN_BigNum *n, BN_Optimize
  * @retval Return the error code.
  */
 int32_t RSA_BlindCreateParam(RSA_Blind *b, BN_BigNum *e, BN_BigNum *n, BN_Optimizer *opt);
+
+int32_t RSA_CreateBlind(RSA_Blind *b, uint32_t bits);
 
 #define RSA_FREE_PRV_KEY(prvKey_)               \
 do {                                            \

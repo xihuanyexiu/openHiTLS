@@ -24,7 +24,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "bsl_type.h"
+#include "bsl_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,13 +42,16 @@ typedef enum {
     BSL_CID_CHACHA20_POLY1305 = 1,
 
     // aes
-    BSL_CID_AES128_CBC = 16,       /**< identifies AES-128 algorithm in CBC mode */
+    BSL_CID_AES128_CBC = 16,        /**< identifies AES-128 algorithm in CBC mode */
+    BSL_CID_AES128_ECB,             /**< identifies AES-128 algorithm in ECB mode */
     BSL_CID_AES128_OFB,             /**< identifies AES-128 algorithm in OFB mode */
     BSL_CID_AES128_CFB,             /**< identifies AES-128 algorithm in CFB mode */
     BSL_CID_AES192_CBC,             /**< identifies AES-192 algorithm in CBC mode */
+    BSL_CID_AES192_ECB,             /**< identifies AES-192 algorithm in ECB mode */
     BSL_CID_AES192_OFB,             /**< identifies AES-192 algorithm in OFB mode */
     BSL_CID_AES192_CFB,             /**< identifies AES-192 algorithm in CFB mode */
     BSL_CID_AES256_CBC,             /**< identifies AES-256 algorithm in CBC mode */
+    BSL_CID_AES256_ECB,             /**< identifies AES-256 algorithm in ECB mode */
     BSL_CID_AES256_OFB,             /**< identifies AES-256 algorithm in OFB mode */
     BSL_CID_AES256_CFB,             /**< identifies AES-256 algorithm in CFB mode */
     BSL_CID_AES128_GCM,             /**< Identifies the AES128 algorithm in GCM mode */
@@ -68,6 +71,7 @@ typedef enum {
     BSL_CID_SM4_GCM,
     BSL_CID_SM4_CFB,
     BSL_CID_SM4_OFB,
+    BSL_CID_SM4_ECB,
 
     /* asymmetrical algorithm */
     BSL_CID_RSA = 5001,              /**< identifies the RSA algorithm */
@@ -198,12 +202,19 @@ typedef enum {
 
     /* rfc5280 */
     BSL_CID_CE = 127001,
-    BSL_CID_CE_AUTHORITYKEYID,
-    BSL_CID_CE_SUBJECTKEYID,
+    BSL_CID_CE_AUTHORITYKEYIDENTIFIER,
+    BSL_CID_CE_SUBJECTKEYIDENTIFIER,
     BSL_CID_CE_KEYUSAGE,
     BSL_CID_CE_SUBJECTALTNAME,
     BSL_CID_CE_BASICCONSTRAINTS,
-    BSL_CID_CE_EXTENDEDKEYUSAGE,
+    BSL_CID_CE_CRLNUMBER,
+    BSL_CID_CE_CRLREASON,
+    BSL_CID_CE_INVALIDITYDATE,
+    BSL_CID_CE_DELTACRLINDICATOR,
+    BSL_CID_CE_ISSUINGDISTRIBUTIONPOINT,
+    BSL_CID_CE_CERTIFICATEISSUER,
+    BSL_CID_CE_EXTKEYUSAGE,
+    BSL_CID_CE_FRESHESTCRL,
     BSL_CID_CE_SERVERAUTH,
     BSL_CID_CE_CLIENTAUTH,
     BSL_CID_CE_CODESIGNING,
@@ -219,7 +230,7 @@ typedef enum {
 
     /* Attributes: rfc4519, rfc5280 */
     BSL_CID_COMMONNAME = 130301,
-    BSL_CID_SUNAME,
+    BSL_CID_SURNAME,
     BSL_CID_SERIALNUMBER,
     BSL_CID_COUNTRYNAME,
     BSL_CID_LOCALITYNAME,
@@ -241,15 +252,13 @@ typedef enum {
     BSL_CID_REQ_EXTENSION = 130601,
 
     /* rfc2315 */
-    BSL_CID_CONTENTINFO = 130701,
-    BSL_CID_DATA, // kind of contentInfo
-    BSL_CID_SIGENEDDATA,
-    BSL_CID_ENCRYPTEDDATA,
-    BSL_CID_ENVELOPEDDATA,
+    BSL_CID_PKCS7_CONTENTINFO = 130701,
+    BSL_CID_PKCS7_SIMPLEDATA, // kind of contentInfo
+    BSL_CID_PKCS7_ENCRYPTEDDATA,
 
     /* PKCS9  */
     BSL_CID_FRIENDLYNAME = 130801,
-    BSL_CID_LOCATEDID,
+    BSL_CID_LOCALKEYID,
     BSL_CID_X509CERTIFICATE,
 
     /* rfc7292 */
@@ -258,7 +267,8 @@ typedef enum {
     BSL_CID_CERTBAG,
     BSL_CID_CRLBAG,
     BSL_CID_SECRETBAG,
-    BSL_CID_SAFECONTENT,
+    BSL_CID_SAFECONTENTSBAG,
+    BSL_CID_PKCS12KDF,
 
     BSL_CID_MAX,
     BSL_CID_EXTEND = 0x60000000,

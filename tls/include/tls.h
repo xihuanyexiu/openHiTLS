@@ -40,6 +40,12 @@ extern "C" {
 
 #define IS_DTLS_VERSION(version) (((version) & 0x8u) == 0x8u)
 
+#define IS_SUPPORT_STREAM(versionBits) (((versionBits) & STREAM_VERSION_BITS) != 0x0u)
+#define IS_SUPPORT_DATAGRAM(versionBits) (((versionBits) & DATAGRAM_VERSION_BITS) != 0x0u)
+#define IS_SUPPORT_TLCP(versionBits) (((versionBits) & TLCP_VERSION_BITS) != 0x0u)
+
+#define DTLS_COOKIE_LEN 255
+
 #define MAC_KEY_LEN 32u              /* the length of mac key */
 
 #define UNPROCESSED_APP_MSG_COUNT_MAX 50       /* number of APP data cached */
@@ -137,6 +143,7 @@ typedef enum {
     TRY_SEND_CLIENT_HELLO,          /* sends client hello message */
     TRY_SEND_HELLO_RETRY_REQUEST,   /* sends hello retry request message */
     TRY_SEND_SERVER_HELLO,          /* sends server hello message */
+    TRY_SEND_HELLO_VERIFY_REQUEST,  /* sends hello verify request message */
     TRY_SEND_ENCRYPTED_EXTENSIONS,  /* sends encrypted extensions message */
     TRY_SEND_CERTIFICATE,           /* sends certificate message */
     TRY_SEND_SERVER_KEY_EXCHANGE,   /* sends server key exchange message */
@@ -151,6 +158,7 @@ typedef enum {
     TRY_SEND_KEY_UPDATE,            /* sends keyupdate message */
     TRY_RECV_CLIENT_HELLO,          /* attempts to receive client hello message */
     TRY_RECV_SERVER_HELLO,          /* attempts to receive server hello message */
+    TRY_RECV_HELLO_VERIFY_REQUEST,  /* attempts to receive hello verify request message */
     TRY_RECV_ENCRYPTED_EXTENSIONS,  /* attempts to receive encrypted extensions message */
     TRY_RECV_CERTIFICATE,           /* attempts to receive certificate message */
     TRY_RECV_SERVER_KEY_EXCHANGE,   /* attempts to receive server key exchange message */
@@ -286,6 +294,9 @@ struct TlsCtx {
     bool plainAlertForbid;                  /* tls1.3 forbid to receive plain alert message */
     bool allowAppOut;                       /* whether user used HITLS_read to start renegotiation */
 };
+
+#define LIBCTX_FROM_CTX(ctx) ((ctx == NULL) ? NULL : (ctx)->config.tlsConfig.libCtx)
+#define ATTRIBUTE_FROM_CTX(ctx) ((ctx == NULL) ? NULL : (ctx)->config.tlsConfig.attrName)
 
 #ifdef __cplusplus
 }

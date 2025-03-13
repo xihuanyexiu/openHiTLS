@@ -37,6 +37,7 @@
 #include "cert_callback.h"
 #include "sctp_channel.h"
 #include "tcp_channel.h"
+#include "udp_channel.h"
 #include "common_func.h"
 #include "crypt_eal_rand.h"
 #include "crypt_algid.h"
@@ -159,6 +160,8 @@ static const HitlsConfig g_cipherSuiteList[] = {
     {"HITLS_ECDH_ANON_WITH_AES_256_CBC_SHA", HITLS_ECDH_ANON_WITH_AES_256_CBC_SHA},
     {"HITLS_ECDHE_SM4_CBC_SM3", HITLS_ECDHE_SM4_CBC_SM3},
     {"HITLS_ECC_SM4_CBC_SM3", HITLS_ECC_SM4_CBC_SM3},
+    {"HITLS_ECDHE_SM4_GCM_SM3", HITLS_ECDHE_SM4_GCM_SM3},
+    {"HITLS_ECC_SM4_GCM_SM3", HITLS_ECC_SM4_GCM_SM3},
 
     /* error ciphersuite */
     {"HITLS_INVALID_CIPHER_TC01", 0xFFFF},
@@ -247,6 +250,12 @@ HITLS_Config *HitlsNewCtx(TLS_VERSION tlsVersion)
         case TLCP1_1:
             LOG_DEBUG("HiTLS New TLCP1_1 Ctx");
             hitlsConfig = HITLS_CFG_NewTLCPConfig();
+            break;
+#endif
+#ifdef HITLS_TLS_PROTO_DTLCP11
+        case DTLCP1_1:
+            LOG_DEBUG("HiTLS New DTLCP1_1 Ctx");
+            hitlsConfig = HITLS_CFG_NewDTLCPConfig();
             break;
 #endif
         default:
@@ -564,6 +573,8 @@ const BSL_UIO_Method *GetDefaultMethod(HILT_TransportType type)
             return SctpGetDefaultMethod();
         case TCP:
             return TcpGetDefaultMethod();
+        case UDP:
+            return UdpGetDefaultMethod();
         default:
             break;
     }
@@ -591,6 +602,20 @@ int HitlsSetSsl(void *ssl, HLT_Ssl_Config *sslConfig)
         BSL_UIO_Free(uio);
         return ERROR;
     }
+
+    if (BSL_UIO_GetTransportType(uio) == BSL_UIO_UDP) {
+        struct sockaddr_in serverAddr;
+        uint32_t addrlen = sizeof(serverAddr);
+        if (getpeername(sslConfig->sockFd, (struct sockaddr *)&serverAddr, &addrlen) == 0) {
+            ret = BSL_UIO_Ctrl(uio, BSL_UIO_DGRAM_SET_CONNECTED, (int32_t)sizeof(serverAddr), &serverAddr);
+            if (ret != HITLS_SUCCESS) {
+                LOG_ERROR("BSL_UIO_SET_PEER_IP_ADDR failed\n");
+                BSL_UIO_Free(uio);
+                return ERROR;
+            }
+        }
+    }
+
     BSL_UIO_SetInit(uio, 1);
 
     ret = HITLS_SetUio(ssl, uio);

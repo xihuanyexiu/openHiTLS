@@ -63,6 +63,8 @@ typedef struct TlsSessionManager TLS_SessionMgr;
  */
 typedef struct TlsConfig {
     BSL_SAL_RefCount references;        /* reference count */
+    HITLS_Lib_Ctx *libCtx;          /* library context */
+    const char *attrName;              /* attrName */
     uint32_t version;                   /* supported proto version */
     uint32_t originVersionMask;         /* the original supported proto version mask */
     uint16_t minVersion;                /* min supported proto version */
@@ -102,7 +104,6 @@ typedef struct TlsConfig {
     /* TLS1.3 psk */
     HITLS_PskFindSessionCb pskFindSessionCb;    /* TLS1.3 PSK server callback */
     HITLS_PskUseSessionCb pskUseSessionCb;      /* TLS1.3 PSK client callback */
-
 
     HITLS_CRYPT_Key *dhTmp;             /* Temporary DH key set by the user */
     HITLS_DhTmpCb dhTmpCb;              /* Temporary ECDH key set by the user */
@@ -155,6 +156,9 @@ typedef struct TlsConfig {
     bool isSupportSessionTicket;        /* is support session ticket */
     bool isSupportServerPreference;     /* server cipher suites can be preferentially selected */
 
+    /* DTLS */
+    bool isHelloVerifyReqEnable;    /* is HelloVerifyRequest message enabled on server */
+
     /**
      * Configurations in the HITLS_Ctx are classified into private configuration and global configuration.
      * The following parameters directly reference the global configuration in tls.
@@ -168,10 +172,17 @@ typedef struct TlsConfig {
     HITLS_SniDealCb sniDealCb;          /* server name callback function */
     HITLS_ClientHelloCb clientHelloCb;          /* ClientHello callback */
     void *clientHelloCbArg;                     /* the args for ClientHello callback */
+#ifdef HITLS_TLS_PROTO_DTLS12
+    HITLS_CookieGenerateCb cookieGenerateCb;
+    HITLS_CookieVerifyCb cookieVerifyCb;
+#endif
     HITLS_NewSessionCb newSessionCb;    /* negotiates to generate a session */
     HITLS_KeyLogCb keyLogCb;            /* the key log callback */
     bool isKeepPeerCert;                /* whether to save the peer certificate */
 } TLS_Config;
+
+#define LIBCTX_FROM_CONFIG(config) ((config == NULL) ? NULL : (config)->libCtx)
+#define ATTRIBUTE_FROM_CONFIG(config) ((config == NULL) ? NULL : (config)->attrName)
 
 #ifdef __cplusplus
 }

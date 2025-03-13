@@ -44,11 +44,12 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_UNEXPETED_REORD_TYPE_TC001(void)
     testInfo.state = HS_STATE_BUTT;
     testInfo.isClient = false;
     testInfo.isSupportExtendMasterSecret = true;
-    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo, BSL_UIO_SCTP) == HITLS_SUCCESS);
     frameType.versionType = HITLS_VERSION_DTLS12;
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = CLIENT_HELLO;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = BSL_UIO_SCTP;
     ASSERT_TRUE(FRAME_GetDefaultMsg(&frameType, &frameMsg) == HITLS_SUCCESS);
     uint32_t sendLen = MAX_RECORD_LENTH;
     uint8_t sendBuf[MAX_RECORD_LENTH] = {0};
@@ -71,7 +72,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_UNEXPETED_REORD_TYPE_TC001(void)
     ASSERT_TRUE(testInfo.client->ssl->state == CM_STATE_TRANSPORTING);
     ASSERT_TRUE(dataSize == 0);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -92,7 +93,7 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC5246_SEQ_NUMBER_TC001(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC5246_SEQ_NUMBER_TC001(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     FRAME_Msg frameMsg = {0};
@@ -100,7 +101,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SEQ_NUMBER_TC001(void)
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.state = TRY_RECV_CLIENT_HELLO;
     testInfo.isClient = false;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, uioType) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.server->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -110,11 +111,12 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SEQ_NUMBER_TC001(void)
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = CLIENT_HELLO;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = uioType;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     ASSERT_TRUE(parseLen == recvLen);
     ASSERT_TRUE(frameMsg.body.hsMsg.sequence.data == 0);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -135,7 +137,7 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC5246_SEQ_NUMBER_TC002(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC5246_SEQ_NUMBER_TC002(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     FRAME_Msg frameMsg = {0};
@@ -143,7 +145,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SEQ_NUMBER_TC002(void)
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.state = TRY_RECV_SERVER_HELLO;
     testInfo.isClient = true;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, uioType) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.client->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -153,11 +155,12 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SEQ_NUMBER_TC002(void)
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = SERVER_HELLO;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = uioType;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     ASSERT_TRUE(parseLen == recvLen);
     ASSERT_TRUE(frameMsg.body.hsMsg.sequence.data == 0);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -180,7 +183,7 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC5246_SEQ_NUMBER_TC003(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC5246_SEQ_NUMBER_TC003(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     FRAME_Msg frameMsg = {0};
@@ -188,7 +191,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SEQ_NUMBER_TC003(void)
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.state = TRY_RECV_FINISH;
     testInfo.isClient = false;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, uioType) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.server->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -196,6 +199,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SEQ_NUMBER_TC003(void)
     uint32_t parseLen = 0;
     frameType.versionType = HITLS_VERSION_DTLS12;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = uioType;
     ASSERT_TRUE(FRAME_ParseMsgHeader(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     ASSERT_TRUE(parseLen == PARSEMSGHEADER_LEN);
     ASSERT_TRUE(frameMsg.body.hsMsg.sequence.data == 0);
@@ -209,11 +213,12 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SEQ_NUMBER_TC003(void)
     FRAME_Type frameType_1 = {0};
     frameType_1.versionType = HITLS_VERSION_DTLS12;
     frameType_1.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType_1.transportType = uioType;
     ASSERT_TRUE(FRAME_ParseMsgHeader(&frameType_1, recvBuf_1, recvLen_1, &frameMsg_1, &parseLen_1) == HITLS_SUCCESS);
     ASSERT_TRUE(parseLen_1 == PARSEMSGHEADER_LEN);
     ASSERT_TRUE(frameMsg_1.body.hsMsg.sequence.data == 0);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     FRAME_CleanMsg(&frameType_1, &frameMsg_1);
     HITLS_CFG_FreeConfig(testInfo.config);
@@ -240,14 +245,14 @@ After the modification is complete, send the modification to the server. Expecte
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_TOOLONG_TC001(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_TOOLONG_TC001(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     testInfo.state = TRY_RECV_CERTIFICATE;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = false;
     testInfo.isSupportClientVerify = true;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, uioType) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.server->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -259,6 +264,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_TOOLONG_TC001(void)
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = CERTIFICATE;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = uioType;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     uint8_t *certDataTemp = (uint8_t *)BSL_SAL_Calloc(1, (uint32_t)BUF_TOOLONG_LEN);
     ASSERT_TRUE(certDataTemp != NULL);
@@ -278,7 +284,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_TOOLONG_TC001(void)
     ASSERT_TRUE(testInfo.server->ssl != NULL);
     ASSERT_EQ(HITLS_Accept(testInfo.server->ssl), HITLS_REC_NORMAL_RECV_BUF_EMPTY);
     ASSERT_TRUE(testInfo.server->ssl->hsCtx->state == TRY_RECV_CERTIFICATE);
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -304,14 +310,14 @@ After the modification is complete, send the modification to the server. Expecte
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_TOOLONG_TC002(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_TOOLONG_TC002(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     testInfo.state = TRY_RECV_CERTIFICATE;
     testInfo.isClient = true;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isSupportClientVerify = true;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, uioType) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.client->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -323,6 +329,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_TOOLONG_TC002(void)
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = CERTIFICATE;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = uioType;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     uint8_t *certDataTemp = (uint8_t *)BSL_SAL_Calloc(1, (uint32_t)BUF_TOOLONG_LEN);
     ASSERT_TRUE(certDataTemp != NULL);
@@ -343,7 +350,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_TOOLONG_TC002(void)
     ASSERT_TRUE(testInfo.client->ssl != NULL);
     ASSERT_EQ(HITLS_Connect(testInfo.client->ssl), HITLS_REC_NORMAL_RECV_BUF_EMPTY);
     ASSERT_TRUE(testInfo.client->ssl->hsCtx->state == TRY_RECV_CERTIFICATE);
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -367,19 +374,20 @@ Length is 2 ^ 14 + 1. After the modification is complete, send the modification 
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_TOOLONG_TC003(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_TOOLONG_TC003(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     testInfo.state = TRY_RECV_CLIENT_KEY_EXCHANGE;
     testInfo.isClient = false;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isSupportClientVerify = true;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, uioType) == HITLS_SUCCESS);
     ASSERT_EQ(HITLS_Accept(testInfo.server->ssl), HITLS_REC_NORMAL_RECV_BUF_EMPTY);
     FRAME_Msg frameMsg = {0};
     FRAME_Type frameType = {0};
     frameType.versionType = HITLS_VERSION_DTLS12;
     frameType.recordType = REC_TYPE_CHANGE_CIPHER_SPEC;
+    frameType.transportType = uioType;
     ASSERT_TRUE(FRAME_GetDefaultMsg(&frameType, &frameMsg) == HITLS_SUCCESS);
     uint8_t *certDataTemp = (uint8_t *)BSL_SAL_Calloc(1, (uint32_t)BUF_TOOLONG_LEN);
     ASSERT_TRUE(certDataTemp != NULL);
@@ -400,7 +408,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_TOOLONG_TC003(void)
     ASSERT_TRUE(testInfo.server->ssl->hsCtx->state == TRY_RECV_CERTIFICATE_VERIFY);
     bool isCcsRecv = testInfo.server->ssl->method.isRecvCCS(testInfo.server->ssl);
     ASSERT_TRUE(isCcsRecv == false);
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -429,7 +437,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC001(void)
     testInfo.state = TRY_RECV_CLIENT_HELLO;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = false;
-    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo, BSL_UIO_SCTP) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.server->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -439,6 +447,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC001(void)
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = CLIENT_HELLO;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = BSL_UIO_SCTP;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     FRAME_ClientHelloMsg *clientMsg = &frameMsg.body.hsMsg.body.clientHello;
     clientMsg->extensionState = MISSING_FIELD;
@@ -474,7 +483,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC001(void)
     ASSERT_TRUE(alertMsg->alertLevel.data == ALERT_LEVEL_FATAL);
     ASSERT_TRUE(alertMsg->alertDescription.data == ALERT_DECODE_ERROR);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -503,7 +512,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC002(void)
     testInfo.state = TRY_RECV_SERVER_HELLO;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = true;
-    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo, BSL_UIO_SCTP) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.client->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -513,6 +522,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC002(void)
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = SERVER_HELLO;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = BSL_UIO_SCTP;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     FRAME_ServerHelloMsg *serverMsg = &frameMsg.body.hsMsg.body.serverHello;
     serverMsg->version.state = MISSING_FIELD;
@@ -546,7 +556,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC002(void)
     ASSERT_TRUE(alertMsg->alertLevel.data == ALERT_LEVEL_FATAL);
     ASSERT_TRUE(alertMsg->alertDescription.data == ALERT_DECODE_ERROR);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -575,7 +585,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC003(void)
     testInfo.state = TRY_RECV_CERTIFICATE;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = true;
-    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo, BSL_UIO_SCTP) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.client->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -585,6 +595,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC003(void)
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = CERTIFICATE;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = BSL_UIO_SCTP;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     FRAME_CertificateMsg *certifiMsg = &frameMsg.body.hsMsg.body.certificate;
     certifiMsg->certsLen.state = MISSING_FIELD;
@@ -610,7 +621,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC003(void)
     ASSERT_TRUE(alertMsg->alertLevel.data == ALERT_LEVEL_FATAL);
     ASSERT_TRUE(alertMsg->alertDescription.data == ALERT_DECODE_ERROR);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -639,7 +650,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC004(void)
     testInfo.state = TRY_RECV_SERVER_KEY_EXCHANGE;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = true;
-    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo, BSL_UIO_SCTP) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.client->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -649,6 +660,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC004(void)
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = SERVER_KEY_EXCHANGE;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = BSL_UIO_SCTP;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     FRAME_ServerKeyExchangeMsg *serverKeyExMsg = &frameMsg.body.hsMsg.body.serverKeyExchange;
     serverKeyExMsg->keyEx.ecdh.curveType.state = MISSING_FIELD;
@@ -679,7 +691,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC004(void)
     ASSERT_TRUE(alertMsg->alertLevel.data == ALERT_LEVEL_FATAL);
     ASSERT_EQ(alertMsg->alertDescription.data, ALERT_DECODE_ERROR);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -708,7 +720,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC005(void)
     testInfo.state = TRY_RECV_CLIENT_KEY_EXCHANGE;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = false;
-    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo, BSL_UIO_SCTP) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.server->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -718,6 +730,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC005(void)
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = CLIENT_KEY_EXCHANGE;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = BSL_UIO_SCTP;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     FRAME_ClientKeyExchangeMsg *clientKeyExMsg = &frameMsg.body.hsMsg.body.clientKeyExchange;
     clientKeyExMsg->pubKey.state = MISSING_FIELD;
@@ -743,7 +756,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC005(void)
     ASSERT_TRUE(alertMsg->alertLevel.data == ALERT_LEVEL_FATAL);
     ASSERT_TRUE(alertMsg->alertDescription.data == ALERT_DECODE_ERROR);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -770,13 +783,14 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC006(void)
     testInfo.state = TRY_RECV_CLIENT_KEY_EXCHANGE;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = false;
-    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo, BSL_UIO_SCTP) == HITLS_SUCCESS);
     ASSERT_TRUE(testInfo.server->ssl != NULL);
     ASSERT_EQ(HITLS_Accept(testInfo.server->ssl), HITLS_REC_NORMAL_RECV_BUF_EMPTY);
     FRAME_Msg frameMsg1 = {0};
     FRAME_Type frameType1 = {0};
     frameType1.versionType = HITLS_VERSION_DTLS12;
     frameType1.recordType = REC_TYPE_CHANGE_CIPHER_SPEC;
+    frameType1.transportType = BSL_UIO_SCTP;
     ASSERT_TRUE(FRAME_GetDefaultMsg(&frameType1, &frameMsg1) == HITLS_SUCCESS);
     FRAME_CcsMsg *CcsMidMsg = &frameMsg1.body.ccsMsg;
     CcsMidMsg->ccsType.state = MISSING_FIELD;
@@ -790,7 +804,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC006(void)
     ASSERT_TRUE(testInfo.server->ssl != NULL);
     ASSERT_EQ(HITLS_Accept(testInfo.server->ssl), HITLS_REC_NORMAL_RECV_BUF_EMPTY);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType1, &frameMsg1);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -817,13 +831,14 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC007(void)
     testInfo.state = TRY_SEND_FINISH;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = true;
-    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo, BSL_UIO_SCTP) == HITLS_SUCCESS);
     ASSERT_TRUE(testInfo.server->ssl != NULL);
     ASSERT_EQ(HITLS_Connect(testInfo.server->ssl), HITLS_REC_NORMAL_RECV_BUF_EMPTY);
     FRAME_Msg frameMsg1 = {0};
     FRAME_Type frameType1 = {0};
     frameType1.versionType = HITLS_VERSION_DTLS12;
     frameType1.recordType = REC_TYPE_CHANGE_CIPHER_SPEC;
+    frameType1.transportType = BSL_UIO_SCTP;
     ASSERT_TRUE(FRAME_GetDefaultMsg(&frameType1, &frameMsg1) == HITLS_SUCCESS);
     FRAME_CcsMsg *CcsMidMsg = &frameMsg1.body.ccsMsg;
     CcsMidMsg->ccsType.state = MISSING_FIELD;
@@ -837,7 +852,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC007(void)
     ASSERT_TRUE(testInfo.client->ssl != NULL);
     ASSERT_EQ(HITLS_Connect(testInfo.client->ssl), HITLS_REC_NORMAL_RECV_BUF_EMPTY);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType1, &frameMsg1);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -858,7 +873,7 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC5246_COMPRESSED_TC001(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC5246_COMPRESSED_TC001(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     FRAME_Msg frameMsg = {0};
@@ -866,7 +881,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_COMPRESSED_TC001(void)
     testInfo.state = TRY_RECV_CLIENT_HELLO;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = false;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, uioType) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.server->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -876,6 +891,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_COMPRESSED_TC001(void)
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = CLIENT_HELLO;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = uioType;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     FRAME_ClientHelloMsg *clientMsg = &frameMsg.body.hsMsg.body.clientHello;
     *(clientMsg->compressionMethods.data) = 1;
@@ -901,7 +917,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_COMPRESSED_TC001(void)
     ASSERT_TRUE(alertMsg->alertLevel.data == ALERT_LEVEL_FATAL);
     ASSERT_EQ(alertMsg->alertDescription.data, ALERT_DECODE_ERROR);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -922,7 +938,7 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC5246_COMPRESSED_TC002(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC5246_COMPRESSED_TC002(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     FRAME_Msg frameMsg = {0};
@@ -930,7 +946,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_COMPRESSED_TC002(void)
     testInfo.state = TRY_RECV_SERVER_HELLO;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = true;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, uioType) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.client->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -940,6 +956,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_COMPRESSED_TC002(void)
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = SERVER_HELLO;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = uioType;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     FRAME_ServerHelloMsg *serverMsg = &frameMsg.body.hsMsg.body.serverHello;
     serverMsg->compressionMethod.data = 1;
@@ -964,7 +981,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_COMPRESSED_TC002(void)
     ASSERT_TRUE(alertMsg->alertLevel.data == ALERT_LEVEL_FATAL);
     ASSERT_EQ(alertMsg->alertDescription.data, ALERT_ILLEGAL_PARAMETER);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -994,7 +1011,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_CIPHER_TC001(void)
     testInfo.state = TRY_RECV_CLIENT_HELLO;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = false;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, BSL_UIO_SCTP) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.server->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -1004,6 +1021,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_CIPHER_TC001(void)
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = CLIENT_HELLO;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = BSL_UIO_SCTP;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     uint16_t suite[] = {0x00B6, 0x00B7, ILLEGAL_VALUE, HITLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384};
     FRAME_ClientHelloMsg *clientMsg = &frameMsg.body.hsMsg.body.clientHello;
@@ -1028,7 +1046,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_CIPHER_TC001(void)
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, sndBuf, sndLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     ASSERT_EQ(frameMsg.body.hsMsg.body.serverHello.cipherSuite.data, HITLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -1058,7 +1076,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_CIPHER_TC002(void)
     testInfo.state = TRY_RECV_SERVER_HELLO;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = true;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, BSL_UIO_SCTP) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.client->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -1068,6 +1086,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_CIPHER_TC002(void)
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = SERVER_HELLO;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = BSL_UIO_SCTP;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     FRAME_ServerHelloMsg *serverMsg = &frameMsg.body.hsMsg.body.serverHello;
     serverMsg->cipherSuite.data = ILLEGAL_VALUE;
@@ -1093,7 +1112,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_CIPHER_TC002(void)
     ASSERT_TRUE(alertMsg->alertLevel.data == ALERT_LEVEL_FATAL);
     ASSERT_TRUE(alertMsg->alertDescription.data == ALERT_ILLEGAL_PARAMETER);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -1124,7 +1143,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SIGNATURE_TC001(void)
     testInfo.isClient = false;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isSupportClientVerify = true;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, BSL_UIO_SCTP) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.server->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -1134,6 +1153,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SIGNATURE_TC001(void)
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = CLIENT_HELLO;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = BSL_UIO_SCTP;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     ASSERT_TRUE(frameMsg.body.hsMsg.type.data == CLIENT_HELLO);
     frameMsg.body.hsMsg.body.clientHello.signatureAlgorithms.exState = MISSING_FIELD;
@@ -1156,7 +1176,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SIGNATURE_TC001(void)
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, sndBuf, sndLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     ASSERT_EQ(frameMsg.recType.data, REC_TYPE_HANDSHAKE);
     ASSERT_EQ(frameMsg.body.hsMsg.type.data, SERVER_HELLO);
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -1186,7 +1206,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SIGNATURE_TC002(void)
     testInfo.state = TRY_RECV_SERVER_HELLO;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = true;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, BSL_UIO_SCTP) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.client->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -1196,6 +1216,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SIGNATURE_TC002(void)
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = SERVER_HELLO;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = BSL_UIO_SCTP;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     FRAME_ServerHelloMsg *serverMsg = &frameMsg.body.hsMsg.body.serverHello;
     serverMsg->secRenego.exState = INITIAL_FIELD;
@@ -1226,7 +1247,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SIGNATURE_TC002(void)
     ASSERT_TRUE(alertMsg->alertLevel.data == ALERT_LEVEL_FATAL);
     ASSERT_EQ(alertMsg->alertDescription.data, ALERT_UNSUPPORTED_EXTENSION);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -1247,7 +1268,7 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC5246_SIGNATURE_TC003(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC5246_SIGNATURE_TC003(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     FRAME_Msg frameMsg = {0};
@@ -1255,7 +1276,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SIGNATURE_TC003(void)
     testInfo.state = TRY_RECV_CLIENT_HELLO;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = false;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, uioType) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.server->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -1265,6 +1286,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SIGNATURE_TC003(void)
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = CLIENT_HELLO;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = uioType;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     FRAME_ClientHelloMsg *clientMsg = &frameMsg.body.hsMsg.body.clientHello;
     clientMsg->signatureAlgorithms.exDataLen.data = HASH_EXDATA_LEN_ERROR ;
@@ -1290,7 +1312,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SIGNATURE_TC003(void)
     ASSERT_TRUE(alertMsg->alertLevel.data == ALERT_LEVEL_FATAL);
     ASSERT_EQ(alertMsg->alertDescription.data, ALERT_DECODE_ERROR);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -1320,7 +1342,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SIGNATURE_TC004(void)
     testInfo.state = TRY_RECV_CLIENT_HELLO;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = false;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, BSL_UIO_SCTP) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.server->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -1330,6 +1352,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SIGNATURE_TC004(void)
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = CLIENT_HELLO;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = BSL_UIO_SCTP;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     FRAME_ClientHelloMsg *clientMsg = &frameMsg.body.hsMsg.body.clientHello;
     uint16_t Signature[] = {ILLEGAL_VALUE};
@@ -1357,7 +1380,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SIGNATURE_TC004(void)
     ASSERT_TRUE(alertMsg->alertLevel.data ==  ALERT_LEVEL_FATAL);
     ASSERT_TRUE(alertMsg->alertDescription.data == ALERT_HANDSHAKE_FAILURE);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -1387,7 +1410,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SIGNATURE_TC005(void)
     testInfo.state = TRY_RECV_SERVER_HELLO;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = true;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, BSL_UIO_SCTP) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.client->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -1397,6 +1420,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SIGNATURE_TC005(void)
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = SERVER_HELLO;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = BSL_UIO_SCTP;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     FRAME_ServerHelloMsg *serverMsg = &frameMsg.body.hsMsg.body.serverHello;
     serverMsg->secRenego.exState = INITIAL_FIELD;
@@ -1427,7 +1451,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SIGNATURE_TC005(void)
     ASSERT_TRUE(alertMsg->alertLevel.data == ALERT_LEVEL_FATAL);
     ASSERT_EQ(alertMsg->alertDescription.data, ALERT_UNSUPPORTED_EXTENSION);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -1448,7 +1472,7 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC5246_SIGNATURE_TC007(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC5246_SIGNATURE_TC007(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     FRAME_Msg frameMsg = {0};
@@ -1456,7 +1480,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SIGNATURE_TC007(void)
     testInfo.state = TRY_RECV_CLIENT_HELLO;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = false;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, uioType) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.server->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -1466,6 +1490,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SIGNATURE_TC007(void)
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = CLIENT_HELLO;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = uioType;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     FRAME_ClientHelloMsg *clientMsg = &frameMsg.body.hsMsg.body.clientHello;
     clientMsg->signatureAlgorithms.exState = MISSING_FIELD;
@@ -1488,7 +1513,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_SIGNATURE_TC007(void)
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, sndBuf, sndLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     ASSERT_TRUE(frameMsg.recType.data == REC_TYPE_HANDSHAKE);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -1509,7 +1534,7 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC5246_CERTIFICATE_TC003(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC5246_CERTIFICATE_TC003(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     FRAME_Msg frameMsg = {0};
@@ -1518,11 +1543,12 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_CERTIFICATE_TC003(void)
     testInfo.isClient = false;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isSupportClientVerify = false;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, uioType) == HITLS_SUCCESS);
     frameType.versionType = HITLS_VERSION_DTLS12;
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = CERTIFICATE;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = uioType;
     ASSERT_TRUE(FRAME_GetDefaultMsg(&frameType, &frameMsg) == HITLS_SUCCESS);
     uint32_t sendLen = MAX_RECORD_LENTH;
     uint8_t sendBuf[MAX_RECORD_LENTH] = {0};
@@ -1545,7 +1571,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_CERTIFICATE_TC003(void)
     FRAME_AlertMsg *alertMsg = &frameMsg.body.alertMsg;
     ASSERT_TRUE(alertMsg->alertLevel.data == ALERT_LEVEL_FATAL);
     ASSERT_TRUE(alertMsg->alertDescription.data == ALERT_UNEXPECTED_MESSAGE);
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -1559,7 +1585,7 @@ exit:
 * @title In dual-end verification, the server receives out-of-order Certificate Verify messages.
 * @precon nan
 * @brief 1. Retain the default configuration on the client and server, and enable peer verification on the server. Expected result 1.
-* 2. After sending the server hello done message, the server constructs a Certificate Verify message and sends it to the server.
+* 2. After sending the server hello done message, the client constructs a Certificate Verify message and sends it to the server.
 * @expect 1. The initialization is successful.
 * 2. The client sends the ALERT message. The ALERT level is ALERT_LEVEL_FATAL and the description is ALERT_UNEXPECTED_MESSAGE.
 * @prior Level 1
@@ -1575,11 +1601,12 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_CERTIFICATE_TC004(void)
     testInfo.isClient = false;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isSupportClientVerify = true;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, BSL_UIO_SCTP) == HITLS_SUCCESS);
     frameType.versionType = HITLS_VERSION_DTLS12;
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = CERTIFICATE_VERIFY;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = BSL_UIO_SCTP;
     ASSERT_TRUE(FRAME_GetDefaultMsg(&frameType, &frameMsg) == HITLS_SUCCESS);
     uint32_t sendLen = MAX_RECORD_LENTH;
     uint8_t sendBuf[MAX_RECORD_LENTH] = {0};
@@ -1602,7 +1629,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_CERTIFICATE_TC004(void)
     FRAME_AlertMsg *alertMsg = &frameMsg.body.alertMsg;
     ASSERT_TRUE(alertMsg->alertLevel.data == ALERT_LEVEL_FATAL);
     ASSERT_TRUE(alertMsg->alertDescription.data == ALERT_UNEXPECTED_MESSAGE);
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -1623,7 +1650,7 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC5246_VERSION_TC001(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC5246_VERSION_TC001(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     FRAME_Msg frameMsg = {0};
@@ -1631,7 +1658,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_VERSION_TC001(void)
     testInfo.state = TRY_RECV_CLIENT_HELLO;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = false;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, uioType) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.server->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -1641,6 +1668,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_VERSION_TC001(void)
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = CLIENT_HELLO;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = uioType;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     FRAME_ClientHelloMsg *clientMsg = &frameMsg.body.hsMsg.body.clientHello;
     clientMsg->version.data = HITLS_VERSION_DTLS10;
@@ -1667,7 +1695,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_VERSION_TC001(void)
     ASSERT_TRUE(alertMsg->alertLevel.data == ALERT_LEVEL_FATAL);
     ASSERT_EQ(alertMsg->alertDescription.data, ALERT_PROTOCOL_VERSION);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -1690,7 +1718,7 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC001(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC001(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     testInfo.state = TLS_IDLE;
@@ -1704,9 +1732,9 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC001(void)
     testInfo.config->isSupportExtendMasterSecret = testInfo.isSupportExtendMasterSecret;
     testInfo.config->isSupportClientVerify = testInfo.isSupportClientVerify;
     testInfo.config->isSupportNoClientCert = testInfo.isSupportNoClientCert;
-    testInfo.client = FRAME_CreateLink(testInfo.config, BSL_UIO_SCTP);
+    testInfo.client = FRAME_CreateLink(testInfo.config, uioType);
     ASSERT_TRUE(testInfo.client != NULL);
-    testInfo.server = FRAME_CreateLink(testInfo.config, BSL_UIO_SCTP);
+    testInfo.server = FRAME_CreateLink(testInfo.config, uioType);
     ASSERT_TRUE(testInfo.server != NULL);
     ASSERT_EQ(HITLS_Accept(testInfo.server->ssl), HITLS_REC_NORMAL_RECV_BUF_EMPTY);
     ASSERT_TRUE(SendHelloReqWithIndex(testInfo.server->ssl, 0) == HITLS_SUCCESS);
@@ -1728,7 +1756,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC001(void)
     ASSERT_EQ(readLen, writeLen);
     ASSERT_EQ(memcmp(writeData, readData, readLen), 0);
 
-exit:
+EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
@@ -1750,13 +1778,13 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC002(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC002(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     testInfo.state = TRY_SEND_CLIENT_HELLO;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = true;
-    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo, uioType) == HITLS_SUCCESS);
     CONN_Deinit(testInfo.client->ssl);
     ASSERT_TRUE(testInfo.client->ssl != NULL);
     ASSERT_EQ(HITLS_Connect(testInfo.client->ssl), HITLS_REC_NORMAL_RECV_BUF_EMPTY);
@@ -1769,7 +1797,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC002(void)
     ASSERT_EQ(clientTlsCtx->state, CM_STATE_HANDSHAKING);
     ASSERT_EQ(clientTlsCtx->hsCtx->state, TRY_RECV_SERVER_HELLO);
 
-exit:
+EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
@@ -1789,7 +1817,7 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC003(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC003(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     FRAME_Msg frameMsg = {0};
@@ -1797,7 +1825,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC003(void)
     testInfo.state = TRY_SEND_SERVER_HELLO_DONE;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = false;
-    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo, uioType) == HITLS_SUCCESS);
     ASSERT_TRUE(testInfo.server->ssl != NULL);
     ASSERT_EQ(HITLS_Accept(testInfo.server->ssl), HITLS_REC_NORMAL_RECV_BUF_EMPTY);
     ASSERT_TRUE(FRAME_TrasferMsgBetweenLink(testInfo.server, testInfo.client) == HITLS_SUCCESS);
@@ -1812,12 +1840,13 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC003(void)
     uint32_t parseLen = 0;
     frameType.versionType = HITLS_VERSION_DTLS12;
     frameType.recordType = REC_TYPE_ALERT;
+    frameType.transportType = uioType;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, sndBuf, sndLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     ASSERT_TRUE(frameMsg.recType.data == REC_TYPE_ALERT);
     FRAME_AlertMsg *alertMsg = &frameMsg.body.alertMsg;
     ASSERT_TRUE(alertMsg->alertLevel.data ==  ALERT_LEVEL_FATAL);
     ASSERT_TRUE(alertMsg->alertDescription.data == ALERT_UNEXPECTED_MESSAGE);
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -1838,13 +1867,13 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC004(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC004(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     testInfo.state = TRY_SEND_FINISH;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = true;
-    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo, uioType) == HITLS_SUCCESS);
     ASSERT_TRUE(testInfo.client->ssl != NULL);
     ASSERT_EQ(HITLS_Connect(testInfo.client->ssl), HITLS_REC_NORMAL_RECV_BUF_EMPTY);
     ASSERT_TRUE(FRAME_TrasferMsgBetweenLink(testInfo.client, testInfo.server) == HITLS_SUCCESS);
@@ -1856,7 +1885,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC004(void)
     ASSERT_EQ(clientTlsCtx->state, CM_STATE_HANDSHAKING);
     ASSERT_EQ(clientTlsCtx->hsCtx->state, TRY_RECV_NEW_SESSION_TICKET);
 
-exit:
+EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
@@ -1876,13 +1905,13 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC005(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC005(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     testInfo.state = TRY_SEND_FINISH;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = false;
-    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo, uioType) == HITLS_SUCCESS);
     ASSERT_TRUE(testInfo.server->ssl != NULL);
     ASSERT_EQ(HITLS_Accept(testInfo.server->ssl), HITLS_SUCCESS);
     ASSERT_TRUE(FRAME_TrasferMsgBetweenLink(testInfo.server, testInfo.client) == HITLS_SUCCESS);
@@ -1898,7 +1927,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC005(void)
     HITLS_Ctx *serverTlsCtx = FRAME_GetTlsCtx(testInfo.server);
     ASSERT_EQ(serverTlsCtx->state, CM_STATE_ALERTED);
 
-exit:
+EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
@@ -1920,13 +1949,13 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC006(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC006(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     testInfo.state = HS_STATE_BUTT;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = true;
-    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusParkWithSuite(&testInfo, uioType) == HITLS_SUCCESS);
     ASSERT_TRUE(SendHelloReqWithIndex(testInfo.server->ssl, 1) == HITLS_SUCCESS);
     ASSERT_TRUE(FRAME_TrasferMsgBetweenLink(testInfo.server, testInfo.client) == HITLS_SUCCESS);
     uint8_t readBuf[READ_BUF_SIZE] = {0};
@@ -1943,7 +1972,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC006(void)
     ASSERT_EQ(readLen, writeLen);
     ASSERT_EQ(memcmp(writeData, readData, readLen), 0);
 
-exit:
+EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
@@ -1963,7 +1992,7 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC007(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC007(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     FRAME_Msg frameMsg = {0};
@@ -1981,11 +2010,11 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC007(void)
     testInfo.config->isSupportExtendMasterSecret = testInfo.isSupportExtendMasterSecret;
     testInfo.config->isSupportClientVerify = testInfo.isSupportClientVerify;
     testInfo.config->isSupportNoClientCert = testInfo.isSupportNoClientCert;
-    testInfo.client = FRAME_CreateLink(testInfo.config, BSL_UIO_SCTP);
+    testInfo.client = FRAME_CreateLink(testInfo.config, uioType);
     ASSERT_TRUE(testInfo.client != NULL);
-    testInfo.server = FRAME_CreateLink(testInfo.config, BSL_UIO_SCTP);
+    testInfo.server = FRAME_CreateLink(testInfo.config, uioType);
     ASSERT_TRUE(testInfo.server != NULL);
-    testInfo1.server = FRAME_CreateLink(testInfo.config, BSL_UIO_SCTP);
+    testInfo1.server = FRAME_CreateLink(testInfo.config, uioType);
     ASSERT_TRUE(testInfo1.server != NULL);
     ASSERT_EQ(HITLS_Connect(testInfo.client->ssl), HITLS_REC_NORMAL_RECV_BUF_EMPTY);
     ASSERT_TRUE(FRAME_TrasferMsgBetweenLink(testInfo.client, testInfo1.server) == HITLS_SUCCESS);
@@ -1994,7 +2023,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC007(void)
     ASSERT_TRUE(testInfo.server->ssl != NULL);
     ASSERT_EQ(HITLS_Accept(testInfo.server->ssl), HITLS_MSG_HANDLE_UNEXPECTED_MESSAGE);
     ASSERT_TRUE(testInfo.server->ssl->state == CM_STATE_ALERTED);
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -2023,7 +2052,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC6083_RETRANSMISSION_TC001(void)
     testInfo.state = TRY_SEND_CLIENT_HELLO;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = true;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, BSL_UIO_SCTP) == HITLS_SUCCESS);
 
     CONN_Deinit(testInfo.client->ssl);
 
@@ -2041,7 +2070,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC6083_RETRANSMISSION_TC001(void)
     uint32_t sndLen = ioUserData->sndMsg.len;
     ASSERT_TRUE(sndLen == 0);
 
-exit:
+EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
@@ -2066,7 +2095,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC6347_FINISH_TC001(void)
     HandshakeTestInfo testInfo = {0};
     testInfo.isClient = false;
     testInfo.state = TRY_SEND_CHANGE_CIPHER_SPEC;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, BSL_UIO_SCTP) == HITLS_SUCCESS);
     uint8_t data[MAX_RECORD_LENTH] = {0};
     uint32_t len = MAX_RECORD_LENTH;
     ASSERT_TRUE(GetDisorderServerFinished(testInfo.server, data, len, &len) == HITLS_SUCCESS);
@@ -2077,7 +2106,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC6347_FINISH_TC001(void)
     ASSERT_TRUE(testInfo.client->ssl->state == CM_STATE_HANDSHAKING);
     ASSERT_TRUE(testInfo.client->ssl->hsCtx->state == TRY_RECV_FINISH);
 
-exit:
+EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
@@ -2104,7 +2133,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC6347_FINISH_TC002(void)
     HandshakeTestInfo testInfo = {0};
     testInfo.isClient = true;
     testInfo.state = TRY_SEND_CLIENT_KEY_EXCHANGE;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, BSL_UIO_SCTP) == HITLS_SUCCESS);
     uint8_t data[MAX_RECORD_LENTH] = {0};
     uint32_t len = MAX_RECORD_LENTH;
     ASSERT_TRUE(GetDisorderClientFinished(testInfo.client, data, len, &len) == HITLS_SUCCESS);
@@ -2115,7 +2144,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC6347_FINISH_TC002(void)
     ASSERT_TRUE(testInfo.server->ssl->state == CM_STATE_HANDSHAKING);
     ASSERT_TRUE(testInfo.server->ssl->hsCtx->state == TRY_RECV_FINISH);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -2136,12 +2165,12 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC6347_FINISH_TC003(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC6347_FINISH_TC003(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     testInfo.isClient = false;
     testInfo.state = TRY_SEND_CHANGE_CIPHER_SPEC;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, uioType) == HITLS_SUCCESS);
     uint8_t data[MAX_RECORD_LENTH] = {0};
     uint32_t len = MAX_RECORD_LENTH;
     ASSERT_TRUE(GetDisorderServerFinish_AppData(testInfo.server, data, len, &len) == HITLS_SUCCESS);
@@ -2152,7 +2181,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC6347_FINISH_TC003(void)
     ASSERT_TRUE(testInfo.client->ssl->state == CM_STATE_TRANSPORTING);
     ASSERT_TRUE(HITLS_Read(testInfo.client->ssl, data, MAX_RECORD_LENTH, &len) == HITLS_SUCCESS);
 
-exit:
+EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
@@ -2174,12 +2203,12 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC6347_FINISH_TC004(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC6347_FINISH_TC004(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     testInfo.isClient = true;
     testInfo.state = TRY_SEND_FINISH;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, uioType) == HITLS_SUCCESS);
     uint8_t data[MAX_RECORD_LENTH] = {0};
     uint32_t len = MAX_RECORD_LENTH;
     ASSERT_TRUE(GetDisorderClientFinished_AppData(testInfo.client, data, len, &len) == HITLS_SUCCESS);
@@ -2208,7 +2237,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC6347_FINISH_TC004(void)
     ASSERT_EQ(readLen, writeLen);
     ASSERT_EQ(memcmp(writeData, readData, readLen), 0);
 
-exit:
+EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
@@ -2232,12 +2261,12 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC6347_DISORDER_TC001(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC6347_DISORDER_TC001(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     testInfo.isClient = true;
     testInfo.state = HS_STATE_BUTT;
-    ASSERT_EQ(DefaultCfgStatusPark1(&testInfo), HITLS_SUCCESS);
+    ASSERT_EQ(DefaultCfgStatusPark1(&testInfo, uioType), HITLS_SUCCESS);
     uint8_t data[MAX_RECORD_LENTH] = {0};
     uint32_t len = MAX_RECORD_LENTH;
     ASSERT_TRUE(GetDisorderApp(testInfo.client, data, &len) == HITLS_SUCCESS);
@@ -2252,7 +2281,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC6347_DISORDER_TC001(void)
     ASSERT_TRUE(HITLS_Read(testInfo.server->ssl, app2Data, MAX_RECORD_LENTH, &app2Len) == HITLS_SUCCESS);
     ASSERT_EQ(app1Len, app2Len);
     ASSERT_EQ(memcmp(app1Data, app2Data, app2Len), 0);
-exit:
+EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
@@ -2276,12 +2305,12 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC6347_DISORDER_TC002(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC6347_DISORDER_TC002(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     testInfo.isClient = false;
     testInfo.state = HS_STATE_BUTT;
-    ASSERT_EQ(DefaultCfgStatusPark1(&testInfo), HITLS_SUCCESS);
+    ASSERT_EQ(DefaultCfgStatusPark1(&testInfo, uioType), HITLS_SUCCESS);
     uint8_t data[MAX_RECORD_LENTH] = {0};
     uint32_t len = MAX_RECORD_LENTH;
     ASSERT_TRUE(GetDisorderApp(testInfo.server, data, &len) == HITLS_SUCCESS);
@@ -2296,7 +2325,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC6347_DISORDER_TC002(void)
     ASSERT_TRUE(HITLS_Read(testInfo.client->ssl, app2Data, MAX_RECORD_LENTH, &app2Len) == HITLS_SUCCESS);
     ASSERT_EQ(app1Len, app2Len);
     ASSERT_EQ(memcmp(app1Data, app2Data, app1Len), 0);
-exit:
+EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
@@ -2322,12 +2351,12 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC6347_APPDATA_TC001(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC6347_APPDATA_TC001(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     testInfo.isClient = true;
     testInfo.state = HS_STATE_BUTT;
-    ASSERT_EQ(DefaultCfgStatusPark1(&testInfo), HITLS_SUCCESS);
+    ASSERT_EQ(DefaultCfgStatusPark1(&testInfo, uioType), HITLS_SUCCESS);
     uint8_t data[MAX_RECORD_LENTH] = {0};
     uint32_t len = MAX_RECORD_LENTH;
     ASSERT_TRUE(GetRepeatsApp(testInfo.client, data, &len) == HITLS_SUCCESS);
@@ -2349,7 +2378,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC6347_APPDATA_TC001(void)
     ASSERT_EQ(HITLS_Read(testInfo.client->ssl, readData, MAX_RECORD_LENTH, &readLen), HITLS_SUCCESS);
     ASSERT_EQ(readLen, writeLen);
     ASSERT_EQ(memcmp(writeData, readData, readLen), 0);
-exit:
+EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
@@ -2375,12 +2404,12 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC6347_APPDATA_TC002(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC6347_APPDATA_TC002(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     testInfo.isClient = false;
     testInfo.state = HS_STATE_BUTT;
-    ASSERT_EQ(DefaultCfgStatusPark1(&testInfo), HITLS_SUCCESS);
+    ASSERT_EQ(DefaultCfgStatusPark1(&testInfo, uioType), HITLS_SUCCESS);
     uint8_t data[MAX_RECORD_LENTH] = {0};
     uint32_t len = MAX_RECORD_LENTH;
     ASSERT_TRUE(GetRepeatsApp(testInfo.server, data, &len) == HITLS_SUCCESS);
@@ -2402,7 +2431,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC6347_APPDATA_TC002(void)
     ASSERT_EQ(HITLS_Read(testInfo.client->ssl, readData, MAX_RECORD_LENTH, &readLen), HITLS_SUCCESS);
     ASSERT_EQ(readLen, writeLen);
     ASSERT_EQ(memcmp(writeData, readData, readLen), 0);
-exit:
+EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
@@ -2426,18 +2455,19 @@ exit:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RFC6347_CLIENT_HELLO_TC001(void)
+void UT_TLS_DTLS_CONSISTENCY_RFC6347_CLIENT_HELLO_TC001(int uioType)
 {
     HandshakeTestInfo testInfo = {0};
     FRAME_Msg frameMsg = {0};
     FRAME_Type frameType = {0};
     testInfo.isClient = true;
     testInfo.state = HS_STATE_BUTT;
-    ASSERT_EQ(DefaultCfgStatusPark1(&testInfo), HITLS_SUCCESS);
+    ASSERT_EQ(DefaultCfgStatusPark1(&testInfo, uioType), HITLS_SUCCESS);
     frameType.versionType = HITLS_VERSION_DTLS12;
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = CLIENT_HELLO;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = BSL_UIO_SCTP;
     ASSERT_TRUE(FRAME_GetDefaultMsg(&frameType, &frameMsg) == HITLS_SUCCESS);
     uint32_t sendLen = MAX_RECORD_LENTH;
     uint8_t sendBuf[MAX_RECORD_LENTH] = {0};
@@ -2462,11 +2492,187 @@ void UT_TLS_DTLS_CONSISTENCY_RFC6347_CLIENT_HELLO_TC001(void)
     ASSERT_EQ(HITLS_Read(testInfo.server->ssl, readData, MAX_RECORD_LENTH, &readLen), HITLS_SUCCESS);
     ASSERT_EQ(readLen, writeLen);
     ASSERT_EQ(memcmp(writeData, readData, readLen), 0);
-exit:
+EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_CleanMsg(&frameType, &frameMsg);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+}
+/* END_CASE */
+
+static bool cookie_generate_success = true;
+static int32_t UT_CookieGenerateCb(HITLS_Ctx *ctx, uint8_t *cookie, uint32_t *cookie_len)
+{
+    (void)ctx;
+    (void)cookie;
+    if (cookie_generate_success) {
+        *cookie_len = DTLS_COOKIE_LEN;
+    }
+    return cookie_generate_success;
+}
+
+static bool cookie_valid = true;
+static int32_t UT_CookieVerifyCb(HITLS_Ctx *ctx, const uint8_t *cookie, uint8_t cookie_len)
+{
+    (void)ctx;
+    (void)cookie;
+    (void)cookie_len;
+    return cookie_valid;
+}
+
+/* @
+* @test UT_TLS_DTLS_CONSISTENCY_RFC6347_HELLO_VERIFY_REQ_TC001
+* @spec -
+* @title The server doesn't set cookieGenerateCb or cookieVerifyCb.
+* @precon nan
+* @brief 1. Configure option isHelloVerifyReqEnable is on. Leave cookieGenerateCb or cookieVerifyCb blank.
+            Check whether server and client can handshake successfully. Expected result 1.
+* @expect 1. The link fails to be set up.
+* @prior Level 1
+* @auto TRUE
+@ */
+/* BEGIN_CASE */
+void UT_TLS_DTLS_CONSISTENCY_RFC6347_HELLO_VERIFY_REQ_TC001(int setGenerateCb, int setVerifyCb)
+{
+    FRAME_Init();
+    HITLS_Config *tlsConfig = HITLS_CFG_NewDTLS12Config();
+    ASSERT_TRUE(tlsConfig != NULL);
+    FRAME_LinkObj *client = FRAME_CreateLink(tlsConfig, BSL_UIO_UDP);
+    FRAME_LinkObj *server = FRAME_CreateLink(tlsConfig, BSL_UIO_UDP);
+    ASSERT_TRUE(client != NULL);
+    ASSERT_TRUE(server != NULL);
+
+    HITLS_Ctx *serverTlsCtx = FRAME_GetTlsCtx(server);
+    serverTlsCtx->config.tlsConfig.isHelloVerifyReqEnable = true;
+    if (setGenerateCb) {
+        serverTlsCtx->globalConfig->cookieGenerateCb = UT_CookieGenerateCb;
+    }
+    if (setVerifyCb) {
+        serverTlsCtx->globalConfig->cookieVerifyCb = UT_CookieVerifyCb;
+    }
+
+    ASSERT_TRUE(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT) == HITLS_UNREGISTERED_CALLBACK);
+
+EXIT:
+    HITLS_CFG_FreeConfig(tlsConfig);
+    FRAME_FreeLink(client);
+    FRAME_FreeLink(server);
+}
+/* END_CASE */
+
+/* @
+* @test UT_TLS_DTLS_CONSISTENCY_RFC6347_HELLO_VERIFY_REQ_TC002
+* @spec -
+* @title The server fails to generate cookie.
+* @precon nan
+* @brief 1. Configure option isHelloVerifyReqEnable is on. Configure cookieGenerateCb and cookieVerifyCb.
+            cookieGenerateCb always return false.
+            Check whether server and client can handshake successfully. Expected result 1.
+* @expect 1. The link fails to be set up.
+* @prior Level 1
+* @auto TRUE
+@ */
+/* BEGIN_CASE */
+void UT_TLS_DTLS_CONSISTENCY_RFC6347_HELLO_VERIFY_REQ_TC002(void)
+{
+    FRAME_Init();
+    HITLS_Config *tlsConfig = HITLS_CFG_NewDTLS12Config();
+    ASSERT_TRUE(tlsConfig != NULL);
+    FRAME_LinkObj *client = FRAME_CreateLink(tlsConfig, BSL_UIO_UDP);
+    FRAME_LinkObj *server = FRAME_CreateLink(tlsConfig, BSL_UIO_UDP);
+    ASSERT_TRUE(client != NULL);
+    ASSERT_TRUE(server != NULL);
+    HITLS_Ctx *serverTlsCtx = FRAME_GetTlsCtx(server);
+
+    serverTlsCtx->config.tlsConfig.isHelloVerifyReqEnable = true;
+    serverTlsCtx->globalConfig->cookieGenerateCb = UT_CookieGenerateCb;
+    serverTlsCtx->globalConfig->cookieVerifyCb = UT_CookieVerifyCb;
+    cookie_generate_success = false;
+
+    ASSERT_TRUE(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT) == HITLS_INTERNAL_EXCEPTION);
+
+EXIT:
+    HITLS_CFG_FreeConfig(tlsConfig);
+    FRAME_FreeLink(client);
+    FRAME_FreeLink(server);
+}
+/* END_CASE */
+
+/* @
+* @test UT_TLS_DTLS_CONSISTENCY_RFC6347_HELLO_VERIFY_REQ_TC003
+* @spec -
+* @title The server receives a Client Hello packet with invalid cookie when isHelloVerifyReqEnable is on.
+* @precon nan
+* @brief 1. Configure option isHelloVerifyReqEnable is on. Configure cookieGenerateCb and cookieVerifyCb.
+            cookieGenerateCb always return true and cookieVerifyCb always return false.
+            Check whether server and client can handshake successfully. Expected result 1.
+* @expect 1: The link fails to be set up.
+* @prior Level 1
+* @auto TRUE
+@ */
+/* BEGIN_CASE */
+void UT_TLS_DTLS_CONSISTENCY_RFC6347_HELLO_VERIFY_REQ_TC003(void)
+{
+    FRAME_Init();
+    HITLS_Config *tlsConfig = HITLS_CFG_NewDTLS12Config();
+    ASSERT_TRUE(tlsConfig != NULL);
+    FRAME_LinkObj *client = FRAME_CreateLink(tlsConfig, BSL_UIO_UDP);
+    FRAME_LinkObj *server = FRAME_CreateLink(tlsConfig, BSL_UIO_UDP);
+    ASSERT_TRUE(client != NULL);
+    ASSERT_TRUE(server != NULL);
+    HITLS_Ctx *serverTlsCtx = FRAME_GetTlsCtx(server);
+
+    serverTlsCtx->config.tlsConfig.isHelloVerifyReqEnable = true;
+    serverTlsCtx->globalConfig->cookieGenerateCb = UT_CookieGenerateCb;
+    serverTlsCtx->globalConfig->cookieVerifyCb = UT_CookieVerifyCb;
+    cookie_generate_success = true;
+    cookie_valid = false;
+
+    ASSERT_TRUE(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT) == HITLS_INTERNAL_EXCEPTION);
+
+EXIT:
+    HITLS_CFG_FreeConfig(tlsConfig);
+    FRAME_FreeLink(client);
+    FRAME_FreeLink(server);
+}
+/* END_CASE */
+
+/* @
+* @test UT_TLS_DTLS_CONSISTENCY_RFC6347_HELLO_VERIFY_REQ_TC003
+* @spec -
+* @title The server receives a Client Hello packet with valid cookie when isHelloVerifyReqEnable is on.
+* @precon nan
+* @brief 1. Configure option isHelloVerifyReqEnable is on. Configure cookieGenerateCb and cookieVerifyCb.
+            cookieGenerateCb always return true and cookieVerifyCb always return true.
+            Check whether server and client can handshake successfully. Expected result 1.
+* @expect 1: The link is set up successfully.
+* @prior Level 1
+* @auto TRUE
+@ */
+/* BEGIN_CASE */
+void UT_TLS_DTLS_CONSISTENCY_RFC6347_HELLO_VERIFY_REQ_TC004(void)
+{
+    FRAME_Init();
+    HITLS_Config *tlsConfig = HITLS_CFG_NewDTLS12Config();
+    ASSERT_TRUE(tlsConfig != NULL);
+    FRAME_LinkObj *client = FRAME_CreateLink(tlsConfig, BSL_UIO_UDP);
+    FRAME_LinkObj *server = FRAME_CreateLink(tlsConfig, BSL_UIO_UDP);
+    ASSERT_TRUE(client != NULL);
+    ASSERT_TRUE(server != NULL);
+    HITLS_Ctx *serverTlsCtx = FRAME_GetTlsCtx(server);
+
+    serverTlsCtx->config.tlsConfig.isHelloVerifyReqEnable = true;
+    serverTlsCtx->globalConfig->cookieGenerateCb = UT_CookieGenerateCb;
+    serverTlsCtx->globalConfig->cookieVerifyCb = UT_CookieVerifyCb;
+    cookie_generate_success = true;
+    cookie_valid = true;
+
+    ASSERT_TRUE(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT) == HITLS_SUCCESS);
+
+EXIT:
+    HITLS_CFG_FreeConfig(tlsConfig);
+    FRAME_FreeLink(client);
+    FRAME_FreeLink(server);
 }
 /* END_CASE */
 
@@ -2490,7 +2696,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC8422_ECPOINT_TC001(void)
     testInfo.state = TRY_RECV_SERVER_HELLO;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = true;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, BSL_UIO_SCTP) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.client->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -2502,6 +2708,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC8422_ECPOINT_TC001(void)
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = SERVER_HELLO;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = BSL_UIO_SCTP;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     uint8_t Gdata[] = { 0x01 };
     FRAME_ServerHelloMsg *serverMsg = &frameMsg.body.hsMsg.body.serverHello;
@@ -2531,7 +2738,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC8422_ECPOINT_TC001(void)
     ASSERT_TRUE(alertMsg->alertLevel.data == ALERT_LEVEL_FATAL);
     ASSERT_TRUE(alertMsg->alertDescription.data == ALERT_ILLEGAL_PARAMETER);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -2559,7 +2766,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC8422_EXTENSION_MISS_TC001(void)
     testInfo.state = TRY_RECV_CLIENT_HELLO;
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.isClient = false;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo) == HITLS_SUCCESS);
+    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, BSL_UIO_SCTP) == HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.server->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -2571,6 +2778,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC8422_EXTENSION_MISS_TC001(void)
     frameType.recordType = REC_TYPE_HANDSHAKE;
     frameType.handshakeType = CLIENT_HELLO;
     frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    frameType.transportType = BSL_UIO_SCTP;
     ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
     FRAME_ClientHelloMsg *clientMsg = &frameMsg.body.hsMsg.body.clientHello;
     clientMsg->supportedGroups.exState = MISSING_FIELD;
@@ -2597,7 +2805,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC8422_EXTENSION_MISS_TC001(void)
     FRAME_ServerHelloMsg *serverMsg = &frameMsg.body.hsMsg.body.serverHello;
     ASSERT_EQ(serverMsg->cipherSuite.data, HITLS_DHE_RSA_WITH_AES_256_GCM_SHA384);
 
-exit:
+EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
@@ -2607,13 +2815,13 @@ exit:
 
 /* when receive alert between finish and ccs, dtls12 should cache it*/
 /* BEGIN_CASE */
-void UT_DTLS_RFC6347_RECV_ALERT_AFTER_CCS_TC001()
+void UT_DTLS_RFC6347_RECV_ALERT_AFTER_CCS_TC001(int uioType)
 {
     FRAME_Init();
     HITLS_Config *tlsConfig = HITLS_CFG_NewDTLSConfig();
     ASSERT_TRUE(tlsConfig != NULL);
-    FRAME_LinkObj *client = FRAME_CreateLink(tlsConfig, BSL_UIO_SCTP);
-    FRAME_LinkObj *server = FRAME_CreateLink(tlsConfig, BSL_UIO_SCTP);
+    FRAME_LinkObj *client = FRAME_CreateLink(tlsConfig, uioType);
+    FRAME_LinkObj *server = FRAME_CreateLink(tlsConfig, uioType);
     client->needStopBeforeRecvCCS = true;
     server->needStopBeforeRecvCCS = true;
     ASSERT_TRUE(client != NULL);
@@ -2642,7 +2850,7 @@ void UT_DTLS_RFC6347_RECV_ALERT_AFTER_CCS_TC001()
     uint32_t readLen = 0;
     ASSERT_EQ(HITLS_Read(clientTlsCtx, readBuf, READ_BUF_SIZE, &readLen), HITLS_REC_NORMAL_RECV_UNEXPECT_MSG);
     ASSERT_TRUE(clientTlsCtx->state == CM_STATE_ALERTED);
-exit:
+EXIT:
     HITLS_CFG_FreeConfig(tlsConfig);
     FRAME_FreeLink(client);
     FRAME_FreeLink(server);
@@ -2683,7 +2891,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC6347_TC001()
     uint8_t readData[MAX_RECORD_LENTH] = {0};
     uint32_t readLen = MAX_RECORD_LENTH;
     ASSERT_EQ(HITLS_Read(clientTlsCtx, readData, MAX_RECORD_LENTH, &readLen), HITLS_MSG_HANDLE_UNMATCHED_SEQUENCE);
-exit:
+EXIT:
     HITLS_CFG_FreeConfig(tlsConfig);
     FRAME_FreeLink(client);
     FRAME_FreeLink(server);

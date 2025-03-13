@@ -8,11 +8,13 @@
         "CC_WARN_FLAGS": [
             "-Werror",
             "-Wextra",
+            "-Wcast-qual",
             "-Wall",
             "-Wdate-time",
             "-Wfloat-equal",
             "-Wshadow",
-            "-Wformat=2"
+            "-Wformat=2",
+            "-Wno-stringop-overread"
         ],
         "CC_LANGUAGE_FLAGS": [
             "-fsigned-char"
@@ -28,7 +30,9 @@
             "-fstack-protector-strong",
             "--param=ssp-buffer-size=4"
         ],
-        "CC_DEFINE_FLAGS": [],
+        "CC_DEFINE_FLAGS": [
+            "-DHITLS_CRYPTO_NIST_ECC_ACCELERATE"
+        ],
         "CC_DEBUG_FLAGS": [],
         "CC_USER_DEFINE_FLAGS": []
     },
@@ -37,8 +41,7 @@
             "-shared",
             "-Wl,-z,noexecstack",
             "-Wl,-z,relro",
-            "-Wl,-z,now",
-            "-Wl,--build-id=none"
+            "-Wl,-z,now"
         ],
         "SHARED": [],
         "EXE": []

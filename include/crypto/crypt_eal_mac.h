@@ -26,7 +26,6 @@
 #include <stdint.h>
 #include "crypt_algid.h"
 #include "crypt_types.h"
-#include "crypt_method.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,6 +54,19 @@ bool CRYPT_EAL_MacIsValidAlgId(CRYPT_MAC_AlgId id);
  *         NULL, if the operation fails.
  */
 CRYPT_EAL_MacCtx *CRYPT_EAL_MacNewCtx(CRYPT_MAC_AlgId id);
+
+/**
+ * @ingroup crypt_eal_mac
+ * @brief   Create an MAC context in the providers.
+ *
+ * @param libCtx [IN] Library context
+ * @param algId [IN] mac algorithm ID.
+ * @param attrName [IN] Specify expected attribute values
+ *
+ * @retval  CRYPT_EAL_MacCtx pointer.
+ *          NULL, if the operation fails.
+ */
+CRYPT_EAL_MacCtx *CRYPT_EAL_ProviderMacNewCtx(CRYPT_EAL_LibCtx *libCtx,  int32_t algId, const char *attrName);
 
 /**
  * @ingroup crypt_eal_mac
@@ -145,7 +157,7 @@ int32_t CRYPT_EAL_MacFinal(CRYPT_EAL_MacCtx *ctx, uint8_t *out, uint32_t *len);
  *
  * @param   ctx [IN] MAC context
  */
-void CRYPT_EAL_MacDeinit(CRYPT_EAL_MacCtx *ctx);
+int32_t CRYPT_EAL_MacDeinit(CRYPT_EAL_MacCtx *ctx);
 
 /**
  * @ingroup crypt_eal_mac

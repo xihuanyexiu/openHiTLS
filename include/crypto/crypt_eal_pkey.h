@@ -26,8 +26,7 @@
 #include <stdint.h>
 #include "crypt_algid.h"
 #include "crypt_types.h"
-#include "crypt_method.h"
-#include "crypt_eal_pkey.h"
+#include "bsl_params.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,8 +46,14 @@ typedef struct {
         CRYPT_EccPub eccPub; /**< ECC public key structure */
         CRYPT_Curve25519Pub curve25519Pub; /**< ed25519/x25519 public key structure */
         CRYPT_PaillierPub paillierPub; /**< Paillier public key structure */
+        CRYPT_KemEncapsKey kemEk; /**< kem encaps key structure */
     } key;                           /**< Public key union of all algorithms */
 } CRYPT_EAL_PkeyPub;
+
+#define CRYPT_EAL_PKEY_CIPHER_OPERATE   1
+#define CRYPT_EAL_PKEY_EXCH_OPERATE     2
+#define CRYPT_EAL_PKEY_SIGN_OPERATE     4
+#define CRYPT_EAL_PKEY_KEM_OPERATE      8
 
 /**
  * @ingroup crypt_eal_pkey
@@ -64,6 +69,7 @@ typedef struct {
         CRYPT_EccPrv eccPrv; /**< ECC private key structure */
         CRYPT_Curve25519Prv curve25519Prv; /**< ed25519/x25519 private key structure */
         CRYPT_PaillierPrv paillierPrv; /**< Paillier private key structure */
+        CRYPT_KemDecapsKey kemDk; /**< kem decaps key structure */
     } key;                           /**<Private key union of all algorithms */
 } CRYPT_EAL_PkeyPrv;
 
@@ -114,6 +120,21 @@ bool CRYPT_EAL_PkeyIsValidAlgId(CRYPT_PKEY_AlgId id);
  *          NULL, if the operation fails.
  */
 CRYPT_EAL_PkeyCtx *CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_AlgId id);
+
+/**
+ * @ingroup crypt_eal_pkey
+ * @brief   Create an asymmetric key pair structure in the providers.
+ *
+ * @param libCtx [IN] Library context
+ * @param algId [IN] Asymmetric algorithm ID.
+ * @param pkeyOperType [IN] Specify operation type.
+ * @param attrName [IN] Specify expected attribute values
+ *
+ * @retval  CRYPT_EAL_PkeyCtx pointer.
+ *          NULL, if the operation fails.
+ */
+CRYPT_EAL_PkeyCtx *CRYPT_EAL_ProviderPkeyNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t algId, uint32_t pkeyOperType,
+    const char *attrName);
 
 /**
  * @ingroup crypt_eal_pkey
@@ -351,7 +372,8 @@ int32_t CRYPT_EAL_PkeyDecrypt(const CRYPT_EAL_PkeyCtx *pkey, const uint8_t *data
 
 /**
  * @ingroup crypt_eal_pkey
- * @brief   Check whether the public and private keys match.
+ * @brief Check whether the public and private keys match.
+ *  Currently not supported in the provider, supported in the future
  *
  * @param   pubKey      [IN] Public key
  * @param   prvKey      [IN] private key
@@ -437,6 +459,39 @@ int32_t CRYPT_EAL_PkeyCtrl(CRYPT_EAL_PkeyCtx *pkey, int32_t opt, void *val, uint
 
 /**
  * @ingroup crypt_eal_pkey
+ * @brief   Perform blind operation on input data using the specified algorithm.
+ *          For RSA BSSA, users need to ensure sufficient entropy in the message if the input has low entropy.
+ * @param   pkey [IN] Key session
+ * @param   id [IN] md Id for input.
+ * @param   input [IN] Data to be blinded
+ * @param   inputLen [IN] Length of input data
+ * @param   out [OUT] Blinded output data
+ * @param   outLen [OUT] Length of blinded data
+ *
+ * @retval  #CRYPT_SUCCESS, if successful.
+ *          For other error codes, see crypt_errno.h.
+ */
+int32_t CRYPT_EAL_PkeyBlind(CRYPT_EAL_PkeyCtx *pkey, CRYPT_MD_AlgId id, const uint8_t *input, uint32_t inputLen,
+    uint8_t *out, uint32_t *outLen);
+
+/**
+ * @ingroup crypt_eal_pkey
+ * @brief   Perform unblind operation on blinded data.
+ *
+ * @param   pkey [IN] Key session
+ * @param   input [IN] Blinded data to be unblinded
+ * @param   inputLen [IN] Length of blinded data
+ * @param   out [OUT] Unblinded output data
+ * @param   outLen [OUT] Length of unblinded data
+ *
+ * @retval  #CRYPT_SUCCESS, if successful.
+ *          For other error codes, see crypt_errno.h.
+ */
+int32_t CRYPT_EAL_PkeyUnBlind(CRYPT_EAL_PkeyCtx *pkey, const uint8_t *input, uint32_t inputLen,
+    uint8_t *out, uint32_t *outLen);
+
+/**
+ * @ingroup crypt_eal_pkey
  * @brief   Obtain the key algorithm type.
  *
  * @param   pkey [IN] Key session
@@ -455,16 +510,6 @@ CRYPT_PKEY_AlgId CRYPT_EAL_PkeyGetId(const CRYPT_EAL_PkeyCtx *pkey);
  */
 CRYPT_PKEY_ParaId CRYPT_EAL_PkeyGetParaId(const CRYPT_EAL_PkeyCtx *pkey);
 
-/**
- * @ingroup crypt_eal_pkey
- * @brief   Check the key pair consistency. only supports CRYPT_PKEY_DH.
- *
- * @param   pkey [IN] Key session
- *
- * @retval  #CRYPT_SUCCESS, if successful.
- *          For other error codes, see crypt_errno.h.
- */
-int32_t CRYPT_EAL_PkeyCheck(const CRYPT_EAL_PkeyCtx *pkey);
 
 /**
  * @ingroup crypt_eal_pkey
@@ -524,6 +569,62 @@ typedef bool (*CRYPT_EAL_Pct)(CRYPT_EAL_PkeyCtx *pkey);
  *          For other error codes see crypt_errno.h.
  */
 int32_t CRYPT_EAL_PkeyUpRef(CRYPT_EAL_PkeyCtx *pkey);
+
+/**
+ * @ingroup crypt_eal_pkey
+ * @brief Initialize asymmetric key encapsulation context
+ *
+ * @param pkey [in] Pointer to the key context
+ * @param params [in] Algorithm parameters
+ *
+ * @retval  #CRYPT_SUCCESS.
+ *          For other error codes see crypt_errno.h.
+ */
+int32_t CRYPT_EAL_PkeyEncapsInit(CRYPT_EAL_PkeyCtx *pkey, const BSL_Param *params);
+
+/**
+ * @ingroup crypt_eal_pkey
+ * @brief Initialize asymmetric key decapsulation context
+ *
+ * @param pkey [in] Pointer to the key context
+ * @param params [in] Algorithm parameters
+ *
+ * @retval  #CRYPT_SUCCESS.
+ *          For other error codes see crypt_errno.h.
+ */
+int32_t CRYPT_EAL_PkeyDecapsInit(CRYPT_EAL_PkeyCtx *pkey, const BSL_Param *params);
+
+/**
+ * @ingroup crypt_eal_pkey
+ * @brief Perform key encapsulation operation
+ *
+ * @param pkey [in] Initialized key context
+ * @param cipher [out] Output buffer for encapsulated ciphertext
+ * @param cipherLen [in,out] Input: buffer capacity, Output: actual ciphertext length
+ * @param sharekey [out] Output buffer for shared secret
+ * @param shareKeyLen [in,out] Input: buffer capacity, Output: actual secret length
+ *
+ * @retval  #CRYPT_SUCCESS.
+ *          For other error codes see crypt_errno.h.
+ */
+int32_t CRYPT_EAL_PkeyEncaps(const CRYPT_EAL_PkeyCtx *pkey, uint8_t *cipher, uint32_t *cipherLen, uint8_t *sharekey,
+    uint32_t *shareKeyLen);
+
+/**
+ * @ingroup crypt_eal_pkey
+ * @brief Perform key decapsulation operation
+ *
+ * @param pkey [in] Initialized key context
+ * @param cipher [in] Input encapsulated ciphertext
+ * @param cipherLen [in] Length of the input ciphertext
+ * @param sharekey [out] Output buffer for shared secret
+ * @param shareKeyLen [in,out] Input: buffer capacity, Output: actual secret length
+ *
+ * @retval  #CRYPT_SUCCESS.
+ *          For other error codes see crypt_errno.h.
+ */
+int32_t CRYPT_EAL_PkeyDecaps(const CRYPT_EAL_PkeyCtx *pkey, uint8_t *cipher, uint32_t cipherLen, uint8_t *sharekey,
+    uint32_t *shareKeyLen);
 
 #ifdef __cplusplus
 }

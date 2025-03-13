@@ -27,7 +27,8 @@ class FeatureParser:
         "hitls_bsl": "bsl",
         "hitls_crypto": "crypto",
         "hitls_tls": "tls",
-        "hitls_x509": "x509"
+        "hitls_pki": "pki",
+        "hitls_auth": "auth"
     }
 
     def __init__(self, file_path):
@@ -466,24 +467,9 @@ class FeatureConfigParser:
         if has_bn and 'bits' not in self._cfg:
             raise ValueError("If 'bn' is used, the 'bits' of the system must be configured.")
 
-    def _check_system_config(self):
-        lib = 'hitls_bsl'
-        if lib not in self._cfg['libs']:
-            return
-        sys_feas = ['sal_mem', 'sal_thread', 'sal_lock', 'sal_time', 'sal_file', 'sal_net', 'sal_str']
-        has_sys_feas = False
-        for impl_type in self._cfg['libs'][lib]:
-            for fea in self._cfg['libs'][lib][impl_type]:
-                if fea in sys_feas:
-                    has_sys_feas = True
-                    break
-
-        if has_sys_feas and 'system' not in self._cfg:
-            raise ValueError("If %s is used, the system type must be configured." % sys_feas)
-
     def _re_sort_lib(self):
         # Change the key sequence of the 'libs' dictionary. Otherwise, the compilation fails.
-        lib_sort = ['hitls_bsl', 'hitls_crypto', 'hitls_tls', "hitls_x509"]
+        lib_sort = ['hitls_bsl', 'hitls_crypto', 'hitls_tls', "hitls_pki", "hitls_auth"]
         libs = self.libs.copy()
         self._cfg['libs'].clear()
 
@@ -531,7 +517,6 @@ class FeatureConfigParser:
         macros = set()
         for lib, lib_value in self.libs.items():
             lib_upper = lib.upper()
-
             for fea in lib_value.get('c', []):
                 macros.add("-D%s_%s" % (lib_upper, fea.upper()))
             for fea in lib_value.get('asm', []):

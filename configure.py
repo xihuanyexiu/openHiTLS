@@ -100,7 +100,7 @@ def get_cfg_args():
         # Compilation Feature Configuration
         parser.add_argument('--enable', metavar='feature', nargs='+', default=[],
                             help='enable some libs or features, such as --enable sha256 aes gcm_asm, default is "all"')
-        parser.add_argument('--disable', action='extend', metavar='feature', nargs='+', default=['uio_sctp'],
+        parser.add_argument('--disable', metavar='feature', nargs='+', default=['uio_sctp'],
                             help='disable some libs or features, such as --disable aes gcm_asm, default is disable "uio_sctp" ')
         parser.add_argument('--enable-sctp', action="store_true", help='enable sctp which is used in DTLS')
         parser.add_argument('--asm_type', type=str, help='Assembly Type, default is "no_asm".')
@@ -124,8 +124,8 @@ def get_cfg_args():
         parser.add_argument('--del_link_flags', default='', type=str,
                             help='delete some link flags such as --del_link_flags="-shared -Wl,-z,relro"')
 
-        parser.add_argument('--hitls_version', default='openHiTLS 0.1.0 25 12 2023', help='%(prog)s version str')
-        parser.add_argument('--hitls_version_num', default=0x00001000, help='%(prog)s version num')
+        parser.add_argument('--hitls_version', default='openHiTLS 0.1.0f 26 Nov 2024', help='%(prog)s version str')
+        parser.add_argument('--hitls_version_num', default=0x0010000f, help='%(prog)s version num')
 
         args = vars(parser.parse_args())
 
@@ -278,6 +278,7 @@ class CMakeGenerator:
             path = 'include/' + module
             if os.path.exists(path):
                 inc_dirs.add(path)
+
         if os.path.exists('config/macro_config'):
             inc_dirs.add('config/macro_config')
         if os.path.exists('../../../../Secure_C/include'):
@@ -363,16 +364,24 @@ class CMakeGenerator:
         cmake += self._gen_cmd_cmake('add_library', '{} SHARED'.format(tgt_name), tgt_obj_list)
         cmake += self._gen_cmd_cmake('target_link_options', '{} PRIVATE'.format(tgt_name), '${SHARED_LNK_FLAGS}')
         cmake += self._gen_cmd_cmake('set_target_properties', '{} PROPERTIES'.format(tgt_name), properties)
-        cmake += 'install(TARGETS %s DESTINATION ${CMAKE_INSTALL_PREFIX})\n' % tgt_name
+        cmake += 'install(TARGETS %s DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)\n' % tgt_name
 
         if lib_name == 'hitls_bsl':
             for item in macros:
                 if item == '-DHITLS_BSL_UIO' or item == '-DHITLS_BSL_UIO_SCTP':
                     cmake += self._gen_cmd_cmake("target_link_libraries", "hitls_bsl-shared sctp")
+                if item == '-DHITLS_BSL_SAL_DL':
+                    cmake += self._gen_cmd_cmake("target_link_libraries", "hitls_bsl-shared dl")     
         if lib_name == 'hitls_crypto':
             cmake += self._gen_cmd_cmake("target_link_libraries", "hitls_crypto-shared hitls_bsl-shared")
         if lib_name == 'hitls_tls':
             cmake += self._gen_cmd_cmake("target_link_libraries", "hitls_tls-shared hitls_bsl-shared")
+        if lib_name == 'hitls_pki':
+            cmake += self._gen_cmd_cmake(
+                "target_link_libraries", "hitls_pki-shared hitls_crypto-shared hitls_bsl-shared")
+        if lib_name == 'hitls_auth':
+            cmake += self._gen_cmd_cmake(
+                "target_link_libraries", "hitls_auth-shared hitls_crypto-shared hitls_bsl-shared")
         tgt_list.append(tgt_name)
         return cmake
 
@@ -383,7 +392,7 @@ class CMakeGenerator:
         cmake = '\n'
         cmake += self._gen_cmd_cmake('add_library', '{} STATIC'.format(tgt_name), tgt_obj_list)
         cmake += self._gen_cmd_cmake('set_target_properties', '{} PROPERTIES'.format(tgt_name), properties)
-        cmake += 'install(TARGETS %s DESTINATION ${CMAKE_INSTALL_PREFIX})\n' % tgt_name
+        cmake += 'install(TARGETS %s DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)\n' % tgt_name
 
         tgt_list.append(tgt_name)
         return cmake
@@ -396,7 +405,7 @@ class CMakeGenerator:
         cmake += self._gen_cmd_cmake('add_executable', tgt_name, tgt_obj_list)
         cmake += self._gen_cmd_cmake('target_link_options', '{} PRIVATE'.format(tgt_name), '${PIE_EXE_LNK_FLAGS}')
         cmake += self._gen_cmd_cmake('set_target_properties', '{} PROPERTIES'.format(tgt_name), properties)
-        cmake += 'install(TARGETS %s DESTINATION ${CMAKE_INSTALL_PREFIX})\n' % tgt_name
+        cmake += 'install(TARGETS %s DESTINATION ${CMAKE_INSTALL_PREFIX}/obj)\n' % tgt_name
 
         tgt_list.append(tgt_name)
         return cmake
@@ -469,7 +478,6 @@ class CMakeGenerator:
 
     def out_cmake(self, cmake_path, macro_file):
         self._cfg_custom_feature._check_bn_config()
-        self._cfg_custom_feature._check_system_config()
 
         set_param_cmake, macros = self._gen_set_param_cmake(macro_file)
 

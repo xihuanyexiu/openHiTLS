@@ -201,9 +201,9 @@ typedef enum {
     HITLS_PARSE_DH_SIGN_ERR,                        /**< Failed to parse the DHE signature. */
     HITLS_PARSE_UNSUPPORTED_EXTENSION,              /**< Unsupported extended fields. */
     HITLS_PARSE_CA_LIST_ERR,                        /**< Failed to parse the CA name list. */
-    HTILS_PARSE_EXCESSIVE_MESSAGE_SIZE,             /**< The length of the parsing exceeds the maximum. */
-    HTILS_PARSE_PRE_SHARED_KEY_FAILED,              /**< Failed to parse the PSK extension. */
-    HTILS_PARSE_DUPLICATED_KEY_SHARE,               /**< duplicated key share entry. */
+    HITLS_PARSE_EXCESSIVE_MESSAGE_SIZE,             /**< The length of the parsing exceeds the maximum. */
+    HITLS_PARSE_PRE_SHARED_KEY_FAILED,              /**< Failed to parse the PSK extension. */
+    HITLS_PARSE_DUPLICATED_KEY_SHARE,               /**< duplicated key share entry. */
 
     HITLS_REASS_FAIL_START = 0x02070001,            /**< Reassembly module error code start bit. */
     HITLS_REASS_INVALID_FRAGMENT,                   /**< Receives invalid fragmented messages. */
@@ -296,6 +296,7 @@ typedef enum {
     HITLS_CERT_ERR_KEYUSAGE,                        /**< Failed to verify the certificate keyusage. */
     HITLS_CERT_ERR_INVALID_STORE_TYPE,              /**< Invalid store type */
     HITLS_CERT_ERR_X509_REF,                        /**< Certificate reference counting error. */
+    HITLS_CERT_ERR_INSERT_CERTPAIR,                 /**< Certificate insert certPair error. */
 
     HITLS_CRYPT_FAIL_START = 0x020D0001,           /**< Crypt adaptation module error code start bit. */
     HITLS_CRYPT_ERR_GENERATE_RANDOM,               /**< Failed to generate a random number. */
@@ -401,6 +402,8 @@ typedef enum {
 
     HITLS_X509_ADAPT_ERR = 0x02200001,
     HITLS_X509_ADAPT_BUILD_CERT_CHAIN_ERR,
+    HITLS_X509_ADAPT_INVALID_TIME,
+    HITLS_X509_ADAPT_UNSUPPORT_FORMAT,
 } HITLS_ERROR;
 
 /**

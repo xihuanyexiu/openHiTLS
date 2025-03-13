@@ -58,28 +58,39 @@ int32_t CRYPT_EAL_PkeyDecrypt(const CRYPT_EAL_PkeyCtx *pkey, const uint8_t *data
 
 static int32_t CryptRsaEmsaPairSet(CRYPT_EAL_PkeyCtx *pubKey, CRYPT_EAL_PkeyCtx *prvKey, CRYPT_MD_AlgId hashId)
 {
-    CRYPT_RSA_PkcsV15Para pkcsv15 = {hashId};
-    int32_t ret = CRYPT_EAL_PkeyCtrl(pubKey, CRYPT_CTRL_SET_RSA_EMSA_PKCSV15, &pkcsv15, sizeof(CRYPT_RSA_PkcsV15Para));
+    int32_t mdId = hashId;
+    int32_t ret = CRYPT_EAL_PkeyCtrl(pubKey, CRYPT_CTRL_SET_RSA_EMSA_PKCSV15, &mdId, sizeof(mdId));
     if (ret != CRYPT_SUCCESS) {
         return ret;
     }
-    return CRYPT_EAL_PkeyCtrl(prvKey, CRYPT_CTRL_SET_RSA_EMSA_PKCSV15, &pkcsv15, sizeof(CRYPT_RSA_PkcsV15Para));
+    return CRYPT_EAL_PkeyCtrl(prvKey, CRYPT_CTRL_SET_RSA_EMSA_PKCSV15, &mdId, sizeof(mdId));
+}
+
+static int32_t CryptSm2PairSet(CRYPT_EAL_PkeyCtx *pubKey, CRYPT_EAL_PkeyCtx *prvKey)
+{
+    char *userId = "1234567812345678";
+    int32_t ret = CRYPT_EAL_PkeyCtrl(pubKey, CRYPT_CTRL_SET_SM2_USER_ID, (void *)userId, strlen(userId));
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
+    }
+    return CRYPT_EAL_PkeyCtrl(prvKey, CRYPT_CTRL_SET_SM2_USER_ID, (void *)userId, strlen(userId));
 }
 
 int32_t CRYPT_EAL_PkeyPairCheck(CRYPT_EAL_PkeyCtx *pubKey, CRYPT_EAL_PkeyCtx *prvKey)
 {
     if ((pubKey == NULL) || (prvKey == NULL)) {
-        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_PKEY, CRYPT_PKEY_MAX, CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
 
     int32_t ret = CRYPT_SUCCESS;
     uint8_t *signedData = NULL;
+    
     CRYPT_EAL_PkeyCtx *tempPubKey = CRYPT_EAL_PkeyDupCtx(pubKey);
     CRYPT_EAL_PkeyCtx *tempPrivKey = CRYPT_EAL_PkeyDupCtx(prvKey);
     if (tempPubKey == NULL || tempPrivKey == NULL) {
         ret = CRYPT_MEM_ALLOC_FAIL;
-        goto ERR;
+        goto EXIT;
     }
     CRYPT_MD_AlgId hashId;
     CRYPT_PKEY_AlgId algId = CRYPT_EAL_PkeyGetId(tempPubKey);
@@ -97,6 +108,7 @@ int32_t CRYPT_EAL_PkeyPairCheck(CRYPT_EAL_PkeyCtx *pubKey, CRYPT_EAL_PkeyCtx *pr
             break;
         case CRYPT_PKEY_SM2:
             hashId = CRYPT_MD_SM3;
+            ret = CryptSm2PairSet(tempPubKey, tempPrivKey);
             break;
         default:
             ret = CRYPT_NOT_SUPPORT;
@@ -104,25 +116,25 @@ int32_t CRYPT_EAL_PkeyPairCheck(CRYPT_EAL_PkeyCtx *pubKey, CRYPT_EAL_PkeyCtx *pr
     }
 
     if (ret != CRYPT_SUCCESS) {
-        goto ERR;
+        goto EXIT;
     }
     uint8_t toBeSig[] = {1};
     uint32_t signedLen = CRYPT_EAL_PkeyGetSignLen(tempPrivKey);
     if (signedLen == 0) {
         ret = CRYPT_ECC_PKEY_ERR_SIGN_LEN;
-        goto ERR;
+        goto EXIT;
     }
     signedData = BSL_SAL_Malloc(signedLen);
     if (signedData == NULL) {
         ret = CRYPT_MEM_ALLOC_FAIL;
-        goto ERR;
+        goto EXIT;
     }
     ret = CRYPT_EAL_PkeySign(tempPrivKey, hashId, toBeSig, sizeof(toBeSig), signedData, &signedLen);
     if (ret != CRYPT_SUCCESS) {
-        goto ERR;
+        goto EXIT;
     }
     ret = CRYPT_EAL_PkeyVerify(tempPubKey, hashId, toBeSig, sizeof(toBeSig), signedData, signedLen);
-ERR:
+EXIT:
     BSL_SAL_FREE(signedData);
     CRYPT_EAL_PkeyFreeCtx(tempPubKey);
     CRYPT_EAL_PkeyFreeCtx(tempPrivKey);

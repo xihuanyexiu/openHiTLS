@@ -164,7 +164,7 @@ static int32_t PackClientCipherSuites(const TLS_Ctx *ctx, uint8_t *buf, uint32_t
      * be calculated according to offset */
     cipherSuitesLen = (uint16_t)(offset - CIPHER_SUITES_LEN_SIZE);
     /* If the local is not in the renegotiation state,
-     * the SCSV algorithm set needs to be packed.*/
+     * the SCSV algorithm set needs to be packed. */
     if (!ctx->negotiatedInfo.isRenegotiation) {
         if (offset + sizeof(uint16_t) > bufLen) {
             BSL_ERR_PUSH_ERROR(HITLS_PACK_CLIENT_CIPHER_SUITE_ERR);
@@ -223,14 +223,13 @@ static int32_t PackSessionAndCookie(const TLS_Ctx *ctx, uint8_t *buf, uint32_t b
     offset += len;
 #else // Session recovery is not supported.
     /* SessionId (Session is not supported yet and the length field is initialized with a value of 0) */
-    buf[offset] = 0; 
+    buf[offset] = 0;
     offset += sizeof(uint8_t);
 #endif
 
 #ifdef HITLS_TLS_PROTO_DTLS12
     const TLS_Config *tlsConfig = &ctx->config.tlsConfig;
-    uint16_t version = (tlsConfig->maxVersion == HITLS_VERSION_TLS13) ? HITLS_VERSION_TLS12 : tlsConfig->maxVersion;
-    if (IS_DTLS_VERSION(version)) {
+    if (IS_SUPPORT_DATAGRAM(tlsConfig->originVersionMask)) {
         len = 0u;
         ret = PackClientCookie(ctx->negotiatedInfo.cookie, (uint8_t)ctx->negotiatedInfo.cookieSize,
             &buf[offset], bufLen - offset, &len);

@@ -181,18 +181,17 @@ static int32_t ParseEcdhePublicKey(ParsePacket *pkt, ServerEcdh *ecdh)
     }
 
 #ifdef HITLS_TLS_PROTO_TLCP11
-    if (pkt->ctx->negotiatedInfo.version == HITLS_VERSION_TLCP11) {
+    if (pkt->ctx->negotiatedInfo.version == HITLS_VERSION_TLCP_DTLCP11) {
         ecdh->ecPara.param.namedcurve = HITLS_EC_GROUP_SM2;
     }
 #endif /* HITLS_TLS_PROTO_TLCP11 */
-
     if ((ecdh->ecPara.type == HITLS_EC_CURVE_TYPE_NAMED_CURVE) &&
-        (pubKeySize != HS_GetNamedCurvePubkeyLen(ecdh->ecPara.param.namedcurve))) {
+        (pubKeySize != SAL_CRYPT_GetCryptLength(pkt->ctx, HITLS_CRYPT_INFO_CMD_GET_PUBLIC_KEY_LEN,
+            ecdh->ecPara.param.namedcurve))) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15300, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "ecdhe server pubkey length error, curve id = %u, pubkey len = %u.",
             ecdh->ecPara.param.namedcurve, pubKeySize, 0, 0);
-        return ParseErrorProcess(pkt->ctx, HITLS_PARSE_ECDH_PUBKEY_ERR, 0,
-            NULL, ALERT_ILLEGAL_PARAMETER);
+        return ParseErrorProcess(pkt->ctx, HITLS_PARSE_ECDH_PUBKEY_ERR, 0, NULL, ALERT_ILLEGAL_PARAMETER);
     }
 
     uint8_t *pubKey = NULL;
@@ -280,7 +279,7 @@ static int32_t ParseServerEcdhe(ParsePacket *pkt, ServerKeyExchangeMsg *msg)
     uint32_t keyExDataLen = *pkt->bufOffset;
     uint16_t signAlgorithm = ctx->negotiatedInfo.cipherSuiteInfo.signScheme;
 
-    if (ctx->negotiatedInfo.version != HITLS_VERSION_TLCP11) {
+    if (ctx->negotiatedInfo.version != HITLS_VERSION_TLCP_DTLCP11) {
         ret = ParseSignAlgorithm(pkt, &signAlgorithm);
         if (ret != HITLS_SUCCESS) {
             BSL_LOG_BINLOG_FIXLEN(BINLOG_ID17015, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
@@ -379,7 +378,6 @@ static int32_t ParseServerDhe(ParsePacket *pkt, ServerKeyExchangeMsg *msg)
     if (ret != HITLS_SUCCESS) {
         return RETURN_ERROR_NUMBER_PROCESS(ret, BINLOG_ID17017, "ParseSignAlgorithm fail");
     }
-
 
     ret = ParseSignature(pkt, &dh->signSize, &dh->signData);
     if (ret != HITLS_SUCCESS) {

@@ -32,7 +32,7 @@ static bool IsSignAlgValid(uint16_t signAlg, uint16_t version)
 {
     uint32_t listLen = 0;
 #ifdef HITLS_TLS_PROTO_TLCP11
-    const SignSchemeInfo *signSchemeList = (version != HITLS_VERSION_TLCP11) ?
+    const SignSchemeInfo *signSchemeList = (version != HITLS_VERSION_TLCP_DTLCP11) ?
         CFG_GetSignSchemeList(&listLen) :
         CFG_GetSignSchemeListTlcp(&listLen);
 #else
@@ -54,7 +54,7 @@ static bool CFG_IsValidVersion(uint16_t version)
         case HITLS_VERSION_TLS12:
         case HITLS_VERSION_TLS13:
         case HITLS_VERSION_DTLS12:
-        case HITLS_VERSION_TLCP11:
+        case HITLS_VERSION_TLCP_DTLCP11:
             return true;
         default:
             break;
@@ -66,17 +66,17 @@ static bool  HaveMatchSignAlg(HITLS_AuthAlgo authAlg, const uint16_t *signatureA
     uint32_t signatureAlgorithmsSize, uint16_t version)
 {
     HITLS_SignAlgo signAlg = HITLS_SIGN_BUTT;
-    HITLS_HashAlgo hashAlg = HITLS_HASH_BUTT;
+    HITLS_HashAlgo hashAlg = HITLS_HASH_NULL;
 
     /** Traverse the signature algorithms. If the matching is successful, return true */
     for (uint32_t i = 0u; i < signatureAlgorithmsSize; i++) {
         if (CFG_GetSignParamBySchemes(version, signatureAlgorithms[i], &signAlg, &hashAlg)) {
-            if (((signAlg == HITLS_SIGN_RSA_PKCS1_V15) || (signAlg == HITLS_SIGN_RSA_PSS_RSAE)) &&
+            if (((signAlg == HITLS_SIGN_RSA_PKCS1_V15) || (signAlg == HITLS_SIGN_RSA_PSS)) &&
                 (authAlg == HITLS_AUTH_RSA)) {
                 return true;
             }
 
-            if (((signAlg == HITLS_SIGN_ECDSA) || (signAlg == HITLS_SIGN_ED25519) || (signAlg == HITLS_SIGN_ED448)) &&
+            if (((signAlg == HITLS_SIGN_ECDSA) || (signAlg == HITLS_SIGN_ED25519)) &&
                 (authAlg == HITLS_AUTH_ECDSA)) {
                 return true;
             }
@@ -238,7 +238,7 @@ int32_t CheckVersion(uint16_t minVersion, uint16_t maxVersion)
         return HITLS_CONFIG_INVALID_VERSION;
     }
 #ifdef HITLS_TLS_PROTO_TLCP11
-    if (minVersion == HITLS_VERSION_TLCP11 || maxVersion == HITLS_VERSION_TLCP11) {
+    if (minVersion == HITLS_VERSION_TLCP_DTLCP11 || maxVersion == HITLS_VERSION_TLCP_DTLCP11) {
         if (minVersion != maxVersion) {
             BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16233, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
                 "Config max version [0x%x] or min version [0x%x] is invalid.", maxVersion,
@@ -279,9 +279,5 @@ int32_t CheckConfig(const TLS_Config *config)
         }
     }
 
-    ret = CheckSign(config);
-    if (ret != HITLS_SUCCESS) {
-        return ret;
-    }
-    return ret;
+    return CheckSign(config);
 }

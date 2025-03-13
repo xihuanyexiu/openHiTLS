@@ -58,12 +58,16 @@ typedef void (*BSL_UIO_USERDATA_FREE_FUNC)(void *);
  */
 typedef enum {
     BSL_UIO_TCP,
+    BSL_UIO_UDP,
     BSL_UIO_SCTP,
     BSL_UIO_BUFFER,
+    BSL_UIO_MEM,
     BSL_UIO_UNKNOWN, /* Unknown protocol should not appear */
 
     BSL_UIO_EXTEND = 10000, /* extension value */
 } BSL_UIO_TransportType;
+
+#define IS_TRANSTYPE_DATAGRAM(transportType) ((transportType) == BSL_UIO_SCTP || (transportType) == BSL_UIO_UDP)
 
 /**
  * @ingroup bsl_uio
@@ -95,6 +99,11 @@ typedef enum {
     BSL_UIO_GET_FD,
     BSL_UIO_FLUSH,
     BSL_UIO_RESET,
+    BSL_UIO_PENDING,
+    BSL_UIO_WPENDING,
+
+    /* UDP uses 0x2XX */
+    BSL_UIO_DGRAM_SET_CONNECTED,
 
     /* SCTP uses 0x3XX */
     BSL_UIO_SCTP_CHECK_PEER_AUTH = 0x300,
@@ -105,6 +114,13 @@ typedef enum {
     BSL_UIO_SCTP_GET_SEND_STREAM_ID,
     BSL_UIO_SCTP_SET_APP_STREAM_ID,
     BSL_UIO_SCTP_MASK_APP_MESSAGE,
+
+    /* MEM uses 0x4XX */
+    BSL_UIO_MEM_NEW_BUF = 0x400,
+    BSL_UIO_MEM_GET_PTR,
+    BSL_UIO_MEM_SET_EOF,
+    BSL_UIO_MEM_GET_EOF,
+    BSL_UIO_MEM_GET_INFO,
 } BSL_UIO_CtrlParameter;
 
 #define BSL_UIO_FILE_READ             0x02
@@ -199,6 +215,14 @@ const BSL_UIO_Method *BSL_UIO_TcpMethod(void);
 
 /**
  * @ingroup bsl_uio
+ * @brief   obtain the default UDP UIO method
+ *
+ * @retval  pointer to the UDP UIO method
+ */
+const BSL_UIO_Method *BSL_UIO_UdpMethod(void);
+
+/**
+ * @ingroup bsl_uio
  * @brief   obtain the default SCTP UIO
  *
  * @retval  pointer to the SCTP UIO method
@@ -213,6 +237,13 @@ const BSL_UIO_Method *BSL_UIO_SctpMethod(void);
  */
 const BSL_UIO_Method *BSL_UIO_BufferMethod(void);
 
+/**
+ * @ingroup bsl_uio
+ * @brief   obtain the default MEM UIO
+ *
+ * @retval  pointer to the MEM UIO method
+ */
+const BSL_UIO_Method *BSL_UIO_MemMethod(void);
 /**
  * @ingroup bsl_uio
  * @brief   Create a UIO object

@@ -37,6 +37,21 @@ typedef struct {
     CheckHsMsgTypeFunc checkCb;
 } HsMsgTypeCheck;
 
+static int32_t CheckServerHelloType(TLS_Ctx *ctx, const HS_MsgType msgType)
+{
+    /* In DTLS, When client try to receive ServerHello message, it doesn't know if server enables 
+     * isHelloVerifyReqEnable. If client receives HelloVerifyRequest message, also valid */
+    if (BSL_UIO_GetTransportType(ctx->rUio) == BSL_UIO_UDP) {
+        if (msgType == HELLO_VERIFY_REQUEST) {
+            (void)HS_ChangeState(ctx, TRY_RECV_HELLO_VERIFY_REQUEST);
+            return HITLS_SUCCESS;
+        }
+    }
+    BSL_LOG_BINLOG_FIXLEN(BINLOG_ID17331, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
+        "CheckServerHelloType fail", 0, 0, 0, 0);
+    return HITLS_MSG_HANDLE_UNEXPECTED_MESSAGE;
+}
+
 static int32_t CheckServerKeyExchangeType(TLS_Ctx *ctx, const HS_MsgType msgType)
 {
     /* When the PSK and RSA_PSK are used, whether the ServerKeyExchange message is received depends on whether the
@@ -78,7 +93,8 @@ static int32_t CheckCertificateRequestType(TLS_Ctx *ctx, const HS_MsgType msgTyp
 static const HsMsgTypeCheck g_checkHsMsgTypeList[] = {
     [TRY_RECV_CLIENT_HELLO] = {.msgType = CLIENT_HELLO,
                                .checkCb = NULL},
-    [TRY_RECV_SERVER_HELLO] = {.msgType = SERVER_HELLO, .checkCb = NULL},
+    [TRY_RECV_SERVER_HELLO] = {.msgType = SERVER_HELLO, .checkCb = CheckServerHelloType},
+    [TRY_RECV_HELLO_VERIFY_REQUEST] = {.msgType = HELLO_VERIFY_REQUEST, .checkCb = NULL},
     [TRY_RECV_ENCRYPTED_EXTENSIONS] = {.msgType = ENCRYPTED_EXTENSIONS, .checkCb = NULL},
     [TRY_RECV_CERTIFICATE] = {.msgType = CERTIFICATE, .checkCb = NULL},
     [TRY_RECV_SERVER_KEY_EXCHANGE] = {.msgType = SERVER_KEY_EXCHANGE, .checkCb = CheckServerKeyExchangeType},
@@ -142,10 +158,10 @@ static int32_t CheckHsMsgLen(TLS_Ctx *ctx, HS_MsgInfo *hsMsgInfo)
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16161, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "(D)TLS HS msg type: %d, parsed length: %u, max length: %u.", (int)hsMsgInfo->type, hsMsgInfo->length,
             hsMsgOfSpecificTypeMaxSize, 0);
-        return ParseErrorProcess(ctx, HTILS_PARSE_EXCESSIVE_MESSAGE_SIZE, 0,
+        return ParseErrorProcess(ctx, HITLS_PARSE_EXCESSIVE_MESSAGE_SIZE, 0,
             NULL, ALERT_ILLEGAL_PARAMETER);
     }
-    uint32_t headerLen = IS_DTLS_VERSION(ctx->config.tlsConfig.maxVersion) ?
+    uint32_t headerLen = IS_SUPPORT_DATAGRAM(ctx->config.tlsConfig.originVersionMask) ?
         DTLS_HS_MSG_HEADER_SIZE : HS_MSG_HEADER_SIZE;
     ret = HS_GrowMsgBuf(ctx, headerLen + hsMsgInfo->length, true);
     if (ret != HITLS_SUCCESS) {
@@ -225,6 +241,8 @@ static int32_t ParseHandShakeMsg(TLS_Ctx *ctx, const uint8_t *data, uint32_t len
             return ParseClientHello(ctx, data, len, hsMsg);
         case SERVER_HELLO:
             return ParseServerHello(ctx, data, len, hsMsg);
+        case HELLO_VERIFY_REQUEST:
+            return ParseHelloVerifyRequest(ctx, data, len, hsMsg);
         case CERTIFICATE:
             return ParseCertificate(ctx, data, len, hsMsg);
         case SERVER_KEY_EXCHANGE:
@@ -319,7 +337,12 @@ int32_t HS_ParseMsgHeader(TLS_Ctx *ctx, const uint8_t *data, uint32_t len, HS_Ms
         case HITLS_VERSION_TLS12:
         case HITLS_VERSION_TLS13:
 #ifdef HITLS_TLS_PROTO_TLCP11
-        case HITLS_VERSION_TLCP11:
+        case HITLS_VERSION_TLCP_DTLCP11:
+#if defined(HITLS_TLS_PROTO_DTLCP11)
+            if (IS_SUPPORT_DATAGRAM(ctx->config.tlsConfig.originVersionMask)) {
+                return DtlsParseHsMsgHeader(ctx, data, len, hsMsgInfo);
+            }
+#endif
 #endif
             return TlsParseHsMsgHeader(ctx, data, len, hsMsgInfo);
 #endif /* HITLS_TLS_PROTO_TLS */
@@ -358,7 +381,12 @@ int32_t HS_ParseMsg(TLS_Ctx *ctx, const HS_MsgInfo *hsMsgInfo, HS_Msg *hsMsg)
 #ifdef HITLS_TLS_PROTO_TLS_BASIC
         case HITLS_VERSION_TLS12:
 #ifdef HITLS_TLS_PROTO_TLCP11
-        case HITLS_VERSION_TLCP11:
+        case HITLS_VERSION_TLCP_DTLCP11:
+#if defined(HITLS_TLS_PROTO_DTLCP11)
+            if (IS_SUPPORT_DATAGRAM(ctx->config.tlsConfig.originVersionMask)) {
+                return ParseHandShakeMsg(ctx, &hsMsgInfo->rawMsg[DTLS_HS_MSG_HEADER_SIZE], hsMsgInfo->length, hsMsg);
+            }
+#endif
 #endif
             return ParseHandShakeMsg(ctx, &hsMsgInfo->rawMsg[HS_MSG_HEADER_SIZE], hsMsgInfo->length, hsMsg);
 #endif /* HITLS_TLS_PROTO_TLS_BASIC */
@@ -397,6 +425,8 @@ void HS_CleanMsg(HS_Msg *hsMsg)
 #ifdef HITLS_TLS_HOST_CLIENT
         case SERVER_HELLO:
             return CleanServerHello(&hsMsg->body.serverHello);
+        case HELLO_VERIFY_REQUEST:
+            return CleanHelloVerifyRequest(&hsMsg->body.helloVerifyReq);
         case CERTIFICATE_REQUEST:
             return CleanCertificateRequest(&hsMsg->body.certificateReq);
 #if defined(HITLS_TLS_PROTO_TLS_BASIC) || defined(HITLS_TLS_PROTO_DTLS12)
