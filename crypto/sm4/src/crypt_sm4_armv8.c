@@ -20,7 +20,6 @@
 #include "crypt_sm4.h"
 #include "bsl_err_internal.h"
 #include "crypt_errno.h"
-
 #ifdef HITLS_CRYPTO_XTS
 // key[0..16]: data key
 // key[16..32]: tweak key
@@ -68,7 +67,6 @@ int32_t CRYPT_SM4_XTS_SetDecryptKey(CRYPT_SM4_Ctx *ctx, const uint8_t *key, uint
     CRYPT_SM4_Ctx *tmk = (CRYPT_SM4_Ctx *)&ctx[1];
     Vpsm4SetDecryptKey(key, (SM4_KEY *)ctx->rk);
     Vpsm4SetEncryptKey(key + CRYPT_SM4_BLOCKSIZE, (SM4_KEY *)tmk->rk);
-
     return CRYPT_SUCCESS;
 }
 
@@ -81,11 +79,11 @@ int32_t CRYPT_SM4_XTS_Encrypt(CRYPT_SM4_Ctx *ctx, const uint8_t *in, uint8_t *ou
     }
 
     if (len < CRYPT_SM4_BLOCKSIZE) {
-        BSL_ERR_PUSH_ERROR(CRYPT_SM4_DATALEN_ERROR);
-        return CRYPT_SM4_DATALEN_ERROR;
+        BSL_ERR_PUSH_ERROR(CRYPT_SM4_ERR_MSG_LEN);
+        return CRYPT_SM4_ERR_MSG_LEN;
     }
     tmk = (CRYPT_SM4_Ctx *)&ctx[1];
-    Vpsm4XtsEncrypt(in, out, len, (const SM4_KEY *)ctx->rk, (const SM4_KEY *)tmk->rk, iv);
+    Vpsm4XtsCipher(in, out, len, (const SM4_KEY *)ctx->rk, (const SM4_KEY *)tmk->rk, iv, 1);
 
     return CRYPT_SUCCESS;
 }
@@ -99,20 +97,26 @@ int32_t CRYPT_SM4_XTS_Decrypt(CRYPT_SM4_Ctx *ctx, const uint8_t *in, uint8_t *ou
     }
 
     if (len < CRYPT_SM4_BLOCKSIZE) {
-        BSL_ERR_PUSH_ERROR(CRYPT_SM4_DATALEN_ERROR);
-        return CRYPT_SM4_DATALEN_ERROR;
+        BSL_ERR_PUSH_ERROR(CRYPT_SM4_ERR_MSG_LEN);
+        return CRYPT_SM4_ERR_MSG_LEN;
     }
     tmk = (CRYPT_SM4_Ctx *)&ctx[1];
-    Vpsm4XtsDecrypt(in, out, len, (const SM4_KEY *)ctx->rk, (const SM4_KEY *)tmk->rk, iv);
+    Vpsm4XtsCipher(in, out, len, (const SM4_KEY *)ctx->rk, (const SM4_KEY *)tmk->rk, iv, 0);
 
     return CRYPT_SUCCESS;
 }
 #endif
+
 int32_t CRYPT_SM4_SetEncryptKey(CRYPT_SM4_Ctx *ctx, const uint8_t *key, uint32_t len)
 {
+    if (ctx == NULL || key == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+
     if (len != SM4_KEY_LEN) {
-        BSL_ERR_PUSH_ERROR(CRYPT_SM4_KEYLEN_ERROR);
-        return CRYPT_SM4_KEYLEN_ERROR;
+        BSL_ERR_PUSH_ERROR(CRYPT_SM4_ERR_KEY_LEN);
+        return CRYPT_SM4_ERR_KEY_LEN;
     }
     Vpsm4SetEncryptKey(key, (SM4_KEY *)ctx->rk);
 
@@ -121,9 +125,14 @@ int32_t CRYPT_SM4_SetEncryptKey(CRYPT_SM4_Ctx *ctx, const uint8_t *key, uint32_t
 
 int32_t CRYPT_SM4_SetDecryptKey(CRYPT_SM4_Ctx *ctx, const uint8_t *key, uint32_t len)
 {
+    if (ctx == NULL || key == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+
     if (len != SM4_KEY_LEN) {
-        BSL_ERR_PUSH_ERROR(CRYPT_SM4_KEYLEN_ERROR);
-        return CRYPT_SM4_KEYLEN_ERROR;
+        BSL_ERR_PUSH_ERROR(CRYPT_SM4_ERR_KEY_LEN);
+        return CRYPT_SM4_ERR_KEY_LEN;
     }
 
     Vpsm4SetDecryptKey(key, (SM4_KEY *)ctx->rk);
@@ -138,8 +147,8 @@ int32_t CRYPT_SM4_ECB_Encrypt(CRYPT_SM4_Ctx *ctx, const uint8_t *in, uint8_t *ou
         return CRYPT_NULL_INPUT;
     }
     if (len < CRYPT_SM4_BLOCKSIZE) {
-        BSL_ERR_PUSH_ERROR(CRYPT_SM4_DATALEN_ERROR);
-        return CRYPT_SM4_DATALEN_ERROR;
+        BSL_ERR_PUSH_ERROR(CRYPT_SM4_ERR_MSG_LEN);
+        return CRYPT_SM4_ERR_MSG_LEN;
     }
     Vpsm4EcbEncrypt(in, out, len, ctx->rk);
     return CRYPT_SUCCESS;
@@ -152,19 +161,24 @@ int32_t CRYPT_SM4_ECB_Decrypt(CRYPT_SM4_Ctx *ctx, const uint8_t *in, uint8_t *ou
         return CRYPT_NULL_INPUT;
     }
     if (len < CRYPT_SM4_BLOCKSIZE) {
-        BSL_ERR_PUSH_ERROR(CRYPT_SM4_DATALEN_ERROR);
-        return CRYPT_SM4_DATALEN_ERROR;
+        BSL_ERR_PUSH_ERROR(CRYPT_SM4_ERR_MSG_LEN);
+        return CRYPT_SM4_ERR_MSG_LEN;
     }
     Vpsm4EcbEncrypt(in, out, len, ctx->rk);
     return CRYPT_SUCCESS;
 }
 #endif
+
 #ifdef HITLS_CRYPTO_CBC
 int32_t CRYPT_SM4_CBC_Encrypt(CRYPT_SM4_Ctx *ctx, const uint8_t *in, uint8_t *out, uint32_t len, uint8_t *iv)
 {
+    if (ctx == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
     if (len % CRYPT_SM4_BLOCKSIZE != 0) {
-        BSL_ERR_PUSH_ERROR(CRYPT_SM4_DATALEN_ERROR);
-        return CRYPT_SM4_DATALEN_ERROR;
+        BSL_ERR_PUSH_ERROR(CRYPT_SM4_ERR_MSG_LEN);
+        return CRYPT_SM4_ERR_MSG_LEN;
     }
     Vpsm4CbcEncrypt(in, out, len, ctx->rk, iv, 1);
     return CRYPT_SUCCESS;
@@ -172,14 +186,18 @@ int32_t CRYPT_SM4_CBC_Encrypt(CRYPT_SM4_Ctx *ctx, const uint8_t *in, uint8_t *ou
 
 int32_t CRYPT_SM4_CBC_Decrypt(CRYPT_SM4_Ctx *ctx, const uint8_t *in, uint8_t *out, uint32_t len, uint8_t *iv)
 {
-    if (len < CRYPT_SM4_BLOCKSIZE) {
-        BSL_ERR_PUSH_ERROR(CRYPT_SM4_DATALEN_ERROR);
-        return CRYPT_SM4_DATALEN_ERROR;
+    if (ctx == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    if (len % CRYPT_SM4_BLOCKSIZE != 0) {
+        BSL_ERR_PUSH_ERROR(CRYPT_SM4_ERR_MSG_LEN);
+        return CRYPT_SM4_ERR_MSG_LEN;
     }
     Vpsm4CbcEncrypt(in, out, len, ctx->rk, iv, 0);
     return CRYPT_SUCCESS;
 }
-#endif // HITLS_CRYPTO_CBC
+#endif
 
 #ifdef HITLS_CRYPTO_CFB
 int32_t CRYPT_SM4_CFB_Encrypt(CRYPT_SM4_Ctx *ctx, const uint8_t *in, uint8_t *out, uint32_t len,
@@ -194,6 +212,7 @@ int32_t CRYPT_SM4_CFB_Encrypt(CRYPT_SM4_Ctx *ctx, const uint8_t *in, uint8_t *ou
     *offset = (uint8_t)tmp;
     return CRYPT_SUCCESS;
 }
+
 int32_t CRYPT_SM4_CFB_Decrypt(CRYPT_SM4_Ctx *ctx, const uint8_t *in, uint8_t *out, uint32_t len,
     uint8_t *iv, uint8_t *offset)
 {
@@ -207,18 +226,27 @@ int32_t CRYPT_SM4_CFB_Decrypt(CRYPT_SM4_Ctx *ctx, const uint8_t *in, uint8_t *ou
     return CRYPT_SUCCESS;
 }
 #endif
+
 #if defined(HITLS_CRYPTO_CTR) || defined(HITLS_CRYPTO_GCM)
 int32_t CRYPT_SM4_CTR_Encrypt(CRYPT_SM4_Ctx *ctx, const uint8_t *in, uint8_t *out, uint32_t len, uint8_t *iv)
 {
+    if (ctx == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
     Vpsm4Ctr32EncryptBlocks(in, out, len, ctx->rk, iv);
     return CRYPT_SUCCESS;
 }
 
 int32_t CRYPT_SM4_CTR_Decrypt(CRYPT_SM4_Ctx *ctx, const uint8_t *in, uint8_t *out, uint32_t len, uint8_t *iv)
 {
+    if (ctx == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
     Vpsm4Ctr32EncryptBlocks(in, out, len, ctx->rk, iv);
     return CRYPT_SUCCESS;
 }
 #endif
 
-#endif // HITLS_CRYPTO_SM4
+#endif /* HITLS_CRYPTO_SM4 */

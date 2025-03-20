@@ -765,6 +765,7 @@
                     "armv8":[
                         "crypto/sm4/src/asm/crypt_sm4_xts_armv8.S",
                         "crypto/sm4/src/asm/crypt_sm4_armv8.S",
+                        "crypto/sm4/src/asm/crypt_sm4_ex_armv8.S",
                         "crypto/sm4/src/crypt_sm4_armv8.c"
                     ],
                     "x8664":{
