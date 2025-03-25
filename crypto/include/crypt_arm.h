@@ -45,6 +45,53 @@
 
 #ifndef __ASSEMBLER__
 extern uint32_t g_cryptArmCpuInfo;
+#else
+#  ifdef HITLS_AARCH64_PACIASP
+#   define AARCH64_PACIASP hint #25
+#   define AARCH64_AUTIASP hint #29
+#   define PROPERTY_AARCH64_PAC 2
+#  else
+#   define AARCH64_PACIASP
+#   define AARCH64_AUTIASP
+#   define PROPERTY_AARCH64_PAC 0
+#  endif
+
+#  ifdef HITLS_AARCH64_BTI
+#   define AARCH64_BTIC hint #34
+#   define PROPERTY_AARCH64_BTI 1
+#  else
+#   define AARCH64_BTIC
+#   define PROPERTY_AARCH64_BTI 0
+#  endif
+
+#  if PROPERTY_AARCH64_PAC != 0 || PROPERTY_AARCH64_BTI != 0
+#   if defined(__ILP32__)
+      .pushsection .note.gnu.property, "a";
+      .p2align 2;
+      .word 4;
+      .word 12;
+      .word 5;
+      .asciz "GNU";
+      .word 0xc0000000;
+      .word 4;
+      .word (PROPERTY_AARCH64_PAC | PROPERTY_AARCH64_BTI);
+      .p2align 2;
+      .popsection;
+#   else
+      .pushsection .note.gnu.property, "a";
+      .p2align 3;
+      .word 4;
+      .word 16;
+      .word 5;
+      .asciz "GNU";
+      .word 0xc0000000;
+      .word 4;
+      .word (PROPERTY_AARCH64_PAC | PROPERTY_AARCH64_BTI);
+      .word 0;
+      .popsection;
+#   endif
+#  endif
+
 #endif
 
 #endif

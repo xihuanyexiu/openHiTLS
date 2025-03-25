@@ -31,7 +31,9 @@
             "--param=ssp-buffer-size=4"
         ],
         "CC_DEFINE_FLAGS": [
-            "-DHITLS_CRYPTO_NIST_ECC_ACCELERATE"
+            "-DHITLS_CRYPTO_NIST_ECC_ACCELERATE",
+            "-DHITLS_AARCH64_BTI",
+            "-DHITLS_AARCH64_PACIASP"
         ],
         "CC_DEBUG_FLAGS": [],
         "CC_USER_DEFINE_FLAGS": []

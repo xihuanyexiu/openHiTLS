@@ -331,8 +331,8 @@ enum CRYPT_ERROR {
     CRYPT_SM3_OUT_BUFF_LEN_NOT_ENOUGH,                /**< The length of the buffer that storing the output
                                                            result is insufficient. */
 
-    CRYPT_SM4_KEYLEN_ERROR = 0x01180001,              /**< Wrong key length set. */
-    CRYPT_SM4_DATALEN_ERROR,                          /**< Wrong data length is set. */
+    CRYPT_SM4_ERR_IV_LEN = 0x01180001,              /**< Wrong key length set. */
+    CRYPT_SM4_ERR_MSG_LEN,                          /**< Wrong data length is set. */
     CRYPT_SM4_ERR_KEY_LEN,                            /**< Wrong key length is set. */
     CRYPT_SM4_UNSAFE_KEY,                             /**< DataKey is the same as tweakKey. */
 
