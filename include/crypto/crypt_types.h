@@ -147,6 +147,22 @@ typedef struct {
 /**
  * @ingroup crypt_types
  *
+ * ElGamal private key parameter structure
+ */
+typedef struct {
+    uint8_t *p; /**< ElGamal private key parameter marked as p */
+    uint8_t *g; /**< ElGamal private key parameter marked as g */
+    uint8_t *x; /**< ElGamal private key parameter marked as x */
+
+    uint32_t pLen; /**< Length of the ElGamal private key parameter marked as p */
+    uint32_t gLen; /**< Length of the ElGamal private key parameter marked as g */
+    uint32_t xLen; /**< Length of the ElGamal private key parameter marked as x */
+
+} CRYPT_ElGamalPrv;
+
+/**
+ * @ingroup crypt_types
+ *
  * DSA private key parameter structure
  */
 typedef CRYPT_Data CRYPT_DsaPrv;
@@ -225,6 +241,22 @@ typedef struct {
     uint32_t gLen; /**< Length of the Paillier public key parameter marked as g */
     uint32_t n2Len; /**< Length of the Paillier public key parameter marked as n2 */
 } CRYPT_PaillierPub;
+
+/**
+ * @ingroup crypt_types
+ *
+ * ElGamal public key parameter structure
+ */
+typedef struct {
+    uint8_t *p; /**< ElGamal public key parameter marked as p */
+    uint8_t *g; /**< ElGamal public key parameter marked as g */
+    uint8_t *y; /**< ElGamal public key parameter marked as y */
+    uint8_t *q; /**< ElGamal public key parameter marked as q */
+    uint32_t pLen; /**< Length of the ElGamal public key parameter marked as p */
+    uint32_t gLen; /**< Length of the ElGamal public key parameter marked as g */
+    uint32_t yLen; /**< Length of the ElGamal public key parameter marked as y */
+    uint32_t qLen; /**< Length of the ElGamal public key parameter marked as q */
+} CRYPT_ElGamalPub;
 
 /**
  * @ingroup crypt_types
@@ -333,6 +365,18 @@ typedef struct {
     uint32_t qLen; /**< Length of parameter q. */
     uint32_t bits; /**< Bits of para. */
 } CRYPT_PaillierPara;
+
+/**
+ * @ingroup crypt_types
+ *
+ * Para structure of the ElGamal algorithm
+ */
+typedef struct {
+    uint8_t *q; /**< Parameter q. */
+    uint32_t qLen; /**< Length of parameter q. */
+    uint32_t bits; /**< Bits of para. */
+    uint32_t k_bits; /**< Bits of q. */
+} CRYPT_ElGamalPara;
 
 /**
  * @ingroup crypt_types
