@@ -436,7 +436,7 @@ static int32_t ElGamal_GenP(BN_BigNum *p, CRYPT_ELGAMAL_Para *para, BN_Optimizer
         goto EXIT;
     }
 
-    ret = BN_GenPrime(para->q, k_bits, false, optimizer, NULL);
+    ret = BN_GenPrime(para->q, NULL, k_bits, false, optimizer, NULL);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         goto EXIT;

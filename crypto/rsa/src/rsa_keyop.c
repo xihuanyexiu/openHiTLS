@@ -420,6 +420,6 @@ int32_t CRYPT_RSA_GetSecBits(const CRYPT_RSA_Ctx *ctx)
         return 0;
     }
     int32_t bits = (int32_t)CRYPT_RSA_GetBits(ctx);
-    return BN_SecBit(bits, -1);
+    return BN_SecBits(bits, -1);
 }
 #endif // HITLS_CRYPTO_RSA

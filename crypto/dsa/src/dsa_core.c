@@ -986,6 +986,6 @@ int32_t CRYPT_DSA_GetSecBits(const CRYPT_DSA_Ctx *ctx)
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return 0;
     }
-    return BN_SecBit(BN_Bits(ctx->para->p), BN_Bits(ctx->para->q));
+    return BN_SecBits(BN_Bits(ctx->para->p), BN_Bits(ctx->para->q));
 }
 #endif /* HITLS_CRYPTO_DSA */

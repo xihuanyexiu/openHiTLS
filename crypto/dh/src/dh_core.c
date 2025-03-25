@@ -960,9 +960,9 @@ int32_t CRYPT_DH_GetSecBits(const CRYPT_DH_Ctx *ctx)
         return 0;
     }
     if (ctx->para->q == NULL) {
-        return BN_SecBit(BN_Bits(ctx->para->p), -1);
+        return BN_SecBits(BN_Bits(ctx->para->p), -1);
     }
-    return BN_SecBit(BN_Bits(ctx->para->p), BN_Bits(ctx->para->q));
+    return BN_SecBits(BN_Bits(ctx->para->p), BN_Bits(ctx->para->q));
 }
 
 #endif /* HITLS_CRYPTO_DH */

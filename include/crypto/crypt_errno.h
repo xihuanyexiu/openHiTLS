@@ -72,6 +72,11 @@ enum CRYPT_ERROR {
     CRYPT_BN_ERR_MASKCOPY_LEN,          /**< Data lengths are inconsistent when data is copied with masks. */
     CRYPT_BN_ERR_QUICK_MODDATA,         /**< Uses the BN_ModNistEccMul and BN_ModNistEccSqr interfaces,
                                              the module data is not supported. */
+
+    CRYPT_BN_FLAG_INVALID,              /**< Invalid big number flag. */
+    CRYPT_BN_CONVERT_INPUT_INVALID,     /**< Invalid input parameter of big number strings. */
+    CRYPT_BN_NOT_SUPPORT_EXTENSION,     /**< The big number does not support dynamic extension. */
+    CRYPT_BN_INPUT_INVALID,             /**< Invalid external big number input. */
     CRYPT_BN_BITS_INVALID,              /**< The bits of the big number exceeds the limit. */
 
     CRYPT_RSA_BUFF_LEN_NOT_ENOUGH = 0x01030001, /**< The buffer length is insufficient. */
