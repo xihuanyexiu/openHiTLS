@@ -756,7 +756,7 @@ ERR:
 }
 #endif
 
-#if defined(HITLS_CRYPTO_SM9) || defined(HITLS_CRYPTO_RSA)
+#if defined(HITLS_CRYPTO_RSA)
 
 int32_t MontMulCore(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b, BN_Mont *mont, BN_Optimizer *opt)
 {
@@ -777,89 +777,9 @@ ERR:
     return ret;
 }
 
-#endif // HITLS_CRYPTO_SM9 || HITLS_CRYPTO_RSA
+#endif // HITLS_CRYPTO_RSA
 
-#if defined(HITLS_CRYPTO_SM9)
-
-int32_t BN_MontMul(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b, BN_Mont *mont, BN_Optimizer *opt)
-{
-    if (r == NULL || a == NULL || b == NULL || mont == NULL || opt == NULL) {
-        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
-        return CRYPT_NULL_INPUT;
-    }
-    if ((a->size == 0) || (b->size == 0)) {
-        return BN_Zeroize(r);
-    }
-    int32_t ret;
-    const BN_BigNum *aTmp = NULL;
-    const BN_BigNum *bTmp = NULL;
-    if (BnExtend(r, mont->mSize) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
-    }
-    ret = OptimizerStart(opt);
-    if (ret != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(ret);
-        return ret;
-    }
-    /* if a >= mod || b >= mod */
-    aTmp = DealBaseNum(a, mont, opt, &ret);
-    if (ret != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(ret);
-        goto ERR;
-    }
-    bTmp = DealBaseNum(b, mont, opt, &ret);
-    if (ret != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(ret);
-        goto ERR;
-    }
-    GOTO_ERR_IF(MontMulCore(r, aTmp, bTmp, mont, opt), ret);
-    // consider a * b < 0
-    if (a->sign != b->sign && r->size != 0) {
-        BinSub(r->data, mont->mod, r->data, mont->mSize);
-        r->size = BinFixSize(r->data, mont->mSize);
-    }
-    r->sign = false;
-ERR:
-    OptimizerEnd(opt);
-    return ret;
-}
-
-int32_t BN_MontSqr(BN_BigNum *r, const BN_BigNum *a, BN_Mont *mont, BN_Optimizer *opt)
-{
-    int32_t ret;
-    if (r == NULL || a == NULL || mont == NULL || opt == NULL) {
-        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
-        return CRYPT_NULL_INPUT;
-    }
-    if ((a->size == 0)) {
-        return BN_Zeroize(r);
-    }
-    if (BnExtend(r, mont->mSize) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
-    }
-    ret = OptimizerStart(opt);
-    if (ret != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(ret);
-        return ret;
-    }
-    /* if a >= mod */
-    const BN_BigNum *tmp = DealBaseNum(a, mont, opt, &ret);
-    if (tmp == NULL) {
-        BSL_ERR_PUSH_ERROR(ret);
-        goto ERR;
-    }
-    GOTO_ERR_IF(MontSqrCore(r, tmp, mont, opt), ret);
-    r->sign = false; // sqr dont needs to consider a < 0;
-ERR:
-    OptimizerEnd(opt);
-    return ret;
-}
-
-#endif // HITLS_CRYPTO_SM9
-
-#if defined(HITLS_CRYPTO_SM9) || defined(HITLS_CRYPTO_BN_PRIME)
+#if defined(HITLS_CRYPTO_BN_PRIME)
 
 int32_t MontSqrCore(BN_BigNum *r, const BN_BigNum *a, BN_Mont *mont, BN_Optimizer *opt)
 {
@@ -873,6 +793,6 @@ ERR:
     return ret;
 }
 
-#endif // HITLS_CRYPTO_SM9 || HITLS_CRYPTO_BN_PRIME
+#endif // HITLS_CRYPTO_BN_PRIME
 
 #endif /* HITLS_CRYPTO_BN */

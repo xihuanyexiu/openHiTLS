@@ -284,9 +284,16 @@ int32_t CRYPT_ASMCAP_Md(CRYPT_MD_AlgId id)
 #if defined(HITLS_CRYPTO_PKEY)
 static const EAL_CheckAsm HITLS_ASM_PKEY_ALG_CHECK[] = {
     /* Asymmetric algorithm ID */
+#if defined(HITLS_CRYPTO_BN_ASM)
+    {.id = CRYPT_PKEY_DSA, .callback = {CRYPT_BN_AsmCheck, NULL}},
+    {.id = CRYPT_PKEY_RSA, .callback = {CRYPT_BN_AsmCheck, NULL}},
+    {.id = CRYPT_PKEY_DH, .callback = {CRYPT_BN_AsmCheck, NULL}},
 #if defined(HITLS_CRYPTO_CURVE_NISTP256_ASM)
-    {.id = CRYPT_PKEY_ECDSA, .callback = {NULL, CRYPT_ECP256_AsmCheck}},
-    {.id = CRYPT_PKEY_ECDH, .callback = {NULL, CRYPT_ECP256_AsmCheck}},
+    {.id = CRYPT_PKEY_ECDSA, .callback = {CRYPT_BN_AsmCheck, CRYPT_ECP256_AsmCheck}},
+    {.id = CRYPT_PKEY_ECDH, .callback = {CRYPT_BN_AsmCheck, CRYPT_ECP256_AsmCheck}},
+#endif
+    {.id = CRYPT_PKEY_SM2, .callback = {CRYPT_BN_AsmCheck, NULL}},
+    {.id = CRYPT_PKEY_SM9, .callback = {CRYPT_BN_AsmCheck, NULL}},
 #endif
     {.id = CRYPT_PKEY_MAX, .callback = {NULL, NULL}},
 };

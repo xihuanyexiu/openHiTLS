@@ -1338,7 +1338,7 @@ BN_BigNum *BN_GetRfc3526Prime(BN_BigNum *r, uint32_t len);
  */
 int32_t BN_SecBits(int32_t pubLen, int32_t prvLen);
 
-#if defined(HITLS_CRYPTO_SM9) || defined(HITLS_CRYPTO_RSA)
+#if defined(HITLS_CRYPTO_RSA)
 
 /**
  * @ingroup bn
@@ -1356,40 +1356,9 @@ int32_t BN_SecBits(int32_t pubLen, int32_t prvLen);
  */
 int32_t MontMulCore(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b, BN_Mont *mont, BN_Optimizer *opt);
 
-#endif // HITLS_CRYPTO_SM9 || HITLS_CRYPTO_SM9
+#endif // HITLS_CRYPTO_RSA
 
-#if defined(HITLS_CRYPTO_SM9)
-/**
- * @ingroup bn
- * @brief   Montgomery modular multiplication
- *
- * @param   r [OUT] Output results
- * @param   a [IN] Input data
- * @param   b [IN] Input data
- * @param   mont [IN] Montgomery context
- * @param   opt [IN] Large number optimizer
- *
- * @retval  CRYPT_SUCCESS
- * @retval  For details about other errors, see crypt_errno.h.
- */
-int32_t BN_MontMul(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b, BN_Mont *mont, BN_Optimizer *opt);
-
-/**
- * @ingroup bn
- * @brief   Montgomery modular square
- *
- * @param   r [OUT] Output results
- * @param   a [IN] Input data
- * @param   mont [IN] Montgomery context
- * @param   opt [IN] Large number optimizer
- *
- * @retval  CRYPT_SUCCESS
- * @retval  For details about other errors, see crypt_errno.h.
- */
-int32_t BN_MontSqr(BN_BigNum *r, const BN_BigNum *a, BN_Mont *mont, BN_Optimizer *opt);
-#endif // HITLS_CRYPTO_SM9
-
-#if defined(HITLS_CRYPTO_SM9) || defined(HITLS_CRYPTO_BN_PRIME)
+#if defined(HITLS_CRYPTO_BN_PRIME)
 /**
  * @ingroup bn
  * @brief   Montgomery modulus calculation process, need a < m, unlimited symbols.
@@ -1404,7 +1373,7 @@ int32_t BN_MontSqr(BN_BigNum *r, const BN_BigNum *a, BN_Mont *mont, BN_Optimizer
  */
 int32_t MontSqrCore(BN_BigNum *r, const BN_BigNum *a, BN_Mont *mont, BN_Optimizer *opt);
 
-#endif // HITLS_CRYPTO_SM9 || HITLS_CRYPTO_BN_PRIME
+#endif // HITLS_CRYPTO_BN_PRIME
 
 /**
  * @ingroup bn

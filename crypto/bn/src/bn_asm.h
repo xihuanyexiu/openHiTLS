@@ -50,7 +50,6 @@ void MontMul_Asm(BN_UINT *r, const BN_UINT *a, const BN_UINT *b, const BN_UINT *
     void MontMulx_Asm(BN_UINT *r, const BN_UINT *a, const BN_UINT *b, const BN_UINT *n, const BN_UINT k0, size_t size);
 #endif
 
-void MontMul_Armv7(BN_UINT *r, const BN_UINT *a, const BN_UINT *b, const BN_UINT *n, const BN_UINT k0, size_t size);
 #ifdef __cplusplus
 }
 #endif

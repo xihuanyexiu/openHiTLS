@@ -388,6 +388,14 @@
     #endif
 #endif
 
+#if defined(HITLS_CRYPTO_ECC_X8664)
+#define HITLS_CRYPTO_CURVE_SM2_X8664
+#endif
+
+#if defined(HITLS_CRYPTO_ECC_ARMV8)
+#define HITLS_CRYPTO_CURVE_SM2_ARMV8
+#endif
+
 #if defined(HITLS_CRYPTO_MODES_X8664) && !defined(HITLS_CRYPTO_GCM_X8664)
     #define HITLS_CRYPTO_GCM_X8664
 #endif
@@ -434,6 +442,10 @@
 
 #if defined(HITLS_CRYPTO_ECC_X8664) && !defined(HITLS_CRYPTO_ECC_ASM)
 #define HITLS_CRYPTO_ECC_ASM
+#endif
+
+#if defined(HITLS_CRYPTO_CURVE_SM2_X8664) || defined(HITLS_CRYPTO_CURVE_SM2_ARMV8)
+#define HITLS_CRYPTO_CURVE_SM2_ASM
 #endif
 
 #if defined(HITLS_CRYPTO_CURVE_NISTP256_X8664) && !defined(HITLS_CRYPTO_CURVE_NISTP256_ASM)
