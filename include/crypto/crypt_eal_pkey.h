@@ -552,18 +552,6 @@ void *CRYPT_EAL_PkeyGetExtData(const CRYPT_EAL_PkeyCtx *pkey);
 
 /**
  * @ingroup crypt_eal_pkey
- * @brief   Key pairing consistency test
- *
- * @param   pkey     [IN] Key pair structure
- *
- * @retval   true, consistent.
- *           false, non-consistent.
- */
-typedef bool (*CRYPT_EAL_Pct)(CRYPT_EAL_PkeyCtx *pkey);
-
-
-/**
- * @ingroup crypt_eal_pkey
  * @brief   EAL layer reference counting auto-increment
  *
  * @param   pkey [IN] Key session

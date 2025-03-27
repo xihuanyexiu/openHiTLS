@@ -31,7 +31,6 @@
 #include "crypt_provider.h"
 #endif
 
-
 static void CipherCopyMethod(const EAL_CipherMethod *modeMethod, EAL_CipherUnitaryMethod *method)
 {
     method->newCtx = modeMethod->newCtx;
@@ -211,6 +210,7 @@ int32_t CRYPT_EAL_CipherInit(CRYPT_EAL_CipherCtx *ctx, const uint8_t *key, uint3
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_CIPHER, ctx->id, CRYPT_EAL_ALG_NOT_SUPPORT);
         return CRYPT_EAL_ALG_NOT_SUPPORT;
     }
+
     CRYPT_EAL_CipherDeinit(ctx);
     if (ctx->states != EAL_CIPHER_STATE_NEW) {
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_CIPHER, ctx->id, CRYPT_EAL_ERR_STATE);
@@ -363,6 +363,7 @@ int32_t CRYPT_EAL_CipherFinal(CRYPT_EAL_CipherCtx *ctx, uint8_t *out, uint32_t *
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_CIPHER, (ctx == NULL) ? CRYPT_CIPHER_MAX : ctx->id, ret);
         return ret;
     }
+
     ret = ctx->method->final(ctx->ctx, out, outLen);
     if (ret != CRYPT_SUCCESS) {
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_CIPHER, ctx->id, ret);
@@ -400,14 +401,17 @@ int32_t CRYPT_EAL_CipherCtrl(CRYPT_EAL_CipherCtx *ctx, int32_t type, void *data,
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_CIPHER, ctx->id, CRYPT_EAL_CIPHER_CTRL_ERROR);
         return CRYPT_EAL_CIPHER_CTRL_ERROR;
     }
+
     // If the algorithm is running in the intermediate state, write operations are not allowed.
     if (!CipherCtrlIsCanSet(ctx, type)) {
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_CIPHER, ctx->id, CRYPT_EAL_ERR_STATE);
         return CRYPT_EAL_ERR_STATE;
     }
+    // Setting AAD indicates that the encryption operation has started and no more write operations are allowed.
     if (type == CRYPT_CTRL_SET_AAD) {
         ctx->states = EAL_CIPHER_STATE_UPDATE;
     } else if (type == CRYPT_CTRL_GET_TAG) {
+        // After getTag the system enters the final state.
         ctx->states = EAL_CIPHER_STATE_FINAL;
     }
     if (ctx->method == NULL || ctx->method->ctrl == NULL) {
@@ -419,7 +423,6 @@ int32_t CRYPT_EAL_CipherCtrl(CRYPT_EAL_CipherCtx *ctx, int32_t type, void *data,
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_CIPHER, ctx->id, ret);
         return ret;
     }
-
     return ret;
 }
 
@@ -447,6 +450,7 @@ int32_t CRYPT_EAL_CipherGetPadding(CRYPT_EAL_CipherCtx *ctx)
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_CIPHER, CRYPT_CIPHER_MAX, CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
+
     if (ctx->method == NULL || ctx->method->ctrl == NULL) {
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_CIPHER, ctx->id, CRYPT_EAL_ALG_NOT_SUPPORT);
         return CRYPT_EAL_ALG_NOT_SUPPORT;

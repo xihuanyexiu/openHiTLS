@@ -34,6 +34,17 @@ extern "C" {
 #endif
 
 /**
+  * @ingroup crypt_eal_rand
+  * @brief rand generate callback
+  *
+  * rand£ºstring
+  * randLen£º len
+  *
+  * @return  int32_t, defined by users.
+  */
+typedef int32_t (*CRYPT_EAL_RandFunc)(uint8_t *rand, uint32_t randLen);
+
+/**
  * @ingroup crypt_eal_rand
  * @brief Random number initialization interface. This interface does not support multiple threads.
  *

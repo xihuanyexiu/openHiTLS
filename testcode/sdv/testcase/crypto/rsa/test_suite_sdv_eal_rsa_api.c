@@ -932,9 +932,8 @@ void SDV_CRYPTO_RSA_CTRL_API_TC001(Hex *n, Hex *d, Hex *salt, int hashId, int is
 
     // OAEP The parameter is a null pointer.
     ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_RSA_RSAES_OAEP, NULL, 0), CRYPT_NULL_INPUT);
-
-    // PKCS1.5 The parameter is a null pointer.
     ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_RSA_RSAES_PKCSV15, NULL, sizeof(pkcsv15)), CRYPT_NULL_INPUT);
+
     // PKCS1.5 The parameter length is 0.
     ASSERT_EQ(
         CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_RSA_RSAES_PKCSV15, &pkcsv15, 0), CRYPT_RSA_SET_EMS_PKCSV15_LEN_ERROR);

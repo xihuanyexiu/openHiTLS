@@ -27,6 +27,7 @@
 #include "sal_atomic.h"
 #include "crypt_eal_implprovider.h"
 #include "bsl_list.h"
+#include "eal_drbg_local.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,7 +45,7 @@ struct EAL_ProviderMgrCtx {
     BSL_SAL_RefCount ref;
     char *providerName;
     char *providerPath;
-    void *seedCtx; // entropy ctx
+    EAL_SeedDrbg providerSeed; // entropy ctx
     struct EAL_LibCtx *libCtx;
     CRYPT_EAL_ImplProviderInit provInitFunc;
 

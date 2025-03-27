@@ -26,14 +26,14 @@
 extern "C" {
 #endif
 
-typedef int32_t (*CRYPT_RandFunc)(uint8_t *rand, uint32_t randLen);
+typedef int32_t (*CRYPT_EAL_RandFunc)(uint8_t *rand, uint32_t randLen);
 
 /**
  * @brief   Random number registration
  *
  * @param   func [IN] Interface for obtaining random numbers
  */
-void CRYPT_RandRegist(CRYPT_RandFunc func);
+void CRYPT_RandRegist(CRYPT_EAL_RandFunc func);
 
 /**
  * @brief   Generate a random number
@@ -46,6 +46,24 @@ void CRYPT_RandRegist(CRYPT_RandFunc func);
  * @retval  Error returned when the registered random number fails during the generate.
  */
 int32_t CRYPT_Rand(uint8_t *rand, uint32_t randLen);
+
+#if defined(HITLS_CRYPTO_EAL)
+#ifdef HITLS_CRYPTO_ENTROPY
+/**
+ * @brief Global seed-drbg lock initialization
+ *
+ * @param ctx handle of ctx
+ */
+int32_t EAL_SeedDrbgLockInit(void);
+
+/**
+ * @brief Global seed-drbg lock deinitialization
+ *
+ * @param ctx handle of ctx
+ */
+void EAL_SeedDrbgLockDeInit(void);
+#endif
+#endif
 
 #ifdef __cplusplus
 }

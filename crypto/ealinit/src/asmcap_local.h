@@ -33,9 +33,11 @@ int32_t CRYPT_AES_AsmCheck(void);
 #if defined(HITLS_CRYPTO_CHACHA20_ASM)
 int32_t CRYPT_CHACHA20_AsmCheck(void);
 #endif // HITLS_CRYPTO_CHACHA20
+
 #if defined(HITLS_CRYPTO_CHACHA20POLY1305_ASM)
 int32_t CRYPT_POLY1305_AsmCheck(void);
 #endif // HITLS_CRYPTO_CHACHA20POLY1305
+
 #if defined(HITLS_CRYPTO_SM4_ASM)
 int32_t CRYPT_SM4_AsmCheck(void);
 #endif // HITLS_CRYPTO_SM4

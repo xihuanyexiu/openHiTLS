@@ -33,6 +33,10 @@
 #error "[HiTLS] The entropy must work with at leaset one drbg algorithm."
 #endif
 
+#if defined(HITLS_CRYPTO_CMVP_INTEGRITY) && !defined(HITLS_CRYPTO_CMVP)
+    #error "[HiTLS] Integrity check must work with CMVP"
+#endif
+
 #if defined(HITLS_CRYPTO_PKEY) && !defined(HITLS_CRYPTO_MD)
 #error "[HiTLS] The pkey must work with hash."
 #endif

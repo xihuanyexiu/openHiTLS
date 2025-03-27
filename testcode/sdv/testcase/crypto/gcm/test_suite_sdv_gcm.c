@@ -176,7 +176,7 @@ void SDV_CRYPTO_GCM_API_TC005(int id, int keyLen)
     ASSERT_TRUE(ctx != NULL);
     ASSERT_TRUE(CRYPT_EAL_CipherInit(ctx, (uint8_t *)key, keyLen, iv, sizeof(iv), true) == CRYPT_SUCCESS);
     ASSERT_TRUE(CRYPT_EAL_CipherCtrl(ctx, CRYPT_CTRL_SET_AAD, NULL, 0) == CRYPT_SUCCESS);
-    ASSERT_TRUE(CRYPT_EAL_CipherCtrl(ctx, CRYPT_CTRL_SET_AAD, NULL, 0) != CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_CipherCtrl(ctx, CRYPT_CTRL_SET_AAD, NULL, 0), CRYPT_EAL_ERR_STATE);
 EXIT:
     CRYPT_EAL_CipherFreeCtx(ctx);
 }
