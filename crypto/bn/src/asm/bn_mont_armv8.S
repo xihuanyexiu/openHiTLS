@@ -41,7 +41,6 @@
 .type   MontMul_Asm, %function
 .align  5
 MontMul_Asm:
-AARCH64_BTIC
 AARCH64_PACIASP
     tst     x5, #7
     b.eq    MontSqr8
@@ -244,7 +243,6 @@ AARCH64_AUTIASP
 
 .type   MontSqr8, %function
 MontSqr8:
-AARCH64_BTIC
 AARCH64_PACIASP
     cmp     x1, x2
     b.ne    MontMul4
@@ -1068,7 +1066,6 @@ AARCH64_AUTIASP
 
 .type   MontMul4, %function
 MontMul4:
-AARCH64_BTIC
 AARCH64_PACIASP
     stp     x29, x30, [sp, #-128]!
     mov     x29, sp

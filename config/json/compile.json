@@ -36,7 +36,6 @@
             "-DHITLS_CRYPTO_BN_PRIME",
             "-DHITLS_CRYPTO_CURVE_SM2_ASM",
             "-DHITLS_CRYPTO_BN_CB",
-            "-DHITLS_AARCH64_BTI",
             "-DHITLS_AARCH64_PACIASP"
         ],
         "CC_DEBUG_FLAGS": [],
