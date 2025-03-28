@@ -318,7 +318,7 @@ static int32_t SetTagLen(MODES_CipherCCMCtx *ctx, const void *val, uint32_t len)
      * RFC_3610-2
      * Valid values are 4, 6, 8, 10, 12, 14, and 16 octets
      */
-    uint32_t tagLen = *((const uint32_t *)val);
+    uint32_t tagLen = *(const uint32_t *)val;
     // 4 <= tagLen <= 16 and tagLen is an even number.
     if (tagLen > 16 || tagLen < 4 || ((tagLen & 0x01) != 0)) {
         BSL_ERR_PUSH_ERROR(CRYPT_MODES_CTRL_TAGLEN_ERROR);
@@ -333,7 +333,7 @@ static int32_t SetTagLen(MODES_CipherCCMCtx *ctx, const void *val, uint32_t len)
 
 static uint32_t XorAadLen(MODES_CipherCCMCtx *ctx, uint32_t aadLen)
 {
-    /**
+    /*
      * RFC_3610-2.2
      * First two octets   Followed by       Comment
      * -----------------  ----------------  -------------------------------
@@ -488,6 +488,8 @@ int32_t MODES_CCM_Ctrl(MODES_CCM_Ctx *modeCtx, int32_t opt, void *val, uint32_t 
         return CRYPT_NULL_INPUT;
     }
     switch (opt) {
+        case CRYPT_CTRL_SET_IV:
+            return SetIv(&modeCtx->ccmCtx, val, len);
         case CRYPT_CTRL_REINIT_STATUS:
             return SetIv(&modeCtx->ccmCtx, val, len);
         case CRYPT_CTRL_GET_BLOCKSIZE:
@@ -513,7 +515,7 @@ int32_t MODES_CCM_Ctrl(MODES_CCM_Ctx *modeCtx, int32_t opt, void *val, uint32_t 
 
 MODES_CCM_Ctx *MODES_CCM_NewCtx(int32_t algId)
 {
-    const EAL_SymMethod *method = MODES_GetSymMethod(algId);
+    const EAL_SymMethod *method = EAL_GetSymMethod(algId);
     if (method == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);
         return NULL;
@@ -527,7 +529,7 @@ MODES_CCM_Ctx *MODES_CCM_NewCtx(int32_t algId)
     ctx->ccmCtx.ciphCtx = BSL_SAL_Calloc(1, method->ctxSize);
     if (ctx->ccmCtx.ciphCtx  == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        BSL_SAL_FREE(ctx);
+        BSL_SAL_Free(ctx);
         return NULL;
     }
 
@@ -536,7 +538,7 @@ MODES_CCM_Ctx *MODES_CCM_NewCtx(int32_t algId)
 }
 
 int32_t MODES_CCM_InitCtx(MODES_CCM_Ctx *modeCtx, const uint8_t *key, uint32_t keyLen, const uint8_t *iv,
-    uint32_t ivLen, const BSL_Param *param, bool enc)
+    uint32_t ivLen, void *param, bool enc)
 {
     (void)param;
     if (modeCtx == NULL) {
@@ -570,8 +572,8 @@ int32_t MODES_CCM_Final(MODES_CCM_Ctx *modeCtx, uint8_t *out, uint32_t *outLen)
 {
     (void) modeCtx;
     (void) out;
-    *outLen = 0;
-    return CRYPT_SUCCESS;
+    (void) outLen;
+    return CRYPT_EAL_CIPHER_FINAL_WITH_AEAD_ERROR;
 }
 
 int32_t MODES_CCM_DeInitCtx(MODES_CCM_Ctx *modeCtx)
@@ -611,7 +613,11 @@ int32_t MODES_CCM_UpdateEx(MODES_CCM_Ctx *modeCtx, const uint8_t *in, uint32_t i
         case CRYPT_CIPHER_AES128_CCM:
         case CRYPT_CIPHER_AES192_CCM:
         case CRYPT_CIPHER_AES256_CCM:
+#ifdef HITLS_CRYPTO_AES
             return AES_CCM_Update(modeCtx, in, inLen, out, outLen);
+#else
+            return CRYPT_EAL_ALG_NOT_SUPPORT;
+#endif
         default:
             return MODES_CCM_Update(modeCtx, in, inLen, out, outLen);
     }

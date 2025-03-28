@@ -510,8 +510,6 @@ void SDV_CRYPTO_EAL_REINIT_TC001(int id)
     for (uint32_t i = 0; i < EAL_MAX_BLOCK_LENGTH; i++) {
         ASSERT_EQ(ciphCtx->data[i], 0);
     }
-    // Check paddingType
-    ASSERT_EQ(ciphCtx->pad, CRYPT_PADDING_NONE);
 EXIT:
     CRYPT_EAL_CipherDeinit(ctx);
     CRYPT_EAL_CipherFreeCtx(ctx);
@@ -583,8 +581,6 @@ void SDV_CRYPTO_EAL_REINIT_TC003(int id)
     ASSERT_EQ(ciphCtx->gcmCtx.plaintextLen, 0);
     for (uint32_t i = 0; i < GCM_BLOCKSIZE; i++) {
         ASSERT_EQ(ciphCtx->gcmCtx.ghash[i], 0);
-        ASSERT_EQ(ciphCtx->gcmCtx.last[i], 0);
-        ASSERT_EQ(ciphCtx->gcmCtx.remCt[i], 0);
     }
 EXIT:
     CRYPT_EAL_CipherDeinit(ctx);

@@ -146,6 +146,7 @@ enum CRYPT_ERROR {
                                              if this requirement is not met,an error will be reported.
                                              For ISO7816, the first bit of padding data is 0x80, and the other bits
                                              are 0, if this requirement is not met, an error will be reported. */
+    CRYPT_EAL_PADDING_NOT_SUPPORT,      /**< Unsupported padding. */
     CRYPT_EAL_CIPHER_CTRL_ERROR,        /**< CRYPT_EAL_CipherCtrl interface unsupported CTRL type. */
     CRYPT_EAL_CIPHER_ERR_NEWCTX,
     CRYPT_EAL_PKEY_CTRL_ERROR,          /**< When the CRYPT_EAL_PkeyCtrl interface performs CTRL,
@@ -155,6 +156,8 @@ enum CRYPT_ERROR {
     CRYPT_EAL_ERR_PART_OVERLAP,         /**< Some memory overlap. */
     CRYPT_EAL_INTO_TYPE_NOT_SUPPORT,    /**< The info type is not supported. */
     CRYPT_EAL_ALG_ASM_NOT_SUPPORT,      /**< Algorithm assembly is not supported. */
+    CRYPT_EAL_CIPHER_FINAL_WITH_AEAD_ERROR,  /**< An error occurs when the final operation is performed on the
+                                                  AEAD algorithm. */
 
     CRYPT_SHA2_INPUT_OVERFLOW = 0x01050001, /**< The length of the input data exceeds the maximum
                                                      processing range of SHA2. */
@@ -433,6 +436,26 @@ enum CRYPT_ERROR {
     CRYPT_ELGAMAL_ERR_DEC_KBITS,             /**< Incorrect length of the decrypted ciphertext of the private key. */
     CRYPT_ELGAMAL_ERR_INPUT_VALUE,          /**< Some special values, which are used as input errors. */
     CRYPT_ELGAMAL_CTRL_NOT_SUPPORT_ERROR,   /**< The Ctrl type is not supported When elgamal is used for Ctrl. */
+
+    CRYPT_CMVP_ERR_CSP_EXIST = 0x01230001,            /**< Mode switchover failure due to CSP Existence in Memory. */
+    CRYPT_CMVP_INVALID_INPUT,                        /**< The mode to be switched is incorrect. */
+    CRYPT_CMVP_ERR_STATUS,                           /**< Current status is not available. */
+    CRYPT_CMVP_ERR_LOCK,                             /**< CMVP lock failure. */
+    CRYPT_CMVP_ERR_ALGO_SELFTEST,                    /**< Algorithm self-check failure. */
+    CRYPT_CMVP_ALREADY_IN_MODE,                      /**< Already in this mode. */
+    CRYPT_CMVP_ERR_PAIRWISETEST,                     /**< Key pairing test failed. */
+    CRYPT_CMVP_NOT_APPROVED,                         /**< Does not meet the standard requirements. */
+    CRYPT_CMVP_ERR_INTEGRITY,                        /**< Integrity verification failed. */
+    CRYPT_CMVP_ERR_PARAM_CHECK,                      /**< Failed to determine the parameter. */
+    CRYPT_CMVP_COMMON_ERR,                           /**< Common error of the CMVP module. */
+
+    CRYPT_MLKEM_KEYLEN_ERROR = 0x01240001,              /**< Incorrect input data length. */
+    CRYPT_MLKEM_LEN_NOT_ENOUGH,                         /**<The buffer size of output is insufficient. */
+    CRYPT_MLKEM_KEY_NOT_SET,                            /**<The encaps or decaps key not set. */
+    CRYPT_MLKEM_KEYINFO_NOT_SET,                        /**<The algorithm not set. */
+    CRYPT_MLKEM_KEY_NOT_EQUAL,                          /**< The MLKEM keys are not equal. */
+    CRYPT_MLKEM_CTRL_NOT_SUPPORT,                       /**< The Ctrl type is not supported.*/
+    CRYPT_MLKEM_CTRL_INIT_REPEATED,                     /**< The CTX cannot be initialized repeatedly.*/
 };
 #ifdef __cplusplus
 }

@@ -201,6 +201,9 @@
     #ifndef HITLS_CRYPTO_ELGAMAL
         #define HITLS_CRYPTO_ELGAMAL
     #endif
+    #ifndef HITLS_CRYPTO_MLKEM
+        #define HITLS_CRYPTO_MLKEM
+    #endif
 #endif
 
 #ifdef HITLS_CRYPTO_ECC
@@ -332,6 +335,15 @@
 
 #if defined(HITLS_CRYPTO_NIST_ECC_ACCELERATE) && defined(__SIZEOF_INT128__) && (__SIZEOF_INT128__ == 16)
     #define HITLS_CRYPTO_NIST_USE_ACCEL
+#endif
+
+#ifdef HITLS_CRYPTO_MLKEM
+    #ifndef HITLS_CRYPTO_SHA3
+        #define HITLS_CRYPTO_SHA3
+    #endif
+    #ifndef HITLS_CRYPTO_KEM
+        #define HITLS_CRYPTO_KEM
+    #endif
 #endif
 
 /* MD */

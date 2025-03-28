@@ -60,6 +60,7 @@ extern const CRYPT_EAL_Func g_defKeyMgmtEcdh[];
 extern const CRYPT_EAL_Func g_defKeyMgmtSm2[];
 extern const CRYPT_EAL_Func g_defKeyMgmtPaillier[];
 extern const CRYPT_EAL_Func g_defKeyMgmtElGamal[];
+extern const CRYPT_EAL_Func g_defKeyMgmtMlKem[];
 
 extern const CRYPT_EAL_Func g_defExchX25519[];
 extern const CRYPT_EAL_Func g_defExchDh[];
@@ -90,6 +91,8 @@ extern const CRYPT_EAL_Func g_defEcb[];
 extern const CRYPT_EAL_Func g_defGcm[];
 extern const CRYPT_EAL_Func g_defOfb[];
 extern const CRYPT_EAL_Func g_defXts[];
+
+extern const CRYPT_EAL_Func g_defMlKem[];
 
 #ifdef __cplusplus
 }

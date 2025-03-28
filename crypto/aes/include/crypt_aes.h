@@ -199,6 +199,34 @@ int32_t CRYPT_AES_ECB_Decrypt(const CRYPT_AES_Key *ctx, const uint8_t *in, uint8
 int32_t CRYPT_AES_CFB_Decrypt(const CRYPT_AES_Key *ctx, const uint8_t *in, uint8_t *out, uint32_t len, uint8_t *iv);
 #endif
 
+#ifdef HITLS_CRYPTO_XTS
+/**
+ * @ingroup aes
+ * @brief AES xts encryption
+ *
+ * @param ctx [IN]  AES key
+ * @param in  [IN]  Input plaintext.
+ * @param out [OUT] Output ciphertext.
+ * @param len [IN]  Input length. The length is guaraenteed to be greater than block-size.
+ * @param tweak [IN/OUT]  XTS tweak.
+*/
+int32_t CRYPT_AES_XTS_Encrypt(const CRYPT_AES_Key *ctx, const uint8_t *in,
+    uint8_t *out, uint32_t len, const uint8_t *tweak);
+
+/**
+ * @ingroup aes
+ * @brief AES xts decryption
+ *
+ * @param ctx [IN]  AES handle, storing keys
+ * @param in  [IN]  Input ciphertext data. The value is 16 bytes.
+ * @param out [OUT] Output plaintext data. The length is 16 bytes.
+ * @param len [IN]  Block length.
+ * @param t [IN/OUT]  XTS tweak.
+*/
+int32_t CRYPT_AES_XTS_Decrypt(const CRYPT_AES_Key *ctx, const uint8_t *in,
+    uint8_t *out, uint32_t len, const uint8_t *t);
+#endif
+
 /**
  * @ingroup aes
  * @brief Delete the AES key information.

@@ -98,7 +98,6 @@ typedef int32_t (*CRYPT_EAL_ProvCtrlCb)(void *provCtx, int32_t cmd, void *val, u
 typedef int32_t (*CRYPT_EAL_ImplProviderInit)(CRYPT_EAL_ProvMgrCtx *mgrCtx, BSL_Param *param,
     CRYPT_EAL_Func *capFuncs, CRYPT_EAL_Func **outFuncs, void **provCtx);
 
-// CRYPT_EAL_OPERAID_SYMMCIPHER
 #define CRYPT_EAL_IMPLCIPHER_NEWCTX      1
 #define CRYPT_EAL_IMPLCIPHER_INITCTX     2
 #define CRYPT_EAL_IMPLCIPHER_UPDATE      3
@@ -190,8 +189,10 @@ typedef int32_t (*CRYPT_EAL_ImplPkeyExch)(const void *ctx, const void *pubCtx, u
 
 typedef int32_t (*CRYPT_EAL_ImplPkeyEncapsInit)(const void *pkey, const BSL_Param *params);
 typedef int32_t (*CRYPT_EAL_ImplPkeyDecapsInit)(const void *pkey, const BSL_Param *params);
-typedef int32_t (*CRYPT_EAL_ImplPkeyKemEncapsulate)(const void *pkey, uint8_t *cipher, uint32_t *cipherLen, uint8_t *out, uint32_t *outLen);
-typedef int32_t (*CRYPT_EAL_ImplPkeyKemDecapsulate)(const void *pkey, uint8_t *data, uint32_t *dataLen, uint8_t *out, uint32_t *outLen);
+typedef int32_t (*CRYPT_EAL_ImplPkeyKemEncapsulate)(const void *pkey, uint8_t *cipher, uint32_t *cipherLen,
+    uint8_t *out, uint32_t *outLen);
+typedef int32_t (*CRYPT_EAL_ImplPkeyKemDecapsulate)(const void *pkey, uint8_t *data, uint32_t dataLen, uint8_t *out,
+    uint32_t *outLen);
 
 // CRYPT_EAL_OPERAID_HASH
 #define CRYPT_EAL_IMPLMD_NEWCTX      1

@@ -77,6 +77,7 @@ void *CRYPT_EAL_DefMacNewCtx(void *provCtx, int32_t algId)
 }
 
 const CRYPT_EAL_Func g_defMacHmac[] = {
+#ifdef HITLS_CRYPTO_HMAC
     {CRYPT_EAL_IMPLMAC_NEWCTX, (CRYPT_EAL_ImplMacNewCtx)CRYPT_EAL_DefMacNewCtx},
     {CRYPT_EAL_IMPLMAC_INIT, (CRYPT_EAL_ImplMacInit)CRYPT_HMAC_Init},
     {CRYPT_EAL_IMPLMAC_UPDATE, (CRYPT_EAL_ImplMacUpdate)CRYPT_HMAC_Update},
@@ -85,6 +86,7 @@ const CRYPT_EAL_Func g_defMacHmac[] = {
     {CRYPT_EAL_IMPLMAC_REINITCTX, (CRYPT_EAL_ImplMacReInitCtx)CRYPT_HMAC_ReinitWrapper},
     {CRYPT_EAL_IMPLMAC_CTRL, (CRYPT_EAL_ImplMacCtrl)CRYPT_HMAC_Ctrl},
     {CRYPT_EAL_IMPLMAC_FREECTX, (CRYPT_EAL_ImplMacFreeCtx)CRYPT_HMAC_FreeCtx},
+#endif
     CRYPT_EAL_FUNC_END,
 };
 

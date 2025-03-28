@@ -271,7 +271,7 @@ void GetCpuInstrSupportState(void)
 #else // HITLS_CRYPTO_NO_AUXVAL
     g_supportNEON = getauxval(CRYPT_CAP) & CRYPT_ARM_NEON;
     if (g_supportNEON) {
-        g_cryptArmCpuInfo = getauxval(CRYPT_CE);
+        g_cryptArmCpuInfo = (uint32_t)getauxval(CRYPT_CE);
     }
 #endif // HITLS_CRYPTO_NO_AUXVAL
 #endif // defined(__arm__) || defined (__arm) || defined(__aarch64__)

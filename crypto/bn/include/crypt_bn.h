@@ -48,7 +48,6 @@ extern "C" {
 #define BN_BYTES_TO_BITS(n) ((n) << 3) /* bits = bytes * 8 = bytes << 3 */
 #define BN_UINT_BITS ((uint32_t)sizeof(BN_UINT) << 3)
 #define BITS_TO_BN_UNIT(bits) (((bits) + BN_UINT_BITS - 1) / BN_UINT_BITS)
-
 /* Flag of BigNum. If a new number is added, the value increases by 0x01 0x02 0x04... */
 typedef enum {
     CRYPT_BN_FLAG_OPTIMIZER = 0x01,      /**< Flag of BigNum, indicating the BigNum obtained from the optimizer */
@@ -1426,6 +1425,40 @@ BN_BigNum *OptimizerGetBn(BN_Optimizer *opt, uint32_t room);
  */
 int32_t BN_Lcm(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b, BN_Optimizer *opt);
 #endif
+
+/**
+ * @ingroup bn
+ * @brief   Enabling the big data optimizer
+ *
+ * @param   opt [IN] Large number optimizer
+ *
+ * @retval  CRYPT_SUCCESS
+ * @retval  For details about other errors, see crypt_errno.h.
+ */
+int32_t OptimizerStart(BN_Optimizer *opt);
+
+/**
+ * @ingroup bn
+ * @brief   Disabling the Large Number Optimizer
+ *
+ * @param   opt [IN] Large number optimizer
+ *
+ * @retval  CRYPT_SUCCESS
+ * @retval  For details about other errors, see crypt_errno.h.
+ */
+void OptimizerEnd(BN_Optimizer *opt);
+
+/**
+ * @ingroup bn
+ * @brief   Get large numbers from the large number optimizer.
+ *
+ * @param   opt [IN] Large number optimizer
+ * @param   room [IN] Length of the big number.
+ *
+ * @retval  BN_BigNum if success
+ * @retval  NULL if failed
+ */
+BN_BigNum *OptimizerGetBn(BN_Optimizer *opt, uint32_t room);
 
 #ifdef __cplusplus
 }

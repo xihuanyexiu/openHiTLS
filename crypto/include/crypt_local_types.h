@@ -150,6 +150,8 @@ typedef struct EAL_PkeyMethod {
     PkeyCrypt decrypt;                      // Decrypt.
     PkeyCheck check;                        // Check the consistency of the key pair.
     PkeyCmp cmp;                            // Compare keys and parameters.
+    PkeyEncapsulate encaps;                // Key encapsulation.
+    PkeyDecapsulate decaps;                // Key decapsulation.
     PkeyBlind blind;                        // msg blind
     PkeyUnBlind unBlind;                    // sig unBlind.
 } EAL_PkeyMethod;
