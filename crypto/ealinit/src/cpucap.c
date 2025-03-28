@@ -61,6 +61,11 @@ bool IsSupportBMI2(void)
     return g_cpuState.code7Out[EBX_OUT_IDX] & bit_BMI2;
 }
 
+bool IsSupportADX(void)
+{
+    return g_cpuState.code7Out[EBX_OUT_IDX] & bit_ADX;
+}
+
 bool IsSupportSSE(void)
 {
     return g_cpuState.code1Out[EDX_OUT_IDX] & bit_SSE;

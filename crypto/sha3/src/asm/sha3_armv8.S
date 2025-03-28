@@ -352,7 +352,6 @@ g_roundConstant:
 .global SHA3_Absorb
 .type   SHA3_Absorb, %function
 SHA3_Absorb:
-AARCH64_BTIC
 AARCH64_PACIASP
     /* push stack protection */
     stp x29, x30, [sp, #-96]!
@@ -637,7 +636,6 @@ AARCH64_AUTIASP
 .global SHA3_Squeeze
 .type   SHA3_Squeeze, %function
 SHA3_Squeeze:
-AARCH64_BTIC
 AARCH64_PACIASP
     /* push stack protection */
     stp x29, x30, [sp, #-96]!

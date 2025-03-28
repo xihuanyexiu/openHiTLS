@@ -983,7 +983,7 @@ void SDV_CRYPTO_BN_PRIMECHECK_API_TC001(void)
     BN_Optimizer *opt = BN_OptimizerCreate();
 
     ASSERT_TRUE(BN_SetLimb(bn, 10) == CRYPT_SUCCESS);  // bn == 10
-    ASSERT_TRUE(BN_PrimeCheck(bn, opt) == CRYPT_BN_NOR_CHECK_PRIME);
+    ASSERT_TRUE(BN_PrimeCheck(bn, 0, opt, NULL) == CRYPT_BN_NOR_CHECK_PRIME);
 
 EXIT:
     BN_Destroy(bn);
@@ -1019,7 +1019,7 @@ void SDV_CRYPTO_BN_PRIME_CHECK_FUNC_TC001(Hex *hex, int isPrime)
     ASSERT_EQ(BN_Bin2Bn(bn, hex->x, hex->len), CRYPT_SUCCESS);
 
     ASSERT_EQ(TestRandInit(), CRYPT_SUCCESS);
-    ret = BN_PrimeCheck(bn, opt);
+    ret = BN_PrimeCheck(bn, 0, opt, NULL);
     if (isPrime != 0) {
         ASSERT_EQ(ret, CRYPT_SUCCESS);
     } else {
@@ -1078,11 +1078,11 @@ void SDV_CRYPTO_BN_GENPRIMELIMB_API_TC001(void)
 
     CRYPT_RandRegist(TEST_Random);
 
-    ASSERT_TRUE(BN_GenPrime(r, bits, half, opt, cb) == CRYPT_SUCCESS);
+    ASSERT_TRUE(BN_GenPrime(r, NULL, bits, half, opt, cb) == CRYPT_SUCCESS);
 
-    ASSERT_TRUE(BN_GenPrime(r, 13, true, opt, cb) == CRYPT_SUCCESS);
+    ASSERT_TRUE(BN_GenPrime(r, NULL, 13, true, opt, cb) == CRYPT_SUCCESS);
 
-    ASSERT_TRUE(BN_GenPrime(r, 10, half, opt, cb) == CRYPT_SUCCESS);
+    ASSERT_TRUE(BN_GenPrime(r, NULL, 10, half, opt, cb) == CRYPT_SUCCESS);
 
 EXIT:
     BN_CbCtxDestroy(cb);
@@ -1292,7 +1292,7 @@ void SDV_CRYPTO_BN_SUB_LIMB_FUNC_TC001(int sign1, Hex *hex1, Hex *hex2, int sign
 
     ASSERT_TRUE(BN_SetLimb(res, w) == CRYPT_SUCCESS);
     if (w != 0) {
-        res->flag |= CRYPT_BN_FLAG_ISNEGTIVE;
+        res->sign = true;
     }
     ASSERT_TRUE(BN_Cmp(n, res) == 0);
 

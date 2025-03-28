@@ -752,7 +752,6 @@ ivec1   .req   v15
 .type	Sm4Enc4blks,%function
 .align	4
 Sm4Enc4blks:
-AARCH64_BTIC
 AARCH64_PACIASP
 	Encrypt4blks
 AARCH64_AUTIASP
@@ -762,7 +761,6 @@ AARCH64_AUTIASP
 .type	Sm4Enc8blks,%function
 .align	4
 Sm4Enc8blks:
-AARCH64_BTIC
 AARCH64_PACIASP
 	Encrypt8blks
 AARCH64_AUTIASP
@@ -772,7 +770,6 @@ AARCH64_AUTIASP
 .type	Sm4Enc12blks,%function
 .align	4
 Sm4Enc12blks:
-AARCH64_BTIC
 AARCH64_PACIASP
 	Encrypt12blks
 AARCH64_AUTIASP
@@ -783,7 +780,6 @@ AARCH64_AUTIASP
 .type	Vpsm4EcbEncrypt,%function
 .align	5
 Vpsm4EcbEncrypt:
-AARCH64_BTIC
 AARCH64_PACIASP
 	// convert length into blocks
 	lsr	x2,x2,4
@@ -939,7 +935,6 @@ AARCH64_AUTIASP
 .type	Vpsm4CbcEncrypt,%function
 .align	5
 Vpsm4CbcEncrypt:
-AARCH64_BTIC
 AARCH64_PACIASP
 	lsr	len,len,4
 	stp	x29,x30,[sp,#-48]!
@@ -1224,7 +1219,6 @@ AARCH64_AUTIASP
 .type	Vpsm4Ctr32EncryptBlocks,%function
 .align	5
 Vpsm4Ctr32EncryptBlocks:
-AARCH64_BTIC
 AARCH64_PACIASP
 	ld1	{ivec.4s},[ivp]
 #ifndef HITLS_BIG_ENDIAN
@@ -1450,7 +1444,6 @@ AARCH64_AUTIASP
 .type	Vpsm4XtsCipher,%function
 .align	5
 Vpsm4XtsCipher:
-AARCH64_BTIC
 AARCH64_PACIASP
 	stp	x19, x20, [sp, #-0x10]!
 	stp	x21, x22, [sp, #-0x10]!
@@ -2582,7 +2575,6 @@ AARCH64_AUTIASP
 .type	Vpsm4Cfb128Encrypt,%function
 .align	5
 Vpsm4Cfb128Encrypt:
-AARCH64_BTIC
 AARCH64_PACIASP
 	stp	x29,x30,[sp,#-80]!
 	add	x29,sp,#0
@@ -2692,7 +2684,6 @@ AARCH64_AUTIASP
 .type	Vpsm4Cfb128Decrypt,%function
 .align	5
 Vpsm4Cfb128Decrypt:
-AARCH64_BTIC
 AARCH64_PACIASP
 	stp	x29,x30,[sp,#-128]!
 	stp	x19,x20,[sp,#16]

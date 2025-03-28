@@ -337,6 +337,7 @@ typedef struct {
 bool IsSupportAES(void);
 bool IsSupportBMI1(void);
 bool IsSupportBMI2(void);
+bool IsSupportADX(void);
 bool IsSupportAVX(void);
 bool IsSupportAVX2(void);
 bool IsSupportSSE(void);

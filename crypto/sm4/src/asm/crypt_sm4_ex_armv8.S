@@ -130,7 +130,6 @@
 .type    vpsm4_ex_set_key,%function
 .align 4
 vpsm4_ex_set_key:
-AARCH64_BTIC
 AARCH64_PACIASP
     ld1 {V_KEY.4s},[USER_KEY]
     LOAD_SBOX_MATRIX
@@ -198,7 +197,6 @@ AARCH64_AUTIASP
 .type Vpsm4SetEncryptKey,%function
 .align 5
 Vpsm4SetEncryptKey:
-AARCH64_BTIC
 AARCH64_PACIASP
     stp x29,x30,[sp,#-16]!
     mov w2,1
@@ -217,7 +215,6 @@ AARCH64_AUTIASP
 .type Vpsm4SetDecryptKey,%function
 .align 5
 Vpsm4SetDecryptKey:
-AARCH64_BTIC
 AARCH64_PACIASP
     stp x29,x30,[sp,#-16]!
     mov w2,0

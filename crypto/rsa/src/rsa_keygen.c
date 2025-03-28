@@ -491,7 +491,7 @@ EXIT:
 static int32_t RsaPGen(CRYPT_RSA_Para *para, CRYPT_RSA_PrvKey *priKey, BN_Optimizer *optimizer)
 {
     uint32_t pBits = (para->bits + 1) / 2;
-    int32_t ret = BN_GenPrime(priKey->p, pBits, true, optimizer, NULL);
+    int32_t ret = BN_GenPrime(priKey->p, NULL, pBits, true, optimizer, NULL);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -503,7 +503,7 @@ static int32_t RsaQGen(CRYPT_RSA_Para *para, CRYPT_RSA_PrvKey *priKey, BN_Optimi
 {
     uint32_t pBits = (para->bits + 1) / 2;
     uint32_t qBits = para->bits - pBits;
-    int32_t ret = BN_GenPrime(priKey->q, qBits, true, optimizer, NULL);
+    int32_t ret = BN_GenPrime(priKey->q, NULL, qBits, true, optimizer, NULL);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;

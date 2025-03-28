@@ -171,7 +171,9 @@
             "-DHITLS_THIRTY_TWO_BITS",
             "-DHITLS_BSL_SAL_LINUX",
             "-DHITLS_CRYPTO_NIST_ECC_ACCELERATE",
-            "-DHITLS_AARCH64_BTI",
+            "-DHITLS_CRYPTO_BN_RAND",
+            "-DHITLS_CRYPTO_BN_PRIME",
+            "-DHITLS_CRYPTO_BN_CB",
             "-DHITLS_AARCH64_PACIASP"
         ],
         "CC_DEBUG_FLAGS": [

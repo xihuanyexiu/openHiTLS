@@ -97,6 +97,9 @@ parse_option()
                 add_options="${add_options} -fsanitize=address -fsanitize-address-use-after-scope -O0 -g3 -fno-stack-protector -fno-omit-frame-pointer -fgnu89-inline"
                 del_options="${del_options} -fstack-protector-strong -fomit-frame-pointer -O2 -D_FORTIFY_SOURCE=2"
                 ;;
+            "x86_64")
+                get_arch="x86_64"
+                ;;
             "armv8_be")
                 get_arch="armv8_be"
                 ;;
