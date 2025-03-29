@@ -531,6 +531,11 @@ typedef enum {
     CRYPT_CTRL_GEN_ECC_PUBLICKEY,       /**< Use prikey generate pubkey. */
     CRYPT_CTRL_SET_RSA_BSSA_FACTOR_R,      /**< Set the random bytes for RSA-BSSA. */
     CRYPT_CTRL_GEN_X25519_PUBLICKEY,    /**< Use prikey genarate x25519 pubkey. */
+
+    CRYPT_CTRL_SET_MLKEM_TYPE = 400,    /**< Set the key info of ML-KEM */
+    CRYPT_CTRL_GET_MLKEM_EK_LEN,            /**< Get the encapsulation key length */
+    CRYPT_CTRL_GET_MLKEM_DK_LEN,            /**< Get the decapsulation key length */
+    CRYPT_CTRL_GET_MLKEM_CT_LEN,            /**< Get the ciphertext length */
 } CRYPT_PkeyCtrl;
 
 /**

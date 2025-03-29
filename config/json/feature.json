@@ -111,6 +111,9 @@
                             "sm2_sign": null,
                             "sm2_exch": null,
                             "deps": ["ecc", "sm3"]
+                        },
+                        "kem": {
+                            "mlkem": {"deps": ["sha3"]}
                         }
                     },
                     "provider": null,
@@ -123,7 +126,9 @@
                     "sm3": null,
                     "modes": {"ins_set":["x8664", "avx512"]},
                     "aes": {"ins_set":["x8664", "avx512"]},
+                    "chacha20": {"ins_set":["x8664", "avx512"]},
                     "sm4": {"ins_set":["x8664", "avx512"]},
+                    "x25519": null,
                     "ecc": {"ins_set":["x8664", "avx512"]}
                 },
                 "armv8": {
@@ -132,7 +137,9 @@
                     "sm3": null,
                     "aes": null,
                     "modes": null,
+                    "chacha20": null,
                     "sm4": null,
+                    "x25519": null,
                     "ecc": null
                 }
             }
@@ -548,6 +555,7 @@
                     "crypto/sm2/include",
                     "crypto/paillier/include",
                     "crypto/elgamal/include",
+                    "crypto/mlkem/include",
                     "crypto/provider/include"
                 ]
             },
@@ -661,11 +669,14 @@
                     "public": "crypto/modes/src/modes*.c",
                     "no_asm": "crypto/modes/src/noasm_*.c",
                     "armv8": [
-                        "crypto/modes/src/noasm_poly1305.c",
-                        "crypto/modes/src/noasm_aes_gcm.c",
+                        "crypto/modes/src/asm/poly1305_armv8.S",
+                        "crypto/modes/src/asm_aes_gcm.c",
+                        "crypto/modes/src/asm_aes_xts.c",
                         "crypto/modes/src/asm_aes_cbc.c",
                         "crypto/modes/src/asm_aes_ecb.c",
                         "crypto/modes/src/asm_aes_ctr.c",
+                        "crypto/modes/src/asm/aes_gcm_16block_aarch64.S",
+                        "crypto/modes/src/asm/aes_gcm_64block_aarch64.S",
                         "crypto/modes/src/asm/ghash_armv8.S",
                         "crypto/modes/src/noasm_aes_ccm.c",
                         "crypto/modes/src/asm_aes_cfb.c",
@@ -681,13 +692,17 @@
                     "x8664": {
                         "x8664":[
                             "crypto/modes/src/asm_aes_ctr.c",
-                            "crypto/modes/src/noasm_aes_gcm.c",
+                            "crypto/modes/src/asm_aes_gcm.c",
+                            "crypto/modes/src/asm/aes_gcm_16block_x86_64.S",
+                            "crypto/modes/src/asm/aes_gcm_64block_x86_64.S",
+                            "crypto/modes/src/asm/aes_gcm_96block_x86_64.S",
+                            "crypto/modes/src/asm_aes_xts.c",
                             "crypto/modes/src/asm_aes_cbc.c",
                             "crypto/modes/src/asm_aes_ecb.c",
                             "crypto/modes/src/asm/ghash_x86_64.S",
                             "crypto/modes/src/asm_aes_ccm.c",
                             "crypto/modes/src/asm/aes_ccm_x86_64.S",
-                            "crypto/modes/src/noasm_poly1305.c",
+                            "crypto/modes/src/asm/poly1305_x86_64_avx2.S",
                             "crypto/modes/src/noasm_aes_cfb.c",
                             "crypto/modes/src/asm_sm4_xts.c",
                             "crypto/modes/src/asm_sm4_ecb.c",
@@ -701,14 +716,26 @@
                         "avx512":[
                             "crypto/modes/src/asm_aes_ctr.c",
                             "crypto/modes/src/noasm_aes_gcm.c",
-                            "crypto/modes/src/asm_aes_cbc.c",
+                            "crypto/modes/src/asm/aes_gcm_16block_x86_64.S",
+                            "crypto/modes/src/asm/aes_gcm_64block_x86_64.S",
+                            "crypto/modes/src/asm/aes_gcm_96block_x86_64.S",
                             "crypto/modes/src/asm_aes_ecb.c",
+                            "crypto/modes/src/asm_aes_cbc.c",
+                            "crypto/modes/src/asm_aes_xts.c",
                             "crypto/modes/src/asm/ghash_x86_64.S",
                             "crypto/modes/src/asm_aes_ccm.c",
                             "crypto/modes/src/asm/aes_ccm_x86_64.S",
-                            "crypto/modes/src/noasm_poly1305.c",
+                            "crypto/modes/src/asm/poly1305_x86_64_avx2.S",
                             "crypto/modes/src/noasm_aes_cfb.c",
-                            "crypto/modes/src/asm_sm4_xts.c"
+                            "crypto/modes/src/asm_sm4_cfb.c",
+                            "crypto/modes/src/asm_sm4_xts.c",
+                            "crypto/modes/src/asm_sm4_ecb.c",
+                            "crypto/modes/src/asm_sm4_cbc.c",
+                            "crypto/modes/src/asm_sm4_cfb.c",
+                            "crypto/modes/src/asm_sm4_ofb_x86_64.c",
+                            "crypto/modes/src/asm_sm4_ctr.c",
+                            "crypto/modes/src/asm_sm4_setkey.c",
+                            "crypto/modes/src/asm_sm4_gcm.c"
                         ]
                     }
                 },
@@ -718,13 +745,14 @@
             "aes": {
                 ".features": ["aes"],
                 ".srcs": {
-                    "no_asm":["crypto/aes/src/crypt_aes.c"],
+                    "no_asm":["crypto/aes/src/crypt_aes.c", "crypto/aes/src/crypt_aes_sbox.c"],
                     "public": "crypto/aes/src/crypt_aes_setkey.c",
                     "armv8":[
                         "crypto/aes/src/asm/crypt_aes_armv8.S",
                         "crypto/aes/src/asm/crypt_aes_ecb_armv8.S",
                         "crypto/aes/src/asm/crypt_aes_cbc_armv8.S",
                         "crypto/aes/src/asm/crypt_aes_ctr_armv8.S",
+                        "crypto/aes/src/asm/crypt_aes_xts_armv8.S",
                         "crypto/aes/src/asm/crypt_aes_cfb_armv8.S"
                     ],
                    "x8664": {
@@ -732,12 +760,14 @@
                             "crypto/aes/src/asm/crypt_aes_x86_64.S",
                             "crypto/aes/src/asm/crypt_aes_ecb_x86_64.S",
                             "crypto/aes/src/asm/crypt_aes_cbc_x86_64.S",
-                            "crypto/aes/src/asm/crypt_aes_ctr_x86_64.S"
+                            "crypto/aes/src/asm/crypt_aes_ctr_x86_64.S",
+                            "crypto/aes/src/asm/crypt_aes_xts_x86_64.S"
                         ],
                         "avx512": [
                             "crypto/aes/src/asm/crypt_aes_x86_64.S",
                             "crypto/aes/src/asm/crypt_aes_ecb_x86_64.S",
                             "crypto/aes/src/asm/crypt_aes_cbc_x86_64.S",
+                            "crypto/aes/src/asm/crypt_aes_xts_x86_64.S",
                             "crypto/aes/src/asm/crypt_aes_ctr_x86_64.S"
                         ]
                     }
@@ -748,7 +778,12 @@
                 ".features": ["chacha20"],
                 ".srcs": {
                     "public": "crypto/chacha20/src/chacha20.c",
-                    "no_asm": "crypto/chacha20/src/chacha20block.c"
+                    "no_asm": "crypto/chacha20/src/chacha20block.c",
+                    "armv8": "crypto/chacha20/src/asm/chacha20_aarch64.S",
+                    "x8664": {
+                        "x8664": ["crypto/chacha20/src/asm/chacha20block_x8664_avx2.S"],
+                        "avx512": ["crypto/chacha20/src/asm/chacha20block_x8664_avx512.S"]
+                    }
                 },
                 ".deps": ["bsl::sal"]
             },
@@ -834,6 +869,7 @@
                     "crypto/hmac/include",
                     "crypto/paillier/include",
                     "crypto/elgamal/include",
+                    "crypto/mlkem/include",
                     "crypto/drbg/include",
                     "crypto/modes/include",
                     "crypto/entropy/include",
@@ -860,7 +896,15 @@
                 ".features": ["ed25519", "x25519"],
                 ".srcs": {
                     "public": "crypto/curve25519/src/curve25519*.c",
-		            "no_asm": "crypto/curve25519/src/noasm_*.c"
+		            "no_asm": "crypto/curve25519/src/noasm_*.c",
+                    "x8664": [
+                        "crypto/curve25519/src/asm/*_x86_64.S",
+                        "crypto/curve25519/src/asm_*.c"
+                    ],
+                    "armv8": [
+                        "crypto/curve25519/src/asm/*_armv8.S",
+                        "crypto/curve25519/src/asm_*.c"
+                    ]
                 },
                 ".deps": ["platform::Secure_C", "bsl::sal"],
                 ".include": ["crypto/eal/src"]
@@ -934,6 +978,12 @@
                 ".features": ["elgamal"],
                 ".srcs": "crypto/elgamal/src/*.c",
                 ".deps": ["crypto::bn"],
+                ".include": ["crypto/eal/src"]
+            },
+            "mlkem": {
+                ".features": ["mlkem"],
+                ".srcs": "crypto/mlkem/src/*.c",
+                ".deps": ["crypto::sha3", "bsl::sal"],
                 ".include": ["crypto/eal/src"]
             }
         },

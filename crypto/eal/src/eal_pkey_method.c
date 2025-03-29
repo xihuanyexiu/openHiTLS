@@ -47,20 +47,23 @@
 #ifdef HITLS_CRYPTO_ELGAMAL
 #include "crypt_elgamal.h"
 #endif
+#ifdef HITLS_CRYPTO_KEM
+#include "crypt_mlkem.h"
+#endif
 #include "bsl_err_internal.h"
 #include "crypt_types.h"
+#include "crypt_errno.h"
 #include "eal_common.h"
 #include "bsl_sal.h"
 
-
 #define EAL_PKEY_METHOD_DEFINE(id, newCtx, dupCtx, freeCtx, setPara, getPara, gen, ctrl, \
     setPub, setPrv, getPub, getPrv, sign, signData, verify, verifyData, computeShareKey, encrypt, \
-    decrypt, check, cmp, blind, unBlind) { \
+    decrypt, check, cmp, encaps, decaps, blind, unBlind) { \
     id, (PkeyNew)(newCtx), (PkeyDup)(dupCtx), (PkeyFree)(freeCtx), (PkeySetPara)(setPara), \
     (PkeyGetPara)(getPara), (PkeyGen)(gen), (PkeyCtrl)(ctrl), (PkeySetPub)(setPub), \
     (PkeySetPrv)(setPrv), (PkeyGetPub)(getPub), (PkeyGetPrv)(getPrv), (PkeySign)(sign), (PkeySignData)(signData), \
     (PkeyVerify)(verify), (PkeyVerifyData)(verifyData), (PkeyComputeShareKey)(computeShareKey), (PkeyCrypt)(encrypt), \
-    (PkeyCrypt)(decrypt), (PkeyCheck)(check), (PkeyCmp)(cmp), (PkeyBlind)(blind), \
+    (PkeyCrypt)(decrypt), (PkeyCheck)(check), (PkeyCmp)(cmp), (PkeyEncapsulate)(encaps), (PkeyDecapsulate)(decaps), (PkeyBlind)(blind), \
     (PkeyUnBlind)(unBlind)}
 
 static const EAL_PkeyMethod METHODS[] = {
@@ -87,6 +90,8 @@ static const EAL_PkeyMethod METHODS[] = {
         NULL,
         NULL,
         CRYPT_DSA_Cmp,
+        NULL, // pkeyEncaps
+        NULL, // pkeyDecaps
         NULL, // blind
         NULL  // unBlind
     ), // CRYPT_PKEY_DSA
@@ -114,6 +119,8 @@ static const EAL_PkeyMethod METHODS[] = {
         NULL,
         NULL,
         CRYPT_CURVE25519_Cmp,
+        NULL, // pkeyEncaps
+        NULL, // pkeyDecaps
         NULL, // blind
         NULL  // unBlind
     ), // CRYPT_PKEY_ED25519
@@ -141,6 +148,8 @@ static const EAL_PkeyMethod METHODS[] = {
         NULL,
         NULL,
         CRYPT_CURVE25519_Cmp,
+        NULL, // pkeyEncaps
+        NULL, // pkeyDecaps
         NULL, // blind
         NULL  // unBlind
     ), // CRYPT_PKEY_X25519
@@ -168,6 +177,8 @@ static const EAL_PkeyMethod METHODS[] = {
         CRYPT_RSA_Decrypt,
         NULL,
         CRYPT_RSA_Cmp,
+        NULL, // pkeyEncaps
+        NULL, // pkeyDecaps
         CRYPT_RSA_Blind,
         CRYPT_RSA_UnBlind
     ), // CRYPT_PKEY_RSA
@@ -195,6 +206,8 @@ static const EAL_PkeyMethod METHODS[] = {
         NULL,
         NULL,
         CRYPT_DH_Cmp,
+        NULL, // pkeyEncaps
+        NULL, // pkeyDecaps
         NULL, // blind
         NULL  // unBlind
     ), // CRYPT_PKEY_DH
@@ -222,6 +235,8 @@ static const EAL_PkeyMethod METHODS[] = {
         NULL,   // decrypt
         NULL,
         CRYPT_ECDSA_Cmp,
+        NULL, // pkeyEncaps
+        NULL, // pkeyDecaps
         NULL, // blind
         NULL  // unBlind
     ), // CRYPT_PKEY_ECDSA
@@ -249,6 +264,8 @@ static const EAL_PkeyMethod METHODS[] = {
         NULL,   // decrypt
         NULL,
         CRYPT_ECDH_Cmp,
+        NULL, // pkeyEncaps
+        NULL, // pkeyDecaps
         NULL, // blind
         NULL  // unBlind
     ), // CRYPT_PKEY_ECDH
@@ -292,6 +309,8 @@ static const EAL_PkeyMethod METHODS[] = {
 #endif
         NULL,
         CRYPT_SM2_Cmp,
+        NULL, // pkeyEncaps
+        NULL, // pkeyDecaps
         NULL, // blind
         NULL  // unBlind
     ), // CRYPT_PKEY_SM2
@@ -319,6 +338,8 @@ static const EAL_PkeyMethod METHODS[] = {
         CRYPT_PAILLIER_Decrypt,
         NULL,
         NULL,  // cmp
+        NULL, // pkeyEncaps
+        NULL, // pkeyDecaps
         NULL, // blind
         NULL  // unBlind
     ), // CRYPT_PKEY_PAILLIER
@@ -346,9 +367,40 @@ static const EAL_PkeyMethod METHODS[] = {
         CRYPT_ELGAMAL_Decrypt,
         NULL,
         NULL,  // cmp
+        NULL, // pkeyEncaps
+        NULL, // pkeyDecaps
         NULL, // blind
         NULL  // unBlind
     ), // CRYPT_PKEY_ELGAMAL
+#endif
+#ifdef HITLS_CRYPTO_MLKEM
+    EAL_PKEY_METHOD_DEFINE(
+        CRYPT_PKEY_ML_KEM,
+        CRYPT_ML_KEM_NewCtx,
+        CRYPT_ML_KEM_DupCtx,
+        CRYPT_ML_KEM_FreeCtx,
+        NULL, // setPara
+        NULL, // getPara
+        CRYPT_ML_KEM_GenKey,
+        CRYPT_ML_KEM_Ctrl,
+        CRYPT_ML_KEM_SetEncapsKey,
+        CRYPT_ML_KEM_SetDecapsKey,
+        CRYPT_ML_KEM_GetEncapsKey,
+        CRYPT_ML_KEM_GetDecapsKey,
+        NULL, // sign
+        NULL, // signData
+        NULL, // verify
+        NULL, // verifyData
+        NULL, // computeShareKey
+        NULL, // encrypt
+        NULL, // decrypt
+        NULL, // check
+        CRYPT_ML_KEM_Cmp,
+        CRYPT_ML_KEM_Encaps,
+        CRYPT_ML_KEM_Decaps,
+        NULL, // blind
+        NULL  // unBlind
+    ),
 #endif
 };
 
@@ -365,4 +417,5 @@ const EAL_PkeyMethod *CRYPT_EAL_PkeyFindMethod(CRYPT_PKEY_AlgId id)
     }
     return NULL;
 }
+
 #endif

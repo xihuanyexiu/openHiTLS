@@ -24,7 +24,6 @@
 #include "crypt_algid.h"
 #include "bsl_params.h"
 #include "sal_atomic.h"
-#include "bsl_params.h"
 
 #ifdef __cplusplus
 extern "C" {

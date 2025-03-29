@@ -53,7 +53,6 @@ extern uint32_t g_cryptArmCpuInfo;
 #   define AARCH64_PACIASP
 #   define AARCH64_AUTIASP
 #  endif
-
 #endif
 
 #endif

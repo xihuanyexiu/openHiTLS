@@ -231,6 +231,8 @@ static const EAL_CheckAsm HITLS_ASM_SYM_ALG_CHECK[] = {
     {.id = CRYPT_CIPHER_AES128_OFB, .callback = {CRYPT_AES_AsmCheck, NULL}},
     {.id = CRYPT_CIPHER_AES192_OFB, .callback = {CRYPT_AES_AsmCheck, NULL}},
     {.id = CRYPT_CIPHER_AES256_OFB, .callback = {CRYPT_AES_AsmCheck, NULL}},
+    {.id = CRYPT_CIPHER_AES128_XTS, .callback = {CRYPT_AES_AsmCheck, NULL}},
+    {.id = CRYPT_CIPHER_AES256_XTS, .callback = {CRYPT_AES_AsmCheck, NULL}},
 #if defined(HITLS_CRYPTO_GCM_ASM)
     {.id = CRYPT_CIPHER_AES128_GCM, .callback = {CRYPT_AES_AsmCheck, CRYPT_GHASH_AsmCheck}},
     {.id = CRYPT_CIPHER_AES192_GCM, .callback = {CRYPT_AES_AsmCheck, CRYPT_GHASH_AsmCheck}},

@@ -13,6 +13,7 @@
  * See the Mulan PSL v2 for more details.
  */
 
+#include "hitls_build.h"
 #ifdef HITLS_CRYPTO_PROVIDER
 
 #include <stdint.h>
@@ -65,6 +66,7 @@ static const CRYPT_EAL_AlgInfo g_defKeyMgmt[] = {
     {CRYPT_PKEY_SM2, g_defKeyMgmtSm2, CRYPT_EAL_DEFAULT_ATTR},
     {CRYPT_PKEY_PAILLIER, g_defKeyMgmtPaillier, CRYPT_EAL_DEFAULT_ATTR},
     {CRYPT_PKEY_ELGAMAL, g_defKeyMgmtElGamal, CRYPT_EAL_DEFAULT_ATTR},
+	{CRYPT_PKEY_ML_KEM, g_defKeyMgmtMlKem, CRYPT_EAL_DEFAULT_ATTR},
     CRYPT_EAL_ALGINFO_END
 };
 
@@ -144,6 +146,8 @@ static const CRYPT_EAL_AlgInfo g_defCiphers[] = {
     {CRYPT_CIPHER_AES128_GCM, g_defGcm, CRYPT_EAL_DEFAULT_ATTR},
     {CRYPT_CIPHER_AES192_GCM, g_defGcm, CRYPT_EAL_DEFAULT_ATTR},
     {CRYPT_CIPHER_AES256_GCM, g_defGcm, CRYPT_EAL_DEFAULT_ATTR},
+    {CRYPT_CIPHER_AES128_XTS, g_defXts, CRYPT_EAL_DEFAULT_ATTR},
+    {CRYPT_CIPHER_AES256_XTS, g_defXts, CRYPT_EAL_DEFAULT_ATTR},
     {CRYPT_CIPHER_CHACHA20_POLY1305, g_defChaCha, CRYPT_EAL_DEFAULT_ATTR},
     {CRYPT_CIPHER_SM4_XTS, g_defXts, CRYPT_EAL_DEFAULT_ATTR},
     {CRYPT_CIPHER_SM4_CBC, g_defCbc, CRYPT_EAL_DEFAULT_ATTR},
@@ -158,6 +162,11 @@ static const CRYPT_EAL_AlgInfo g_defCiphers[] = {
     {CRYPT_CIPHER_AES128_OFB, g_defOfb, CRYPT_EAL_DEFAULT_ATTR},
     {CRYPT_CIPHER_AES192_OFB, g_defOfb, CRYPT_EAL_DEFAULT_ATTR},
     {CRYPT_CIPHER_AES256_OFB, g_defOfb, CRYPT_EAL_DEFAULT_ATTR},
+    CRYPT_EAL_ALGINFO_END
+};
+
+static const CRYPT_EAL_AlgInfo g_defKems[] = {
+    {CRYPT_PKEY_ML_KEM, g_defMlKem, CRYPT_EAL_DEFAULT_ATTR},
     CRYPT_EAL_ALGINFO_END
 };
 
@@ -182,7 +191,7 @@ static int32_t CRYPT_EAL_DefaultProvQuery(void *provCtx, int32_t operaId, const 
             *algInfos = g_defKeyExch;
             break;
         case CRYPT_EAL_OPERAID_KEM:
-            ret = CRYPT_NOT_SUPPORT;
+            *algInfos = g_defKems;
             break;
         case CRYPT_EAL_OPERAID_HASH:
             *algInfos = g_defMds;

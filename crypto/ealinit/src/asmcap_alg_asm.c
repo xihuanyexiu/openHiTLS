@@ -45,6 +45,31 @@ int32_t CRYPT_AES_AsmCheck(void)
     return CRYPT_SUCCESS;
 }
 #endif // HITLS_CRYPTO_AES_ASM
+#if defined(HITLS_CRYPTO_CHACHA20_ASM)
+int32_t CRYPT_CHACHA20_AsmCheck(void)
+{
+#if defined(HITLS_CRYPTO_CHACHA20_X8664)
+    if (!IsSupportAVX() || !IsOSSupportAVX() || !IsSupportAVX2()) {
+        BSL_ERR_PUSH_ERROR(CRYPT_EAL_ALG_ASM_NOT_SUPPORT);
+        return CRYPT_EAL_ALG_ASM_NOT_SUPPORT;
+    }
+#endif
+    return CRYPT_SUCCESS;
+}
+#endif // HITLS_CRYPTO_CHACHA20
+#if defined(HITLS_CRYPTO_CHACHA20POLY1305_ASM)
+int32_t CRYPT_POLY1305_AsmCheck(void)
+{
+#if defined(HITLS_CRYPTO_CHACHA20POLY1305_X8664)
+    if (!IsSupportAVX() || !IsOSSupportAVX() ||
+        !IsSupportAVX2() || !IsSupportSSE2()) {
+        BSL_ERR_PUSH_ERROR(CRYPT_EAL_ALG_ASM_NOT_SUPPORT);
+        return CRYPT_EAL_ALG_ASM_NOT_SUPPORT;
+    }
+#endif
+    return CRYPT_SUCCESS;
+}
+#endif // HITLS_CRYPTO_CHACHA20POLY1305
 #if defined(HITLS_CRYPTO_SM4_ASM)
 int32_t CRYPT_SM4_AsmCheck(void)
 {

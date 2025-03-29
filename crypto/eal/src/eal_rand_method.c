@@ -124,7 +124,7 @@ static int32_t GetRequiredMethod(const DrbgIdMap *map, EAL_RandMethLookup *lu)
 #ifdef HITLS_CRYPTO_DRBG_CTR
         case RAND_TYPE_AES:
         case RAND_TYPE_AES_DF: {
-            const EAL_SymMethod *ciphMeth = MODES_GetSymMethod(map->depId);
+            const EAL_SymMethod *ciphMeth = EAL_GetSymMethod(map->depId);
             if (ciphMeth == NULL) {
                 BSL_ERR_PUSH_ERROR(CRYPT_EAL_ERR_ALGID);
                 return CRYPT_EAL_ERR_ALGID;
