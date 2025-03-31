@@ -50,6 +50,9 @@
 #ifdef HITLS_CRYPTO_KEM
 #include "crypt_mlkem.h"
 #endif
+#ifdef HITLS_CRYPTO_MLDSA
+#include "crypt_mldsa.h"
+#endif
 #include "bsl_err_internal.h"
 #include "crypt_types.h"
 #include "crypt_errno.h"
@@ -401,6 +404,35 @@ static const EAL_PkeyMethod METHODS[] = {
         NULL, // blind
         NULL  // unBlind
     ),
+#endif
+#ifdef HITLS_CRYPTO_MLDSA
+    EAL_PKEY_METHOD_DEFINE(
+        CRYPT_PKEY_MLDSA,
+        CRYPT_ML_DSA_NewCtx,
+        CRYPT_ML_DSA_DupCtx,
+        CRYPT_ML_DSA_FreeCtx,
+        NULL, // setPara
+        NULL, // getPara
+        CRYPT_ML_DSA_GenKey,
+        CRYPT_ML_DSA_Ctrl,
+        CRYPT_ML_DSA_SetPubKey,
+        CRYPT_ML_DSA_SetPrvKey,
+        CRYPT_ML_DSA_GetPubKey,
+        CRYPT_ML_DSA_GetPrvKey,
+        CRYPT_ML_DSA_Sign, // sign
+        CRYPT_ML_DSA_SignData, // signData
+        CRYPT_ML_DSA_Verify, // verify
+		CRYPT_ML_DSA_VerifyData, // verifyData
+        NULL, // computeShareKey
+        NULL, // encrypt
+        NULL, // decrypt
+        NULL, // check
+        CRYPT_ML_DSA_Cmp,
+        NULL, // pkeyEncaps
+        NULL, // pkeyDecaps
+        NULL, // blind
+        NULL  // unBlind
+    ), // CRYPT_PKEY_MLDSA
 #endif
 };
 

@@ -22,6 +22,7 @@
 #include "crypt_ecdsa.h"
 #include "crypt_sm2.h"
 #include "crypt_curve25519.h"
+#include "crypt_mldsa.h"
 
 const CRYPT_EAL_Func g_defSignDsa[] = {
 #ifdef HITLS_CRYPTO_DSA
@@ -67,6 +68,16 @@ const CRYPT_EAL_Func g_defSignSm2[] = {
 #ifdef HITLS_CRYPTO_SM2_SIGN
     {CRYPT_EAL_IMPLPKEYSIGN_SIGN, (CRYPT_EAL_ImplPkeySign)CRYPT_SM2_Sign},
     {CRYPT_EAL_IMPLPKEYSIGN_VERIFY, (CRYPT_EAL_ImplPkeyVerify)CRYPT_SM2_Verify},
+#endif
+    CRYPT_EAL_FUNC_END,
+};
+
+const CRYPT_EAL_Func g_defSignMlDsa[] = {
+#ifdef HITLS_CRYPTO_MLDSA
+    {CRYPT_EAL_IMPLPKEYSIGN_SIGN, (CRYPT_EAL_ImplPkeySign)CRYPT_ML_DSA_Sign},
+    {CRYPT_EAL_IMPLPKEYSIGN_SIGNDATA, (CRYPT_EAL_ImplPkeySignData)CRYPT_ML_DSA_SignData},
+    {CRYPT_EAL_IMPLPKEYSIGN_VERIFY, (CRYPT_EAL_ImplPkeyVerify)CRYPT_ML_DSA_Verify},
+    {CRYPT_EAL_IMPLPKEYSIGN_VERIFYDATA, (CRYPT_EAL_ImplPkeyVerifyData)CRYPT_ML_DSA_VerifyData},
 #endif
     CRYPT_EAL_FUNC_END,
 };

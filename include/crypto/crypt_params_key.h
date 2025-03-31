@@ -114,6 +114,9 @@ extern "C" {
 #define CRYPT_PARAM_ML_KEM_DECAPSKEY           (CRYPT_PARAM_ML_KEM_BASE + 1)
 #define CRYPT_PARAM_ML_KEM_ENCAPSKEY           (CRYPT_PARAM_ML_KEM_BASE + 2)
 
+#define CRYPT_PARAM_ML_DSA_BASE             1000
+#define CRYPT_PARAM_ML_DSA_PRVKEY           (CRYPT_PARAM_ML_DSA_BASE + 1)
+#define CRYPT_PARAM_ML_DSA_PUBKEY           (CRYPT_PARAM_ML_DSA_BASE + 2)
 #ifdef __cplusplus
 }
 #endif

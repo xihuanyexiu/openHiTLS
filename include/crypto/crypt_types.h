@@ -278,6 +278,13 @@ typedef CRYPT_Data CRYPT_KemDecapsKey;
 /**
  * @ingroup crypt_types
  *
+ * MLDSA private key parameter structure
+ */
+typedef CRYPT_Data CRYPT_MlDsaPrv;
+
+/**
+ * @ingroup crypt_types
+ *
  * RSA public key parameter structure
  */
 typedef struct {
@@ -372,6 +379,13 @@ typedef CRYPT_Data CRYPT_Curve25519Pub;
  * kem encaps key parameter structure
  */
 typedef CRYPT_Data CRYPT_KemEncapsKey;
+
+/**
+ * @ingroup crypt_types
+ *
+ * MLDSA public key parameter structure
+ */
+typedef CRYPT_Data CRYPT_MlDsaPub;
 
 /**
  * @ingroup crypt_types
@@ -570,6 +584,7 @@ typedef enum {
     CRYPT_CTRL_GET_RSA_MD,              /**< Obtain the MD algorithm of the RSA algorithm. */
     CRYPT_CTRL_GET_RSA_MGF,             /**< Obtain the mgf algorithm when the RSA algorithm padding mode is PSS. */
     CRYPT_CTRL_CLR_RSA_FLAG,            /**< RSA clear the flag. */
+    CRYPT_CTRL_SET_RSA_BSSA_FACTOR_R,   /**< Set the random bytes for RSA-BSSA. */
 
     // ecc
     CRYPT_CTRL_SET_SM2_USER_ID = 300,
@@ -577,24 +592,31 @@ typedef enum {
     CRYPT_CTRL_SET_SM2_R,               /* SM2 set the R value. */
     CRYPT_CTRL_SET_SM2_RANDOM,          /* SM2 set the r value. */
     CRYPT_CTRL_SET_SM2_PKG,             /* SM2 uses the PKG process. */
-    CRYPT_CTRL_SET_ECC_POINT_FORMAT,    /**< ECC PKEY set the point format. For the point format,
-                                             see CRYPT_PKEY_PointFormat. */
-    CRYPT_CTRL_SET_ECC_USE_COFACTOR_MODE, /**< Indicates whether to use the cofactor mode to prevent
-                                               man-in-the-middle from tampering with the public key.
-                                               Set this parameter to 1 when used or 0 when not used. */
 
     CRYPT_CTRL_GET_SM2_SEND_CHECK,      /* SM2 obtain the check value sent from the local end to the peer end. */
 
     CRYPT_CTRL_SM2_DO_CHECK,            /* SM2 check the shared key. */
     CRYPT_CTRL_GENE_SM2_R,              /* SM2 obtain the R value. */
-    CRYPT_CTRL_GEN_ECC_PUBLICKEY,       /**< Use prikey generate pubkey. */
-    CRYPT_CTRL_SET_RSA_BSSA_FACTOR_R,      /**< Set the random bytes for RSA-BSSA. */
-    CRYPT_CTRL_GEN_X25519_PUBLICKEY,    /**< Use prikey genarate x25519 pubkey. */
 
-    CRYPT_CTRL_SET_MLKEM_TYPE = 400,    /**< Set the key info of ML-KEM */
+    CRYPT_CTRL_GEN_ECC_PUBLICKEY = 400,   /**< Use prikey generate pubkey. */
+    CRYPT_CTRL_SET_ECC_POINT_FORMAT,      /**< ECC PKEY set the point format. For the point format,
+                                             see CRYPT_PKEY_PointFormat. */
+    CRYPT_CTRL_SET_ECC_USE_COFACTOR_MODE, /**< Indicates whether to use the cofactor mode to prevent
+                                               man-in-the-middle from tampering with the public key.
+                                               Set this parameter to 1 when used or 0 when not used. */
+
+    CRYPT_CTRL_GEN_X25519_PUBLICKEY = 500,    /**< Use prikey genarate x25519 pubkey. */
+
+    CRYPT_CTRL_SET_MLKEM_TYPE = 600,        /**< Set the key info of ML-KEM */
     CRYPT_CTRL_GET_MLKEM_EK_LEN,            /**< Get the encapsulation key length */
     CRYPT_CTRL_GET_MLKEM_DK_LEN,            /**< Get the decapsulation key length */
     CRYPT_CTRL_GET_MLKEM_CT_LEN,            /**< Get the ciphertext length */
+	
+	CRYPT_CTRL_SET_MLDSA_TYPE = 700,         /**< Set the algorithm information of ML-DSA */
+    CRYPT_CTRL_SET_MLDSA_ENCODE_FLAG,        /**< Set the flag for encode messages. */
+    CRYPT_CTRL_SET_MLDSA_MUMSG_FLAG,         /**< Whether to calculate message representative */
+    CRYPT_CTRL_SET_MLDSA_DETERMINISTIC_FLAG, /**< Whether to use deterministic signatures */
+    CRYPT_CTRL_SET_CTX_INFO,                 /* context string. */
 } CRYPT_PkeyCtrl;
 
 typedef enum {
@@ -786,6 +808,14 @@ typedef struct {
 } CRYPT_Pbkdf2Param;
 
 typedef struct EAL_LibCtx CRYPT_EAL_LibCtx;
+
+/* Optional parameter set for MLDSA */
+typedef enum {
+    CRYPT_MLDSA_TYPE_MLDSA_44 = 0x01,            // MLDSA-44
+    CRYPT_MLDSA_TYPE_MLDSA_65 = 0x02,            // MLDSA-65
+    CRYPT_MLDSA_TYPE_MLDSA_87 = 0x03,            // MLDSA-87
+    CRYPT_MLDSA_TYPE_INVALID = 0x7fffffff        // invalid value
+} CRYPT_MLDSA_KeyType;
 
 #ifdef __cplusplus
 }
