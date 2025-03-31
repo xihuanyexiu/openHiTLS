@@ -24,6 +24,8 @@
 #include "crypt_types.h"
 #include "sal_atomic.h"
 
+#define HASH_MAX_MDSIZE  (64)
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cpluscplus */
@@ -87,10 +89,19 @@ typedef enum {
                           to prevent possible Bleichenbacher attacks */
 } RSA_PadType;
 
+/**
+ * @ingroup crypt_types
+ *
+ * Pkcsv15 padding mode, when RSA is used for signature.
+ */
+typedef struct {
+    CRYPT_MD_AlgId mdId; /**< ID of the hash algorithm during pkcsv15 padding */
+} RSA_PkcsV15Para;
+
 typedef struct {
     RSA_PadType type; /**< padding id */
     union {
-        CRYPT_RSA_PkcsV15Para pkcsv15; /**< pkcsv15 padding mode */
+        RSA_PkcsV15Para pkcsv15; /**< pkcsv15 padding mode */
         RSA_PadingPara pss;         /**< pss padding mode */
         RSA_PadingPara oaep; /**< oaep padding mode */
     } para;                            /**< padding mode combination, including pss and pkcsv15 */
@@ -178,6 +189,8 @@ int32_t RSA_BlindInvert(RSA_Blind *b, BN_BigNum *data, BN_BigNum *n, BN_Optimize
  * @retval Return the error code.
  */
 int32_t RSA_BlindCreateParam(RSA_Blind *b, BN_BigNum *e, BN_BigNum *n, uint32_t bits, BN_Optimizer *opt);
+
+int32_t RSA_CreateBlind(RSA_Blind *b, uint32_t bits);
 
 #define RSA_FREE_PRV_KEY(prvKey_)               \
 do {                                            \

@@ -53,15 +53,6 @@ typedef struct {
 /**
  * @ingroup crypt_types
  *
- * Pkcsv15 padding mode, when RSA is used for signature.
- */
-typedef struct {
-    CRYPT_MD_AlgId mdId; /**< ID of the hash algorithm during pkcsv15 padding */
-} CRYPT_RSA_PkcsV15Para;
-
-/**
- * @ingroup crypt_types
- *
  * RSA salt length type, when RSA PSS mode is used for signature and verify.
  */
 typedef enum {

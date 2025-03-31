@@ -86,7 +86,7 @@ int32_t RSA_BlindInvert(RSA_Blind *b, BN_BigNum *data, BN_BigNum *n, BN_Optimize
     return ret;
 }
 
-static int32_t RSA_CreateBlind(RSA_Blind *b, uint32_t bits)
+int32_t RSA_CreateBlind(RSA_Blind *b, uint32_t bits)
 {
     // create a BigNum
     b->r = BN_Create(bits);

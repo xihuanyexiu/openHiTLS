@@ -113,7 +113,6 @@ typedef enum {
     /* hash algorithm */
     BSL_CID_MD4 = 10001,            /**< identifies MD4 hash algorithm */
     BSL_CID_MD5,                    /**< identifies the MD5 hash algorithm */
-    BSL_CID_MD5_SHA1,
     BSL_CID_SHA1,                   /**< identifies the SHA1 hash algorithm */
     BSL_CID_SHA224,                 /**< identifies the SHA224 hash algorithm */
     BSL_CID_SHA256,                 /**< identifies the SHA256 hash algorithm */
