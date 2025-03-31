@@ -404,6 +404,57 @@
     #endif
 #endif
 
+#ifdef HITLS_CRYPTO_RSA
+    #ifndef HITLS_CRYPTO_RSA_SIGN
+        #define HITLS_CRYPTO_RSA_SIGN
+    #endif
+    #ifndef HITLS_CRYPTO_RSA_CRYPT
+        #define HITLS_CRYPTO_RSA_CRYPT
+    #endif
+    #ifndef HITLS_CRYPTO_RSA_BLINDING
+        #define HITLS_CRYPTO_RSA_BLINDING
+    #endif
+    #ifndef HITLS_CRYPTO_RSA_GEN
+        #define HITLS_CRYPTO_RSA_GEN
+    #endif
+
+    // rsa dependencies
+    #ifndef HITLS_CRYPTO_BN_RAND
+        #define HITLS_CRYPTO_BN_RAND
+    #endif
+    #ifndef HITLS_CRYPTO_BN_PRIME
+        #define HITLS_CRYPTO_BN_PRIME
+    #endif
+#endif
+
+#ifdef HITLS_CRYPTO_RSA_BSSA
+    #ifndef HITLS_CRYPTO_RSA_SIGN_PSS
+        #define HITLS_CRYPTO_RSA_SIGN_PSS
+    #endif
+#endif
+
+#ifdef HITLS_CRYPTO_RSA_SIGN
+    #ifndef HITLS_CRYPTO_RSA_SIGN_PSS
+        #define HITLS_CRYPTO_RSA_SIGN_PSS
+    #endif
+    #ifndef HITLS_CRYPTO_RSA_SIGN_PKCSV15
+        #define HITLS_CRYPTO_RSA_SIGN_PKCSV15
+    #endif
+#endif
+
+#if defined(HITLS_CRYPTO_RSA_SIGN_PSS) || defined(HITLS_CRYPTO_RSA_SIGN_PKCSV15)
+    #ifndef HITLS_CRYPTO_RSA_SIGN
+        #define HITLS_CRYPTO_RSA_SIGN
+    #endif
+#endif
+
+#if defined(HITLS_CRYPTO_RSA_SIGN) || defined(HITLS_CRYPTO_RSA_CRYPT) || \
+    defined(HITLS_CRYPTO_RSA_BLINDING) || defined(HITLS_CRYPTO_RSA_GEN)
+    #ifndef HITLS_CRYPTO_RSA
+        #define HITLS_CRYPTO_RSA
+    #endif
+#endif
+
 #if defined(HITLS_CRYPTO_ECC_X8664)
 #define HITLS_CRYPTO_CURVE_SM2_X8664
 #endif

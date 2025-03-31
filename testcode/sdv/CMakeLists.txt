@@ -230,6 +230,5 @@ foreach(test_suite ${TEST_FILES})
     set_target_properties(${sdv_exe} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${openHiTLS_SRC}/testcode/output"
     )
-    target_compile_options(${sdv_exe} PRIVATE -D__FILENAME__="${sdv_exe}.c")
     target_link_libraries(${sdv_exe} PRIVATE TEST_INTF TESTCASE_PRE)
 endforeach()

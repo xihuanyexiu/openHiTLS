@@ -90,6 +90,8 @@ enum CRYPT_ERROR {
     CRYPT_RSA_ERR_PSS_SALT_LEN,         /**< Incorrect salt length of the PSS operation. */
     CRYPT_RSA_ERR_PSS_SALT_DATA,        /**< PSS operation salt data error, failed to compare the salt extracted
                                              during signature verification with the user's input. */
+    CRYPT_RSA_ERR_PKCSV15_SALT_LEN,     /**< Incorrect salt length of the PKCSV15 operation. */
+    CRYPT_RSA_ERR_PKCSV15_SALT_DATA,    /**< PKCSV15 salt data error. */
     CRYPT_RSA_ERR_INPUT_VALUE,          /**< Some special values, which are used as input errors. */
     CRYPT_RSA_ERR_MD_ALGID,             /**< The hash ID of the input parameter is incorrect when
                                              the pkcs1.5 padding mode is set. */
@@ -113,16 +115,19 @@ enum CRYPT_ERROR {
     CRYPT_RSA_ERR_GEN_SALT,             /**< An error is returned when salt information fails to be generated
                                              during PSS signature. */
     CRYPT_RSA_ERR_ENC_INPUT_NOT_ENOUGH, /**< The plaintext length is too short for RSA NO PAD encryption. */
+    CRYPT_RSA_ERR_DATA_LEN,             /**< Incorrect encryption length. */
+    CRYPT_RSA_ERR_PAD_NUM,              /**< Incorrect padding length. */
     CRYPT_RSA_PUBKEY_NOT_EQUAL,         /**< RSA public keys are not equal. */
+    CRYPT_RSA_KEYPAIRWISE_CONSISTENCY_FAILURE,   /**< RSA pair-wise consistency failure. */
     CRYPT_RSA_ERR_BLIND_TYPE,           /**< Invalid RSA blinding type. Only RSA-BSSA is currently supported. */
     CRYPT_RSA_ERR_NO_BLIND_INFO,        /**< RSA blinding information is missing.
                                             The blind/unblind operation requires previous blinding parameters. */
     CRYPT_RSA_ERR_NO_PUBKEY_INFO,       /**< The rsa pub key is missing. */
     CRYPT_RSA_PADDING_NOT_SUPPORTED,    /**< The specified RSA padding mode is not supported in blinding. */
+    CRYPT_RSA_ERR_BSSA_PARAM,           /**< The param of bssa is not invalid. */
     CRYPT_RSA_GET_SALT_LEN_ERROR,       /**< The input length of getting salt-len is incorrect. */
     CRYPT_RSA_GET_SALT_NOT_PSS_ERROR,   /**< When the padding type of the key is not pss, and get the salt len. */
     CRYPT_RSA_ERR_PSS_PARAMS,            /**< The parameter is error when the padding type of the key is pss. */
-    CRYPT_RSA_ERR_BSSA_PARAM,          /**< The parameter of bssa is invalid. */
 
     CRYPT_EAL_BUFF_LEN_NOT_ENOUGH = 0x01040001, /**< Insufficient buffer length. */
     CRYPT_EAL_BUFF_LEN_TOO_LONG,        /**< Insufficient buffer length. */
