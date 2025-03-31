@@ -475,7 +475,19 @@ enum CRYPT_ERROR {
     CRYPT_MLKEM_CTRL_NOT_SUPPORT,                       /**< The Ctrl type is not supported.*/
     CRYPT_MLKEM_CTRL_INIT_REPEATED,                     /**< The CTX cannot be initialized repeatedly.*/
 
-    CRYPT_SEED_POOL_NEW_ERROR = 0x01240001,             /**< The length of the key input is
+    CRYPT_MLDSA_KEYINFO_NOT_SET = 0x01250001,           /**< The algorithm not set. */
+    CRYPT_MLDSA_CTRL_NOT_SUPPORT,                       /**< The Ctrl type is not supported. */
+    CRYPT_MLDSA_PAD_TOO_LONG,                           /**< The pad is too long. */
+    CRYPT_MLDSA_KEYLEN_ERROR,                           /**< Incorrect input data length. */
+    CRYPT_MLDSA_SIGN_DATA_ERROR,                        /**< Invalid signature value. */
+    CRYPT_MLDSA_VERIFY_FAIL,                            /**< Failed to verify the signature. */
+    CRYPT_MLDSA_KEY_NOT_SET,                            /**< The public key or private not set. */
+    CRYPT_MLDSA_LEN_NOT_ENOUGH,                         /**< The buffer size of output is insufficient. */
+    CRYPT_MLDSA_KEY_NOT_EQUAL,                          /**< The MLDSA keys are not equal. */
+    CRYPT_MLDSA_CTRL_INIT_REPEATED,                     /**< The CTX cannot be initialized repeatedly.*/
+    CRYPT_MLDSA_SET_KEY_FAILED,                         /**< Failed to set the key. */
+
+    CRYPT_SEED_POOL_NEW_ERROR = 0x01260001,             /**< The length of the key input is
                                                              incorrect when setting the key. */
     CRYPT_SEED_POOL_STATE_ERROR,                        /**< Incorrect seed pool status. */
     CRYPT_SEED_POOL_ES_LIST_FULL,                       /**< The number of entropy sources exceeds the upper limit. */
@@ -484,7 +496,6 @@ enum CRYPT_ERROR {
     CRYPT_SEED_POOL_NO_ENTROPY_OBTAINED,                /**< No entropy data is obtained from the seed pool. */
     CRYPT_SEED_POOL_NOT_MEET_REQUIREMENT,               /**< The entropy data does not meet the requirements. */
     CRYPT_ENTROPY_CTX_CREATE_FAILED,                    /**< Failed to create the handle for obtaining the entropy. */
-
 };
 #ifdef __cplusplus
 }

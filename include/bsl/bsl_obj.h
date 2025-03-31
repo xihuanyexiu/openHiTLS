@@ -109,7 +109,7 @@ typedef enum {
     BSL_CID_PAILLIER = 5291,        /**< identifies the Paillier algorithm */
     BSL_CID_ELGAMAL = 5301,        /**< identifies the Elgamal algorithm */
     BSL_CID_ML_KEM = 5401,
-
+    BSL_CID_ML_DSA = 5501,
     /* hash algorithm */
     BSL_CID_MD4 = 10001,            /**< identifies MD4 hash algorithm */
     BSL_CID_MD5,                    /**< identifies the MD5 hash algorithm */

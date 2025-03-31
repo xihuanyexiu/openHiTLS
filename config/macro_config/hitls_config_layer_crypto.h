@@ -204,6 +204,9 @@
     #ifndef HITLS_CRYPTO_MLKEM
         #define HITLS_CRYPTO_MLKEM
     #endif
+    #ifndef HITLS_CRYPTO_MLDSA
+        #define HITLS_CRYPTO_MLDSA
+    #endif
 #endif
 
 #ifdef HITLS_CRYPTO_ECC
@@ -323,7 +326,8 @@
 
 #if defined(HITLS_CRYPTO_DSA) || defined(HITLS_CRYPTO_CURVE25519) || defined(HITLS_CRYPTO_RSA) || \
     defined(HITLS_CRYPTO_DH) || defined(HITLS_CRYPTO_ECDSA) || defined(HITLS_CRYPTO_ECDH) ||      \
-    defined(HITLS_CRYPTO_SM2) || defined(HITLS_CRYPTO_PAILLIER)|| defined(HITLS_CRYPTO_ELGAMAL)
+    defined(HITLS_CRYPTO_SM2) || defined(HITLS_CRYPTO_PAILLIER)|| defined(HITLS_CRYPTO_ELGAMAL) || \
+    defined(HITLS_CRYPTO_MLDSA)
     #ifndef HITLS_CRYPTO_PKEY
         #define HITLS_CRYPTO_PKEY
     #endif

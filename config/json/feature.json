@@ -114,7 +114,8 @@
                         },
                         "kem": {
                             "mlkem": {"deps": ["sha3"]}
-                        }
+                        },
+                        "mldsa": {"deps": ["sha3"]}
                     },
                     "provider": null,
                     "bn": null
@@ -556,6 +557,7 @@
                     "crypto/paillier/include",
                     "crypto/elgamal/include",
                     "crypto/mlkem/include",
+                    "crypto/mldsa/include",
                     "crypto/provider/include"
                 ]
             },
@@ -871,6 +873,7 @@
                     "crypto/paillier/include",
                     "crypto/elgamal/include",
                     "crypto/mlkem/include",
+                    "crypto/mldsa/include",
                     "crypto/drbg/include",
                     "crypto/entropy/include",
                     "crypto/modes/include",
@@ -987,6 +990,18 @@
                 ".features": ["mlkem"],
                 ".srcs": "crypto/mlkem/src/*.c",
                 ".deps": ["crypto::sha3", "bsl::sal"],
+                ".include": ["crypto/eal/src"]
+            },
+            "mldsa": {
+                ".features": ["mldsa"],
+                ".srcs": {
+                    "public": [
+                        "crypto/mldsa/src/ml_dsa_core.c",
+                        "crypto/mldsa/src/ml_dsa_ntt.c",
+                        "crypto/mldsa/src/ml_dsa.c"
+                    ]
+                },
+                ".deps": ["crypto::sha3", "bsl::sal", "bsl::obj"],
                 ".include": ["crypto/eal/src"]
             }
         },
