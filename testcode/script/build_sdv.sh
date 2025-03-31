@@ -48,6 +48,7 @@ export_env()
     ENABLE_BSL=${ENABLE_BSL:=ON}
     ENABLE_PKI=${ENABLE_PKI:=ON}
     ENABLE_AUTH=${ENABLE_AUTH:=ON}
+    ENABLE_CMVP=${ENABLE_CMVP:=OFF}
     ENABLE_UIO_SCTP=${ENABLE_UIO_SCTP:=ON}
     ENABLE_VERBOSE=${ENABLE_VERBOSE:=''}
     RUN_TESTS=${RUN_TESTS:=''}
@@ -85,7 +86,10 @@ find_test_suite()
     if [[ ${ENABLE_AUTH} == "ON" ]]; then
         auth_testsuite=$(find ${HITLS_ROOT_DIR}/testcode/sdv/testcase/auth -name "*.data" | sed -e "s/.data//" | tr -s "\n" " ")
     fi
-    RUN_TEST_SUITES="${crypto_testsuite}${bsl_testsuite}${pki_testsuite}${proto_testsuite}${auth_testsuite}"
+    if [[ ${ENABLE_CMVP} == "ON" ]]; then
+        cmvp_testsuite=$(find ${HITLS_ROOT_DIR}/testcode/sdv/testcase/cmvp -name "*.data" | sed -e "s/.data//" | tr -s "\n" " ")
+    fi
+    RUN_TEST_SUITES="${crypto_testsuite}${bsl_testsuite}${pki_testsuite}${proto_testsuite}${auth_testsuite}${cmvp_testsuite}"
 }
 
 build_test_suite()

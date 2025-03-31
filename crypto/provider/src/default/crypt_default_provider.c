@@ -116,6 +116,7 @@ static const CRYPT_EAL_AlgInfo g_defRands[] = {
     {CRYPT_RAND_SHA256, g_defRand, CRYPT_EAL_DEFAULT_ATTR},
     {CRYPT_RAND_SHA384, g_defRand, CRYPT_EAL_DEFAULT_ATTR},
     {CRYPT_RAND_SHA512, g_defRand, CRYPT_EAL_DEFAULT_ATTR},
+    {CRYPT_RAND_SM3, g_defRand, CRYPT_EAL_DEFAULT_ATTR},
     {CRYPT_RAND_HMAC_SHA1, g_defRand, CRYPT_EAL_DEFAULT_ATTR},
     {CRYPT_RAND_HMAC_SHA224, g_defRand, CRYPT_EAL_DEFAULT_ATTR},
     {CRYPT_RAND_HMAC_SHA256, g_defRand, CRYPT_EAL_DEFAULT_ATTR},
@@ -127,6 +128,7 @@ static const CRYPT_EAL_AlgInfo g_defRands[] = {
     {CRYPT_RAND_AES128_CTR_DF, g_defRand, CRYPT_EAL_DEFAULT_ATTR},
     {CRYPT_RAND_AES192_CTR_DF, g_defRand, CRYPT_EAL_DEFAULT_ATTR},
     {CRYPT_RAND_AES256_CTR_DF, g_defRand, CRYPT_EAL_DEFAULT_ATTR},
+    {CRYPT_RAND_SM4_CTR_DF, g_defRand, CRYPT_EAL_DEFAULT_ATTR},
     CRYPT_EAL_ALGINFO_END
 };
 
@@ -224,6 +226,22 @@ static CRYPT_EAL_Func g_defProvOutFuncs[] = {
     CRYPT_EAL_FUNC_END
 };
 
+#ifdef HITLS_CRYPTO_ENTROPY
+static void *g_providerSeedCtx = NULL;
+static CRYPT_RandSeedMethod g_providerSeedMethod = {0};
+
+int32_t CRYPT_EAL_ProviderGetSeed(CRYPT_RandSeedMethod **method, void **seedCtx)
+{
+    if (method == NULL || seedCtx == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    *method = &g_providerSeedMethod;
+    *seedCtx = g_providerSeedCtx;
+    return CRYPT_SUCCESS;
+}
+#endif
+
 int32_t CRYPT_EAL_DefaultProvInit(CRYPT_EAL_ProvMgrCtx *mgrCtx, BSL_Param *param,
     CRYPT_EAL_Func *capFuncs, CRYPT_EAL_Func **outFuncs, void **provCtx)
 {
@@ -234,6 +252,42 @@ int32_t CRYPT_EAL_DefaultProvInit(CRYPT_EAL_ProvMgrCtx *mgrCtx, BSL_Param *param
         BSL_ERR_PUSH_ERROR(BSL_MALLOC_FAIL);
         return BSL_MALLOC_FAIL;
     }
+#ifdef HITLS_CRYPTO_ENTROPY
+    CRYPT_EAL_ProvMgrCtrlCb mgrCtrlFunc = NULL;
+    int32_t index = 0;
+    while (capFuncs[index].id != 0) {
+        switch (capFuncs[index].id) {
+            case CRYPT_EAL_CAP_GETENTROPY:
+                g_providerSeedMethod.getEntropy = capFuncs[index].func;
+                break;
+            case CRYPT_EAL_CAP_CLEANENTROPY:
+                g_providerSeedMethod.cleanEntropy = capFuncs[index].func;
+                break;
+            case CRYPT_EAL_CAP_GETNONCE:
+                g_providerSeedMethod.getNonce = capFuncs[index].func;
+                break;
+            case CRYPT_EAL_CAP_CLEANNONCE:
+                g_providerSeedMethod.cleanNonce = capFuncs[index].func;
+                break;
+            case CRYPT_EAL_CAP_MGRCTXCTRL:
+                mgrCtrlFunc = capFuncs[index].func;
+                break;
+            default:
+                break;
+        }
+        index++;
+    }
+    if (mgrCtrlFunc == NULL) {
+        BSL_SAL_Free(temp);
+        return CRYPT_PROVIDER_NOT_SUPPORT;
+    }
+    int32_t ret = mgrCtrlFunc(mgrCtx, CRYPT_EAL_MGR_GETSEEDCTX, &g_providerSeedCtx, 0);
+    if (ret != CRYPT_SUCCESS) {
+        BSL_SAL_Free(temp);
+        BSL_ERR_PUSH_ERROR(ret);
+        return ret;
+    }
+#endif
     temp->mgrCtxHandle = mgrCtx;
     *provCtx = temp;
     *outFuncs = g_defProvOutFuncs;

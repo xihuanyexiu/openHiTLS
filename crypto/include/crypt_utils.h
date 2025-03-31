@@ -71,6 +71,18 @@ do {                                         \
     ((uint64_t)(p)[(i) + 1] <<  8) | ((uint64_t)(p)[(i) + 0] <<  0)    \
 )
 
+
+/**
+ * Check whether conditions are met. If conditions are met, go to the label EXIT.
+ */
+#define GOTO_EXIT_IF(condition, ret) \
+    do {                        \
+        if (condition) {        \
+            BSL_ERR_PUSH_ERROR((ret));   \
+            goto EXIT;          \
+        }                       \
+    } while (0)
+
 /**
  * Check whether conditions are met. If yes, an error code is returned.
  */

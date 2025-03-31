@@ -460,6 +460,10 @@ class CMakeGenerator:
         compile_flags, link_flags = self._cfg_compile.union_options(self._cfg_custom_compile)
         macros = self._cfg_custom_feature.get_fea_macros()
         macros.sort()
+
+        if '-DHITLS_CRYPTO_CMVP' in macros:
+            self._hmac = True
+
         compile_flags.extend(macros)
         hitls_macros = list(filter(lambda x: '-DHITLS' in x, compile_flags))
         with open(macro_file, "w") as f:

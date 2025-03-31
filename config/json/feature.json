@@ -75,7 +75,7 @@
                         "drbg_ctr": {"deps": ["aes"]}
                     },
                     "entropy": {
-                        "opts": ["drbg", "drbg_hash", "drbg_hmac", "drbg_ctr"]
+                        "deps": ["list"], "opts": ["drbg_hash", "drbg_hmac", "drbg_ctr"]
                     },
                     "modes": {
                         "cbc": null,
@@ -829,7 +829,7 @@
             "entropy":{
                 ".features": ["entropy"],
                 ".srcs": "crypto/entropy/src/*.c",
-                ".deps": ["bsl::sal"]
+                ".deps": ["bsl::sal", "bsl::list"]
             },
             "drbg": {
                 ".features": ["drbg_hash", "drbg_hmac", "drbg_ctr"],
@@ -864,6 +864,7 @@
                     "crypto/ecdsa/include",
                     "crypto/ecdh/include",
                     "crypto/sm2/include",
+                    "crypto/mlkem/include",
                     "crypto/bn/include",
                     "crypto/ecc/include",
                     "crypto/hmac/include",
@@ -871,8 +872,10 @@
                     "crypto/elgamal/include",
                     "crypto/mlkem/include",
                     "crypto/drbg/include",
+                    "crypto/entropy/include",
                     "crypto/modes/include",
                     "crypto/entropy/include",
+                    "crypto/eal/src",
                     "crypto/include"
                 ]
             },

@@ -681,7 +681,7 @@ void SDV_CRYPTO_MLKEM_PKEYNEWCTX_API_TC001()
     TestMemInit();
     CRYPT_RandRegist(TestSimpleRand);
 
-    CRYPT_EAL_PkeyCtx *ctx1 = CRYPT_EAL_PkeyNewCtx(CRYPT_MD_SHA256);
+    CRYPT_EAL_PkeyCtx *ctx1 = CRYPT_EAL_PkeyNewCtx((CRYPT_PKEY_AlgId)CRYPT_MD_SHA256);
     ASSERT_TRUE(ctx1 == NULL);
 
     CRYPT_EAL_PkeyCtx *ctx2 = CRYPT_EAL_PkeyNewCtx(-1);

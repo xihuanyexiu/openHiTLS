@@ -191,6 +191,23 @@ enum CRYPT_ERROR {
     CRYPT_ENTROPY_CONDITION_FAILURE = 0x01090001,    /**< Processing method error after invoking. */
     CRYPT_ENTROPY_RANGE_ERROR,                       /**< Entropy source generation range error */
     CRYPT_ENTROPY_ECF_ALG_ERROR,                     /**< Entropy source conditioning algorithm is incorrect. */
+    CRYPT_ENTROPY_RCT_FAILURE,                       /**< RCT detection fails, restart the entropy source. */
+    CRYPT_ENTROPY_APT_FAILURE,                       /**< APT detection fails, restart the entropy source. */
+    CRYPT_ENTROPY_ECF_IS_ERROR,                      /**< Entropy source conditioning is incorrect. */
+    CRYPT_ENTROPY_ES_CREATE_ERROR,                   /**< Entropy pool creation error. */
+    CRYPT_ENTROPY_ES_STATE_ERROR,                    /**< Incorrect entropy pool status. */
+    CRYPT_ENTROPY_ES_CTRL_ERROR,                     /**< Incorrect entropy pool settings. */
+    CRYPT_ENTROPY_ES_NO_NS,                          /**< No available noise source in the entropy pool. */
+    CRYPT_ENTROPY_ES_NS_NOT_FOUND,                   /**< Noise source not found. */
+    CRYPT_ENTROPY_ES_DUP_NS,                         /**< Noise source Repetition. */
+    CRYPT_ENTROPY_ES_NS_NOT_AVA,                     /**< Noise source not available. */
+    CRYPT_ENTROPY_ES_NS_FULL,                        /**< Noise source list is full. */
+    CRYPT_ENTROPY_ES_CF_NOT_SUPPORT,                 /**< Nonditioning function not supported. */
+    CRYPT_ENTROPY_ES_CF_ERROR,                       /**< Nonditioning function error. */
+    CRYPT_ENTROPY_ES_ENTROPY_NOT_ENOUGH,             /**< Not getting enough entropy. */
+    CRYPT_ENTROPY_ES_POOL_ERROR,                     /**< Entropy pool error. */
+    CRYPT_ENTROPY_ES_POOL_INSUFFICIENT,              /**< Entropy pool capacity is insufficient. */
+    CRYPT_ENTROPY_CTRL_INVALID_PARAM,                /**< Entropy invalid parameter. */
 
     CRYPT_DSA_BUFF_LEN_NOT_ENOUGH = 0x010A0001, /**< Insufficient buffer length. */
     CRYPT_DSA_ERR_KEY_PARA,                     /**< Incorrect key parameter data. */
@@ -448,6 +465,7 @@ enum CRYPT_ERROR {
     CRYPT_CMVP_ERR_INTEGRITY,                        /**< Integrity verification failed. */
     CRYPT_CMVP_ERR_PARAM_CHECK,                      /**< Failed to determine the parameter. */
     CRYPT_CMVP_COMMON_ERR,                           /**< Common error of the CMVP module. */
+    CRYPT_CMVP_RANDOMNESS_ERR,                       /**< randomness test failed. */
 
     CRYPT_MLKEM_KEYLEN_ERROR = 0x01240001,              /**< Incorrect input data length. */
     CRYPT_MLKEM_LEN_NOT_ENOUGH,                         /**<The buffer size of output is insufficient. */
@@ -456,6 +474,17 @@ enum CRYPT_ERROR {
     CRYPT_MLKEM_KEY_NOT_EQUAL,                          /**< The MLKEM keys are not equal. */
     CRYPT_MLKEM_CTRL_NOT_SUPPORT,                       /**< The Ctrl type is not supported.*/
     CRYPT_MLKEM_CTRL_INIT_REPEATED,                     /**< The CTX cannot be initialized repeatedly.*/
+
+    CRYPT_SEED_POOL_NEW_ERROR = 0x01240001,             /**< The length of the key input is
+                                                             incorrect when setting the key. */
+    CRYPT_SEED_POOL_STATE_ERROR,                        /**< Incorrect seed pool status. */
+    CRYPT_SEED_POOL_ES_LIST_FULL,                       /**< The number of entropy sources exceeds the upper limit. */
+    CRYPT_SEED_POOL_NO_SUFFICIENT_ENTROPY,              /**< The seed pool cannot provide sufficient entropy. */
+    CRYPT_SEED_POOL_NO_ENTROPY_SOURCE,                  /**< The seed pool has no entropy source. */
+    CRYPT_SEED_POOL_NO_ENTROPY_OBTAINED,                /**< No entropy data is obtained from the seed pool. */
+    CRYPT_SEED_POOL_NOT_MEET_REQUIREMENT,               /**< The entropy data does not meet the requirements. */
+    CRYPT_ENTROPY_CTX_CREATE_FAILED,                    /**< Failed to create the handle for obtaining the entropy. */
+
 };
 #ifdef __cplusplus
 }

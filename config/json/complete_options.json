@@ -182,7 +182,9 @@
             "-gdwarf-2"
         ],
         "CC_USER_DEFINE_FLAGS": [
-            "-DHITLS_EAL_INIT_OPTS=n"
+            "-DHITLS_EAL_INIT_OPTS=n",
+            "-DHITLS_CRYPTO_DRBG_GM_LEVEL=n",
+            "-DHITLS_SEED_DRBG_INIT_RAND_ALG=n"
         ]
     },
     "linkFlag": {

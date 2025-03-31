@@ -385,6 +385,18 @@ typedef struct {
     const void *method;
 } EAL_RandMethLookup;
 
+/**
+ * @ingroup crypt_ctrl_param
+ *
+ * Set and obtain internal parameters of Pbkdf2.
+ */
+typedef enum {
+    CRYPT_CTRL_GET_MACID = 0,       /* kdf get macId . */
+    CRYPT_CTRL_GET_SALTLEN,         /* kdf get saltlen . */
+    CRYPT_CTRL_GET_ITER,            /* kdf get iter . */
+    CRYPT_CTRL_GET_KEYLEN           /* kdf get keyLen . */
+} CRYPT_KdfCtrl;
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

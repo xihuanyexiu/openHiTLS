@@ -158,6 +158,8 @@ typedef enum {
     BSL_CID_RAND_AES128_CTR_DF,
     BSL_CID_RAND_AES192_CTR_DF,
     BSL_CID_RAND_AES256_CTR_DF,
+    BSL_CID_RAND_SM3,
+    BSL_CID_RAND_SM4_CTR_DF,
 
     /* Key derivation algorithm */
     BSL_CID_SCRYPT = 11501,         /**< Identifieds Scrypt KDF algorithm */

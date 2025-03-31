@@ -56,6 +56,7 @@ void *CRYPT_EAL_DefKdfNewCtx(void *provCtx, int32_t algId)
 int32_t CRYPT_EAL_DefKdfCtrl(void *ctx, int32_t cmd, void *val, uint32_t valLen)
 {
     (void) ctx;
+
     (void) cmd;
     (void) val;
     (void) valLen;

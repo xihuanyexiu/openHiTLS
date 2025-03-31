@@ -22,9 +22,9 @@
 #include "bsl_err_internal.h"
 #include "crypt_util_rand.h"
 
-static CRYPT_RandFunc g_randFunc = NULL;
+static CRYPT_EAL_RandFunc g_randFunc = NULL;
 
-void CRYPT_RandRegist(CRYPT_RandFunc func)
+void CRYPT_RandRegist(CRYPT_EAL_RandFunc func)
 {
     g_randFunc = func;
 }

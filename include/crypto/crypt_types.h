@@ -144,6 +144,65 @@ typedef struct {
     uint32_t n2Len; /**< Length of the Paillier private key parameter marked as n2 */
 } CRYPT_PaillierPrv;
 
+typedef struct {
+    /* Initialization parameters of the noise source */
+    void *para;
+    /* Noise Source Initialization Interface */
+    void *(*init)(void *para);
+    /* Noise source read interface,can't be NULL */
+    int32_t (*read)(void *ctx, uint32_t timeout, uint8_t *buf, uint32_t bufLen);
+    /* Noise Source Deinitialization Interface */
+    void (*deinit)(void *ctx);
+} CRYPT_EAL_NsMethod;
+
+typedef struct {
+    /* Repetition Count Test: the cutoff value C */
+    uint32_t rctCutoff;
+    /* Adaptive Proportion Test: the cutoff value C */
+    uint32_t aptCutoff;
+    /* Adaptive Proportion Test: the window size W
+     * see nist.sp.800-90b section 4.4.2
+     * The window size W is selected based on the alphabet size, and shall be assigned to 1024
+     * if the noise source is binary (that is, the noise source produces only two distinct values) and 512 if
+     * the noise source is not binary (that is, the noise source produces more than two distinct values).
+     */
+    uint32_t aptWinSize;
+} CRYPT_EAL_NsTestPara;
+
+typedef struct {
+    /* Noise source name, which must be unique. */
+    const char *name;
+    /* Whether the noise source automatically performs the health test */
+    bool autoTest;
+    /* Minimum entropy, that is, the number of bits of entropy for a byte */
+    uint32_t minEntropy;
+    CRYPT_EAL_NsMethod nsMeth;
+    CRYPT_EAL_NsTestPara nsPara;
+} CRYPT_EAL_NsPara;
+
+/**
+  * @ingroup crypt_types
+  * @brief Entropy source callback for obtaining entropy data.
+  *
+  * @param ctx [IN] the entropy source handle.
+  * @param buf [OUT] buffer.
+  * @param bufLen [IN] the length of buffer.
+  * @return 0, success
+  *         Other error codes
+  */
+typedef uint32_t (*CRYPT_EAL_EntropyGet)(void *ctx, uint8_t *buf, uint32_t bufLen);
+
+typedef struct {
+    /* Whether Physical Entropy Source. */
+    bool isPhysical;
+    /* minimum entropy, (0, 8]. */
+    uint32_t minEntropy;
+    /* entropy source handle */
+    void *entropyCtx;
+    CRYPT_EAL_EntropyGet entropyGet;
+} CRYPT_EAL_EsPara;
+
+
 /**
  * @ingroup crypt_types
  *
@@ -527,7 +586,7 @@ typedef enum {
     CRYPT_CTRL_GET_SM2_SEND_CHECK,      /* SM2 obtain the check value sent from the local end to the peer end. */
 
     CRYPT_CTRL_SM2_DO_CHECK,            /* SM2 check the shared key. */
-    CRYPT_CTRL_SM2_GENE_R,              /* SM2 obtain the R value. */
+    CRYPT_CTRL_GENE_SM2_R,              /* SM2 obtain the R value. */
     CRYPT_CTRL_GEN_ECC_PUBLICKEY,       /**< Use prikey generate pubkey. */
     CRYPT_CTRL_SET_RSA_BSSA_FACTOR_R,      /**< Set the random bytes for RSA-BSSA. */
     CRYPT_CTRL_GEN_X25519_PUBLICKEY,    /**< Use prikey genarate x25519 pubkey. */
@@ -538,6 +597,13 @@ typedef enum {
     CRYPT_CTRL_GET_MLKEM_CT_LEN,            /**< Get the ciphertext length */
 } CRYPT_PkeyCtrl;
 
+typedef enum {
+    CRYPT_CTRL_SET_GM_LEVEL,    /**<  Set the authentication level of gm drbg */
+    CRYPT_CTRL_SET_RESEED_INTERVAL,
+    CRYPT_CTRL_SET_RESEED_TIME,
+    CRYPT_CTRL_RAND_MAX = 0xff,
+} CRYPT_RandCtrl;
+
 /**
  * @ingroup crypt_ctrl_param
  *
@@ -546,6 +612,31 @@ typedef enum {
 typedef enum {
     CRYPT_CTRL_GET_MACLEN             /* Mac get maxlen . */
 } CRYPT_MacCtrl;
+
+/**
+ * @ingroup crypt_entropy_type
+ *
+ * Entropy setting type.
+ */
+typedef enum {
+    CRYPT_ENTROPY_SET_POOL_SIZE = 0,      /**< Sets the EntropyPool size. */
+    CRYPT_ENTROPY_SET_CF,                 /**< Sets the EntropyPool conditioning function. */
+    CRYPT_ENTROPY_ADD_NS,                 /**< Adding a Noise Source. */
+    CRYPT_ENTROPY_REMOVE_NS,              /**< Deleting a Noise Source. */
+    CRYPT_ENTROPY_ENABLE_TEST,            /**< Sets the Health Test. */
+    CRYPT_ENTROPY_GET_STATE,              /**< Gets the entropy source state. */
+    CRYPT_ENTROPY_GET_POOL_SIZE,          /**< Gets the entropy pool size. */
+    CRYPT_ENTROPY_POOL_GET_CURRSIZE,      /**< Gets the entropy pool current size. */
+    CRYPT_ENTROPY_GET_CF_SIZE,            /**< Gets the cf size. */
+    CRYPT_ENTROPY_GATHER_ENTROPY,         /**< Entropy source collection option. This option collects the original
+                                               entropy data from each noise source, obtains the full entropy output
+                                               after adjustment by the conditioning function, and stores the full
+                                               entropy output in the entropy pool. The length of the entropy output
+                                               obtained each time is the output length of the adjustment function.
+                                               The caller can use this interface to implement the automatic collection
+                                               function of the entropy pool. */
+    CRYPT_ENTROPY_MAX
+} CRYPT_ENTROPY_TYPE;
 
 /**
  * @ingroup crypt_padding_type
