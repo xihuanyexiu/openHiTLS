@@ -12,7 +12,6 @@
  * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
  * See the Mulan PSL v2 for more details.
  */
-
 #ifndef RSA_LOCAL_H
 #define RSA_LOCAL_H
 
@@ -25,11 +24,11 @@
 #include "crypt_types.h"
 #include "sal_atomic.h"
 
+#define HASH_MAX_MDSIZE  (64)
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cpluscplus */
-
-#define HASH_MAX_MDSIZE  (64)
 
 typedef struct RSA_BlindSt {
     BN_BigNum *r;
@@ -61,6 +60,19 @@ struct RSA_Para {
     BN_BigNum *p;     // prime factor p
     BN_BigNum *q;     // prime factor q
 };
+
+#ifdef HITLS_CRYPTO_RSA_BSSA
+typedef enum {
+    RSABSSA = 1, /**< RSA Blind Signature with Appendix, ref RFC9474 */
+} RSA_BlindType;
+
+typedef struct {
+    RSA_BlindType type; /**< padding id */
+    union {
+        RSA_Blind *bssa;
+    } para;
+} RSA_BlindParam;
+#endif
 
 /**
  * @ingroup crypt_eal_pkey
@@ -96,38 +108,31 @@ typedef struct {
     CRYPT_Data salt; // Used for the KAT test.
 } RSAPad;
 
-typedef enum {
-    RSABSSA = 1, /**< RSA Blind Signature */
-    RSAPBSSA,
-} RSA_BlindType;
-
-typedef struct {
-    RSA_BlindType type; /**< padding id */
-    union {
-        RSA_Blind *bssa;
-    } para;
-} RSA_BlindParam;
-
 struct RSA_Ctx {
     CRYPT_RSA_PrvKey *prvKey;
     CRYPT_RSA_PubKey *pubKey;
     CRYPT_RSA_Para *para;
-    RSA_Blind *scBlind; // Preventing side channel attacks
+    RSA_Blind *scBlind;
     RSAPad pad;
     uint32_t flags;
     CRYPT_Data label; // Used for oaep padding
     BSL_SAL_RefCount references;
+#ifdef HITLS_CRYPTO_RSA_BSSA
     RSA_BlindParam *blindParam;
+#endif
 };
 
 CRYPT_RSA_PrvKey *RSA_NewPrvKey(uint32_t bits);
 CRYPT_RSA_PubKey *RSA_NewPubKey(uint32_t bits);
 void RSA_FreePrvKey(CRYPT_RSA_PrvKey *prvKey);
 void RSA_FreePubKey(CRYPT_RSA_PubKey *pubKey);
-int32_t RSA_CalcPrvKey(CRYPT_RSA_Ctx *ctx, BN_Optimizer *optimizer);
+int32_t RSA_CalcPrvKey(const CRYPT_RSA_Para *para, CRYPT_RSA_Ctx *ctx, BN_Optimizer *optimizer);
 int32_t GenPssSalt(CRYPT_Data *salt, const EAL_MdMethod *mdMethod, int32_t saltLen, uint32_t padBuffLen);
 void ShallowCopyCtx(CRYPT_RSA_Ctx *ctx, CRYPT_RSA_Ctx *newCtx);
 CRYPT_RSA_Para *CRYPT_RSA_DupPara(const CRYPT_RSA_Para *para);
+#ifdef HITLS_CRYPTO_RSA_SIGN_PKCSV15
+int32_t CRYPT_RSA_UnPackPkcsV15Type1(uint8_t *data, uint32_t dataLen, uint8_t *out, uint32_t *outLen);
+#endif
 
 /**
  * @ingroup rsa
@@ -179,10 +184,11 @@ int32_t RSA_BlindInvert(RSA_Blind *b, BN_BigNum *data, BN_BigNum *n, BN_Optimize
  * @param b [IN] Blinding Handle
  * @param e [IN] e in the public key (n, e)
  * @param n [IN] n in the public key (n, e)
+ * @param bits [IN] bits of n
  *
  * @retval Return the error code.
  */
-int32_t RSA_BlindCreateParam(RSA_Blind *b, BN_BigNum *e, BN_BigNum *n, BN_Optimizer *opt);
+int32_t RSA_BlindCreateParam(RSA_Blind *b, BN_BigNum *e, BN_BigNum *n, uint32_t bits, BN_Optimizer *opt);
 
 int32_t RSA_CreateBlind(RSA_Blind *b, uint32_t bits);
 
@@ -208,6 +214,6 @@ do {                                            \
 }
 #endif
 
-#endif // HITLS_CRYPTO_RSA
+#endif /* HITLS_CRYPTO_RSA */
 
-#endif // RSA_LOCAL_H
+#endif

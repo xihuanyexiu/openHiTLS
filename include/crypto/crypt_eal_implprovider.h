@@ -154,6 +154,7 @@ typedef void (*CRYPT_EAL_ImplPkeyMgmtFreeCtx)(void *ctx);
 #define CRYPT_EAL_IMPLPKEYSIGN_VERIFYDATA 4
 #define CRYPT_EAL_IMPLPKEYSIGN_BLIND      5
 #define CRYPT_EAL_IMPLPKEYSIGN_UNBLIND    6
+#define CRYPT_EAL_IMPLPKEYSIGN_RECOVER    7
 
 typedef int32_t (*CRYPT_EAL_ImplPkeySign)(void *ctx, int32_t mdAlgId, const uint8_t *data, uint32_t dataLen,
     uint8_t *sign, uint32_t *signLen);
@@ -167,6 +168,8 @@ typedef int32_t (*CRYPT_EAL_ImplPkeyBlind)(void *ctx, int32_t mdAlgId, const uin
     uint8_t *out, uint32_t *outLen);
 typedef int32_t (*CRYPT_EAL_ImplPkeyUnBlind)(const void *ctx, const uint8_t *input, uint32_t inputLen,
     uint8_t *out, uint32_t *outLen);
+typedef int32_t (*CRYPT_EAL_ImplPkeyRecover)(const void *ctx, uint8_t *sign, uint32_t signLen,
+    uint8_t *data, uint32_t *dataLen);
 
 // CRYPT_EAL_OPERAID_ASYMCIPHER
 #define CRYPT_EAL_IMPLPKEYCIPHER_ENCRYPT  1

@@ -17,7 +17,10 @@
 #define CRYPT_UTILS_H
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <stdbool.h>
+#include "bsl_err_internal.h"
+#include "crypt_errno.h"
 #include "crypt_algid.h"
 
 #ifdef __cplusplus
@@ -310,7 +313,7 @@ static inline void Uint64ToBeBytes(uint64_t v, uint8_t *bytes)
 }
 
 #ifdef HITLS_CRYPTO_RSA
-uint32_t CRYPT_MD_GetSizeById(CRYPT_MD_AlgId id);
+uint32_t CRYPT_GetMdSizeById(CRYPT_MD_AlgId id);
 #endif
 
 static inline bool ParamIdIsValid(uint32_t id, const uint32_t *list, uint32_t num)
@@ -321,6 +324,21 @@ static inline bool ParamIdIsValid(uint32_t id, const uint32_t *list, uint32_t nu
         }
     }
     return false;
+}
+
+typedef uint32_t (*GetUintCallBack)(const void *key);
+static inline int32_t GetUintCtrl(const void *ctx, void *val, uint32_t len, GetUintCallBack getUint)
+{
+    if (val == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    if (len != sizeof(uint32_t)) {
+        BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);
+        return CRYPT_INVALID_ARG;
+    }
+    *(uint32_t *)val = getUint(ctx);
+    return CRYPT_SUCCESS;
 }
 
 void GetCpuInstrSupportState(void);

@@ -59,15 +59,16 @@
 #include "eal_common.h"
 #include "bsl_sal.h"
 
-#define EAL_PKEY_METHOD_DEFINE(id, newCtx, dupCtx, freeCtx, setPara, getPara, gen, ctrl, \
-    setPub, setPrv, getPub, getPrv, sign, signData, verify, verifyData, computeShareKey, encrypt, \
-    decrypt, check, cmp, encaps, decaps, blind, unBlind) { \
-    id, (PkeyNew)(newCtx), (PkeyDup)(dupCtx), (PkeyFree)(freeCtx), (PkeySetPara)(setPara), \
-    (PkeyGetPara)(getPara), (PkeyGen)(gen), (PkeyCtrl)(ctrl), (PkeySetPub)(setPub), \
-    (PkeySetPrv)(setPrv), (PkeyGetPub)(getPub), (PkeyGetPrv)(getPrv), (PkeySign)(sign), (PkeySignData)(signData), \
-    (PkeyVerify)(verify), (PkeyVerifyData)(verifyData), (PkeyComputeShareKey)(computeShareKey), (PkeyCrypt)(encrypt), \
-    (PkeyCrypt)(decrypt), (PkeyCheck)(check), (PkeyCmp)(cmp), (PkeyEncapsulate)(encaps), (PkeyDecapsulate)(decaps), (PkeyBlind)(blind), \
-    (PkeyUnBlind)(unBlind)}
+#define EAL_PKEY_METHOD_DEFINE(id, \
+    newCtx, dupCtx, freeCtx, setPara, getPara, gen, ctrl, setPub, setPrv, getPub, getPrv, sign, signData, verify, \
+    verifyData, recover, computeShareKey, encrypt, decrypt, check, cmp, copyParam, encaps, decaps, blind, unBlind) { \
+    id, (PkeyNew)(newCtx), (PkeyDup)(dupCtx), (PkeyFree)(freeCtx), \
+    (PkeySetPara)(setPara), (PkeyGetPara)(getPara), (PkeyGen)(gen), (PkeyCtrl)(ctrl), \
+    (PkeySetPub)(setPub), (PkeySetPrv)(setPrv), (PkeyGetPub)(getPub), (PkeyGetPrv)(getPrv), \
+    (PkeySign)(sign), (PkeySignData)(signData), (PkeyVerify)(verify), (PkeyVerifyData)(verifyData), \
+    (PkeyRecover)(recover), (PkeyComputeShareKey)(computeShareKey), \
+    (PkeyCrypt)(encrypt), (PkeyCrypt)(decrypt), (PkeyCheck)(check), (PkeyCmp)(cmp), (PkeyCopyParam)(copyParam), \
+    (PkeyEncapsulate)(encaps), (PkeyDecapsulate)(decaps), (PkeyBlind)(blind), (PkeyUnBlind)(unBlind)}
 
 static const EAL_PkeyMethod METHODS[] = {
 #ifdef HITLS_CRYPTO_DSA
@@ -88,16 +89,18 @@ static const EAL_PkeyMethod METHODS[] = {
         CRYPT_DSA_SignData,
         CRYPT_DSA_Verify,
         CRYPT_DSA_VerifyData,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
+        NULL, // recover
+        NULL, // computeShareKey
+        NULL, // encrypt
+        NULL, // decrypt
+        NULL, // check
         CRYPT_DSA_Cmp,
+        NULL, // copyPara
         NULL, // pkeyEncaps
         NULL, // pkeyDecaps
         NULL, // blind
         NULL  // unBlind
-    ), // CRYPT_PKEY_DSA
+    ),
 #endif
 #ifdef HITLS_CRYPTO_ED25519
     EAL_PKEY_METHOD_DEFINE(
@@ -114,19 +117,21 @@ static const EAL_PkeyMethod METHODS[] = {
         CRYPT_CURVE25519_GetPubKey,
         CRYPT_CURVE25519_GetPrvKey,
         CRYPT_CURVE25519_Sign,
-        NULL,
+        NULL, // signData
         CRYPT_CURVE25519_Verify,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
+        NULL, // verifyData
+        NULL, // recover
+        NULL, // computeShareKey
+        NULL, // encrypt
+        NULL, // decrypt
+        NULL, // check
         CRYPT_CURVE25519_Cmp,
+        NULL, // copyPara
         NULL, // pkeyEncaps
         NULL, // pkeyDecaps
         NULL, // blind
         NULL  // unBlind
-    ), // CRYPT_PKEY_ED25519
+    ),
 #endif
 #ifdef HITLS_CRYPTO_X25519
     EAL_PKEY_METHOD_DEFINE(
@@ -142,20 +147,22 @@ static const EAL_PkeyMethod METHODS[] = {
         CRYPT_CURVE25519_SetPrvKey,
         CRYPT_CURVE25519_GetPubKey,
         CRYPT_CURVE25519_GetPrvKey,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
+        NULL, // sign
+        NULL, // signData
+        NULL, // verify
+        NULL, // verifyData
+        NULL, // recover
         CRYPT_CURVE25519_ComputeSharedKey,
-        NULL,
-        NULL,
-        NULL,
+        NULL, // encrypt
+        NULL, // decrypt
+        NULL, // check
         CRYPT_CURVE25519_Cmp,
+        NULL, // copyPara
         NULL, // pkeyEncaps
         NULL, // pkeyDecaps
         NULL, // blind
         NULL  // unBlind
-    ), // CRYPT_PKEY_X25519
+    ),
 #endif
 #ifdef HITLS_CRYPTO_RSA
     EAL_PKEY_METHOD_DEFINE(
@@ -165,26 +172,49 @@ static const EAL_PkeyMethod METHODS[] = {
         CRYPT_RSA_FreeCtx,
         CRYPT_RSA_SetPara,
         NULL, // getPara
+#ifdef HITLS_CRYPTO_RSA_GEN
         CRYPT_RSA_Gen,
+#else
+        NULL, // gen
+#endif
         CRYPT_RSA_Ctrl,
         CRYPT_RSA_SetPubKey,
         CRYPT_RSA_SetPrvKey,
         CRYPT_RSA_GetPubKey,
         CRYPT_RSA_GetPrvKey,
+#ifdef HITLS_CRYPTO_RSA_SIGN
         CRYPT_RSA_Sign,
         CRYPT_RSA_SignData,
         CRYPT_RSA_Verify,
         CRYPT_RSA_VerifyData,
-        NULL,
+#else
+        NULL, // sign
+        NULL, // signData
+        NULL, // verify
+        NULL, // verifyData
+#endif
+        CRYPT_RSA_Recover,
+        NULL, // computeShareKey
+#ifdef HITLS_CRYPTO_RSA_CRYPT
         CRYPT_RSA_Encrypt,
         CRYPT_RSA_Decrypt,
-        NULL,
+#else
+        NULL, // encrypt
+        NULL, // decrypt
+#endif
+        NULL, // check
         CRYPT_RSA_Cmp,
+        NULL, // copyPara
         NULL, // pkeyEncaps
         NULL, // pkeyDecaps
-        CRYPT_RSA_Blind,
-        CRYPT_RSA_UnBlind
-    ), // CRYPT_PKEY_RSA
+#ifdef HITLS_CRYPTO_RSA_BSSA
+        CRYPT_RSA_Blind, // blind
+        CRYPT_RSA_UnBlind  // unBlind
+#else
+        NULL, // blind
+        NULL  // unBlind
+#endif
+    ),
 #endif
 #ifdef HITLS_CRYPTO_DH
     EAL_PKEY_METHOD_DEFINE(
@@ -200,20 +230,22 @@ static const EAL_PkeyMethod METHODS[] = {
         CRYPT_DH_SetPrvKey,
         CRYPT_DH_GetPubKey,
         CRYPT_DH_GetPrvKey,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
+        NULL, // sign
+        NULL, // signData
+        NULL, // verify
+        NULL, // verifyData
+        NULL, // recover
         CRYPT_DH_ComputeShareKey,
-        NULL,
-        NULL,
+        NULL, // encrypt
+        NULL, // decrypt
         NULL,
         CRYPT_DH_Cmp,
+        NULL,
         NULL, // pkeyEncaps
         NULL, // pkeyDecaps
         NULL, // blind
         NULL  // unBlind
-    ), // CRYPT_PKEY_DH
+    ),
 #endif
 #ifdef HITLS_CRYPTO_ECDSA
     EAL_PKEY_METHOD_DEFINE(
@@ -233,16 +265,18 @@ static const EAL_PkeyMethod METHODS[] = {
         CRYPT_ECDSA_SignData,
         CRYPT_ECDSA_Verify,
         CRYPT_ECDSA_VerifyData,
-        NULL,   // compute share key
-        NULL,   // encrypt
-        NULL,   // decrypt
-        NULL,
+        NULL, // recover
+        NULL, // computeShareKey
+        NULL, // encrypt
+        NULL, // decrypt
+        NULL, // check
         CRYPT_ECDSA_Cmp,
+        NULL, // copyPara
         NULL, // pkeyEncaps
         NULL, // pkeyDecaps
         NULL, // blind
         NULL  // unBlind
-    ), // CRYPT_PKEY_ECDSA
+    ),
 #endif
 #ifdef HITLS_CRYPTO_ECDH
     EAL_PKEY_METHOD_DEFINE(
@@ -258,20 +292,22 @@ static const EAL_PkeyMethod METHODS[] = {
         CRYPT_ECDH_SetPrvKey,
         CRYPT_ECDH_GetPubKey,
         CRYPT_ECDH_GetPrvKey,
-        NULL,   // sign
-        NULL,
-        NULL,   // verify
-        NULL,
+        NULL, // sign
+        NULL, // signData
+        NULL, // verify
+        NULL, // verifyData
+        NULL, // recover
         CRYPT_ECDH_ComputeShareKey,
-        NULL,   // encrypt
-        NULL,   // decrypt
-        NULL,
+        NULL, // encrypt
+        NULL, // decrypt
+        NULL, // check
         CRYPT_ECDH_Cmp,
+        NULL, // copyPara
         NULL, // pkeyEncaps
         NULL, // pkeyDecaps
         NULL, // blind
         NULL  // unBlind
-    ), // CRYPT_PKEY_ECDH
+    ),
 #endif
 #ifdef HITLS_CRYPTO_SM2
     EAL_PKEY_METHOD_DEFINE(
@@ -279,8 +315,8 @@ static const EAL_PkeyMethod METHODS[] = {
         CRYPT_SM2_NewCtx,
         CRYPT_SM2_DupCtx,
         CRYPT_SM2_FreeCtx,
-        NULL,  // setPara
-        NULL,  // getPara
+        NULL,
+        NULL,
         CRYPT_SM2_Gen,
         CRYPT_SM2_Ctrl,
         CRYPT_SM2_SetPubKey,
@@ -293,30 +329,32 @@ static const EAL_PkeyMethod METHODS[] = {
         CRYPT_SM2_Verify,
         NULL,
 #else
-        NULL,
-        NULL,
-        NULL,
-        NULL,
+        NULL, // sign
+        NULL, // signData
+        NULL, // verify
+        NULL, // verifyData
 #endif
+        NULL, // recover
 #ifdef HITLS_CRYPTO_SM2_EXCH
-        CRYPT_SM2_KapComputeKey,   // compute share key
+        CRYPT_SM2_KapComputeKey,
 #else
-        NULL,
+        NULL, // computeShareKey
 #endif
 #ifdef HITLS_CRYPTO_SM2_CRYPT
-        CRYPT_SM2_Encrypt,   // encrypt
-        CRYPT_SM2_Decrypt,   // decrypt
+        CRYPT_SM2_Encrypt,
+        CRYPT_SM2_Decrypt,
 #else
-        NULL,
-        NULL,
+        NULL, // encrypt
+        NULL, // decrypt
 #endif
-        NULL,
+        NULL, // check
         CRYPT_SM2_Cmp,
+        NULL, // copyPara
         NULL, // pkeyEncaps
         NULL, // pkeyDecaps
         NULL, // blind
         NULL  // unBlind
-    ), // CRYPT_PKEY_SM2
+    ),
 #endif
 #ifdef HITLS_CRYPTO_PAILLIER
     EAL_PKEY_METHOD_DEFINE(
@@ -336,11 +374,13 @@ static const EAL_PkeyMethod METHODS[] = {
         NULL,
         NULL,
         NULL,
+        NULL, // recover
         NULL,
         CRYPT_PAILLIER_Encrypt,
         CRYPT_PAILLIER_Decrypt,
         NULL,
         NULL,  // cmp
+        NULL, // copyPara
         NULL, // pkeyEncaps
         NULL, // pkeyDecaps
         NULL, // blind
@@ -365,11 +405,13 @@ static const EAL_PkeyMethod METHODS[] = {
         NULL,
         NULL,
         NULL,
+        NULL, // recover
         NULL,
         CRYPT_ELGAMAL_Encrypt,
         CRYPT_ELGAMAL_Decrypt,
         NULL,
         NULL,  // cmp
+        NULL, // copyPara
         NULL, // pkeyEncaps
         NULL, // pkeyDecaps
         NULL, // blind
@@ -394,11 +436,13 @@ static const EAL_PkeyMethod METHODS[] = {
         NULL, // signData
         NULL, // verify
         NULL, // verifyData
+        NULL, // recover
         NULL, // computeShareKey
         NULL, // encrypt
         NULL, // decrypt
         NULL, // check
         CRYPT_ML_KEM_Cmp,
+        NULL, // copyPara
         CRYPT_ML_KEM_Encaps,
         CRYPT_ML_KEM_Decaps,
         NULL, // blind
@@ -423,11 +467,13 @@ static const EAL_PkeyMethod METHODS[] = {
         CRYPT_ML_DSA_SignData, // signData
         CRYPT_ML_DSA_Verify, // verify
 		CRYPT_ML_DSA_VerifyData, // verifyData
+        NULL, // recover
         NULL, // computeShareKey
         NULL, // encrypt
         NULL, // decrypt
         NULL, // check
         CRYPT_ML_DSA_Cmp,
+        NULL, // copyPara
         NULL, // pkeyEncaps
         NULL, // pkeyDecaps
         NULL, // blind

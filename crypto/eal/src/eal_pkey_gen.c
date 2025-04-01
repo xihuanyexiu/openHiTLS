@@ -55,6 +55,7 @@ static void EalPkeyCopyMethod(const EAL_PkeyMethod *method, EAL_PkeyUnitaryMetho
     dest->signData = method->signData;
     dest->verify = method->verify;
     dest->verifyData = method->verifyData;
+    dest->recover = method->recover;
     dest->computeShareKey = method->computeShareKey;
     dest->encrypt = method->encrypt;
     dest->decrypt = method->decrypt;
@@ -1242,6 +1243,9 @@ static int32_t CRYPT_EAL_SetSignMethod(const CRYPT_EAL_Func *funcSign, EAL_PkeyU
                     break;
                 case CRYPT_EAL_IMPLPKEYSIGN_UNBLIND:
                     method->unBlind = funcSign[index].func;
+                    break;
+                case CRYPT_EAL_IMPLPKEYSIGN_RECOVER:
+                    method->recover = funcSign[index].func;
                     break;
                 default:
                     BSL_ERR_PUSH_ERROR(CRYPT_PROVIDER_ERR_UNEXPECTED_IMPL);

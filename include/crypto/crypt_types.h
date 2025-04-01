@@ -53,16 +53,16 @@ typedef struct {
 /**
  * @ingroup crypt_types
  *
- * RSA salt length type, when rsa pss mode is used for signature and verify
+ * RSA salt length type, when RSA PSS mode is used for signature and verify.
  */
 typedef enum {
-    // When the padding type is PSS, the salt data is obtained by the DRBG and the length is hashlen.
+// When the padding type is PSS, the salt data is obtained by the DRBG and the length is hashlen.
     CRYPT_RSA_SALTLEN_TYPE_HASHLEN = -1,
-    // When the padding type is PSS, the salt data is obtained by the DRBG.
-    // and the length is padLen - mdMethod->GetDigestSize - 2
+// When the padding type is PSS, the salt data is obtained by the DRBG.
+// and the length is padLen - mdMethod->GetDigestSize - 2
     CRYPT_RSA_SALTLEN_TYPE_MAXLEN = -2,
-    // get salt length from signature
-    CRYPT_RSA_SALTLEN_TYPE_AUTOLEN = -3,
+// get salt length from signature, only used verify.
+    CRYPT_RSA_SALTLEN_TYPE_AUTOLEN = -3
 } CRYPT_RSA_SaltLenType;
 
 /**
@@ -71,13 +71,20 @@ typedef enum {
  * PSS padding mode, when RSA is used for signature.
  */
 typedef struct {
-    int32_t saltLen;      /**< pss salt length. enum values defined by CRYPT_RSA_SaltLenType or actual value. */
+    int32_t saltLen;      /**< pss salt length, enum values defined by CRYPT_RSA_SaltLenType or actual value. */
     CRYPT_MD_AlgId mdId;  /**< mdid when pss padding. */
     CRYPT_MD_AlgId mgfId; /**< mgfid when pss padding. */
 } CRYPT_RSA_PssPara;
 
+typedef struct {
+    CRYPT_MD_AlgId mdId;  /**< mdid when oaep padding */
+    CRYPT_MD_AlgId mgfId; /**< mgfid when oaep padding */
+} CRYPT_RSA_OaepPara;
+
 typedef enum {
-    CRYPT_RSA_BLINDING = 0x00000001,            /**< Enable the RSA blinding function for signature. */
+    CRYPT_RSA_BLINDING = 0x00000001,            /**< Enable the RSA blinding function for signature.
+                                                     At the same time, You need to set the public key information,
+                                                     or set the p q parameter when setting the private key. */
     CRYPT_RSA_BSSA = 0x00000002,                /**< The signature process is rsa blind signature. */
     CRYPT_RSA_MAXFLAG
 } CRYPT_RSA_Flag;
@@ -555,15 +562,18 @@ typedef enum {
     CRYPT_CTRL_UP_REFERENCES = 0,           /**< The reference count value increases automatically.
                                              It is applicable to asymmetric algorithms such as 25519, RSA, and ECC. */
     CRYPT_CTRL_SET_PARAM_BY_ID,          /* Asymmetric cipher set para by id. */
+    CRYPT_CTRL_SET_NO_PADDING,          /**< RSA Set the padding mode to NO_PADDING. */
 
     CRYPT_CTRL_GET_PARA,                /* Asymmetric cipher get para. */
     CRYPT_CTRL_GET_PARAM_ID,              /* Asymmetric cipher get id of para. */
     CRYPT_CTRL_GET_BITS,                 /* Asymmetric cipher get bits . */
     CRYPT_CTRL_GET_SIGNLEN,             /* Asymmetric cipher get signlen . */
     CRYPT_CTRL_GET_SECBITS,              /* Asymmetric cipher get secure bits . */
+    CRYPT_CTRL_GET_PUB_KEY_BITS,        /**< Get the number of key bits. */
 
     // rsa
     CRYPT_CTRL_SET_RSA_EMSA_PKCSV15 = 200, /**< RSA set the signature padding mode to EMSA_PKCSV15. */
+    CRYPT_CTRL_GET_RSA_SALT,            /**< Obtain the salt length of the RSA algorithm. */
     CRYPT_CTRL_SET_RSA_EMSA_PSS,         /**< RSA set the signature padding mode to EMSA_PSS. */
     CRYPT_CTRL_SET_RSA_SALT,             /**< When the RSA algorithm is used for PSS signature, the salt data is
                                              specified. During signature, the user data address is directly saved
