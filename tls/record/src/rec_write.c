@@ -150,6 +150,7 @@ static int32_t DtlsRecOutBufInit(RecCtx *recordCtx, uint32_t bufSize)
     return HITLS_SUCCESS;
 }
 
+
 static int32_t DtlsTrySendMessage(TLS_Ctx *ctx, RecCtx *recordCtx, REC_Type recordType, RecConnState *state)
 {
     /* Notify the uio whether the service message is being sent. rfc6083 4.4. Stream Usage: For non-app messages, the
@@ -165,6 +166,12 @@ static int32_t DtlsTrySendMessage(TLS_Ctx *ctx, RecCtx *recordCtx, REC_Type reco
         return ret;
     }
 
+#if defined(HITLS_BSL_UIO_UDP)
+    ret = RecDerefBufList(ctx);
+    if (ret != HITLS_SUCCESS) {
+        return ret;
+    }
+#endif
     /** Add the record sequence */
     RecConnSetSeqNum(state, state->seq + 1);
 
