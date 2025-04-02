@@ -117,6 +117,10 @@ extern "C" {
 #define CRYPT_PARAM_ML_DSA_BASE             1000
 #define CRYPT_PARAM_ML_DSA_PRVKEY           (CRYPT_PARAM_ML_DSA_BASE + 1)
 #define CRYPT_PARAM_ML_DSA_PUBKEY           (CRYPT_PARAM_ML_DSA_BASE + 2)
+
+#define CRYPT_PARAM_HYBRID_BASE             1100
+#define CRYPT_PARAM_HYBRID_PRVKEY           (CRYPT_PARAM_HYBRID_BASE + 1)
+#define CRYPT_PARAM_HYBRID_PUBKEY           (CRYPT_PARAM_HYBRID_BASE + 2)
 #ifdef __cplusplus
 }
 #endif

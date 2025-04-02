@@ -617,16 +617,18 @@ typedef enum {
 
     CRYPT_CTRL_GEN_X25519_PUBLICKEY = 500,    /**< Use prikey genarate x25519 pubkey. */
 
-    CRYPT_CTRL_SET_MLKEM_TYPE = 600,        /**< Set the key info of ML-KEM */
-    CRYPT_CTRL_GET_MLKEM_EK_LEN,            /**< Get the encapsulation key length */
-    CRYPT_CTRL_GET_MLKEM_DK_LEN,            /**< Get the decapsulation key length */
-    CRYPT_CTRL_GET_MLKEM_CT_LEN,            /**< Get the ciphertext length */
+    CRYPT_CTRL_GET_SHARED_KEY_LEN = 600,      /**< Get the shared key length */
+    CRYPT_CTRL_GET_PUBKEY_LEN,               /**< Get the encapsulation key length */
+    CRYPT_CTRL_GET_PRVKEY_LEN,               /**< Get the decapsulation key length */
+    CRYPT_CTRL_GET_CIPHERTEXT_LEN,           /**< Get the ciphertext length */
 	
 	CRYPT_CTRL_SET_MLDSA_TYPE = 700,         /**< Set the algorithm information of ML-DSA */
     CRYPT_CTRL_SET_MLDSA_ENCODE_FLAG,        /**< Set the flag for encode messages. */
     CRYPT_CTRL_SET_MLDSA_MUMSG_FLAG,         /**< Whether to calculate message representative */
     CRYPT_CTRL_SET_MLDSA_DETERMINISTIC_FLAG, /**< Whether to use deterministic signatures */
     CRYPT_CTRL_SET_CTX_INFO,                 /* context string. */
+
+    CRYPT_CTRL_SET_KEM_TYPE = 800,           /**< Set the key info of KEM */
 } CRYPT_PkeyCtrl;
 
 typedef enum {

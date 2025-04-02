@@ -50,6 +50,9 @@
 #ifdef HITLS_CRYPTO_MLDSA
 #include "crypt_mldsa.h"
 #endif
+#ifdef HITLS_CRYPTO_HYBRIDKEM
+#include "crypt_hybridkem.h"
+#endif
 #include "crypt_errno.h"
 #include "bsl_log_internal.h"
 #include "bsl_err_internal.h"
@@ -112,6 +115,10 @@ void *CRYPT_EAL_DefPkeyMgmtNewCtx(void *provCtx, int32_t algId)
 #ifdef HITLS_CRYPTO_MLDSA
         case CRYPT_PKEY_MLDSA:
             return CRYPT_ML_DSA_NewCtx();
+#endif
+#ifdef HITLS_CRYPTO_HYBRIDKEM
+        case CRYPT_PKEY_HYBRID_KEM:
+            return CRYPT_HYBRID_KEM_NewCtx();
 #endif
         default:
         	BSL_ERR_PUSH_ERROR(CRYPT_PROVIDER_NOT_SUPPORT);
@@ -318,4 +325,17 @@ const CRYPT_EAL_Func g_defKeyMgmtMlDsa[] = {
     CRYPT_EAL_FUNC_END,
 };
 
+const CRYPT_EAL_Func g_defKeyMgmtHybridKem[] = {
+#ifdef HITLS_CRYPTO_HYBRIDKEM
+    {CRYPT_EAL_IMPLPKEYMGMT_NEWCTX, (CRYPT_EAL_ImplPkeyMgmtNewCtx)CRYPT_EAL_DefPkeyMgmtNewCtx},
+    {CRYPT_EAL_IMPLPKEYMGMT_GENKEY, (CRYPT_EAL_ImplPkeyMgmtGenKey)CRYPT_HYBRID_KEM_GenKey},
+    {CRYPT_EAL_IMPLPKEYMGMT_SETPRV, (CRYPT_EAL_ImplPkeyMgmtSetPrv)CRYPT_HYBRID_KEM_SetDecapsKey},
+    {CRYPT_EAL_IMPLPKEYMGMT_SETPUB, (CRYPT_EAL_ImplPkeyMgmtSetPub)CRYPT_HYBRID_KEM_SetEncapsKey},
+    {CRYPT_EAL_IMPLPKEYMGMT_GETPRV, (CRYPT_EAL_ImplPkeyMgmtGetPrv)CRYPT_HYBRID_KEM_GetDecapsKey},
+    {CRYPT_EAL_IMPLPKEYMGMT_GETPUB, (CRYPT_EAL_ImplPkeyMgmtGetPub)CRYPT_HYBRID_KEM_GetEncapsKey},
+    {CRYPT_EAL_IMPLPKEYMGMT_CTRL, (CRYPT_EAL_ImplPkeyMgmtCtrl)CRYPT_HYBRID_KEM_KeyCtrl},
+    {CRYPT_EAL_IMPLPKEYMGMT_FREECTX, (CRYPT_EAL_ImplPkeyMgmtFreeCtx)CRYPT_HYBRID_KEM_FreeCtx},
+#endif
+    CRYPT_EAL_FUNC_END,
+};
 #endif /* HITLS_CRYPTO_PROVIDER */

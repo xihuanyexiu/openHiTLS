@@ -53,6 +53,9 @@
 #ifdef HITLS_CRYPTO_MLDSA
 #include "crypt_mldsa.h"
 #endif
+#ifdef HITLS_CRYPTO_HYBRIDKEM
+#include "crypt_hybridkem.h"
+#endif
 #include "bsl_err_internal.h"
 #include "crypt_types.h"
 #include "crypt_errno.h"
@@ -479,6 +482,37 @@ static const EAL_PkeyMethod METHODS[] = {
         NULL, // blind
         NULL  // unBlind
     ), // CRYPT_PKEY_MLDSA
+#endif
+#ifdef HITLS_CRYPTO_HYBRIDKEM
+    EAL_PKEY_METHOD_DEFINE(
+        CRYPT_PKEY_HYBRID_KEM,
+        CRYPT_HYBRID_KEM_NewCtx,
+        NULL,
+        CRYPT_HYBRID_KEM_FreeCtx,
+        NULL, // setPara
+        NULL, // getPara
+        CRYPT_HYBRID_KEM_GenKey,
+        CRYPT_HYBRID_KEM_KeyCtrl,
+        CRYPT_HYBRID_KEM_SetEncapsKey,
+        CRYPT_HYBRID_KEM_SetDecapsKey,
+        CRYPT_HYBRID_KEM_GetEncapsKey,
+        CRYPT_HYBRID_KEM_GetDecapsKey,
+        NULL, // sign
+        NULL, // signData
+        NULL, // verify
+        NULL, // verifyData
+        NULL, // recover
+        NULL, // computeShareKey
+        NULL, // encrypt
+        NULL, // decrypt
+        NULL, // check
+        NULL,
+        NULL, // copyPara
+        CRYPT_HYBRID_KEM_Encaps,
+        CRYPT_HYBRID_KEM_Decaps,
+        NULL, // blind
+        NULL  // unBlind
+    ),
 #endif
 };
 

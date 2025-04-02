@@ -490,13 +490,14 @@ int32_t MODES_GCM_DeInitCtx(MODES_GCM_Ctx *modeCtx)
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-
+    int32_t algId = modeCtx->algId;
     void *ciphCtx = modeCtx->gcmCtx.ciphCtx;
     const EAL_SymMethod *ciphMeth = modeCtx->gcmCtx.ciphMeth;
     modeCtx->gcmCtx.ciphMeth->cipherDeInitCtx(ciphCtx);
     BSL_SAL_CleanseData((void *)(modeCtx), sizeof(MODES_GCM_Ctx));
     modeCtx->gcmCtx.ciphCtx = ciphCtx;
     modeCtx->gcmCtx.ciphMeth = ciphMeth;
+    modeCtx->algId = algId;
     return CRYPT_SUCCESS;
 }
 

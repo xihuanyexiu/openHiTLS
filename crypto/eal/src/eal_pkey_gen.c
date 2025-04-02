@@ -611,6 +611,13 @@ int32_t CRYPT_EAL_PkeySetPub(CRYPT_EAL_PkeyCtx *pkey, const CRYPT_EAL_PkeyPub *k
             ret = pkey->method->setPub(pkey->key, &paParam);
             break;
         }
+        case CRYPT_PKEY_HYBRID_KEM: {
+            BSL_Param paParam[2] = {{CRYPT_PARAM_HYBRID_PUBKEY, BSL_PARAM_TYPE_OCTETS, key->key.kemEk.data,
+                key->key.kemEk.len, 0},
+                BSL_PARAM_END};
+            ret = pkey->method->setPub(pkey->key, &paParam);
+            break;
+        }
         case CRYPT_PKEY_MAX:
             ret = CRYPT_EAL_ALG_NOT_SUPPORT;
     }
@@ -705,6 +712,13 @@ int32_t CRYPT_EAL_PkeySetPrv(CRYPT_EAL_PkeyCtx *pkey, const CRYPT_EAL_PkeyPrv *k
         case CRYPT_PKEY_MLDSA: {
             BSL_Param paParam[2] = {{CRYPT_PARAM_ML_DSA_PRVKEY, BSL_PARAM_TYPE_OCTETS, key->key.mldsaPrv.data,
                 key->key.mldsaPrv.len, 0},
+                BSL_PARAM_END};
+            ret = pkey->method->setPrv(pkey->key, &paParam);
+            break;
+        }
+        case CRYPT_PKEY_HYBRID_KEM: {
+            BSL_Param paParam[2] = {{CRYPT_PARAM_HYBRID_PRVKEY, BSL_PARAM_TYPE_OCTETS, key->key.kemDk.data,
+                key->key.kemDk.len, 0},
                 BSL_PARAM_END};
             ret = pkey->method->setPrv(pkey->key, &paParam);
             break;
@@ -807,6 +821,20 @@ static int32_t GetMldsaPub(const CRYPT_EAL_PkeyCtx *pkey, CRYPT_MlDsaPub *dsaPub
     return CRYPT_SUCCESS;
 }
 
+static int32_t GetHybridkemPub(const CRYPT_EAL_PkeyCtx *pkey, CRYPT_KemEncapsKey *kemEk)
+{
+    BSL_Param param[2] = {{CRYPT_PARAM_HYBRID_PUBKEY, BSL_PARAM_TYPE_OCTETS, kemEk->data,
+        kemEk->len, 0},
+        BSL_PARAM_END};
+    int32_t ret = pkey->method->getPub(pkey->key, &param);
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+        return ret;
+    }
+    kemEk->len = param[0].useLen;
+    return CRYPT_SUCCESS;
+}
+
 int32_t CRYPT_EAL_PkeyGetPub(const CRYPT_EAL_PkeyCtx *pkey, CRYPT_EAL_PkeyPub *key)
 {
     int32_t ret = PriAndPubParamIsValid(pkey, key, false);
@@ -850,6 +878,10 @@ int32_t CRYPT_EAL_PkeyGetPub(const CRYPT_EAL_PkeyCtx *pkey, CRYPT_EAL_PkeyPub *k
         }
         case CRYPT_PKEY_MLDSA: {
             ret = GetMldsaPub(pkey, &key->key.mldsaPub);
+            break;
+        }
+        case CRYPT_PKEY_HYBRID_KEM: {
+            ret = GetHybridkemPub(pkey, &key->key.kemEk);
             break;
         }
         case CRYPT_PKEY_MAX:
@@ -964,6 +996,20 @@ static int32_t GetMldsaPrv(const CRYPT_EAL_PkeyCtx *pkey, CRYPT_MlDsaPrv *dsaPrv
     return CRYPT_SUCCESS;
 }
 
+static int32_t GetHybridkemPrv(const CRYPT_EAL_PkeyCtx *pkey, CRYPT_KemDecapsKey *kemDk)
+{
+    BSL_Param param[2] = {{CRYPT_PARAM_HYBRID_PRVKEY, BSL_PARAM_TYPE_OCTETS, kemDk->data,
+        kemDk->len, 0},
+        BSL_PARAM_END};
+    int32_t ret = pkey->method->getPrv(pkey->key, &param);
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+        return ret;
+    }
+    kemDk->len = param[0].useLen;
+    return CRYPT_SUCCESS;
+}
+
 int32_t CRYPT_EAL_PkeyGetPrv(const CRYPT_EAL_PkeyCtx *pkey, CRYPT_EAL_PkeyPrv *key)
 {
     int32_t ret = PriAndPubParamIsValid(pkey, key, true);
@@ -1006,6 +1052,10 @@ int32_t CRYPT_EAL_PkeyGetPrv(const CRYPT_EAL_PkeyCtx *pkey, CRYPT_EAL_PkeyPrv *k
             break;
         case CRYPT_PKEY_MLDSA: {
             ret = GetMldsaPrv(pkey, &key->key.mldsaPrv);
+            break;
+        }
+        case CRYPT_PKEY_HYBRID_KEM: {
+            ret = GetHybridkemPrv(pkey, &key->key.kemDk);
             break;
         }
         case CRYPT_PKEY_MAX:
