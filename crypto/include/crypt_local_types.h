@@ -297,7 +297,11 @@ typedef struct {
 
 typedef struct {
     const EAL_MacMethod *macMethod;
-    const EAL_MdMethod *md;        // MD algorithm which HMAC depends on
+    union {
+        const EAL_MdMethod *md;        // MD algorithm which HMAC depends on
+        const EAL_SymMethod *ciph;  // AES function wihch CMAC depends on
+        const void *depMeth;           // Pointer to the dependent algorithm, which is reserved for extension.
+    };
 } EAL_MacMethLookup;
 
 /**

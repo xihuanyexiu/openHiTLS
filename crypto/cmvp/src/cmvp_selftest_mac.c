@@ -110,6 +110,66 @@ static const CMVP_MAC_VECTOR MAC_VECTOR[] = {
         .iv = NULL,
         .type = MAC_TYPE_HMAC_CMAC
     },
+    // CRYPT_MAC_CMAC_AES128
+    // https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/cavp-testing-block-cipher-modes#CMAC
+    {
+        .id = CRYPT_MAC_CMAC_AES128,
+        .key = "5fcad38ae778394912f8f1b8413cf773",
+        .msg = "07185502bf6d275c84e3ac4f5f77c3d4",
+        .mac = "fd44fbc0dd9719e8b569ff10421df4",
+        .iv = NULL,
+        .type = MAC_TYPE_HMAC_CMAC
+    },
+    // CRYPT_MAC_CMAC_AES192
+    // https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/cavp-testing-block-cipher-modes#CMAC
+    {
+        .id = CRYPT_MAC_CMAC_AES192,
+        .key = "7fea563a866571822472dade8a0bec4b98202d47a3443129",
+        .msg = "a206a1eb70a9d24bb5e72f314e7d91de074f59055653bdd24aab5f2bbe112436",
+        .mac = "3bfe96f05e9cf96a98bd",
+        .iv = NULL,
+        .type = MAC_TYPE_HMAC_CMAC
+    },
+    // CRYPT_MAC_CMAC_AES256
+    // https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/cavp-testing-block-cipher-modes#CMAC
+    {
+        .id = CRYPT_MAC_CMAC_AES256,
+        .key = "7bef8d35616108922aab78936967204980b8a4945b31602f5ef2feec9b144841",
+        .msg = "40affd355416200191ba64edec8d7d27ead235a7b2e01a12662273deb36379b8a748c422c31e046152d6f196f94e852b",
+        .mac = "b2d078071e318ec88de9",
+        .iv = NULL,
+        .type = MAC_TYPE_HMAC_CMAC
+    },
+    // CRYPT_MAC_GMAC_AES128
+    // https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/mac/gcmtestvectors.zip
+    {
+        .id = CRYPT_MAC_GMAC_AES128,
+        .key = "bea48ae4980d27f357611014d4486625",
+        .msg = "8a50b0b8c7654bced884f7f3afda2ead",
+        .mac = "8e0f6d8bf05ffebe6f500eb1",
+        .iv = "32bddb5c3aa998a08556454c",
+        .type = MAC_TYPE_GMAC
+    },
+    // CRYPT_MAC_GMAC_AES192
+    // https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/mac/gcmtestvectors.zip
+    {
+        .id = CRYPT_MAC_GMAC_AES192,
+        .key = "41c5da8667ef725220ffe39ae0ac590ac9fca729ab60ada0",
+        .msg = "8b5c124bef6e2f0fe4d8c95cd5fa4cf1",
+        .mac = "204bdb1bd62154bf08922aaa54eed705",
+        .iv = "05ad13a5e2c2ab667e1a6fbc",
+        .type = MAC_TYPE_GMAC
+    },
+    // CRYPT_MAC_GMAC_AES256
+    // https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/mac/gcmtestvectors.zip
+    {
+        .id = CRYPT_MAC_GMAC_AES256,
+        .key = "78dc4e0aaf52d935c3c01eea57428f00ca1fd475f5da86a49c8dd73d68c8e223",
+        .msg = "b96baa8c1c75a671bfb2d08d06be5f36",
+        .mac = "3e5d486aa2e30b22e040b85723a06e76",
+        .iv = "d79cf22d504cc793c3fb6c8a",
+        .type = MAC_TYPE_GMAC
+    },
     {
         .id = CRYPT_MAC_MAX,
         .key = NULL,

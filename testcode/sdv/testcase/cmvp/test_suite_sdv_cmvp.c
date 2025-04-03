@@ -283,6 +283,12 @@ static uint32_t g_macId[] = {
     CRYPT_MAC_HMAC_SHA384,
     CRYPT_MAC_HMAC_SHA512,
     CRYPT_MAC_HMAC_SM3,
+    CRYPT_MAC_CMAC_AES128,
+    CRYPT_MAC_CMAC_AES192,
+    CRYPT_MAC_CMAC_AES256,
+    CRYPT_MAC_GMAC_AES128,
+    CRYPT_MAC_GMAC_AES192,
+    CRYPT_MAC_GMAC_AES256,
 };
 
 static uint32_t g_pkeyId[] = {
@@ -909,11 +915,17 @@ void SDV_CRYPTO_CMVP_SELFTEST_TC001(void)
     ResetStatusAndStartTest();
     ASSERT_TRUE(CRYPT_EAL_RandInit(CRYPT_RAND_SHA256, NULL, NULL, NULL, 0) == CRYPT_SUCCESS);
     ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_HMAC_SM3) == true);
+    ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_CMAC_AES128) == true);
+    ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_CMAC_AES192) == true);
+    ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_CMAC_AES256) == true);
     ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_HMAC_SHA1) == true);
     ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_HMAC_SHA224) == true);
     ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_HMAC_SHA256) == true);
     ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_HMAC_SHA384) == true);
     ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_HMAC_SHA512) == true);
+    ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_GMAC_AES128) == true);
+    ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_GMAC_AES192) == true);
+    ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_GMAC_AES256) == true);
     ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_MAX) == false);
     ASSERT_TRUE(CRYPT_CMVP_SelftestMac(-1) == false);
 EXIT:
@@ -1649,35 +1661,6 @@ EXIT:
 /* END_CASE */
 
 /* @
-* @test  SDV_CRYPTO_CMVP_SELFTEST_TC060
-* @spec  -
-* @title  TDES算法自检_算法id合法性
-* @precon  nan
-* @brief  1.传入CRYPT_CIPHER_TDES_ECB执行算法自检,有预期结果1
-2.传入CRYPT_CIPHER_TDES_CBC执行算法自检,有预期结果2
-3.传入CRYPT_CIPHER_TDES_OFB执行算法自检,有预期结果3
-4.传入CRYPT_CIPHER_TDES_CFB执行算法自检,有预期结果4
-5.传入CRYPT_CIPHER_MAX执行算法自检,有预期结果5
-6.传入-1执行算法自检,有预期结果6
-* @expect  1.返回true 2.返回true 3.返回true 4.返回true
-5.返回false 6.返回false
-* @prior  Level 1
-* @auto  TRUE
-@ */
-/* BEGIN_CASE */
-void SDV_CRYPTO_CMVP_SELFTEST_TC061(void)
-{
-    ResetStatusAndStartTest();
-    ASSERT_TRUE(CRYPT_EAL_RandInit(CRYPT_RAND_SHA256, NULL, NULL, NULL, 0) == CRYPT_SUCCESS);
-    ASSERT_TRUE(CRYPT_CMVP_SelftestCipher(CRYPT_CIPHER_MAX) == false);
-    ASSERT_TRUE(CRYPT_CMVP_SelftestCipher(-1) == false);
-EXIT:
-    CRYPT_EAL_RandDeinit();
-    EndTest();
-}
-/* END_CASE */
-
-/* @
 * @test  SDV_CRYPTO_CMVP_SELFTEST_TC062
 * @spec  -
 * @title  内存管理未注册_内存管理是否注册
@@ -2162,6 +2145,12 @@ void SDV_CRYPTO_CMVP_PARA_TC003(int mode)
     ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_HMAC_SHA256) == true);
     ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_HMAC_SHA384) == true);
     ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_HMAC_SHA512) == true);
+    ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_CMAC_AES128) == true);
+    ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_CMAC_AES192) == true);
+    ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_CMAC_AES256) == true);
+    ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_GMAC_AES128) == true);
+    ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_GMAC_AES192) == true);
+    ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_GMAC_AES256) == true);
     ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_HMAC_SM3) == false);
     ASSERT_TRUE(CRYPT_CMVP_SelftestMac(CRYPT_MAC_HMAC_MD5) == false);
 #endif

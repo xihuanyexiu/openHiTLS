@@ -56,7 +56,17 @@
                         "sha3": null
                     },
                     "mac": {
-                        "hmac": null
+                        "hmac": null,
+                        "gmac": {"deps": ["eal", "aes", "gcm"]},
+                        "cmac": {
+                            "cmac_aes" :{
+                                "deps": ["aes"]
+                            },
+                            "cmac_sm4" :{
+                                "deps": ["sm4"]
+                            }
+                        },
+                        "cbc_mac": {"deps": ["sm4"]}
                     },
                     "hpke": {
                         "deps": ["hkdf"],
@@ -535,6 +545,8 @@
                     "crypto/md5/include",
                     "crypto/sm3/include",
                     "crypto/hmac/include",
+                    "crypto/gmac/include",
+                    "crypto/cmac/include",
                     "crypto/scrypt/include",
                     "crypto/hkdf/include",
                     "crypto/kdf/include",
@@ -631,6 +643,25 @@
                 ".srcs": "crypto/hmac/src/*.c",
                 ".deps": ["platform::Secure_C"],
                 ".include": ["crypto/eal/src"]
+            },
+            "cmac": {
+                ".features": ["cmac_aes", "cmac_sm4", "cbc_mac"],
+                ".srcs": "crypto/cmac/src/*.c",
+                ".deps": ["platform::Secure_C"],
+                ".include": [
+                    "crypto/eal/src",
+                    "crypto/cmac/src"
+                ]
+            },
+            "gmac": {
+                ".features": ["gmac"],
+                ".srcs": "crypto/gmac/src/*.c",
+                ".deps": ["platform::Secure_C"],
+                ".include": [
+                    "crypto/eal/src",
+                    "crypto/modes/src",
+                    "crypto/modes/include"
+                ]
             },
             "hpke": {
                 ".features": ["hpke"],
@@ -872,6 +903,8 @@
                     "crypto/bn/include",
                     "crypto/ecc/include",
                     "crypto/hmac/include",
+                    "crypto/cmac/include",
+                    "crypto/gmac/include",
                     "crypto/paillier/include",
                     "crypto/elgamal/include",
                     "crypto/mldsa/include",
