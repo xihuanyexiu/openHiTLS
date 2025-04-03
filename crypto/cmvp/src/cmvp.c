@@ -100,6 +100,12 @@ static CMVP_SelftestFlagMap g_macSelfTestFlag[] = {
     { CRYPT_MAC_HMAC_SHA3_384, false },
     { CRYPT_MAC_HMAC_SHA3_512, false },
     { CRYPT_MAC_HMAC_SM3, false },
+    { CRYPT_MAC_CMAC_AES128, false },
+    { CRYPT_MAC_CMAC_AES192, false },
+    { CRYPT_MAC_CMAC_AES256, false },
+    { CRYPT_MAC_GMAC_AES128, false },
+    { CRYPT_MAC_GMAC_AES192, false },
+    { CRYPT_MAC_GMAC_AES256, false },
 };
 
 static CMVP_SelftestFlagMap g_pkeySelfTestFlag[] = {

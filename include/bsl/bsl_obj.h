@@ -140,6 +140,16 @@ typedef enum {
     BSL_CID_HMAC_SHA3_512,          /**< identifies hmac with SHA3_512 */
     BSL_CID_HMAC_SM3,               /**< identifies hmac with SM3 */
 
+    BSL_CID_CMAC_AES = 10601,       /**< identifies cmac with AES */
+    BSL_CID_CMAC_AES128,            /**< identifies cmac with AES128 */
+    BSL_CID_CMAC_AES192,            /**< identifies cmac with AES192 */
+    BSL_CID_CMAC_AES256,            /**< identifies cmac with AES256 */
+    BSL_CID_CMAC_SM4,               /**< identifies cmac with SM4 */
+    BSL_CID_CBC_MAC_SM4,            /**< identifies cbc mac with SM4 */
+    BSL_CID_GMAC_AES128,            /**< identifies gmac with AES128 */
+    BSL_CID_GMAC_AES192,            /**< identifies gmac with AES192 */
+    BSL_CID_GMAC_AES256,            /**< identifies gmac with AES256 */
+
     /* Random number algorithm */
     // DRBG
     BSL_CID_RAND_SHA1 = 11001,

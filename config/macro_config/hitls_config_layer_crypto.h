@@ -94,14 +94,65 @@
     #endif
 #endif
 
+#if defined(HITLS_CRYPTO_DRBG_GM)
+    #ifndef HITLS_BSL_SAL_TIME
+        #define HITLS_BSL_SAL_TIME
+    #endif
+#endif
 /* MAC */
 #ifdef HITLS_CRYPTO_MAC
     #ifndef HITLS_CRYPTO_HMAC
         #define HITLS_CRYPTO_HMAC
     #endif
+    #ifndef HITLS_CRYPTO_CMAC
+        #define HITLS_CRYPTO_CMAC
+    #endif
+    #ifndef HITLS_CRYPTO_GMAC
+        #define HITLS_CRYPTO_GMAC
+    #endif
+    #ifndef HITLS_CRYPTO_CBC_MAC
+        #define HITLS_CRYPTO_CBC_MAC
+    #endif
 #endif
 
-#if defined(HITLS_CRYPTO_HMAC)
+#if defined(HITLS_CRYPTO_CBC_MAC) && !defined(HITLS_CRYPTO_SM4)
+    #define HITLS_CRYPTO_SM4
+#endif
+
+#ifdef HITLS_CRYPTO_GMAC
+    #ifndef HITLS_CRYPTO_EAL
+        #define HITLS_CRYPTO_EAL
+    #endif
+    #ifndef HITLS_CRYPTO_AES
+        #define HITLS_CRYPTO_AES
+    #endif
+    #ifndef HITLS_CRYPTO_GCM
+        #define HITLS_CRYPTO_GCM
+    #endif
+#endif
+
+#ifdef HITLS_CRYPTO_CMAC
+    #ifndef HITLS_CRYPTO_CMAC_AES
+        #define HITLS_CRYPTO_CMAC_AES
+    #endif
+    #ifndef HITLS_CRYPTO_CMAC_SM4
+        #define HITLS_CRYPTO_CMAC_SM4
+    #endif
+#endif
+#if defined(HITLS_CRYPTO_CMAC_AES) && !defined(HITLS_CRYPTO_AES)
+    #define HITLS_CRYPTO_AES
+#endif
+#if defined(HITLS_CRYPTO_CMAC_SM4) && !defined(HITLS_CRYPTO_SM4)
+    #define HITLS_CRYPTO_SM4
+#endif
+#if defined(HITLS_CRYPTO_CMAC_AES) || defined(HITLS_CRYPTO_CMAC_SM4)
+    #ifndef HITLS_CRYPTO_CMAC
+        #define HITLS_CRYPTO_CMAC
+    #endif
+#endif
+
+#if defined(HITLS_CRYPTO_HMAC) || defined(HITLS_CRYPTO_CMAC) || defined(HITLS_CRYPTO_GMAC) || \
+    defined(HITLS_CRYPTO_CBC_MAC)
     #ifndef HITLS_CRYPTO_MAC
         #define HITLS_CRYPTO_MAC
     #endif

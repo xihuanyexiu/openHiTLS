@@ -156,6 +156,8 @@ enum CRYPT_ERROR {
     CRYPT_EAL_CIPHER_ERR_NEWCTX,
     CRYPT_EAL_PKEY_CTRL_ERROR,          /**< When the CRYPT_EAL_PkeyCtrl interface performs CTRL,
                                              the function is not supported or the input length is incorrect. */
+    CRYPT_EAL_MAC_CTRL_TYPE_ERROR,      /**< When the CRYPT_EAL_PkeyCtrl interface performs CTRL,
+                                             the function is not supported or the input length is incorrect. */
     CRYPT_EAL_PKEY_DUP_ERROR,           /**< Pkey context duplicate failure. */
     CRYPT_EAL_PKEY_CMP_DIFF_KEY_TYPE,   /**< Pkey comparison failure: different algorithm types. */
     CRYPT_EAL_ERR_PART_OVERLAP,         /**< Some memory overlap. */
@@ -501,6 +503,21 @@ enum CRYPT_ERROR {
     CRYPT_SEED_POOL_NO_ENTROPY_OBTAINED,                /**< No entropy data is obtained from the seed pool. */
     CRYPT_SEED_POOL_NOT_MEET_REQUIREMENT,               /**< The entropy data does not meet the requirements. */
     CRYPT_ENTROPY_CTX_CREATE_FAILED,                    /**< Failed to create the handle for obtaining the entropy. */
+
+	CRYPT_CMAC_OUT_BUFF_LEN_NOT_ENOUGH = 0x01270001, /**< The length of the buffer that storing the output
+                                                          result is insufficient. */
+    CRYPT_CMAC_INPUT_OVERFLOW,                       /**< The input length exceeds the limit. As a result,
+                                                          the integer type is reversed. */
+    CRYPT_CMAC_ERR_UNSUPPORTED_CTRL_OPTION,          /**< Unsupport the control type. */
+    CRYPT_GMAC_ERR_UNSUPPORTED_CTRL_OPTION,          /**< Unsupport the control type. */
+
+	CRYPT_CBC_MAC_ERR_CTRL_LEN = 0x01280001,
+    CRYPT_CBC_MAC_ERR_UNSUPPORTED_CTRL_OPTION,
+    CRYPT_CBC_MAC_PADDING_NOT_SET,
+    CRYPT_CBC_MAC_PADDING_NOT_SUPPORT,
+    CRYPT_CBC_MAC_OUT_BUFF_LEN_NOT_ENOUGH,
+
+
 };
 #ifdef __cplusplus
 }
