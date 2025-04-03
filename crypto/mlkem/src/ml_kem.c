@@ -158,6 +158,16 @@ static int32_t MlKemGetCipherTextLen(CRYPT_ML_KEM_Ctx *ctx, void *val, uint32_t 
     return CRYPT_SUCCESS;
 }
 
+static int32_t MlKemGetSharedLen(CRYPT_ML_KEM_Ctx *ctx, void *val, uint32_t len)
+{
+    if (len != sizeof(uint32_t)) {
+        BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);
+        return CRYPT_INVALID_ARG;
+    }
+    *(uint32_t*)val = ctx->info->sharedLen;
+    return CRYPT_SUCCESS;
+}
+
 int32_t CRYPT_ML_KEM_SetEncapsKey(CRYPT_ML_KEM_Ctx *ctx, const BSL_Param *param)
 {
     if (ctx == NULL || ctx->info == NULL || param == NULL) {
@@ -345,14 +355,16 @@ int32_t CRYPT_ML_KEM_Ctrl(CRYPT_ML_KEM_Ctx *ctx, int32_t opt, void *val, uint32_
         return CRYPT_NULL_INPUT;
     }
     switch (opt) {
-        case CRYPT_CTRL_SET_MLKEM_TYPE:
+        case CRYPT_CTRL_SET_KEM_TYPE:
             return MlKemSetAlgInfo(ctx, val, len);
-        case CRYPT_CTRL_GET_MLKEM_EK_LEN:
+        case CRYPT_CTRL_GET_PUBKEY_LEN:
             return MlKemGetEncapsKeyLen(ctx, val, len);
-        case CRYPT_CTRL_GET_MLKEM_DK_LEN:
+        case CRYPT_CTRL_GET_PRVKEY_LEN:
             return MlKemGetDecapsKeyLen(ctx, val, len);
-        case CRYPT_CTRL_GET_MLKEM_CT_LEN:
+        case CRYPT_CTRL_GET_CIPHERTEXT_LEN:
             return MlKemGetCipherTextLen(ctx, val, len);
+        case CRYPT_CTRL_GET_SHARED_KEY_LEN:
+            return MlKemGetSharedLen(ctx, val, len);
         default:
             BSL_ERR_PUSH_ERROR(CRYPT_MLKEM_CTRL_NOT_SUPPORT);
             return CRYPT_MLKEM_CTRL_NOT_SUPPORT;

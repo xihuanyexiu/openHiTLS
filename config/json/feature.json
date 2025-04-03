@@ -115,7 +115,8 @@
                         "kem": {
                             "mlkem": {"deps": ["sha3"]}
                         },
-                        "mldsa": {"deps": ["sha3"]}
+                        "mldsa": {"deps": ["sha3"]},
+                        "hybridkem": {"deps": ["mlkem"], "opts": ["ecdh", "x25519"]}
                     },
                     "provider": null,
                     "bn": null
@@ -558,6 +559,7 @@
                     "crypto/elgamal/include",
                     "crypto/mlkem/include",
                     "crypto/mldsa/include",
+                    "crypto/hybridkem/include",
                     "crypto/provider/include"
                 ]
             },
@@ -872,12 +874,12 @@
                     "crypto/hmac/include",
                     "crypto/paillier/include",
                     "crypto/elgamal/include",
-                    "crypto/mlkem/include",
                     "crypto/mldsa/include",
                     "crypto/drbg/include",
                     "crypto/entropy/include",
                     "crypto/modes/include",
                     "crypto/entropy/include",
+                    "crypto/hybridkem/include",
                     "crypto/eal/src",
                     "crypto/include"
                 ]
@@ -1003,6 +1005,12 @@
                 },
                 ".deps": ["crypto::sha3", "bsl::sal", "bsl::obj"],
                 ".include": ["crypto/eal/src"]
+            },
+            "hybridkem": {
+                ".features": ["hybridkem"],
+                ".srcs": "crypto/hybridkem/src/*.c",
+                ".deps": ["crypto::mlkem", "bsl::sal"],
+                ".include": ["crypto/hybridkem/include", "crypto/eal/src"]
             }
         },
         "bsl":{

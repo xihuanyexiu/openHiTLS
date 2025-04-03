@@ -207,6 +207,9 @@
     #ifndef HITLS_CRYPTO_MLDSA
         #define HITLS_CRYPTO_MLDSA
     #endif
+    #ifndef HITLS_CRYPTO_HYBRIDKEM
+        #define HITLS_CRYPTO_HYBRIDKEM
+    #endif
 #endif
 
 #ifdef HITLS_CRYPTO_ECC
@@ -339,6 +342,12 @@
 
 #if defined(HITLS_CRYPTO_NIST_ECC_ACCELERATE) && defined(__SIZEOF_INT128__) && (__SIZEOF_INT128__ == 16)
     #define HITLS_CRYPTO_NIST_USE_ACCEL
+#endif
+
+#ifdef HITLS_CRYPTO_HYBRIDKEM
+    #ifndef HITLS_CRYPTO_MLKEM
+        #define HITLS_CRYPTO_MLKEM
+    #endif
 #endif
 
 #ifdef HITLS_CRYPTO_MLKEM
