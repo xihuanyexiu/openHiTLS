@@ -98,9 +98,9 @@ int32_t BN_Rand(BN_BigNum *r, uint32_t bits, uint32_t top, uint32_t bottom)
         BSL_ERR_PUSH_ERROR(CRYPT_BN_BITS_TOO_MAX);
         return CRYPT_BN_BITS_TOO_MAX;
     }
-    if (BnExtend(r, BITS_TO_BN_UNIT(bits)) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
+    ret = BnExtend(r, BITS_TO_BN_UNIT(bits));
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
     }
     ret = RandGenerate(r, bits);
     if (ret != CRYPT_SUCCESS) {
@@ -133,11 +133,7 @@ static int32_t InputCheck(BN_BigNum *r, const BN_BigNum *p)
         BSL_ERR_PUSH_ERROR(CRYPT_BN_ERR_RAND_NEGATIVE);
         return CRYPT_BN_ERR_RAND_NEGATIVE;
     }
-    if (BnExtend(r, p->size) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
-    }
-    return CRYPT_SUCCESS;
+    return BnExtend(r, p->size);
 }
 
 int32_t BN_RandRange(BN_BigNum *r, const BN_BigNum *p)

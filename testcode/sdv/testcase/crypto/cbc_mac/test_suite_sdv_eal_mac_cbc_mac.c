@@ -14,8 +14,6 @@
  */
 
 /* BEGIN_HEADER */
-#include <openssl/evp.h>
-#include <openssl/rand.h>
 #include "securec.h"
 #include "crypt_eal_mac.h"
 #include "crypt_errno.h"
