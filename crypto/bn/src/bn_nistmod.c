@@ -881,10 +881,7 @@ static inline int32_t ModCalParaCheck(BN_BigNum *r, const BN_BigNum *a, const BN
     if ((mod->size > a->room) || (mod->size > b->room)) {
         return CRYPT_BN_SPACE_NOT_ENOUGH;
     }
-    if (BnExtend(r, mod->size) != CRYPT_SUCCESS) {
-        return CRYPT_MEM_ALLOC_FAIL;
-    }
-    return CRYPT_SUCCESS;
+    return BnExtend(r, mod->size);
 }
 
 // The user must ensure that a < m, and a->room & b->room are not less than mod->size.
@@ -939,16 +936,13 @@ static inline int32_t ModEccMulParaCheck(BN_BigNum *r, const BN_BigNum *a,
     if ((mod->size > b->room) || (mod->size > a->room)) {
         return CRYPT_BN_SPACE_NOT_ENOUGH;
     }
-    if (BnExtend(r, mod->size) != CRYPT_SUCCESS) {
-        return CRYPT_MEM_ALLOC_FAIL;
-    }
-
-    return CRYPT_SUCCESS;
+    return BnExtend(r, mod->size);
 }
 // The user must ensure that a < m, and a->room & b->room are not less than mod->size.
 // All the data must be not negative number, otherwise the API may be not functional.
-int32_t BN_ModNistEccMul(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b, const BN_BigNum *mod, BN_Optimizer *opt)
+int32_t BN_ModNistEccMul(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b, void *data, BN_Optimizer *opt)
 {
+    BN_BigNum *mod = (BN_BigNum *)data;
     int32_t ret = ModEccMulParaCheck(r, a, b, mod, opt);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
@@ -996,17 +990,14 @@ static int32_t ModEccSqrParaCheck(BN_BigNum *r, const BN_BigNum *a, const BN_Big
         BSL_ERR_PUSH_ERROR(CRYPT_BN_SPACE_NOT_ENOUGH);
         return CRYPT_BN_SPACE_NOT_ENOUGH;
     }
-    if (BnExtend(r, mod->size) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
-    }
-    return CRYPT_SUCCESS;
+    return BnExtend(r, mod->size);
 }
 
 // The user must ensure that a < m, and a->room & b->room are not less than mod->size.
 // All the data must be not negative number, otherwise the API may be not functional.
-int32_t BN_ModNistEccSqr(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *mod, BN_Optimizer *opt)
+int32_t BN_ModNistEccSqr(BN_BigNum *r, const BN_BigNum *a, void *data, BN_Optimizer *opt)
 {
+    BN_BigNum *mod = (BN_BigNum *)data;
     int32_t ret = ModEccSqrParaCheck(r, a, mod, opt);
     if (ret != CRYPT_SUCCESS) {
         return ret;
@@ -1045,8 +1036,9 @@ int32_t BN_ModNistEccSqr(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *mod,
 #ifdef HITLS_CRYPTO_CURVE_SM2
 // The user must ensure that a < m, and a->room & b->room are not less than mod->size.
 // All the data must be not negative number, otherwise the API may be not functional.
-int32_t BN_ModSm2EccMul(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b, const BN_BigNum *mod, BN_Optimizer *opt)
+int32_t BN_ModSm2EccMul(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b, void *data, BN_Optimizer *opt)
 {
+    BN_BigNum *mod = (BN_BigNum *)data;
     int32_t ret = ModEccMulParaCheck(r, a, b, mod, opt);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
@@ -1071,8 +1063,9 @@ int32_t BN_ModSm2EccMul(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b, co
 
 // The user must ensure that a < m, and a->room & b->room are not less than mod->size.
 // All the data must be not negative number, otherwise the API may be not functional.
-int32_t BN_ModSm2EccSqr(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *mod, BN_Optimizer *opt)
+int32_t BN_ModSm2EccSqr(BN_BigNum *r, const BN_BigNum *a, void *data, BN_Optimizer *opt)
 {
+    BN_BigNum *mod = (BN_BigNum *)data;
     int32_t ret = ModEccSqrParaCheck(r, a, mod, opt);
     if (ret != CRYPT_SUCCESS) {
         return ret;

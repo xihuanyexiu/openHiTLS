@@ -53,7 +53,7 @@ void BN_OptimizerDestroy(BN_Optimizer *opt)
             BSL_SAL_FREE(nextChunk->bigNums[i].data);
         }
         Chunk *tmp = nextChunk->next;
-        BSL_SAL_FREE(nextChunk);
+        BSL_SAL_Free(nextChunk);
         nextChunk = tmp;
     }
 
@@ -63,7 +63,7 @@ void BN_OptimizerDestroy(BN_Optimizer *opt)
             BSL_SAL_FREE(prevChunk->bigNums[i].data);
         }
         Chunk *tmp = prevChunk->prev;
-        BSL_SAL_FREE(prevChunk);
+        BSL_SAL_Free(prevChunk);
         prevChunk = tmp;
     }
     // curChunk != NULL
@@ -71,8 +71,8 @@ void BN_OptimizerDestroy(BN_Optimizer *opt)
         BSL_SAL_CleanseData((void *)(curChunk->bigNums[i].data), curChunk->bigNums[i].size * sizeof(BN_UINT));
         BSL_SAL_FREE(curChunk->bigNums[i].data);
     }
-    BSL_SAL_FREE(curChunk);
-    BSL_SAL_FREE(opt);
+    BSL_SAL_Free(curChunk);
+    BSL_SAL_Free(opt);
 }
 
 int32_t OptimizerStart(BN_Optimizer *opt)

@@ -27,9 +27,9 @@ int32_t USub(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b)
     uint32_t maxSize = a->size;
     uint32_t minSize = b->size;
     // Ensure that r is sufficient.
-    if (BnExtend(r, maxSize) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
+    int32_t ret = BnExtend(r, maxSize);
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
     }
     BN_UINT *rr = r->data;
     const BN_UINT *aa = a->data;
@@ -75,9 +75,9 @@ int32_t UAdd(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b)
     uint32_t maxSize = max->size;
     uint32_t minSize = min->size;
     // Ensure that r is sufficient to carry the sum.
-    if (BnExtend(r, maxSize + 1) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
+    int32_t ret = BnExtend(r, maxSize + 1);
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
     }
     r->size = maxSize;
     BN_UINT *rr = r->data;

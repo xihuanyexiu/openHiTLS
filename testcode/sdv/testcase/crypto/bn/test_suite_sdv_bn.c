@@ -1710,6 +1710,8 @@ EXIT:
 /* BEGIN_CASE */
 void SDV_CRYPTO_BN_UINT_FUNC_TC001(int len)
 {
+#if defined(HITLS_CRYPTO_CURVE_SM2_ASM) || (defined(HITLS_CRYPTO_CURVE_NISTP256_ASM) && \
+    defined(HITLS_CRYPTO_NIST_USE_ACCEL))
     TestMemInit();
     BN_BigNum *a = BN_Create(0);
     BN_UINT *input = calloc(1, len * sizeof(BN_UINT));
@@ -1725,6 +1727,9 @@ EXIT:
     BN_Destroy(a);
     free(input);
     free(output);
+#else
+    (void)len;
+#endif
 }
 /* END_CASE */
 

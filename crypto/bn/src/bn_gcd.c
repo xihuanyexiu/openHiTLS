@@ -62,9 +62,9 @@ int32_t BnGcdCheckInput(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b, co
     }
     /* The GCD may be the minimum value between a and b. Ensure the r space before calculation. */
     uint32_t needSize = (a->size < b->size) ? a->size : b->size;
-    if (BnExtend(r, needSize) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
+    int32_t ret = BnExtend(r, needSize);
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
     }
     // a and b cannot be 0
     if (BN_IsZero(a) || BN_IsZero(b)) {
@@ -210,11 +210,7 @@ int32_t InverseInputCheck(BN_BigNum *r, const BN_BigNum *x, const BN_BigNum *m, 
         BSL_ERR_PUSH_ERROR(CRYPT_BN_ERR_DIVISOR_ZERO);
         return CRYPT_BN_ERR_DIVISOR_ZERO;
     }
-    if (BnExtend(r, m->size) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
-    }
-    return CRYPT_SUCCESS;
+    return BnExtend(r, m->size);
 }
 
 int32_t BN_ModInv(BN_BigNum *r, const BN_BigNum *x, const BN_BigNum *m, BN_Optimizer *opt)

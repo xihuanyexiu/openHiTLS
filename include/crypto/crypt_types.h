@@ -614,6 +614,10 @@ typedef enum {
     CRYPT_CTRL_SET_ECC_USE_COFACTOR_MODE, /**< Indicates whether to use the cofactor mode to prevent
                                                man-in-the-middle from tampering with the public key.
                                                Set this parameter to 1 when used or 0 when not used. */
+    CRYPT_CTRL_GET_ECC_PUB_X_BIN,       /**< Get the bn of x of the ecc public key without padded bin. */
+    CRYPT_CTRL_GET_ECC_PUB_Y_BIN,       /**< Get the bn of y of the ecc public key without padded bin. */
+    CRYPT_CTRL_GET_ECC_ORDER_BITS,      /**< Get the number of bits in the group order. */
+    CRYPT_CTRL_GET_ECC_NAME,            /**< Obtain the name of the ECC curve. */
 
     CRYPT_CTRL_GEN_X25519_PUBLICKEY = 500,    /**< Use prikey genarate x25519 pubkey. */
 

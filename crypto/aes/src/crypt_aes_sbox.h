@@ -17,7 +17,7 @@
 #define CRYPT_AES_SBOX_H
 
 #include "hitls_build.h"
-#if defined(HITLS_CRYPTO_AES) && !defined(HITLS_CRYPTO_AES_PRECALC_TABLES)
+#if defined(HITLS_CRYPTO_AES)
 #include "crypt_aes.h"
 
 uint32_t RoundConstArray(int val);
@@ -30,5 +30,5 @@ void CRYPT_AES_EncryptSbox(const CRYPT_AES_Key *ctx, const uint8_t *in, uint8_t 
 
 void CRYPT_AES_DecryptSbox(const CRYPT_AES_Key *ctx, const uint8_t *in, uint8_t *out, uint32_t len);
 
-#endif /* !HITLS_CRYPTO_AES_PRECALC_TABLES */
+#endif /* HITLS_CRYPTO_AES */
 #endif

@@ -188,9 +188,9 @@ int32_t BN_Copy(BN_BigNum *r, const BN_BigNum *a)
         return CRYPT_NULL_INPUT;
     }
     if (r != a) {
-        if (BnExtend(r, a->size) != CRYPT_SUCCESS) {
-            BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-            return CRYPT_MEM_ALLOC_FAIL;
+        int32_t ret = BnExtend(r, a->size);
+        if (ret != CRYPT_SUCCESS) {
+            return ret;
         }
         r->sign = a->sign;
         BN_COPY_BYTES(r->data, r->size, a->data, a->size);
@@ -286,9 +286,9 @@ int32_t BN_SetLimb(BN_BigNum *r, BN_UINT w)
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-    if (BnExtend(r, 1) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
+    int32_t ret = BnExtend(r, 1);
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
     }
     BN_Zeroize(r);
     if (w != 0) {
@@ -410,6 +410,7 @@ int32_t BnExtend(BN_BigNum *a, uint32_t words)
         return CRYPT_SUCCESS;
     }
     if (a->flag == CRYPT_BN_FLAG_STATIC) {
+        BSL_ERR_PUSH_ERROR(CRYPT_BN_NOT_SUPPORT_EXTENSION);
         return CRYPT_BN_NOT_SUPPORT_EXTENSION;
     }
     if (words > BITS_TO_BN_UNIT(BN_MAX_BITS)) {

@@ -186,11 +186,7 @@ static int32_t MontParaCheck(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *
         BSL_ERR_PUSH_ERROR(CRYPT_BN_ERR_EXP_NO_NEGATIVE);
         return CRYPT_BN_ERR_EXP_NO_NEGATIVE;
     }
-    if (BnExtend(r, mont->mSize) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
-    }
-    return CRYPT_SUCCESS;
+    return BnExtend(r, mont->mSize);
 }
 
 static const BN_BigNum *DealBaseNum(const BN_BigNum *a, BN_Mont *mont, BN_Optimizer *opt, int32_t *ret)
@@ -669,11 +665,7 @@ static int32_t MontExpMulParaCheck(BN_BigNum *r, const BN_BigNum *a1,
         BSL_ERR_PUSH_ERROR(CRYPT_BN_ERR_EXP_NO_NEGATIVE);
         return CRYPT_BN_ERR_EXP_NO_NEGATIVE;
     }
-    if (BnExtend(r, mont->mSize) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
-    }
-    return CRYPT_SUCCESS;
+    return BnExtend(r, mont->mSize);
 }
 
 typedef struct {
@@ -794,5 +786,52 @@ ERR:
 }
 
 #endif // HITLS_CRYPTO_BN_PRIME
+
+#ifdef HITLS_CRYPTO_CURVE_MONT
+
+int32_t BnMontEnc(BN_BigNum *r, BN_Mont *mont, BN_Optimizer *opt, bool consttime)
+{
+    int32_t ret;
+    GOTO_ERR_IF(MontEncBin(r->data, mont, opt, consttime), ret);
+    r->size = BinFixSize(r->data, mont->mSize);
+ERR:
+    return ret;
+}
+
+void BnMontDec(BN_BigNum *r, BN_Mont *mont)
+{
+    MontDecBin(r->data, mont);
+    r->size = BinFixSize(r->data, mont->mSize);
+}
+
+int32_t BN_EcPrimeMontSqr(BN_BigNum *r, const BN_BigNum *a, void *data, BN_Optimizer *opt)
+{
+    if (r == NULL || a == NULL || data == NULL || opt == NULL) {
+        BSL_ERR_PUSH_ERROR((CRYPT_NULL_INPUT));
+        return CRYPT_NULL_INPUT;
+    }
+    int32_t ret;
+    BN_Mont *mont = (BN_Mont *)data;
+    BN_COPY_BYTES(r->data, mont->mSize, a->data, a->size);
+    GOTO_ERR_IF(MontSqrBin(r->data, mont, opt, false), ret);
+    r->size = BinFixSize(r->data, mont->mSize);
+ERR:
+    return ret;
+}
+
+int32_t BN_EcPrimeMontMul(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b, void *data, BN_Optimizer *opt)
+{
+    if (r == NULL || a == NULL || b == NULL || data == NULL || opt == NULL) {
+        BSL_ERR_PUSH_ERROR((CRYPT_NULL_INPUT));
+        return CRYPT_NULL_INPUT;
+    }
+    int32_t ret;
+    BN_Mont *mont = (BN_Mont *)data;
+    GOTO_ERR_IF(MontMulBin(r->data, a->data, b->data, mont, opt, false), ret);
+    r->size = BinFixSize(r->data, mont->mSize);
+ERR:
+    return ret;
+}
+#endif // HITLS_CRYPTO_CURVE_MONT
 
 #endif /* HITLS_CRYPTO_BN */

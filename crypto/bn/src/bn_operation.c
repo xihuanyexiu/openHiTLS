@@ -80,10 +80,11 @@ int32_t BN_AddLimb(BN_BigNum *r, const BN_BigNum *a, BN_UINT w)
     if (a->size == 0) {
         return BN_SetLimb(r, w);
     }
+    int32_t ret;
     if (a->sign == false) { // a is positive
-        if (BnExtend(r, a->size + 1) != CRYPT_SUCCESS) {
-            BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-            return CRYPT_MEM_ALLOC_FAIL;
+        ret = BnExtend(r, a->size + 1);
+        if (ret != CRYPT_SUCCESS) {
+            return ret;
         }
         BN_UINT carry = BinInc(r->data, a->data, a->size, w);
         if (carry != 0) {
@@ -96,9 +97,9 @@ int32_t BN_AddLimb(BN_BigNum *r, const BN_BigNum *a, BN_UINT w)
         r->sign = false;
         return CRYPT_SUCCESS;
     }
-    if (BnExtend(r, a->size) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
+    ret = BnExtend(r, a->size);
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
     }
     if (a->size == 1) {
         if (a->data[0] > w) {
@@ -149,6 +150,7 @@ int32_t BN_SubLimb(BN_BigNum *r, const BN_BigNum *a, BN_UINT w)
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
+    int32_t ret;
     if (a->size == 0) {
         if (BN_SetLimb(r, w) != CRYPT_SUCCESS) {
             BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
@@ -158,9 +160,9 @@ int32_t BN_SubLimb(BN_BigNum *r, const BN_BigNum *a, BN_UINT w)
         return CRYPT_SUCCESS;
     }
     if (a->sign == true) {
-        if (BnExtend(r, a->size + 1) != CRYPT_SUCCESS) {
-            BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-            return CRYPT_MEM_ALLOC_FAIL;
+        ret = BnExtend(r, a->size + 1);
+        if (ret != CRYPT_SUCCESS) {
+            return ret;
         }
         BN_UINT carry = BinInc(r->data, a->data, a->size, w);
         if (carry != 0) {
@@ -173,9 +175,9 @@ int32_t BN_SubLimb(BN_BigNum *r, const BN_BigNum *a, BN_UINT w)
         r->sign = true;
         return CRYPT_SUCCESS;
     }
-    if (BnExtend(r, a->size) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
+    ret = BnExtend(r, a->size);
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
     }
     if (a->size == 1) {
         if (a->data[0] >= w) {
@@ -222,11 +224,11 @@ int32_t BN_Mul(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b, BN_Optimize
         return BN_Zeroize(r);
     }
     uint32_t size = a->size + b->size;
-    if (BnExtend(r, size) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
+    int32_t ret = BnExtend(r, size);
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
     }
-    int32_t ret = OptimizerStart(opt); // using the Optimizer
+    ret = OptimizerStart(opt); // using the Optimizer
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -282,9 +284,9 @@ int32_t BN_MulLimb(BN_BigNum *r, const BN_BigNum *a, const BN_UINT w)
         return BN_Zeroize(r);
     }
 
-    if (BnExtend(r, a->size + 1) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
+    int32_t ret = BnExtend(r, a->size + 1);
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
     }
     BN_UINT carry = 0;
     uint32_t loc;
@@ -312,11 +314,11 @@ int32_t BN_Sqr(BN_BigNum *r, const BN_BigNum *a, BN_Optimizer *opt)
     if (a->size == 0) {
         return BN_Zeroize(r);
     }
-    if (BnExtend(r, a->size * 2) != CRYPT_SUCCESS) { // The maximum bit required for mul is 2x that of a.
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
+    int32_t ret = BnExtend(r, a->size * 2); // The maximum bit required for mul is 2x that of a.
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
     }
-    int32_t ret = OptimizerStart(opt); // using the Optimizer
+    ret = OptimizerStart(opt); // using the Optimizer
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -428,7 +430,6 @@ int32_t BN_Div(BN_BigNum *q, BN_BigNum *r, const BN_BigNum *x, const BN_BigNum *
     if (q != NULL) {
         ret = BnExtend(q, qTmp->size);
         if (ret != CRYPT_SUCCESS) {
-            BSL_ERR_PUSH_ERROR(ret);
             goto err;
         }
         q->sign = (x->sign != y->sign);
@@ -438,7 +439,6 @@ int32_t BN_Div(BN_BigNum *q, BN_BigNum *r, const BN_BigNum *x, const BN_BigNum *
     if (r != NULL) {
         ret = BnExtend(r, rTmp->size);
         if (ret != CRYPT_SUCCESS) {
-            BSL_ERR_PUSH_ERROR(ret);
             goto err;
         }
         r->sign = (rTmp->size == 0) ? false : rTmp->sign; // The symbol can only be positive when the value is 0.
@@ -535,11 +535,11 @@ int32_t BN_Mod(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *m, BN_Optimize
         BSL_ERR_PUSH_ERROR(CRYPT_BN_ERR_DIVISOR_ZERO);
         return CRYPT_BN_ERR_DIVISOR_ZERO;
     }
-    if (BnExtend(r, m->size) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
+    int32_t ret = BnExtend(r, m->size);
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
     }
-    int32_t ret = OptimizerStart(opt);
+    ret = OptimizerStart(opt);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -609,9 +609,9 @@ int32_t ModBaseInputCheck(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b,
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-    if (BnExtend(r, mod->size) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
+    int32_t ret = BnExtend(r, mod->size);
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
     }
     // mod cannot be 0
     if (BN_IsZero(mod)) {
@@ -737,12 +737,12 @@ int32_t BN_ModSqr(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *mod, BN_Opt
         return CRYPT_BN_ERR_DIVISOR_ZERO;
     }
 
-    if (BnExtend(r, mod->size) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
+    int32_t ret = BnExtend(r, mod->size);
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
     }
 
-    int32_t ret = OptimizerStart(opt); // using the Optimizer
+    ret = OptimizerStart(opt); // using the Optimizer
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -786,11 +786,7 @@ int32_t ModExpInputCheck(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *e,
         BSL_ERR_PUSH_ERROR(CRYPT_BN_ERR_EXP_NO_NEGATIVE);
         return CRYPT_BN_ERR_EXP_NO_NEGATIVE;
     }
-    if (BnExtend(r, m->size) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
-    }
-    return CRYPT_SUCCESS;
+    return BnExtend(r, m->size);
 }
 
 int32_t ModExpCore(BN_BigNum *x, BN_BigNum *y, const BN_BigNum *e, const BN_BigNum *m, BN_Optimizer *opt)
@@ -905,9 +901,9 @@ int32_t BN_Rshift(BN_BigNum *r, const BN_BigNum *a, uint32_t n)
     if (BN_Bits(a) <= n) {
         return BN_Zeroize(r);
     }
-    if (BnExtend(r, BITS_TO_BN_UNIT(BN_Bits(a) - n)) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
+    int32_t ret = BnExtend(r, BITS_TO_BN_UNIT(BN_Bits(a) - n));
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
     }
 
     r->sign = a->sign;
@@ -931,9 +927,9 @@ int32_t BN_Lshift(BN_BigNum *r, const BN_BigNum *a, uint32_t n)
     }
 
     uint32_t incUnit = n % BN_UINT_BITS == 0 ? (n / BN_UINT_BITS) : ((n / BN_UINT_BITS) + 1);
-    if (BnExtend(r, a->size + incUnit) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
+    int32_t ret = BnExtend(r, a->size + incUnit);
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
     }
 
     if (a->size != 0) {
@@ -971,4 +967,39 @@ int32_t BN_CopyWithMask(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b,
     return CRYPT_SUCCESS;
 }
 #endif
+
+#if defined(HITLS_CRYPTO_ECC) && defined(HITLS_CRYPTO_CURVE_MONT)
+/* Invoked by the ECC module and the sign can be ignored.
+ * if mask = BN_MASK, a, b --> b, a
+ * if mask = 0, a, b --> a, b
+ */
+int32_t BN_SwapWithMask(BN_BigNum *a, BN_BigNum *b, BN_UINT mask)
+{
+    if (a == NULL || b == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    if (a->room != b->room) {
+        BSL_ERR_PUSH_ERROR(CRYPT_BN_ERR_SWAP_LEN);
+        return CRYPT_BN_ERR_SWAP_LEN;
+    }
+    BN_UINT rmask = ~mask;
+    BN_UINT *srcA = a->data;
+    BN_UINT *srcB = b->data;
+    BN_UINT tmp1;
+    BN_UINT tmp2;
+    for (uint32_t i = 0; i < a->room; i++) {
+        tmp1 = srcA[i];
+        tmp2 = srcB[i];
+        srcA[i] = (tmp1 & rmask) | (tmp2 & mask);
+        srcB[i] = (tmp2 & rmask) | (tmp1 & mask);
+    }
+    tmp1 = a->size;
+    tmp2 = b->size;
+    a->size = (tmp1 & (uint32_t)rmask) | (tmp2 & (uint32_t)mask);
+    b->size = (tmp2 & (uint32_t)rmask) | (tmp1 & (uint32_t)mask);
+    return CRYPT_SUCCESS;
+}
+#endif // HITLS_CRYPTO_ECC and HITLS_CRYPTO_CURVE_MONT
+
 #endif /* HITLS_CRYPTO_BN */

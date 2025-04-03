@@ -44,9 +44,9 @@ int32_t BN_Bin2Bn(BN_BigNum *r, const uint8_t *bin, uint32_t binLen)
     uint32_t left = binLen - zeroNum;
     uint32_t needRooms = (left % sizeof(BN_UINT) == 0) ? left / sizeof(BN_UINT)
                                                     : (left / sizeof(BN_UINT)) + 1;
-    if (BnExtend(r, needRooms) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
+    int32_t ret = BnExtend(r, needRooms);
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
     }
     uint32_t offset = 0;
     while (left > 0) {
@@ -203,9 +203,9 @@ int32_t BN_U64Array2Bn(BN_BigNum *r, const uint64_t *array, uint32_t len)
         BSL_ERR_PUSH_ERROR(CRYPT_BN_BITS_TOO_MAX);
         return CRYPT_BN_BITS_TOO_MAX;
     }
-    if (BnExtend(r, (uint32_t)needRoom) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
+    int32_t ret = BnExtend(r, (uint32_t)needRoom);
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
     }
 
     (void)BN_Zeroize(r);
@@ -246,9 +246,9 @@ int32_t BN_BN2Array(const BN_BigNum *src, BN_UINT *dst, uint32_t size)
 
 int32_t BN_Array2BN(BN_BigNum *dst, const BN_UINT *src, const uint32_t size)
 {
-    if (BnExtend(dst, size) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
+    int32_t ret = BnExtend(dst, size);
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
     }
     // No error code is returned because the src has been checked NULL.
     (void)BN_Zeroize(dst);
@@ -338,9 +338,9 @@ static int32_t OutputCheck(BN_BigNum **r, int32_t num)
             return CRYPT_MEM_ALLOC_FAIL;
         }
     } else {
-        if (BnExtend(*r, BITS_TO_BN_UNIT(needBits)) != CRYPT_SUCCESS) {
-            BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-            return CRYPT_MEM_ALLOC_FAIL;
+        int32_t ret = BnExtend(*r, BITS_TO_BN_UNIT(needBits));
+        if (ret != CRYPT_SUCCESS) {
+            return ret;
         }
         (void)BN_Zeroize(*r);
     }

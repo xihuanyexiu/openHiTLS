@@ -507,11 +507,7 @@ static int32_t GenCheck(BN_BigNum *bn, uint32_t bits, const BN_Optimizer *opt)
         BSL_ERR_PUSH_ERROR(CRYPT_BN_NOR_CHECK_PRIME);
         return CRYPT_BN_NOR_CHECK_PRIME;
     }
-    if (BnExtend(bn, BITS_TO_BN_UNIT(bits)) != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
-    }
-    return CRYPT_SUCCESS;
+    return BnExtend(bn, BITS_TO_BN_UNIT(bits));
 }
 
 // If the prime number r is generated successfully, CRYPT_SUCCESS is returned.

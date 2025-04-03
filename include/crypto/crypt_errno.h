@@ -78,6 +78,7 @@ enum CRYPT_ERROR {
     CRYPT_BN_NOT_SUPPORT_EXTENSION,     /**< The big number does not support dynamic extension. */
     CRYPT_BN_INPUT_INVALID,             /**< Invalid external big number input. */
     CRYPT_BN_BITS_INVALID,              /**< The bits of the big number exceeds the limit. */
+    CRYPT_BN_ERR_SWAP_LEN,              /**< Data lengths are inconsistent when data is swapped with masks. */
 
     CRYPT_RSA_BUFF_LEN_NOT_ENOUGH = 0x01030001, /**< The buffer length is insufficient. */
     CRYPT_RSA_NO_KEY_INFO,              /**< Lacks valid key information. */
@@ -350,6 +351,7 @@ enum CRYPT_ERROR {
     CRYPT_SHA3_INVALID_STATE,                       /**< Invalid state. */
     CRYPT_ECDH_ERR_EMPTY_KEY = 0x01150001,            /**< Key is null. */
     CRYPT_ECDH_ERR_INVALID_COFACTOR,                  /**< Invalid cofactor value. */
+    CRYPT_ECDH_ERR_UNSUPPORT_CURVE_TYPE,              /**< Unsupported curve type. */
 
     CRYPT_ECDSA_ERR_EMPTY_KEY = 0x01160001,           /**< Key is NULL. */
     CRYPT_ECDSA_ERR_TRY_CNT,                          /**< Key generation and generate signature fail

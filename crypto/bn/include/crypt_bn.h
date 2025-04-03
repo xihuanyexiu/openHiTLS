@@ -1170,8 +1170,7 @@ int32_t BN_Array2BN(BN_BigNum *dst, const BN_UINT *src, const uint32_t size);
  * @retval CRYPT_SUCCESS    succeeded.
  * @retval For details about other errors, see crypt_errno.h.
  */
-int32_t BN_CopyWithMask(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b,
-    BN_UINT mask);
+int32_t BN_CopyWithMask(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b, BN_UINT mask);
 
 /**
  * @ingroup bn
@@ -1240,7 +1239,7 @@ int32_t BN_ModAddQuick(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b,
  * @retval For other errors, see crypt_errno.h.
  */
 int32_t BN_ModNistEccMul(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b,
-    const BN_BigNum *mod, BN_Optimizer *opt);
+    void *mod, BN_Optimizer *opt);
 
 /**
  * @ingroup bn
@@ -1261,8 +1260,7 @@ int32_t BN_ModNistEccMul(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b,
  * @retval CRYPT_SUCCESS    succeeded.
  * @retval For details about other errors, see crypt_errno.h.
  */
-int32_t BN_ModNistEccSqr(
-    BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *mod, BN_Optimizer *opt);
+int32_t BN_ModNistEccSqr(BN_BigNum *r, const BN_BigNum *a, void *mod, BN_Optimizer *opt);
 #endif
 
 #ifdef HITLS_CRYPTO_CURVE_SM2
@@ -1286,8 +1284,7 @@ int32_t BN_ModNistEccSqr(
  * @retval CRYPT_SUCCESS    succeeded.
  * @retval For details about other errors, see crypt_errno.h.
  */
-int32_t BN_ModSm2EccMul(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b,
-    const BN_BigNum *mod, BN_Optimizer *opt);
+int32_t BN_ModSm2EccMul(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b, void *data, BN_Optimizer *opt);
 
 /**
  * @ingroup ecc
@@ -1308,7 +1305,7 @@ int32_t BN_ModSm2EccMul(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b,
  * @retval CRYPT_SUCCESS    succeeded.
  * @retval For details about other errors, see crypt_errno.h.
  */
-int32_t BN_ModSm2EccSqr(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *mod, BN_Optimizer *opt);
+int32_t BN_ModSm2EccSqr(BN_BigNum *r, const BN_BigNum *a, void *data, BN_Optimizer *opt);
 #endif
 
 #ifdef HITLS_CRYPTO_BN_PRIME_RFC3526
@@ -1398,7 +1395,7 @@ void OptimizerEnd(BN_Optimizer *opt);
 
 /**
  * @ingroup bn
- * @brief   Get large numbers from the large number optimizer.
+ * @brief   Get Bn from the large number optimizer.
  *
  * @param   opt [IN] Large number optimizer
  * @param   room [IN] Length of the big number.
@@ -1450,7 +1447,7 @@ void OptimizerEnd(BN_Optimizer *opt);
 
 /**
  * @ingroup bn
- * @brief   Get large numbers from the large number optimizer.
+ * @brief   Get Bn from the large number optimizer.
  *
  * @param   opt [IN] Large number optimizer
  * @param   room [IN] Length of the big number.
@@ -1459,6 +1456,39 @@ void OptimizerEnd(BN_Optimizer *opt);
  * @retval  NULL if failed
  */
 BN_BigNum *OptimizerGetBn(BN_Optimizer *opt, uint32_t room);
+
+#ifdef HITLS_CRYPTO_CURVE_MONT
+
+/**
+ * a, b is mont form.
+ * r = a * b
+ */
+int32_t BN_EcPrimeMontMul(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b, void *data, BN_Optimizer *opt);
+
+/**
+ * a is mont form.
+ * r = a ^ 2
+ */
+int32_t BN_EcPrimeMontSqr(BN_BigNum *r, const BN_BigNum *a, void *mont, BN_Optimizer *opt);
+
+/**
+ * r = Reduce(r * RR)
+ */
+int32_t BnMontEnc(BN_BigNum *r, BN_Mont *mont, BN_Optimizer *opt, bool consttime);
+
+/**
+ * r = Reduce(r)
+ */
+void BnMontDec(BN_BigNum *r, BN_Mont *mont);
+
+/**
+ * This interface is a constant time.
+ * if mask = BN_MASK. swap a and b.
+ * if mask = 0, a and b remain as they are.
+ */
+int32_t BN_SwapWithMask(BN_BigNum *a, BN_BigNum *b, BN_UINT mask);
+
+#endif // HITLS_CRYPTO_CURVE_MONT
 
 #ifdef __cplusplus
 }

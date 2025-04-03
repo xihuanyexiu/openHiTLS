@@ -18,6 +18,10 @@
 #include <stdint.h>
 #include "bn_bincal.h"
 
+#ifndef HITLS_SIXTY_FOUR_BITS
+#error Bn binical x8664 optimizer must open BN-64.
+#endif
+
 // r = a + b, len = n, return carry
 BN_UINT BinAdd(BN_UINT *r, const BN_UINT *a, const BN_UINT *b,  uint32_t n)
 {
