@@ -12,23 +12,18 @@
  * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
  * See the Mulan PSL v2 for more details.
  */
-
-#ifndef CRYPT_AES_SBOX_H
-#define CRYPT_AES_SBOX_H
+#ifndef CRYPT_AES_TBOX_H
+#define CRYPT_AES_TBOX_H
 
 #include "hitls_build.h"
-#if defined(HITLS_CRYPTO_AES) && !defined(HITLS_CRYPTO_AES_PRECALC_TABLES)
+#if defined(HITLS_CRYPTO_AES) && defined(HITLS_CRYPTO_AES_PRECALC_TABLES)
 #include "crypt_aes.h"
 
-uint32_t RoundConstArray(int val);
+void SetAesKeyExpansionTbox(CRYPT_AES_Key *ctx, uint32_t keyLenBits, const uint8_t *key, bool isEncrypt);
 
-uint8_t InvSubSbox(uint8_t val);
+void CRYPT_AES_EncryptTbox(const CRYPT_AES_Key *ctx, const uint8_t *in, uint8_t *out, uint32_t len);
 
-void SetAesKeyExpansionSbox(CRYPT_AES_Key *ctx, uint32_t keyLenBits, const uint8_t *key);
+void CRYPT_AES_DecryptTbox(const CRYPT_AES_Key *ctx, const uint8_t *in, uint8_t *out, uint32_t len);
 
-void CRYPT_AES_EncryptSbox(const CRYPT_AES_Key *ctx, const uint8_t *in, uint8_t *out, uint32_t len);
-
-void CRYPT_AES_DecryptSbox(const CRYPT_AES_Key *ctx, const uint8_t *in, uint8_t *out, uint32_t len);
-
-#endif /* HITLS_CRYPTO_AES && !HITLS_CRYPTO_AES_PRECALC_TABLES */
+#endif /* HITLS_CRYPTO_AES_PRECALC_TABLES */
 #endif
