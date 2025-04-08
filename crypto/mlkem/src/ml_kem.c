@@ -73,7 +73,15 @@ static int32_t MlKemSetAlgInfo(CRYPT_ML_KEM_Ctx *ctx, void *val, uint32_t len)
         BSL_ERR_PUSH_ERROR(CRYPT_MLKEM_CTRL_INIT_REPEATED);
         return CRYPT_MLKEM_CTRL_INIT_REPEATED;
     }
-    uint32_t bits = *(uint32_t*)val;
+    uint32_t bits = 0;
+    int32_t keyType = *(int32_t*)val;
+    if (keyType == CRYPT_KEM_TYPE_MLKEM_512) {
+        bits = 512;  // MLKEM512
+    } else if (keyType == CRYPT_KEM_TYPE_MLKEM_768) {
+        bits = 768;  // MLKEM768
+    } else if (keyType == CRYPT_KEM_TYPE_MLKEM_1024) {
+        bits = 1024;  // MLKEM1024
+    }
     const CRYPT_MlKemInfo *info = MlKemGetInfo(bits);
     if (info == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NOT_SUPPORT);
@@ -355,7 +363,7 @@ int32_t CRYPT_ML_KEM_Ctrl(CRYPT_ML_KEM_Ctx *ctx, int32_t opt, void *val, uint32_
         return CRYPT_NULL_INPUT;
     }
     switch (opt) {
-        case CRYPT_CTRL_SET_KEM_TYPE:
+        case CRYPT_CTRL_SET_PARA_BY_ID:
             return MlKemSetAlgInfo(ctx, val, len);
         case CRYPT_CTRL_GET_PUBKEY_LEN:
             return MlKemGetEncapsKeyLen(ctx, val, len);

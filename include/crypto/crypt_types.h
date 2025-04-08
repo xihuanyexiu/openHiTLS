@@ -559,17 +559,20 @@ typedef enum {
  */
 typedef enum {
     // common
-    CRYPT_CTRL_UP_REFERENCES = 0,           /**< The reference count value increases automatically.
+    CRYPT_CTRL_UP_REFERENCES = 0,        /**< The reference count value increases automatically.
                                              It is applicable to asymmetric algorithms such as 25519, RSA, and ECC. */
-    CRYPT_CTRL_SET_PARAM_BY_ID,          /* Asymmetric cipher set para by id. */
-    CRYPT_CTRL_SET_NO_PADDING,          /**< RSA Set the padding mode to NO_PADDING. */
+    CRYPT_CTRL_SET_PARA_BY_ID,           /* Asymmetric cipher set para by id. */
+    CRYPT_CTRL_SET_NO_PADDING,           /**< RSA Set the padding mode to NO_PADDING. */
 
-    CRYPT_CTRL_GET_PARA,                /* Asymmetric cipher get para. */
-    CRYPT_CTRL_GET_PARAM_ID,              /* Asymmetric cipher get id of para. */
+    CRYPT_CTRL_GET_PARA,                 /* Asymmetric cipher get para. */
+    CRYPT_CTRL_GET_PARAM_ID,             /* Asymmetric cipher get id of para. */
     CRYPT_CTRL_GET_BITS,                 /* Asymmetric cipher get bits . */
-    CRYPT_CTRL_GET_SIGNLEN,             /* Asymmetric cipher get signlen . */
+    CRYPT_CTRL_GET_SIGNLEN,              /* Asymmetric cipher get signlen . */
     CRYPT_CTRL_GET_SECBITS,              /* Asymmetric cipher get secure bits . */
-    CRYPT_CTRL_GET_PUB_KEY_BITS,        /**< Get the number of key bits. */
+    CRYPT_CTRL_GET_SHARED_KEY_LEN,       /**< Get the shared key length */
+    CRYPT_CTRL_GET_PUBKEY_LEN,           /**< Get the encapsulation key length */
+    CRYPT_CTRL_GET_PRVKEY_LEN,           /**< Get the decapsulation key length */
+    CRYPT_CTRL_GET_CIPHERTEXT_LEN,       /**< Get the ciphertext length */
 
     // rsa
     CRYPT_CTRL_SET_RSA_EMSA_PKCSV15 = 200, /**< RSA set the signature padding mode to EMSA_PKCSV15. */
@@ -621,18 +624,10 @@ typedef enum {
 
     CRYPT_CTRL_GEN_X25519_PUBLICKEY = 500,    /**< Use prikey genarate x25519 pubkey. */
 
-    CRYPT_CTRL_GET_SHARED_KEY_LEN = 600,      /**< Get the shared key length */
-    CRYPT_CTRL_GET_PUBKEY_LEN,               /**< Get the encapsulation key length */
-    CRYPT_CTRL_GET_PRVKEY_LEN,               /**< Get the decapsulation key length */
-    CRYPT_CTRL_GET_CIPHERTEXT_LEN,           /**< Get the ciphertext length */
-	
-	CRYPT_CTRL_SET_MLDSA_TYPE = 700,         /**< Set the algorithm information of ML-DSA */
-    CRYPT_CTRL_SET_MLDSA_ENCODE_FLAG,        /**< Set the flag for encode messages. */
+    CRYPT_CTRL_SET_MLDSA_ENCODE_FLAG = 600,  /**< Set the flag for encode messages. */
     CRYPT_CTRL_SET_MLDSA_MUMSG_FLAG,         /**< Whether to calculate message representative */
     CRYPT_CTRL_SET_MLDSA_DETERMINISTIC_FLAG, /**< Whether to use deterministic signatures */
     CRYPT_CTRL_SET_CTX_INFO,                 /* context string. */
-
-    CRYPT_CTRL_SET_KEM_TYPE = 800,           /**< Set the key info of KEM */
 } CRYPT_PkeyCtrl;
 
 typedef enum {
@@ -834,6 +829,14 @@ typedef enum {
     CRYPT_MLDSA_TYPE_MLDSA_87 = 0x03,            // MLDSA-87
     CRYPT_MLDSA_TYPE_INVALID = 0x7fffffff        // invalid value
 } CRYPT_MLDSA_KeyType;
+
+/* Optional parameter set for MLKEM */
+typedef enum {
+    CRYPT_KEM_TYPE_MLKEM_512 = 0x01,            // MLKEM512
+    CRYPT_KEM_TYPE_MLKEM_768 = 0x02,            // MLKEM768
+    CRYPT_KEM_TYPE_MLKEM_1024 = 0x03,            // MLKEM1024
+    CRYPT_KEM_TYPE_INVALID = 0x7fffffff        // invalid value
+} CRYPT_MLKEM_KeyType;
 
 #ifdef __cplusplus
 }

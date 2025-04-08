@@ -51,22 +51,22 @@ void SDV_CRYPTO_MLKEM_CTRL_API_TC001(int bits)
 
     CRYPT_EAL_PkeyCtx *ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ML_KEM);
     uint32_t val = (uint32_t)bits;
-    int ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_KEM_TYPE + 100, &val, sizeof(val));
+    int ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_PARA_BY_ID + 100, &val, sizeof(val));
     ASSERT_EQ(ret, CRYPT_MLKEM_CTRL_NOT_SUPPORT);
 
-    ret = CRYPT_EAL_PkeyCtrl(NULL, CRYPT_CTRL_SET_KEM_TYPE, &val, sizeof(val));
+    ret = CRYPT_EAL_PkeyCtrl(NULL, CRYPT_CTRL_SET_PARA_BY_ID, &val, sizeof(val));
     ASSERT_EQ(ret, CRYPT_NULL_INPUT);
 
-    ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_KEM_TYPE, NULL, sizeof(val));
+    ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_PARA_BY_ID, NULL, sizeof(val));
     ASSERT_EQ(ret, CRYPT_NULL_INPUT);
 
-    ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_KEM_TYPE, &val, sizeof(val) - 1);
+    ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_PARA_BY_ID, &val, sizeof(val) - 1);
     ASSERT_EQ(ret, CRYPT_INVALID_ARG);
 
-    ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_KEM_TYPE, &val, sizeof(val));
+    ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_PARA_BY_ID, &val, sizeof(val));
     ASSERT_EQ(ret, CRYPT_SUCCESS);
 
-    ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_KEM_TYPE, &val, sizeof(val));
+    ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_PARA_BY_ID, &val, sizeof(val));
     ASSERT_EQ(ret, CRYPT_MLKEM_CTRL_INIT_REPEATED);
 EXIT:
     CRYPT_EAL_PkeyFreeCtx(ctx);
@@ -99,7 +99,7 @@ void SDV_CRYPTO_MLKEM_KEYGEN_API_TC001(int bits)
     ASSERT_EQ(ret, CRYPT_MLKEM_KEYINFO_NOT_SET);
 
     uint32_t val = (uint32_t)bits;
-    ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_KEM_TYPE, &val, sizeof(val));
+    ret = CRYPT_EAL_PkeySetParaById(ctx, val);
     ASSERT_EQ(ret, CRYPT_SUCCESS);
     ret = CRYPT_EAL_PkeyEncapsInit(ctx, NULL);
     ASSERT_EQ(ret, CRYPT_SUCCESS);
@@ -141,7 +141,7 @@ void SDV_CRYPTO_MLKEM_ENCAPS_API_TC001(int bits)
     ASSERT_TRUE(ctx != NULL);
 
     uint32_t val = (uint32_t)bits;
-    int32_t ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_KEM_TYPE, &val, sizeof(val));
+    int32_t ret = CRYPT_EAL_PkeySetParaById(ctx, val);
     ASSERT_EQ(ret, CRYPT_SUCCESS);
     ret = CRYPT_EAL_PkeyEncapsInit(ctx, NULL);
     ASSERT_EQ(ret, CRYPT_SUCCESS);
@@ -209,7 +209,7 @@ void SDV_CRYPTO_MLKEM_DECAPS_API_TC001(int bits)
     ASSERT_TRUE(ctx != NULL);
 
     uint32_t val = (uint32_t)bits;
-    int32_t ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_KEM_TYPE, &val, sizeof(val));
+    int32_t ret = CRYPT_EAL_PkeySetParaById(ctx, val);
     ASSERT_EQ(ret, CRYPT_SUCCESS);
     ret = CRYPT_EAL_PkeyDecapsInit(ctx, NULL);
     ASSERT_EQ(ret, CRYPT_SUCCESS);
@@ -276,7 +276,7 @@ void SDV_CRYPTO_MLKEM_SETPUB_API_TC002(int bits, Hex *testEK)
 
     CRYPT_EAL_PkeyCtx *ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ML_KEM);
     uint32_t val = (uint32_t)bits;
-    int ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_KEM_TYPE, &val, sizeof(val));
+    int ret = CRYPT_EAL_PkeySetParaById(ctx, val);
     ASSERT_EQ(ret, CRYPT_SUCCESS);
     ret = CRYPT_EAL_PkeyEncapsInit(ctx, NULL);
     ASSERT_EQ(ret, CRYPT_SUCCESS);
@@ -334,7 +334,7 @@ void SDV_CRYPTO_MLKEM_SETPRV_API_TC002(int bits, Hex *testDK)
 
     CRYPT_EAL_PkeyCtx *ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ML_KEM);
     uint32_t val = (uint32_t)bits;
-    int ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_KEM_TYPE, &val, sizeof(val));
+    int ret = CRYPT_EAL_PkeySetParaById(ctx, val);
     ASSERT_EQ(ret, CRYPT_SUCCESS);
     ret = CRYPT_EAL_PkeyEncapsInit(ctx, NULL);
     ASSERT_EQ(ret, CRYPT_SUCCESS);
@@ -405,7 +405,7 @@ void SDV_CRYPTO_MLKEM_KEYCMP_FUNC_TC001(int bits, Hex *r0, Hex *r1, Hex *r2, int
     }
     ASSERT_NE(ctx, NULL);
     uint32_t val = (uint32_t)bits;
-    ASSERT_EQ(CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_KEM_TYPE, &val, sizeof(val)), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeySetParaById(ctx, val), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeyEncapsInit(ctx, NULL), CRYPT_SUCCESS);
 
     ASSERT_EQ(CRYPT_EAL_PkeyGen(ctx), CRYPT_SUCCESS);
@@ -421,7 +421,7 @@ void SDV_CRYPTO_MLKEM_KEYCMP_FUNC_TC001(int bits, Hex *r0, Hex *r1, Hex *r2, int
     ASSERT_NE(ctx2, NULL);
     ASSERT_EQ(CRYPT_EAL_PkeyCmp(ctx, ctx2), CRYPT_MLKEM_KEY_NOT_EQUAL);
     val = (uint32_t)bits;
-    ASSERT_EQ(CRYPT_EAL_PkeyCtrl(ctx2, CRYPT_CTRL_SET_KEM_TYPE, &val, sizeof(val)), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeySetParaById(ctx2, val), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeyCmp(ctx, ctx2), CRYPT_MLKEM_KEY_NOT_EQUAL);
     ASSERT_EQ(CRYPT_EAL_PkeyEncapsInit(ctx2, NULL), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeyCmp(ctx, ctx2), CRYPT_MLKEM_KEY_NOT_EQUAL);
@@ -437,7 +437,7 @@ void SDV_CRYPTO_MLKEM_KEYCMP_FUNC_TC001(int bits, Hex *r0, Hex *r1, Hex *r2, int
     }
     ASSERT_NE(ctx3, NULL);
     val = (uint32_t)bits;
-    ASSERT_EQ(CRYPT_EAL_PkeyCtrl(ctx3, CRYPT_CTRL_SET_KEM_TYPE, &val, sizeof(val)), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeySetParaById(ctx3, val), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeyEncapsInit(ctx3, NULL), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeyGen(ctx3), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeyCmp(ctx, ctx3), CRYPT_MLKEM_KEY_NOT_EQUAL);
@@ -493,7 +493,7 @@ void SDV_CRYPTO_MLKEM_KEYGEN_FUNC_TC001(int bits, Hex *z, Hex *d, Hex *testEK, H
 
     ASSERT_NE(ctx, NULL);
     uint32_t val = (uint32_t)bits;
-    ASSERT_EQ(CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_KEM_TYPE, &val, sizeof(val)), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeySetParaById(ctx, val), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeyEncapsInit(ctx, NULL), CRYPT_SUCCESS);
 
     uint32_t encapsKeyLen = 0;
@@ -558,7 +558,7 @@ void SDV_CRYPTO_MLKEM_ENCAPS_DECAPS_FUNC_TC001(int bits, Hex *m, Hex *testEK, He
 
     ASSERT_NE(ctx, NULL);
     uint32_t val = (uint32_t)bits;
-    ASSERT_EQ(CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_KEM_TYPE, &val, sizeof(val)), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeySetParaById(ctx, val), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeyEncapsInit(ctx, NULL), CRYPT_SUCCESS);
 
     uint32_t encapsKeyLen = 0;
@@ -634,7 +634,7 @@ void SDV_CRYPTO_MLKEM_DECAPS_FUNC_TC001(int bits, Hex *testDK, Hex *testCT, Hex 
 
     ASSERT_NE(ctx, NULL);
     uint32_t val = (uint32_t)bits;
-    int ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_KEM_TYPE, &val, sizeof(val));
+    int ret = CRYPT_EAL_PkeySetParaById(ctx, val);
     ASSERT_EQ(ret, CRYPT_SUCCESS);
     ret = CRYPT_EAL_PkeyDecapsInit(ctx, NULL);
     ASSERT_EQ(ret, CRYPT_SUCCESS);
@@ -721,7 +721,7 @@ void SDV_CRYPTO_MLKEM_ABNORMAL_DECAPS_FUNC_TC001(int bits, Hex *m, Hex *testEK, 
 
     CRYPT_EAL_PkeyCtx *ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ML_KEM);
     uint32_t val = (uint32_t)bits;
-    uint32_t ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_KEM_TYPE, &val, sizeof(val));
+    uint32_t ret = CRYPT_EAL_PkeySetParaById(ctx, val);
     ASSERT_EQ(ret, CRYPT_SUCCESS);
     ret = CRYPT_EAL_PkeyEncapsInit(ctx, NULL);
     ASSERT_EQ(ret, CRYPT_SUCCESS);
@@ -801,7 +801,7 @@ void SDV_CRYPTO_MLKEM_ABNORMAL_DECAPS_FUNC_TC002(int bits, Hex *m, Hex *testEK, 
 
     CRYPT_EAL_PkeyCtx *ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ML_KEM);
     uint32_t val = (uint32_t)bits;
-    int ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_KEM_TYPE, &val, sizeof(val));
+    int ret = CRYPT_EAL_PkeySetParaById(ctx, val);
     ASSERT_EQ(ret, CRYPT_SUCCESS);
     ret = CRYPT_EAL_PkeyEncapsInit(ctx, NULL);
     ASSERT_EQ(ret, CRYPT_SUCCESS);
@@ -881,7 +881,7 @@ void SDV_CRYPTO_MLKEM_ABNORMAL_DECAPS_FUNC_TC003(int bits, Hex *m, Hex *testDK, 
 
     CRYPT_EAL_PkeyCtx *ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ML_KEM);
     uint32_t val = (uint32_t)bits;
-    int ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_KEM_TYPE, &val, sizeof(val));
+    int ret = CRYPT_EAL_PkeySetParaById(ctx, val);
     ASSERT_EQ(ret, CRYPT_SUCCESS);
     ret = CRYPT_EAL_PkeyEncapsInit(ctx, NULL);
     ASSERT_EQ(ret, CRYPT_SUCCESS);

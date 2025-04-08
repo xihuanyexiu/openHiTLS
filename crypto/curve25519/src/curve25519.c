@@ -94,6 +94,12 @@ static int32_t CRYPT_CURVE25519_GetLen(CRYPT_CURVE25519_Ctx *ctx, GetLenFunc fun
     return CRYPT_SUCCESS;
 }
 
+static int32_t CRYPT_CURVE25519_GetKeyLen(const CRYPT_CURVE25519_Ctx *pkey)
+{
+    (void)pkey;
+    return CRYPT_CURVE25519_KEYLEN;
+}
+
 int32_t CRYPT_CURVE25519_Ctrl(CRYPT_CURVE25519_Ctx *pkey, int32_t opt, void *val, uint32_t len)
 {
     if (pkey == NULL) {
@@ -107,6 +113,10 @@ int32_t CRYPT_CURVE25519_Ctrl(CRYPT_CURVE25519_Ctx *pkey, int32_t opt, void *val
             return CRYPT_CURVE25519_GetLen(pkey, (GetLenFunc)CRYPT_CURVE25519_GetSignLen, val, len);
         case CRYPT_CTRL_GET_SECBITS:
             return CRYPT_CURVE25519_GetLen(pkey, (GetLenFunc)CRYPT_CURVE25519_GetSecBits, val, len);
+        case CRYPT_CTRL_GET_PUBKEY_LEN:
+        case CRYPT_CTRL_GET_PRVKEY_LEN:
+        case CRYPT_CTRL_GET_SHARED_KEY_LEN:
+            return GetUintCtrl(pkey, val, len, (GetUintCallBack)CRYPT_CURVE25519_GetKeyLen);
         case CRYPT_CTRL_UP_REFERENCES:
             if (val == NULL || len != (uint32_t)sizeof(int)) {
                 BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);
