@@ -250,7 +250,7 @@ static int32_t UdpRead(BSL_UIO *uio, void *buf, uint32_t len, uint32_t *readLen)
         BSL_ERR_PUSH_ERROR(BSL_UIO_IO_EXCEPTION);
         return BSL_UIO_IO_EXCEPTION;
     }
-    *readLen = ret;
+    *readLen = (uint32_t)ret;
     if (parameters->connected == 0) {
         ret = UdpSocketCtrl(uio, BSL_UIO_SET_PEER_IP_ADDR, sizeof(sockAddr), &sockAddr);
         if (ret != BSL_SUCCESS) {

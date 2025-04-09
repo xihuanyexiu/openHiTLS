@@ -13,7 +13,7 @@
  * See the Mulan PSL v2 for more details.
  */
 #include "hitls_build.h"
-#ifdef HITLS_TLS_HOST_SERVER
+#if defined(HITLS_TLS_PROTO_DTLS12) && defined(HITLS_BSL_UIO_UDP) && defined(HITLS_TLS_HOST_SERVER)
 #include <stdint.h>
 #include "securec.h"
 #include "tls_binlog_id.h"
@@ -88,4 +88,4 @@ int32_t PackHelloVerifyRequest(TLS_Ctx *ctx, uint8_t *buf, uint32_t bufLen, uint
     *usedLen = offset;
     return HITLS_SUCCESS;
 }
-#endif /* HITLS_TLS_HOST_SERVER */
+#endif /* HITLS_TLS_PROTO_DTLS12 && HITLS_BSL_UIO_UDP && HITLS_TLS_HOST_SERVER */

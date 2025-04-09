@@ -202,9 +202,6 @@ static void ShallowCopy(HITLS_Ctx *ctx, const HITLS_Config *srcConfig)
 #ifdef HITLS_TLS_FEATURE_FLIGHT
     destConfig->isFlightTransmitEnable = srcConfig->isFlightTransmitEnable;
 #endif
-#ifdef HITLS_TLS_PROTO_DTLS12
-    destConfig->isSupportDtlsCookieExchange = srcConfig->isSupportDtlsCookieExchange;
-#endif
 }
 
 static int32_t DeepCopy(void** destConfig, const void* srcConfig, uint32_t logId, uint32_t len)
@@ -1017,7 +1014,7 @@ int32_t HITLS_CFG_SetGroups(HITLS_Config *config, const uint16_t *groups, uint32
     return HITLS_SUCCESS;
 }
 
-#ifdef HITLS_TLS_PROTO_DTLS12
+#if defined(HITLS_TLS_PROTO_DTLS12) && defined(HITLS_BSL_UIO_UDP)
 int32_t HITLS_CFG_SetCookieGenCb(HITLS_Config *config, HITLS_AppGenCookieCb callback)
 {
     if (config == NULL || callback == NULL) {
@@ -1924,7 +1921,7 @@ int32_t HITLS_CFG_GetFlightTransmitSwitch(const HITLS_Config *config, uint8_t *i
 }
 #endif
 
-#ifdef HITLS_TLS_PROTO_DTLS12
+#if defined(HITLS_TLS_PROTO_DTLS12) && defined(HITLS_BSL_UIO_UDP)
 int32_t HITLS_CFG_SetDtlsCookieExchangeSupport(HITLS_Config *config, bool isEnable)
 {
     if (config == NULL) {

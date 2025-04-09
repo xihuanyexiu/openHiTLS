@@ -487,7 +487,7 @@ int32_t HITLS_GetFlightTransmitSwitch(const HITLS_Ctx *ctx, uint8_t *isEnable)
 }
 #endif
 
-#ifdef HITLS_TLS_PROTO_DTLS12
+#if defined(HITLS_TLS_PROTO_DTLS12) && defined(HITLS_BSL_UIO_UDP)
 int32_t HITLS_SetDtlsCookieExangeSupport(HITLS_Ctx *ctx, bool isEnable)
 {
     if (ctx == NULL) {
