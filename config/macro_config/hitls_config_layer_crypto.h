@@ -110,6 +110,9 @@
     #ifndef HITLS_CRYPTO_GMAC
         #define HITLS_CRYPTO_GMAC
     #endif
+    #ifndef HITLS_CRYPTO_SIPHASH
+        #define HITLS_CRYPTO_SIPHASH
+    #endif
     #ifndef HITLS_CRYPTO_CBC_MAC
         #define HITLS_CRYPTO_CBC_MAC
     #endif
@@ -152,7 +155,7 @@
 #endif
 
 #if defined(HITLS_CRYPTO_HMAC) || defined(HITLS_CRYPTO_CMAC) || defined(HITLS_CRYPTO_GMAC) || \
-    defined(HITLS_CRYPTO_CBC_MAC)
+    defined(HITLS_CRYPTO_SIPHASH) || defined(HITLS_CRYPTO_CBC_MAC)
     #ifndef HITLS_CRYPTO_MAC
         #define HITLS_CRYPTO_MAC
     #endif

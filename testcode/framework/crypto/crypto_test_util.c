@@ -136,7 +136,7 @@ int TestRandInit(void)
 #endif
 
 #if defined(HITLS_CRYPTO_EAL) && (defined(HITLS_CRYPTO_MAC) || defined(HITLS_CRYPTO_HMAC) || defined(HITLS_CRYPTO_CMAC)\
-    || defined(HITLS_CRYPTO_GMAC) || defined(HITLS_CRYPTO_CBC_MAC))
+    || defined(HITLS_CRYPTO_GMAC) || defined(HITLS_CRYPTO_SIPHASH) || defined(HITLS_CRYPTO_CBC_MAC))
 
 uint32_t TestGetMacLen(int algId)
 {
@@ -167,6 +167,10 @@ uint32_t TestGetMacLen(int algId)
             return 16;// SM4 block size
         case CRYPT_MAC_CBC_MAC_SM4:
             return 16;// SM4 block size
+        case CRYPT_MAC_SIPHASH64:
+            return 8;
+        case CRYPT_MAC_SIPHASH128:
+            return 16;
         default:
             return 0;
     }

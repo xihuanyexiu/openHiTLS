@@ -164,6 +164,8 @@ typedef enum {
     BSL_CID_GMAC_AES128,            /**< identifies gmac with AES128 */
     BSL_CID_GMAC_AES192,            /**< identifies gmac with AES192 */
     BSL_CID_GMAC_AES256,            /**< identifies gmac with AES256 */
+    BSL_CID_SIPHASH64,              /**< identifies siphash64 */
+    BSL_CID_SIPHASH128,             /**< identifies siphash128 */
 
     /* Random number algorithm */
     // DRBG

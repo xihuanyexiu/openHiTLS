@@ -119,6 +119,7 @@ target_include_directories(TEST_INTF
         ${openHiTLS_SRC}/crypto/kdf/include
         ${openHiTLS_SRC}/crypto/scrypt/include
         ${openHiTLS_SRC}/crypto/hmac/include
+        ${openHiTLS_SRC}/crypto/siphash/include
         ${openHiTLS_SRC}/crypto/aes/include
         ${openHiTLS_SRC}/crypto/sm4/include
         ${openHiTLS_SRC}/crypto/drbg/include
