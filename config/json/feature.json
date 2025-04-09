@@ -780,7 +780,11 @@
             "aes": {
                 ".features": ["aes"],
                 ".srcs": {
-                    "no_asm":["crypto/aes/src/crypt_aes.c", "crypto/aes/src/crypt_aes_sbox.c"],
+                    "no_asm":[
+                        "crypto/aes/src/crypt_aes.c",
+                        "crypto/aes/src/crypt_aes_sbox.c",
+                        "crypto/aes/src/crypt_aes_tbox.c"
+                    ],
                     "public": "crypto/aes/src/crypt_aes_setkey.c",
                     "armv8":[
                         "crypto/aes/src/asm/crypt_aes_armv8.S",

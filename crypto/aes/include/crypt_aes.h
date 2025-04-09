@@ -25,6 +25,10 @@
 extern "C" {
 #endif // __cplusplus
 
+#define CRYPT_AES_128 128
+#define CRYPT_AES_192 192
+#define CRYPT_AES_256 256
+
 #define CRYPT_AES_MAX_ROUNDS  14
 #define CRYPT_AES_MAX_KEYLEN  (4 * (CRYPT_AES_MAX_ROUNDS + 1))
 

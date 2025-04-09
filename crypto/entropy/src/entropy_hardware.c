@@ -178,7 +178,7 @@ uint32_t ENTROPY_HWEntropyGet(void *ctx, uint8_t *buf, uint32_t bufLen)
 }
 
 #endif
-
+#endif
 #else
 uint32_t ENTROPY_HWEntropyGet(void *ctx, uint8_t *buf, uint32_t bufLen)
 {
@@ -187,7 +187,6 @@ uint32_t ENTROPY_HWEntropyGet(void *ctx, uint8_t *buf, uint32_t bufLen)
     (void)bufLen;
     return 0;
 }
-#endif
 
 #endif
 #endif
