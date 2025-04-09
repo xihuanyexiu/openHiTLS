@@ -85,6 +85,7 @@ extern const CRYPT_EAL_Func g_defMacHmac[];
 extern const CRYPT_EAL_Func g_defMacCmac[];
 extern const CRYPT_EAL_Func g_defMacCbcMac[];
 extern const CRYPT_EAL_Func g_defMacGmac[];
+extern const CRYPT_EAL_Func g_defMacSiphash[];
 
 extern const CRYPT_EAL_Func g_defRand[];
 

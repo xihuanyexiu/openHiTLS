@@ -519,6 +519,10 @@ enum CRYPT_ERROR {
     CRYPT_CBC_MAC_PADDING_NOT_SUPPORT,
     CRYPT_CBC_MAC_OUT_BUFF_LEN_NOT_ENOUGH,
 
+    CRYPT_SIPHASH_OUT_BUFF_LEN_NOT_ENOUGH = 0x01290001, /**< The buffer size for storing the output
+                                                             result is insufficient. */
+    CRYPT_SIPHASH_INPUT_OVERFLOW,
+    CRYPT_SIPHASH_ERR_UNSUPPORTED_CTRL_OPTION,          /**< Unsupport the control type. */
 
 };
 #ifdef __cplusplus

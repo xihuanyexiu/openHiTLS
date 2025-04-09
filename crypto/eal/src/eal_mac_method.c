@@ -36,6 +36,9 @@
 #ifdef HITLS_CRYPTO_GMAC
 #include "crypt_gmac.h"
 #endif
+#ifdef HITLS_CRYPTO_SIPHASH
+#include "crypt_siphash.h"
+#endif
 #include "bsl_err_internal.h"
 #include "eal_common.h"
 
@@ -76,6 +79,18 @@ EAL_MacMethod g_macMethod_GMAC = {
     (MacFreeCtx)CRYPT_GMAC_FreeCtx
 };
 #endif
+
+#ifdef HITLS_CRYPTO_SIPHASH
+CRYPT_MAC_IMPL_METHOD_DECLARE(SIPHASH);
+EAL_SiphashMethod g_siphash64Meth = {.hashSize = SIPHASH_MIN_DIGEST_SIZE,
+    .compressionRounds = DEFAULT_COMPRESSION_ROUND,
+    .finalizationRounds = DEFAULT_FINALIZATION_ROUND};
+
+EAL_SiphashMethod g_siphash128Meth = {.hashSize = SIPHASH_MAX_DIGEST_SIZE,
+    .compressionRounds = DEFAULT_COMPRESSION_ROUND,
+    .finalizationRounds = DEFAULT_FINALIZATION_ROUND};
+#endif
+
 static const EAL_MacMethod *g_macMethods[] = {
 #ifdef HITLS_CRYPTO_HMAC
     &g_macMethod_HMAC,   // HMAC
@@ -89,6 +104,11 @@ static const EAL_MacMethod *g_macMethods[] = {
 #endif
 #ifdef HITLS_CRYPTO_CBC_MAC
     &g_macMethod_CBC_MAC,   // CBC-MAC
+#else
+    NULL,
+#endif
+#ifdef HITLS_CRYPTO_SIPHASH
+    &g_macMethod_SIPHASH,   // SIPHASH
 #else
     NULL,
 #endif
@@ -184,6 +204,18 @@ int32_t EAL_MacFindMethod(CRYPT_MAC_AlgId id, EAL_MacMethLookup *lu)
     if (lu == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
+    }
+
+    if (id == CRYPT_MAC_SIPHASH64 || id == CRYPT_MAC_SIPHASH128) {
+#ifdef HITLS_CRYPTO_SIPHASH
+        // @see g_macMethod_SIPHASH
+        lu->macMethod = g_macMethods[CRYPT_MAC_SIPHASH];
+        lu->sip = (id == CRYPT_MAC_SIPHASH64) ? &g_siphash64Meth : &g_siphash128Meth;
+        return CRYPT_SUCCESS;
+#else
+        BSL_ERR_PUSH_ERROR(CRYPT_EAL_ERR_ALGID);
+        return CRYPT_EAL_ERR_ALGID;
+#endif
     }
 
     const EAL_MacAlgMap *macAlgMap = EAL_FindMacAlgMap(id);

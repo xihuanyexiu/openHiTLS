@@ -72,6 +72,12 @@ typedef struct {
 } EAL_MdUnitaryMethod;
 
 typedef struct {
+    uint16_t hashSize;              // Output length of the Siphash algorithm
+    uint16_t compressionRounds;     // the number of compression rounds
+    uint16_t finalizationRounds;    // the number of finalization rounds
+} EAL_SiphashMethod;
+
+typedef struct {
     uint32_t id;
     EAL_MdMethod *mdMeth;
 } EAL_CidToMdMeth;
@@ -300,6 +306,7 @@ typedef struct {
     union {
         const EAL_MdMethod *md;        // MD algorithm which HMAC depends on
         const EAL_SymMethod *ciph;  // AES function wihch CMAC depends on
+        const EAL_SiphashMethod *sip;  // siphash method
         const void *depMeth;           // Pointer to the dependent algorithm, which is reserved for extension.
     };
 } EAL_MacMethLookup;

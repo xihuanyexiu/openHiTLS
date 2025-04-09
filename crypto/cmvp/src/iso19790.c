@@ -304,6 +304,12 @@ bool ISO19790_MacParamCheck(CRYPT_MAC_AlgId id, uint32_t keyLen)
         CRYPT_MAC_HMAC_SHA256,
         CRYPT_MAC_HMAC_SHA384,
         CRYPT_MAC_HMAC_SHA512,
+        CRYPT_MAC_CMAC_AES128,
+        CRYPT_MAC_CMAC_AES192,
+        CRYPT_MAC_CMAC_AES256,
+        CRYPT_MAC_GMAC_AES128,
+        CRYPT_MAC_GMAC_AES192,
+        CRYPT_MAC_GMAC_AES256,
     };
 
     for (uint32_t i = 0; i < sizeof(list) / sizeof(list[0]); i++) {
