@@ -601,3 +601,109 @@ EXIT:
     CRYPT_EAL_CipherFreeCtx(ctx);
 }
 /* END_CASE */
+
+/**
+ * @test   SDV_CRYPTO_EAL_GET_KEY_LEN_TC001
+ */
+/* BEGIN_CASE */
+void SDV_CRYPTO_EAL_GET_KEY_LEN_TC001(int algid, int paramId, int pubLen, int prvLen, int sharedLen)
+{
+    CRYPT_EAL_PkeyCtx *ctx = CRYPT_EAL_PkeyNewCtx(algid);
+    ASSERT_TRUE(ctx != NULL);
+    int32_t ret;
+    if (paramId != 0) {
+        ret = CRYPT_EAL_PkeySetParaById(ctx, paramId);
+        ASSERT_EQ(ret, CRYPT_SUCCESS);
+    }
+
+    uint32_t val = 0;
+    ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_GET_PUBKEY_LEN, &val, sizeof(val));
+    ASSERT_EQ(ret, CRYPT_SUCCESS);
+    ASSERT_EQ(val, pubLen);
+
+    ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_GET_PRVKEY_LEN, &val, sizeof(val));
+    ASSERT_EQ(ret, CRYPT_SUCCESS);
+    ASSERT_EQ(val, prvLen);
+
+    ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_GET_SHARED_KEY_LEN, &val, sizeof(val));
+    ASSERT_EQ(ret, CRYPT_SUCCESS);
+    ASSERT_EQ(val, sharedLen);
+EXIT:
+    CRYPT_EAL_PkeyFreeCtx(ctx);
+}
+/* END_CASE */
+
+/**
+ * @test   SDV_CRYPTO_EAL_GET_KEY_LEN_TC002
+ */
+/* BEGIN_CASE */
+void SDV_CRYPTO_EAL_GET_KEY_LEN_TC002(int algid, int paramId, int pubLen, int prvLen)
+{
+    CRYPT_EAL_PkeyCtx *ctx = CRYPT_EAL_PkeyNewCtx(algid);
+    ASSERT_TRUE(ctx != NULL);
+    int32_t ret;
+    if (paramId != 0) {
+        ret = CRYPT_EAL_PkeySetParaById(ctx, paramId);
+        ASSERT_EQ(ret, CRYPT_SUCCESS);
+    }
+
+    uint32_t val = 0;
+    ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_GET_PUBKEY_LEN, &val, sizeof(val));
+    ASSERT_EQ(ret, CRYPT_SUCCESS);
+    ASSERT_EQ(val, pubLen);
+
+    ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_GET_PRVKEY_LEN, &val, sizeof(val));
+    ASSERT_EQ(ret, CRYPT_SUCCESS);
+    ASSERT_EQ(val, prvLen);
+EXIT:
+    CRYPT_EAL_PkeyFreeCtx(ctx);
+}
+/* END_CASE */
+
+/**
+ * @test   SDV_CRYPTO_EAL_GET_KEY_LEN_TC003
+ */
+/* BEGIN_CASE */
+void SDV_CRYPTO_EAL_GET_KEY_LEN_TC003(int algid, int rsaBits, Hex *p, Hex *q, Hex *g, int pubLen, int prvLen, int sharedLen)
+{
+    TestRandInit();
+    CRYPT_EAL_PkeyCtx *ctx = CRYPT_EAL_PkeyNewCtx(algid);
+    ASSERT_TRUE(ctx != NULL);
+    int32_t ret;
+    CRYPT_EAL_PkeyPara para = {0};
+    uint8_t e[3] = {1, 0, 1};
+    if (algid == CRYPT_PKEY_RSA) {
+        para.id = CRYPT_PKEY_RSA;
+        para.para.rsaPara.e = e;
+        para.para.rsaPara.eLen = 3;
+        para.para.rsaPara.bits = rsaBits;
+    } else {
+        para.id = algid;  // DH or DSA
+        para.para.dhPara.p = p->x;
+        para.para.dhPara.q = q->x;
+        para.para.dhPara.g = g->x;
+        para.para.dhPara.pLen = p->len;
+        para.para.dhPara.qLen = q->len;
+        para.para.dhPara.gLen = g->len;
+    }
+    ASSERT_EQ(CRYPT_EAL_PkeySetPara(ctx, &para), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeyGen(ctx), CRYPT_SUCCESS);
+
+    uint32_t val = 0;
+    ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_GET_PUBKEY_LEN, &val, sizeof(val));
+    ASSERT_EQ(ret, CRYPT_SUCCESS);
+    ASSERT_EQ(val, pubLen);
+
+    ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_GET_PRVKEY_LEN, &val, sizeof(val));
+    ASSERT_EQ(ret, CRYPT_SUCCESS);
+    ASSERT_EQ(val, prvLen);
+
+    if (algid == CRYPT_PKEY_DH) {
+        ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_GET_SHARED_KEY_LEN, &val, sizeof(val));
+        ASSERT_EQ(ret, CRYPT_SUCCESS);
+        ASSERT_EQ(val, sharedLen);
+    }
+EXIT:
+    CRYPT_EAL_PkeyFreeCtx(ctx);
+}
+/* END_CASE */

@@ -115,6 +115,17 @@ do {                                         \
         } \
     } while (0)
 
+/**
+ * Check whether conditions are met. If yes, an error code is returned.
+ */
+#define RETURN_RET_IF_ERR(func, ret)   \
+    do {                               \
+        (ret) = (func);                \
+        if ((ret) != CRYPT_SUCCESS) {  \
+            BSL_ERR_PUSH_ERROR((ret)); \
+            return ret;                \
+        }                              \
+    } while (0)
 
 #define BREAK_IF(condition) \
     do {                    \

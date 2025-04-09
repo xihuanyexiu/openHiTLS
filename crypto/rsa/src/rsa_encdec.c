@@ -1395,8 +1395,12 @@ static int32_t GetSaltLen(CRYPT_RSA_Ctx *ctx, void *val, uint32_t len)
     *ret = valTmp;
     return CRYPT_SUCCESS;
 }
-
 #endif
+
+static int32_t RSAGetKeyLen(CRYPT_RSA_Ctx *ctx)
+{
+    return BN_BITS_TO_BYTES(CRYPT_RSA_GetBits(ctx));
+}
 
 static int32_t GetPadding(CRYPT_RSA_Ctx *ctx, void *val, uint32_t len)
 {
@@ -1633,7 +1637,6 @@ static int32_t RsaCommonCtrl(CRYPT_RSA_Ctx *ctx, int32_t opt, void *val, uint32_
     switch (opt) {
         case CRYPT_CTRL_UP_REFERENCES:
             return RsaUpReferences(ctx, val, len);
-        case CRYPT_CTRL_GET_PUB_KEY_BITS:
         case CRYPT_CTRL_GET_BITS:
             return GetUintCtrl(ctx, val, len, (GetUintCallBack)CRYPT_RSA_GetBits);
         case CRYPT_CTRL_GET_SECBITS:
@@ -1642,6 +1645,9 @@ static int32_t RsaCommonCtrl(CRYPT_RSA_Ctx *ctx, int32_t opt, void *val, uint32_
             return SetFlag(ctx, val, len);
         case CRYPT_CTRL_CLR_RSA_FLAG:
             return ClearFlag(ctx, val, len);
+        case CRYPT_CTRL_GET_PUBKEY_LEN:
+        case CRYPT_CTRL_GET_PRVKEY_LEN:
+            return GetUintCtrl(ctx, val, len, (GetUintCallBack)RSAGetKeyLen);
         default:
             BSL_ERR_PUSH_ERROR(CRYPT_RSA_CTRL_NOT_SUPPORT_ERROR);
             return CRYPT_RSA_CTRL_NOT_SUPPORT_ERROR;

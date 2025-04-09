@@ -415,6 +415,28 @@ static uint32_t GetOrderBits(const ECC_Pkey *ctx)
     return BN_Bits(ctx->para->n);
 }
 
+static uint32_t ECC_GetKeyLen(const ECC_Pkey *ctx)
+{
+    if ((ctx == NULL) || (ctx->para == NULL)) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return 0;
+    }
+    return BN_Bytes(ctx->para->p);
+}
+
+static uint32_t ECC_GetPubKeyLen(const ECC_Pkey *ctx)
+{
+    uint32_t keylen = ECC_GetKeyLen(ctx);
+    if (keylen == 0) {
+        BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);
+        return 0;
+    }
+    if (ctx->pointFormat == CRYPT_POINT_COMPRESSED) {
+        return (keylen + 1);
+    }
+    return (keylen * 2 + 1);
+}
+
 static int32_t GetEccName(ECC_Pkey *ctx, void *val, uint32_t len)
 {
     if (ctx->para == NULL) {
@@ -472,8 +494,12 @@ int32_t ECC_PkeyCtrl(ECC_Pkey *ctx, int32_t opt, void *val, uint32_t len)
         case CRYPT_CTRL_GEN_ECC_PUBLICKEY:
             return GenPublicKey(ctx);
         case CRYPT_CTRL_GET_ECC_ORDER_BITS:
-        case CRYPT_CTRL_GET_PUB_KEY_BITS:
             return GetUintCtrl(ctx, val, len, (GetUintCallBack)GetOrderBits);
+        case CRYPT_CTRL_GET_PUBKEY_LEN:
+            return GetUintCtrl(ctx, val, len, (GetUintCallBack)ECC_GetPubKeyLen);
+        case CRYPT_CTRL_GET_PRVKEY_LEN:
+        case CRYPT_CTRL_GET_SHARED_KEY_LEN:
+            return GetUintCtrl(ctx, val, len, (GetUintCallBack)ECC_GetKeyLen);
         case CRYPT_CTRL_UP_REFERENCES:
             if (len != (uint32_t)sizeof(int)) {
                 BSL_ERR_PUSH_ERROR(CRYPT_ECC_PKEY_ERR_CTRL_LEN);

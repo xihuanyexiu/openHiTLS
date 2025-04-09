@@ -477,7 +477,7 @@ int32_t CRYPT_EAL_PkeyCtrl(CRYPT_EAL_PkeyCtx *pkey, int32_t opt, void *val, uint
 
 int32_t CRYPT_EAL_PkeySetParaById(CRYPT_EAL_PkeyCtx *pkey, CRYPT_PKEY_ParaId id)
 {
-    return CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_PARAM_BY_ID, &id, sizeof(id));
+    return CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_PARA_BY_ID, &id, sizeof(id));
 }
 
 int32_t CRYPT_EAL_PkeyGen(CRYPT_EAL_PkeyCtx *pkey)

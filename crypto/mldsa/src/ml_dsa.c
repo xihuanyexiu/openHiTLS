@@ -215,6 +215,24 @@ int32_t MLDSASetctxInfo(CRYPT_ML_DSA_Ctx *ctx, void *val, uint32_t len)
     return CRYPT_SUCCESS;
 }
 
+static int32_t MLDSAGetPubKeyLen(const CRYPT_ML_DSA_Ctx *ctx, void *val, uint32_t len)
+{
+    RETURN_RET_IF(val == NULL, CRYPT_NULL_INPUT);
+    RETURN_RET_IF((ctx->info == NULL), CRYPT_MLDSA_KEYINFO_NOT_SET);
+    RETURN_RET_IF((len != sizeof(int32_t)), CRYPT_INVALID_ARG);
+    *(int32_t *)val = ctx->info->publicKeyLen;
+    return CRYPT_SUCCESS;
+}
+
+static int32_t MLDSAGetPrvKeyLen(const CRYPT_ML_DSA_Ctx *ctx, void *val, uint32_t len)
+{
+    RETURN_RET_IF(val == NULL, CRYPT_NULL_INPUT);
+    RETURN_RET_IF((ctx->info == NULL), CRYPT_MLDSA_KEYINFO_NOT_SET);
+    RETURN_RET_IF((len != sizeof(int32_t)), CRYPT_INVALID_ARG);
+    *(int32_t *)val = ctx->info->privateKeyLen;
+    return CRYPT_SUCCESS;
+}
+
 int32_t CRYPT_ML_DSA_Ctrl(CRYPT_ML_DSA_Ctx *ctx, CRYPT_PkeyCtrl opt, void *val, uint32_t len)
 {
     if (ctx == NULL) {
@@ -222,7 +240,7 @@ int32_t CRYPT_ML_DSA_Ctrl(CRYPT_ML_DSA_Ctx *ctx, CRYPT_PkeyCtrl opt, void *val, 
         return CRYPT_NULL_INPUT;
     }
     switch ((uint32_t)opt) {
-        case CRYPT_CTRL_SET_MLDSA_TYPE:
+        case CRYPT_CTRL_SET_PARA_BY_ID:
             return MlDSASetAlgInfo(ctx, val, len);
         case CRYPT_CTRL_GET_SIGNLEN:
             return MLDSAGetSignLen(ctx, val, len);
@@ -236,6 +254,10 @@ int32_t CRYPT_ML_DSA_Ctrl(CRYPT_ML_DSA_Ctx *ctx, CRYPT_PkeyCtrl opt, void *val, 
             return MlDSASetMsgFlag(ctx, val, len);
         case CRYPT_CTRL_SET_MLDSA_DETERMINISTIC_FLAG:
             return MlDSASetDeterministicSignFlag(ctx, val, len);
+        case CRYPT_CTRL_GET_PUBKEY_LEN:
+            return MLDSAGetPubKeyLen(ctx, val, len);
+        case CRYPT_CTRL_GET_PRVKEY_LEN:
+            return MLDSAGetPrvKeyLen(ctx, val, len);
         default:
             BSL_ERR_PUSH_ERROR(CRYPT_MLDSA_CTRL_NOT_SUPPORT);
             return CRYPT_MLDSA_CTRL_NOT_SUPPORT;
