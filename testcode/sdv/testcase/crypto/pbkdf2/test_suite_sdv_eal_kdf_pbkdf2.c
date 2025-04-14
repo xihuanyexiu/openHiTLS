@@ -190,6 +190,14 @@ EXIT:
 /* BEGIN_CASE */
 void SDV_CRYPTO_PBKDF2_DEFAULT_PROVIDER_FUNC_TC001(int algId, Hex *key, Hex *salt, int it, Hex *result)
 {
+#ifndef HITLS_CRYPTO_PROVIDER
+    (void)algId;
+    (void)key;
+    (void)salt;
+    (void)it;
+    (void)result;
+    SKIP_TEST();
+#else
     if (IsHmacAlgDisabled(algId)) {
         SKIP_TEST();
     }
@@ -218,5 +226,6 @@ EXIT:
         free(out);
     }
     CRYPT_EAL_KdfFreeCtx(ctx);
+#endif
 }
 /* END_CASE */

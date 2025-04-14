@@ -355,6 +355,12 @@ EXIT:
 /* BEGIN_CASE */
 void SDV_CRYPTO_MD5_FUNC_TC005(int id, Hex *msg, Hex *hash)
 {
+#ifndef HITLS_CRYPTO_PROVIDER
+    (void)id;
+    (void)msg;
+    (void)hash;
+    SKIP_TEST();
+#else
     TestMemInit();
     uint8_t output[CRYPT_MD5_DIGESTSIZE];
     uint32_t outLen = CRYPT_MD5_DIGESTSIZE;
@@ -368,6 +374,7 @@ void SDV_CRYPTO_MD5_FUNC_TC005(int id, Hex *msg, Hex *hash)
     
 EXIT:
     CRYPT_EAL_MdFreeCtx(ctx);
+#endif
 }
 /* END_CASE */
 

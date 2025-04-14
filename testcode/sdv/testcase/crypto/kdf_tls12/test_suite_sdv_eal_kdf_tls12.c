@@ -151,6 +151,14 @@ EXIT:
 /* BEGIN_CASE */
 void SDV_CRYPTO_KDFTLS12_DEFAULT_PROVIDER_FUNC_TC001(int algId, Hex *key, Hex *label, Hex *seed, Hex *result)
 {
+#ifndef HITLS_CRYPTO_PROVIDER
+    (void)algId;
+    (void)key;
+    (void)label;
+    (void)seed;
+    (void)result;
+    SKIP_TEST();
+#else
     if (IsHmacAlgDisabled(algId)) {
         SKIP_TEST();
     }
@@ -179,5 +187,6 @@ EXIT:
         free(out);
     }
     CRYPT_EAL_KdfFreeCtx(ctx);
+#endif
 }
 /* END_CASE */

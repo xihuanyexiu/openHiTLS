@@ -28,6 +28,7 @@
 #include "eal_md_local.h"
 #include "crypt_eal_rand.h"
 #include "crypt_eal_mac.h"
+#include "crypt_eal_init.h"
 
 #include "test.h"
 #include "helper.h"
@@ -68,7 +69,7 @@ typedef struct {
     CRYPT_Data *retBits;
 } DRBG_Vec_t;
 
-#ifdef HITLS_CRYPTO_ENTROPY
+#ifndef HITLS_CRYPTO_ENTROPY
 static int32_t GetEntropy(void *ctx, CRYPT_Data *entropy, uint32_t strength, CRYPT_Range *lenRange)
 {
     if (lenRange == NULL) {
@@ -122,7 +123,7 @@ int TestRandInit(void)
         return CRYPT_NOT_SUPPORT;
     }
 
-#ifdef HITLS_CRYPTO_ENTROPY
+#ifndef HITLS_CRYPTO_ENTROPY
     CRYPT_RandSeedMethod seedMeth = {GetEntropy, CleanEntropy, NULL, NULL};
     uint8_t entropy[64] = {0};
     CRYPT_Data tempEntropy = {entropy, sizeof(entropy)};
@@ -135,8 +136,7 @@ int TestRandInit(void)
 }
 #endif
 
-#if defined(HITLS_CRYPTO_EAL) && (defined(HITLS_CRYPTO_MAC) || defined(HITLS_CRYPTO_HMAC) || defined(HITLS_CRYPTO_CMAC)\
-    || defined(HITLS_CRYPTO_GMAC) || defined(HITLS_CRYPTO_SIPHASH) || defined(HITLS_CRYPTO_CBC_MAC))
+#if defined(HITLS_CRYPTO_EAL) && defined(HITLS_CRYPTO_MAC)
 
 uint32_t TestGetMacLen(int algId)
 {
@@ -225,5 +225,49 @@ void TestMacAddrNotAlign(int algId, Hex *key, Hex *data, Hex *mac)
 
 EXIT:
     CRYPT_EAL_MacFreeCtx(ctx);
+}
+#endif
+
+#ifdef HITLS_CRYPTO_CIPHER
+CRYPT_EAL_CipherCtx *TestCipherNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t id, const char *attrName, int isProvider)
+{
+#ifdef HITLS_CRYPTO_PROVIDER
+    if (isProvider == 1) {
+        if (CRYPT_EAL_Init(0) != CRYPT_SUCCESS) {
+            return NULL;
+        }
+        return CRYPT_EAL_ProviderCipherNewCtx(libCtx, id, attrName);
+    } else {
+        return CRYPT_EAL_CipherNewCtx(id);
+    }
+#else
+    (void)libCtx;
+    (void)attrName;
+    (void)isProvider;
+    return CRYPT_EAL_CipherNewCtx(id);
+#endif
+}
+#endif
+
+#ifdef HITLS_CRYPTO_PKEY
+CRYPT_EAL_PkeyCtx *TestPkeyNewCtx(
+    CRYPT_EAL_LibCtx *libCtx, int32_t id, uint32_t operType, const char *attrName, int isProvider)
+{
+#ifdef HITLS_CRYPTO_PROVIDER
+    if (isProvider == 1) {
+        if (CRYPT_EAL_Init(0) != CRYPT_SUCCESS) {
+            return NULL;
+        }
+        return CRYPT_EAL_ProviderPkeyNewCtx(libCtx, id, operType, attrName);
+    } else {
+        return CRYPT_EAL_PkeyNewCtx(id);
+    }
+#else
+    (void)libCtx;
+    (void)operType;
+    (void)attrName;
+    (void)isProvider;
+    return CRYPT_EAL_PkeyNewCtx(id);
+#endif
 }
 #endif

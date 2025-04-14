@@ -394,6 +394,12 @@ EXIT:
 /* BEGIN_CASE */
 void SDV_CRYPT_EAL_SHA1_FUN_TC004(int id, Hex *msg, Hex *hash)
 {
+#ifndef HITLS_CRYPTO_PROVIDER
+    (void)id;
+    (void)msg;
+    (void)hash;
+    SKIP_TEST();
+#else
     TestMemInit();
     uint8_t output[SHA1_DIGEST_LEN];
     uint32_t outLen = SHA1_DIGEST_LEN;
@@ -407,5 +413,6 @@ void SDV_CRYPT_EAL_SHA1_FUN_TC004(int id, Hex *msg, Hex *hash)
 
 EXIT:
     CRYPT_EAL_MdFreeCtx(ctx);
+#endif
 }
 /* END_CASE */

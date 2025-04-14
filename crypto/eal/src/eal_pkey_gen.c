@@ -1174,6 +1174,7 @@ int32_t CRYPT_EAL_PkeyUpRef(CRYPT_EAL_PkeyCtx *pkey)
     return BSL_SAL_AtomicUpReferences(&(pkey->references), &i);
 }
 
+#ifdef HITLS_CRYPTO_PROVIDER
 static int32_t CRYPT_EAL_SetKeyMethod(const CRYPT_EAL_Func *funcsKeyMgmt, EAL_PkeyUnitaryMethod *method)
 {
     int32_t index = 0;
@@ -1454,4 +1455,6 @@ CRYPT_EAL_PkeyCtx *CRYPT_EAL_ProviderPkeyNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_
     BSL_SAL_ReferencesInit(&(ctx->references));
     return ctx;
 }
+#endif // HITLS_CRYPTO_PROVIDER
+
 #endif

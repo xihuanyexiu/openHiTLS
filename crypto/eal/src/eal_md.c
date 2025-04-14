@@ -27,9 +27,11 @@
 #include "crypt_errno.h"
 #include "eal_md_local.h"
 #include "eal_common.h"
+#ifdef HITLS_CRYPTO_PROVIDER
 #include "crypt_ealinit.h"
 #include "crypt_eal_implprovider.h"
 #include "crypt_provider.h"
+#endif
 
 static CRYPT_EAL_MdCTX *MdAllocCtx(CRYPT_MD_AlgId id, const EAL_MdUnitaryMethod *method)
 {
@@ -96,6 +98,7 @@ static CRYPT_EAL_MdCTX *MdNewDefaultCtx(CRYPT_MD_AlgId id)
     return ctx;
 }
 
+#ifdef HITLS_CRYPTO_PROVIDER
 static int32_t CRYPT_EAL_SetMdMethod(CRYPT_EAL_MdCTX *ctx, const CRYPT_EAL_Func *funcs)
 {
     int32_t index = 0;
@@ -184,6 +187,7 @@ CRYPT_EAL_MdCTX *CRYPT_EAL_ProviderMdNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t al
     ctx->isProvider = true;
     return ctx;
 }
+#endif // HITLS_CRYPTO_PROVIDER
 
 CRYPT_EAL_MdCTX *CRYPT_EAL_MdNewCtx(CRYPT_MD_AlgId id)
 {

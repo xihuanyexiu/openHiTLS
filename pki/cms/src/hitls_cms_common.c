@@ -19,7 +19,7 @@
 #include "bsl_obj_internal.h"
 #include "crypt_eal_encode.h"
 #include "crypt_eal_md.h"
-#include "crypt_encode.h"
+#include "crypt_encode_decode.h"
 #include "hitls_pki_errno.h"
 
 /**

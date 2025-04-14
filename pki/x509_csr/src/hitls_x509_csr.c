@@ -21,7 +21,7 @@
 #include "bsl_pem_internal.h"
 #include "bsl_log_internal.h"
 #include "hitls_pki_errno.h"
-#include "crypt_encode.h"
+#include "crypt_encode_decode.h"
 #include "crypt_errno.h"
 #include "sal_file.h"
 #include "crypt_eal_encode.h"
@@ -277,7 +277,7 @@ static int32_t X509CsrPemParse(const BSL_Buffer *encode, HITLS_X509_Csr *csr)
     uint32_t tmpBufLen = encode->dataLen;
     BSL_Buffer asn1Buf = {NULL, 0};
     BSL_PEM_Symbol symbol = {BSL_PEM_CERT_REQ_BEGIN_STR, BSL_PEM_CERT_REQ_END_STR};
-    int32_t ret = BSL_PEM_ParsePem2Asn1((char **)&tmpBuf, &tmpBufLen, &symbol, &asn1Buf.data,
+    int32_t ret = BSL_PEM_DecodePemToAsn1((char **)&tmpBuf, &tmpBufLen, &symbol, &asn1Buf.data,
         &asn1Buf.dataLen);
     if (ret != HITLS_PKI_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);

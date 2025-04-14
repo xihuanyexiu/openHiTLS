@@ -397,12 +397,8 @@ void SDV_CRYPTO_MLKEM_KEYCMP_FUNC_TC001(int bits, Hex *r0, Hex *r1, Hex *r2, int
     memcpy_s(gKyberRandBuf[2], 32, r2->x, r2->len);
     CRYPT_RandRegist(TEST_KyberRandom);
 
-    CRYPT_EAL_PkeyCtx *ctx = NULL;
-    if (isProvider == 1) {
-        ctx = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_ML_KEM, CRYPT_EAL_PKEY_KEM_OPERATE, "provider=default");
-    } else {
-        ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ML_KEM);
-    }
+    CRYPT_EAL_PkeyCtx *ctx = TestPkeyNewCtx(NULL, CRYPT_PKEY_ML_KEM, CRYPT_EAL_PKEY_KEM_OPERATE,
+        "provider=default", isProvider);
     ASSERT_NE(ctx, NULL);
     uint32_t val = (uint32_t)bits;
     ASSERT_EQ(CRYPT_EAL_PkeySetParaById(ctx, val), CRYPT_SUCCESS);
@@ -411,13 +407,9 @@ void SDV_CRYPTO_MLKEM_KEYCMP_FUNC_TC001(int bits, Hex *r0, Hex *r1, Hex *r2, int
     ASSERT_EQ(CRYPT_EAL_PkeyGen(ctx), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeyCmp(ctx, NULL), CRYPT_NULL_INPUT);
     gKyberRandNum = 0;
-    CRYPT_EAL_PkeyCtx *ctx2 = NULL;
-    if (isProvider == 1) {
-        ctx2 = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_ML_KEM, CRYPT_EAL_PKEY_KEM_OPERATE, "provider=default");
-    } else {
-        ctx2 = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ML_KEM);
-    }
 
+    CRYPT_EAL_PkeyCtx *ctx2 = TestPkeyNewCtx(NULL, CRYPT_PKEY_ML_KEM, CRYPT_EAL_PKEY_KEM_OPERATE,
+        "provider=default", isProvider);
     ASSERT_NE(ctx2, NULL);
     ASSERT_EQ(CRYPT_EAL_PkeyCmp(ctx, ctx2), CRYPT_MLKEM_KEY_NOT_EQUAL);
     val = (uint32_t)bits;
@@ -429,12 +421,8 @@ void SDV_CRYPTO_MLKEM_KEYCMP_FUNC_TC001(int bits, Hex *r0, Hex *r1, Hex *r2, int
     ASSERT_EQ(CRYPT_EAL_PkeyCmp(ctx, ctx2), CRYPT_SUCCESS);
 
     gKyberRandNum = 1;
-    CRYPT_EAL_PkeyCtx *ctx3 = NULL;
-    if (isProvider == 1) {
-        ctx3 = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_ML_KEM, CRYPT_EAL_PKEY_KEM_OPERATE, "provider=default");
-    } else {
-        ctx3 = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ML_KEM);
-    }
+    CRYPT_EAL_PkeyCtx *ctx3 = TestPkeyNewCtx(NULL, CRYPT_PKEY_ML_KEM, CRYPT_EAL_PKEY_KEM_OPERATE,
+        "provider=default", isProvider);
     ASSERT_NE(ctx3, NULL);
     val = (uint32_t)bits;
     ASSERT_EQ(CRYPT_EAL_PkeySetParaById(ctx3, val), CRYPT_SUCCESS);
@@ -484,12 +472,8 @@ void SDV_CRYPTO_MLKEM_KEYGEN_FUNC_TC001(int bits, Hex *z, Hex *d, Hex *testEK, H
     memcpy_s(gKyberRandBuf[1], 32, z->x, z->len);
     CRYPT_RandRegist(TEST_KyberRandom);
 
-    CRYPT_EAL_PkeyCtx *ctx = NULL;
-    if (isProvider == 1) {
-        ctx = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_ML_KEM, CRYPT_EAL_PKEY_KEM_OPERATE, "provider=default");
-    } else {
-        ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ML_KEM);
-    }
+    CRYPT_EAL_PkeyCtx *ctx = TestPkeyNewCtx(NULL, CRYPT_PKEY_ML_KEM, CRYPT_EAL_PKEY_KEM_OPERATE,
+        "provider=default", isProvider);
 
     ASSERT_NE(ctx, NULL);
     uint32_t val = (uint32_t)bits;
@@ -549,12 +533,8 @@ void SDV_CRYPTO_MLKEM_ENCAPS_DECAPS_FUNC_TC001(int bits, Hex *m, Hex *testEK, He
     memcpy_s(gKyberRandBuf[0], 32, m->x, m->len);
     CRYPT_RandRegist(TEST_KyberRandom);
 
-    CRYPT_EAL_PkeyCtx *ctx = NULL;
-    if (isProvider == 1) {
-        ctx = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_ML_KEM, CRYPT_EAL_PKEY_KEM_OPERATE, "provider=default");
-    } else {
-        ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ML_KEM);
-    }
+    CRYPT_EAL_PkeyCtx *ctx = TestPkeyNewCtx(NULL, CRYPT_PKEY_ML_KEM, CRYPT_EAL_PKEY_KEM_OPERATE,
+        "provider=default", isProvider);
 
     ASSERT_NE(ctx, NULL);
     uint32_t val = (uint32_t)bits;
@@ -625,12 +605,8 @@ EXIT:
 void SDV_CRYPTO_MLKEM_DECAPS_FUNC_TC001(int bits, Hex *testDK, Hex *testCT, Hex *testSK, int isProvider)
 {
     TestMemInit();
-    CRYPT_EAL_PkeyCtx *ctx = NULL;
-    if (isProvider == 1) {
-        ctx = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_ML_KEM, CRYPT_EAL_PKEY_KEM_OPERATE, "provider=default");
-    } else {
-        ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ML_KEM);
-    }
+    CRYPT_EAL_PkeyCtx *ctx = TestPkeyNewCtx(NULL, CRYPT_PKEY_ML_KEM, CRYPT_EAL_PKEY_KEM_OPERATE,
+        "provider=default", isProvider);
 
     ASSERT_NE(ctx, NULL);
     uint32_t val = (uint32_t)bits;

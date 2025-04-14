@@ -616,8 +616,7 @@ void SDV_CRYPTO_SM4_ENCRYPT_FUNC_TC003(int isProvider, int id, Hex *key, Hex *pl
     uint8_t out[MAXSIZE] = {0};
     uint32_t len = plainText->len;
 
-    CRYPT_EAL_CipherCtx *ctx = (isProvider == 0) ? CRYPT_EAL_CipherNewCtx(id) :
-        CRYPT_EAL_ProviderCipherNewCtx(NULL, id, "provider=default");
+    CRYPT_EAL_CipherCtx *ctx = TestCipherNewCtx(NULL, id, "provider=default", isProvider);
     ASSERT_TRUE(ctx != NULL);
     ASSERT_EQ(CRYPT_EAL_CipherInit(ctx, key->x, key->len, iv->x, iv->len, true), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_CipherUpdate(ctx, plainText->x, plainText->len, out, &len), CRYPT_SUCCESS);
@@ -651,8 +650,7 @@ void SDV_CRYPTO_SM4_ENCRYPT_FUNC_TC004(int isProvider, int id, Hex *key, Hex *pl
     uint8_t out[MAXSIZE] = {0};
     uint32_t len = cipherText->len;
 
-    CRYPT_EAL_CipherCtx *ctx = (isProvider == 0) ? CRYPT_EAL_CipherNewCtx(id) :
-        CRYPT_EAL_ProviderCipherNewCtx(NULL, id, "provider=default");
+    CRYPT_EAL_CipherCtx *ctx = TestCipherNewCtx(NULL, id, "provider=default", isProvider);
     ASSERT_TRUE(ctx != NULL);
     ret = CRYPT_EAL_CipherInit(ctx, key->x, key->len, iv->x, iv->len, false);
     ASSERT_TRUE(ret == CRYPT_SUCCESS);
@@ -959,8 +957,7 @@ void SDV_CRYPTO_SM4_ENCRYPT_FUNC_TC005(int isProvider, Hex *key, Hex *in1, Hex *
     uint8_t outTmp[MAXSIZE] = {0};
     uint32_t len = MAXSIZE;
 
-    CRYPT_EAL_CipherCtx *ctx = (isProvider == 0) ? CRYPT_EAL_CipherNewCtx(CRYPT_CIPHER_SM4_XTS) :
-        CRYPT_EAL_ProviderCipherNewCtx(NULL, CRYPT_CIPHER_SM4_XTS, "provider=default");
+    CRYPT_EAL_CipherCtx *ctx = TestCipherNewCtx(NULL, CRYPT_CIPHER_SM4_XTS, "provider=default", isProvider);
     ASSERT_TRUE(ctx != NULL);
 
     ret = CRYPT_EAL_CipherInit(ctx, key->x, key->len, iv1->x, iv1->len, enc);
@@ -1176,8 +1173,7 @@ void SDV_CRYPTO_SM4_ENCRYPT_FUNC_TC008(int isProvider, int algId, Hex *key, Hex 
     uint32_t len = MAX_OUTPUT;
     uint32_t finLen;
 
-    CRYPT_EAL_CipherCtx *ctx = (isProvider == 0) ? CRYPT_EAL_CipherNewCtx(algId) :
-        CRYPT_EAL_ProviderCipherNewCtx(NULL, algId, "provider=default");
+    CRYPT_EAL_CipherCtx *ctx = TestCipherNewCtx(NULL, algId, "provider=default", isProvider);
     ASSERT_TRUE(ctx != NULL);
     ret = CRYPT_EAL_CipherInit(ctx, key->x, key->len, iv->x, iv->len, enc);
     ASSERT_TRUE(ret == CRYPT_SUCCESS);
@@ -1233,8 +1229,7 @@ void SDV_CRYPTO_SM4_ENCRYPT_FUNC_TC009(int isProvider, int algId, Hex *key, Hex 
     uint32_t len = MAX_OUTPUT;
     uint32_t finLen;
 
-    CRYPT_EAL_CipherCtx *ctx = (isProvider == 0) ? CRYPT_EAL_CipherNewCtx(algId) :
-        CRYPT_EAL_ProviderCipherNewCtx(NULL, algId, "provider=default");
+    CRYPT_EAL_CipherCtx *ctx = TestCipherNewCtx(NULL, algId, "provider=default", isProvider);
     ASSERT_TRUE(ctx != NULL);
     ret = CRYPT_EAL_CipherInit(ctx, key->x, key->len, iv->x, iv->len, enc);
     ASSERT_TRUE(ret == CRYPT_SUCCESS);
@@ -1549,10 +1544,7 @@ void SDV_CRYPTO_SM4_ENCRYPT_FUNC_TC014(int isProvider, int algId, Hex *key, Hex 
     uint32_t totalLen = 0;
     uint32_t leftLen = MAX_OUTPUT;
     uint32_t len = MAX_OUTPUT;
-    CRYPT_EAL_CipherCtx *ctxEnc = NULL;
-
-    ctxEnc = (isProvider == 0) ? CRYPT_EAL_CipherNewCtx(algId) :
-        CRYPT_EAL_ProviderCipherNewCtx(NULL, algId, "provider=default");
+    CRYPT_EAL_CipherCtx *ctxEnc = TestCipherNewCtx(NULL, algId, "provider=default", isProvider);
     ASSERT_TRUE(ctxEnc != NULL);
     ret = CRYPT_EAL_CipherInit(ctxEnc, key->x, key->len, iv->x, iv->len, true);
     ASSERT_TRUE(ret == CRYPT_SUCCESS);
@@ -1607,8 +1599,7 @@ void SDV_CRYPTO_SM4_ENCRYPT_FUNC_TC015(int isProvider, int algId, Hex *key, Hex 
 
     len = MAX_OUTPUT;
     leftLen = MAX_OUTPUT;
-    ctxDec = (isProvider == 0) ? CRYPT_EAL_CipherNewCtx(algId) :
-        CRYPT_EAL_ProviderCipherNewCtx(NULL, algId, "provider=default");
+    ctxDec = TestCipherNewCtx(NULL, algId, "provider=default", isProvider);
     ASSERT_TRUE(ctxDec != NULL);
     ASSERT_EQ(CRYPT_EAL_CipherInit(ctxDec, key->x, key->len, iv->x, iv->len, false), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_CipherSetPadding(ctxDec, padding), CRYPT_SUCCESS);

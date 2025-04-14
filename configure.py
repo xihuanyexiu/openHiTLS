@@ -208,12 +208,12 @@ class Configure:
         self._load_config(True, self._args.feature_config, self._args.tmp_feature_config)
         self._load_config(False, self._args.compile_config, self._args.tmp_compile_config)
 
-    def update_feature_config(self):
+    def update_feature_config(self, gen_cmake):
         """Update the feature configuration file in the build based on the input parameters."""
         conf_custom_feature = FeatureConfigParser(self._features, self._args.tmp_feature_config)
 
-        # 'enable' default is 'all'
-        if not conf_custom_feature.libs and not self._args.enable:
+        # If no feature is enabled before modules.cmake is generated, set enable to "all".
+        if not conf_custom_feature.libs and not self._args.enable and gen_cmake:
             self._args.enable = ['all']
 
         # Set parameters by referring to "FeatureConfigParser.key_value".
@@ -222,16 +222,20 @@ class Configure:
         conf_custom_feature.set_param('system', self._args.system, False)
         conf_custom_feature.set_param('bits', self._args.bits, False)
 
-        enable_feas, added_asm_feas = conf_custom_feature.get_enable_feas(self._args.enable)
+        enable_feas, asm_feas = conf_custom_feature.get_enable_feas(self._args.enable, self._args.asm)
 
-        if self._args.asm_type:
-            conf_custom_feature.set_asm_type(self._args.asm_type)
-            conf_custom_feature.set_asm_features(enable_feas, added_asm_feas, self._args.asm_type, self._args.asm)
+        asm_type = self._args.asm_type if self._args.asm_type else ''
+        if not asm_type and conf_custom_feature.asm_type != 'no_asm':
+            asm_type = conf_custom_feature.asm_type
 
-        conf_custom_feature.set_c_features(enable_feas)
+        if asm_type:
+            conf_custom_feature.set_asm_type(asm_type)
+            conf_custom_feature.set_asm_features(enable_feas, asm_feas, asm_type)
+        if enable_feas:
+            conf_custom_feature.set_c_features(enable_feas)
 
         # update feature and resave file.
-        conf_custom_feature.update_feature(self._args.enable, self._args.disable)
+        conf_custom_feature.update_feature(self._args.enable, self._args.disable, gen_cmake)
         conf_custom_feature.save(self._args.tmp_feature_config)
 
     def update_compile_config(self, all_options: CompleteOptionParser):
@@ -265,7 +269,7 @@ class CMakeGenerator:
         self._platform = 'linux'
 
     @staticmethod
-    def _get_lib_common_include(modules: list):
+    def _get_common_include(modules: list):
         """ modules: ['::','::']"""
         inc_dirs = set()
         top_modules = set(x.split('::')[0] for x in modules)
@@ -377,11 +381,9 @@ class CMakeGenerator:
         if lib_name == 'hitls_tls':
             cmake += self._gen_cmd_cmake("target_link_libraries", "hitls_tls-shared hitls_bsl-shared")
         if lib_name == 'hitls_pki':
-            cmake += self._gen_cmd_cmake(
-                "target_link_libraries", "hitls_pki-shared hitls_crypto-shared hitls_bsl-shared")
+            cmake += self._gen_cmd_cmake("target_link_libraries", "hitls_pki-shared hitls_crypto-shared hitls_bsl-shared")
         if lib_name == 'hitls_auth':
-            cmake += self._gen_cmd_cmake(
-                "target_link_libraries", "hitls_auth-shared hitls_crypto-shared hitls_bsl-shared")
+            cmake += self._gen_cmd_cmake("target_link_libraries", "hitls_auth-shared hitls_crypto-shared hitls_bsl-shared")
         tgt_list.append(tgt_name)
         return cmake
 
@@ -444,14 +446,14 @@ class CMakeGenerator:
         for lib, lib_obj in lib_enable_modules.items():
             projects[lib] = {}
             projects[lib]['mods_cmake'] = {}
-            inc_dirs = self._get_lib_common_include(lib_obj.keys())
+            inc_dirs = self._get_common_include(lib_obj.keys())
             for mod, mod_obj in lib_obj.items():
                 self._gen_module_cmake(lib, mod, mod_obj, projects[lib]['mods_cmake'])
             self._gen_lib_cmake(lib, inc_dirs, projects[lib], macros)
 
         return projects
 
-    def _gen_target_cmake(self, projects, lib_tgts):
+    def _gen_target_cmake(self, lib_tgts):
         cmake = 'add_custom_target(openHiTLS)\n'
         cmake += self._gen_cmd_cmake('add_dependencies', 'openHiTLS', lib_tgts)
         return cmake
@@ -481,21 +483,21 @@ class CMakeGenerator:
         return cmake, macros
 
     def out_cmake(self, cmake_path, macro_file):
-        self._cfg_custom_feature._check_bn_config()
+        self._cfg_custom_feature.check_bn_config()
 
         set_param_cmake, macros = self._gen_set_param_cmake(macro_file)
 
         projects = self._gen_projects_cmake(macros)
 
         lib_tgts = list(tgt for lib_obj in projects.values() for tgt in lib_obj['targets'])
-        botom_cmake = self._gen_target_cmake(projects, lib_tgts)
+        bottom_cmake = self._gen_target_cmake(lib_tgts)
 
         with open(cmake_path, "w") as f:
             f.write(set_param_cmake)
             for lib_obj in projects.values():
                 f.write(lib_obj['cmake'])
                 f.write('\n\n')
-            f.write(botom_cmake)
+            f.write(bottom_cmake)
 
 def main():
     os.chdir(srcdir)
@@ -510,7 +512,7 @@ def main():
 
     cfg = Configure(conf_feature)
     cfg.load_config_to_build()
-    cfg.update_feature_config()
+    cfg.update_feature_config(cfg.args.module_cmake)
     cfg.update_compile_config(complete_options)
 
     if cfg.args.module_cmake:

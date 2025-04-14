@@ -340,6 +340,15 @@ EXIT:
 /* BEGIN_CASE */
 void SDV_CRYPTO_SCRYPT_DEFAULT_PROVIDER_FUNC_TC001(Hex *key, Hex *salt, int N, int r, int p, Hex *result)
 {
+#ifndef HITLS_CRYPTO_PROVIDER
+    (void)key;
+    (void)salt;
+    (void)N;
+    (void)r;
+    (void)p;
+    (void)result;
+    SKIP_TEST();
+#else
     TestMemInit();
     uint32_t outLen = result->len;
     uint8_t *out = malloc(outLen * sizeof(uint8_t));
@@ -368,5 +377,6 @@ EXIT:
         free(out);
     }
     CRYPT_EAL_KdfFreeCtx(ctx);
+#endif
 }
 /* END_CASE */
