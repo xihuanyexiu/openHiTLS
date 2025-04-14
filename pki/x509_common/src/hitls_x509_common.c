@@ -23,7 +23,7 @@
 #include "bsl_obj_internal.h"
 #include "bsl_err_internal.h"
 #include "bsl_pem_internal.h"
-#include "crypt_encode.h"
+#include "crypt_encode_decode.h"
 #include "bsl_params.h"
 #include "crypt_params_key.h"
 #include "hitls_pki_utils.h"
@@ -383,7 +383,7 @@ static int32_t HITLS_X509_ParsePem(const BSL_Buffer *encode, bool isCert, X509_P
     X509_GetPemSymbol(isCert, &symbol);
     while (nextEncodeLen > 0) {
         BSL_Buffer asn1Buf = {0};
-        int32_t ret = BSL_PEM_ParsePem2Asn1(&nextEncode, &nextEncodeLen, &symbol, &(asn1Buf.data),
+        int32_t ret = BSL_PEM_DecodePemToAsn1(&nextEncode, &nextEncodeLen, &symbol, &(asn1Buf.data),
             &(asn1Buf.dataLen));
         if (ret != HITLS_PKI_SUCCESS) {
             break;

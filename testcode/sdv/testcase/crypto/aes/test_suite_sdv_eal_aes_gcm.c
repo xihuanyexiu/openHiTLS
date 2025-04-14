@@ -77,8 +77,7 @@ void SDV_CRYPTO_AES_GCM_UPDATE_FUNC_TC001(int isProvider, int algId, Hex *key, H
         ASSERT_TRUE(out != NULL);
     }
 
-    ctx = (isProvider == 0) ? CRYPT_EAL_CipherNewCtx(algId) :
-        CRYPT_EAL_ProviderCipherNewCtx(NULL, algId, "provider=default");
+    ctx = TestCipherNewCtx(NULL, algId, "provider=default", isProvider);
     ASSERT_TRUE(ctx != NULL);
     ASSERT_TRUE(CRYPT_EAL_CipherInit(ctx, key->x, key->len, iv->x, iv->len, false) == CRYPT_SUCCESS);
     ASSERT_TRUE(CRYPT_EAL_CipherCtrl(ctx, CRYPT_CTRL_SET_TAGLEN, &tagLen, sizeof(tagLen)) == CRYPT_SUCCESS);
@@ -147,8 +146,7 @@ void SDV_CRYPTO_AES_GCM_UPDATE_FUNC_TC002(int isProvider, int algId, Hex *key, H
         ASSERT_TRUE(out != NULL);
     }
 
-    ctx = (isProvider == 0) ? CRYPT_EAL_CipherNewCtx(algId) :
-        CRYPT_EAL_ProviderCipherNewCtx(NULL, algId, "provider=default");
+    ctx = TestCipherNewCtx(NULL, algId, "provider=default", isProvider);
     ASSERT_TRUE(ctx != NULL);
     ASSERT_TRUE(CRYPT_EAL_CipherInit(ctx, key->x, key->len, iv->x, iv->len, true) == CRYPT_SUCCESS);
     ASSERT_TRUE(CRYPT_EAL_CipherCtrl(ctx, CRYPT_CTRL_SET_TAGLEN, &tagLen, sizeof(tagLen)) == CRYPT_SUCCESS);

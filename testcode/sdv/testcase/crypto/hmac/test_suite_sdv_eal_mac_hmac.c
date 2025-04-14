@@ -431,6 +431,13 @@ EXIT:
 /* BEGIN_CASE */
 void SDV_CRYPT_HMAC_DEFAULT_PROVIDER_FUNC_TC001(int algId, Hex *key, Hex *data, Hex *vecMac)
 {
+#ifndef HITLS_CRYPTO_PROVIDER
+    (void)algId;
+    (void)key;
+    (void)data;
+    (void)vecMac;
+    SKIP_TEST();
+#else
     if (IsHmacAlgDisabled(algId)) {
         SKIP_TEST();
     }
@@ -453,5 +460,6 @@ void SDV_CRYPT_HMAC_DEFAULT_PROVIDER_FUNC_TC001(int algId, Hex *key, Hex *data, 
 EXIT:
     CRYPT_EAL_MacFreeCtx(ctx);
     BSL_SAL_FREE(mac);
+#endif
 }
 /* END_CASE */

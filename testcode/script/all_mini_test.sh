@@ -18,7 +18,8 @@ set -eu
 
 PARAM_LIST=$@
 
-ENABLE_C="off"
+COMMON_PARAM=""
+TEST=""
 ASM_TYPE=""
 
 parse_option()
@@ -26,14 +27,24 @@ parse_option()
     for i in $PARAM_LIST
     do
         case "${i}" in
-            "c")
-                ENABLE_C="on"
+            "bsl"|"md"|"mac"|"kdf"|"cipher"|"bn"|"ecc"|"pkey"|"all")
+                TEST=$i
                 ;;
-            "armv8")
+            "x8664"|"armv8")
                 ASM_TYPE=$i
+                COMMON_PARAM="$COMMON_PARAM $i"
+                ;;
+            "linux")
+                COMMON_PARAM="$COMMON_PARAM $i"
+                ;;
+            "32")
+                COMMON_PARAM="$COMMON_PARAM $i"
+                ;;
+            "big")
+                COMMON_PARAM="$COMMON_PARAM $i"
                 ;;
             *)
-                echo "Wrong parameter: $i"
+                echo "Wrong parameter: $i" 
                 exit 1
                 ;;
         esac
@@ -42,140 +53,317 @@ parse_option()
 
 test_bsl()
 {
-    bash mini_build_test.sh no-crypto no-tls enable=err test=err
-    bash mini_build_test.sh no-crypto no-tls enable=init
-    bash mini_build_test.sh no-crypto no-tls enable=list test=list
-    bash mini_build_test.sh no-crypto no-tls enable=log test=log
-    bash mini_build_test.sh no-crypto no-tls enable=sal test=sal
-    bash mini_build_test.sh no-crypto no-tls enable=sal_mem test=sal_mem
-    bash mini_build_test.sh no-crypto no-tls enable=sal_thread test=sal_thread
-    bash mini_build_test.sh no-crypto no-tls enable=sal_net test=sal_net
-    bash mini_build_test.sh no-crypto no-tls enable=sal_lock test=sal_lock
-    bash mini_build_test.sh no-crypto no-tls enable=sal_time test=sal_time
-    bash mini_build_test.sh no-crypto no-tls enable=sal_file test=sal_file
-    bash mini_build_test.sh no-crypto no-tls enable=sal_str test=sal_str
-    bash mini_build_test.sh no-crypto no-tls enable=tlv test=tlv
-    bash mini_build_test.sh no-crypto no-tls enable=uio_buffer
-    bash mini_build_test.sh no-crypto no-tls enable=uio_sctp
-    bash mini_build_test.sh no-crypto no-tls enable=uio_tcp
-    bash mini_build_test.sh no-crypto no-tls enable=uio test=uio
-    bash mini_build_test.sh no-crypto no-tls enable=usrdata
+    if [ "$ASM_TYPE" != "" ]; then
+        echo "bsl does not support assembly."
+        return
+    fi
+    NO_LIB="no-crypto no-tls linux"
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=asn1 test=asn1
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=base64 test=base64
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=buffer test=buffer
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=err test=err
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=hash test=hash
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=init test=init
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=list test=list
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=log test=log
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=obj test=obj
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=params test=params
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=pem test=pem
+
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=sal test=sal
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=sal_mem test=sal_mem
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=sal_thread test=sal_thread
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=sal_lock test=sal_lock
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=sal_time test=sal_time
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=sal_file test=sal_file
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=sal_net test=sal_net
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=sal_str test=sal_str
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=sal_dl test=sal_dl
+
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=tlv test=tlv
+
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=uio test=uio
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=uio_buffer
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=uio_mem
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=uio_sctp
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=uio_tcp
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=uio_udp
+
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=usrdata test=usrdata
 }
 
 test_md()
 {
-    bash mini_build_test.sh no-tls enable=sha1,eal test=sha1
-    bash mini_build_test.sh no-tls enable=sha2,eal test=sha2
-    bash mini_build_test.sh no-tls enable=sha224,eal test=sha224
-    bash mini_build_test.sh no-tls enable=sha256,eal test=sha256
-    bash mini_build_test.sh no-tls enable=sha384,eal test=sha384
-    bash mini_build_test.sh no-tls enable=sha512,eal test=sha512
-    bash mini_build_test.sh no-tls enable=sha3,eal test=sha3
-    bash mini_build_test.sh no-tls enable=sm3,eal test=sm3
-    bash mini_build_test.sh no-tls enable=md5,eal test=md5
+    NO_LIB="no-tls"
+    if [ "$ASM_TYPE" = "armv8" ]; then
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sm3 test=sm3
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,ealinit,sha1 test=sha1
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,ealinit,sha2 test=sha2
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,ealinit,sha224 test=sha224
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,ealinit,sha256 test=sha256
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sha384 test=sha384
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sha512 test=sha512
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sha3 test=sha3
+    elif [ "$ASM_TYPE" = "x8664" ]; then
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sm3 test=sm3
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,md5 test=md5
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sha1 test=sha1
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sha2 test=sha2
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sha224 test=sha224
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sha256 test=sha256
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sha384 test=sha384
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sha512 test=sha512
+    else
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,md5 test=md5
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sm3 test=sm3
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sha1 test=sha1
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sha2 test=sha2
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sha224 test=sha224
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sha256 test=sha256
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sha384 test=sha384
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sha512 test=sha512
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sha3 test=sha3
+    fi
 }
 
 test_mac()
 {
-    bash mini_build_test.sh no-tls enable=hmac,sha1,eal test=hmac
-    bash mini_build_test.sh no-tls enable=hmac,sha2,eal test=hmac
-    bash mini_build_test.sh no-tls enable=hmac,sha3,eal test=hmac
-    bash mini_build_test.sh no-tls enable=hmac,md5,eal test=hmac
+    if [ "$ASM_TYPE" != "" ]; then
+        echo "mac does not support assembly."
+        return
+    fi
+    NO_LIB="no-tls"
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,hmac,md5 test=hmac
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,hmac,sha1 test=hmac
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,hmac,sha2 test=hmac
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,hmac,sha224 test=hmac
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,hmac,sha256 test=hmac
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,hmac,sha384 test=hmac
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,hmac,sha512 test=hmac
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,hmac,sha3 test=hmac
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,hmac,sm3 test=hmac
+
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,gmac test=gmac
+
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,cmac_aes test=cmac_aes
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,cmac_sm4 test=cmac_sm4
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,cbc_mac test=cbc_mac
+
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,siphash test=siphash
 }
 
 test_kdf()
 {
-    bash mini_build_test.sh no-tls enable=scrypt,eal test=scrypt
-    bash mini_build_test.sh no-tls enable=hkdf,sha2,eal test=hkdf
-    bash mini_build_test.sh no-tls enable=pbkdf2,sha2,eal test=pbkdf2
-    bash mini_build_test.sh no-tls enable=kdftls12,sha2,eal test=kdftls12
+    if [ "$ASM_TYPE" != "" ]; then
+        echo "kdf does not support assembly."
+        return
+    fi
+    NO_LIB="no-tls"
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,scrypt test=scrypt
+
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,hkdf,md5 test=hkdf
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,hkdf,sha1 test=hkdf
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,hkdf,sha2 test=hkdf
+
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,pbkdf2,md5 test=pbkdf2
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,pbkdf2,sha1 test=pbkdf2
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,pbkdf2,sha2 test=pbkdf2
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,pbkdf2,sha3 test=pbkdf2
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,pbkdf2,sm3 test=pbkdf2
+
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,kdftls12,sha256 test=kdftls12
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,kdftls12,sha384 test=kdftls12
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,kdftls12,sha512 test=kdftls12
 }
 
 test_cipher()
 {
-    bash mini_build_test.sh no-tls enable=aes,cbc,eal test=aes
-    bash mini_build_test.sh no-tls enable=aes,ctr,eal test=aes
-    bash mini_build_test.sh no-tls enable=aes,ccm,eal test=aes
-    bash mini_build_test.sh no-tls enable=aes,gcm,eal test=aes
-    bash mini_build_test.sh no-tls enable=aes,cfb,eal test=aes
-    bash mini_build_test.sh no-tls enable=aes,ofb,eal test=aes
+    NO_LIB="no-tls"
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,aes,modes test=aes
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,aes,cbc test=aes
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,aes,ctr test=aes
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,aes,ecb test=aes # SDV_CRYPTO_AES_ENCRYPT_FUNC_TC001
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,aes,xts test=aes # SDV_CRYPTO_EAL_AES_FUNC_TC001
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,aes,ccm test=aes
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,aes,gcm test=aes
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,aes,cfb test=aes
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,aes,ofb test=aes
 
-    bash mini_build_test.sh no-tls enable=sm4,xts,eal test=sm4
-    bash mini_build_test.sh no-tls enable=sm4,cbc,eal test=sm4
-    bash mini_build_test.sh no-tls enable=sm4,ctr,eal test=sm4
-    bash mini_build_test.sh no-tls enable=sm4,gcm,eal test=sm4
-    bash mini_build_test.sh no-tls enable=sm4,cfb,eal test=sm4
-    bash mini_build_test.sh no-tls enable=sm4,ofb,eal test=sm4
+    if [ "$ASM_TYPE" = "x8664" ]; then
+        # depends on ealinit
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,ealinit,sm4,modes test=sm4
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,ealinit,sm4,xts test=sm4
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,ealinit,sm4,cbc test=sm4
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,ealinit,sm4,ecb test=sm4
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,ealinit,sm4,ctr test=sm4
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,ealinit,sm4,gcm test=sm4
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,ealinit,sm4,cfb test=sm4
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,ealinit,sm4,ofb test=sm4
+    else
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sm4,modes test=sm4
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sm4,xts test=sm4
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sm4,cbc test=sm4
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sm4,ecb test=sm4
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sm4,ctr test=sm4
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sm4,gcm test=sm4
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sm4,cfb test=sm4
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,sm4,ofb test=sm4
+    fi
 
-    bash mini_build_test.sh no-tls enable=chacha20,eal test=chacha20
-}
-
-test_pkey()
-{
-    bash mini_build_test.sh no-tls enable=rsa,sha1,sha2,eal,drbg,entropy test=rsa
-
-    bash mini_build_test.sh no-tls enable=dsa,sha2,eal,drbg,entropy test=dsa
-
-    bash mini_build_test.sh no-tls enable=dh,sha2,eal,drbg,entropy test=dh
-
-    bash mini_build_test.sh no-tls enable=ecdh,sha2,eal,drbg,entropy test=ecdh
-
-    bash mini_build_test.sh no-tls enable=ecdsa,sha2,eal,drbg,entropy test=ecdsa
-
-    bash mini_build_test.sh no-tls enable=x25519,sha2,eal,drbg,entropy test=x25519
-    bash mini_build_test.sh no-tls enable=ed25519,eal,drbg,entropy test=ed25519 # ed25519 depends on sha512 by default.
-
-    # sm2 depends on sm3 by default.
-    bash mini_build_test.sh no-tls enable=sm2_crypt,eal,drbg,entropy test=sm2_crypt
-    bash mini_build_test.sh no-tls enable=sm2_exch,eal,drbg,entropy test=sm2_exch
-    bash mini_build_test.sh no-tls enable=sm2_sign,eal,drbg,entropy test=sm2_sign
-}
-
-test_drbg()
-{
-    bash mini_build_test.sh no-tls enable=entropy,drbg_hmac,sha256,eal test=entropy
-    bash mini_build_test.sh no-tls enable=drbg_ctr,eal test=drbg_ctr
-    bash mini_build_test.sh no-tls enable=drbg_hash,eal,sha2 test=drbg_hash
-    bash mini_build_test.sh no-tls enable=drbg_hmac,eal,sha2 test=drbg_hmac
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,chacha20 test=chacha20
 }
 
 test_bn()
 {
-    bash mini_build_test.sh no-tls enable=bn test=bn
+    NO_LIB="no-tls"
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=bn
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=bn_basic
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal_bn
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=bn_rand
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=bn_prime
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=bn_str_conv
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=bn_cb
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=bn_prime_rfc3526
 }
 
-test_asm_armv8()
+test_ecc()
 {
-    bash mini_build_test.sh no-tls enable=sm3,eal armv8 test=sm3
+    NO_LIB="no-tls"
+    if [ "$ASM_TYPE" = "armv8" -o "$ASM_TYPE" = "x8664" ]; then
+        # The curves that support assembly are: curve_sm2, curve_nistp256
+        # all curves.
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,eal_bn,ecdh,ecdsa,sm2,drbg_hash,entropy,sha2,ecc,ealinit test=curve_nistp224
+        # sm2, depends on sm3
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,eal_bn,sm2,drbg_hash,entropy,ealinit test=sm2
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,eal_bn,sm2_crypt,drbg_hash,entropy,ealinit test=sm2_crypt
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,eal_bn,sm2_exch,drbg_hash,entropy,ealinit test=sm2_exch
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,eal_bn,sm2_sign,drbg_hash,entropy,ealinit test=sm2_sign
+        # nistp256
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,eal_bn,ecdh,ecdsa,drbg_hash,entropy,sha2,curve_nistp256,ealinit test=curve_nistp256
 
-    bash mini_build_test.sh no-tls enable=aes,gcm,eal test=aes armv8
+        return
+    fi
 
-    bash mini_build_test.sh no-tls enable=sm4,cbc,eal test=sm4 armv8
-    bash mini_build_test.sh no-tls enable=sm4,xts,eal test=sm4 armv8
-    bash mini_build_test.sh no-tls enable=sm4,ctr,eal test=sm4 armv8
-    bash mini_build_test.sh no-tls enable=sm4,gcm,eal test=sm4 armv8
+    # Test all curves.
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,eal_bn,ecdh,ecdsa,sm2,drbg_hash,entropy,sha2,ecc test=curve_nistp224
 
-    bash mini_build_test.sh no-tls enable=sm2_crypt,eal,drbg,entropy test=sm2_crypt armv8
-    bash mini_build_test.sh no-tls enable=sm2_exch,eal,drbg,entropy test=sm2_exch armv8
-    bash mini_build_test.sh no-tls enable=sm2_sign,eal,drbg,entropy test=sm2_sign armv8
+    # nist224/256/384/521
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,eal_bn,ecdh,ecdsa,drbg_hash,entropy,sha2,curve_nistp224 test=curve_nistp224
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,eal_bn,ecdh,ecdsa,drbg_hash,entropy,sha2,curve_nistp256 test=curve_nistp256
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,eal_bn,ecdh,ecdsa,drbg_hash,entropy,sha2,curve_nistp384 test=curve_nistp384
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,eal_bn,ecdh,ecdsa,drbg_hash,entropy,sha2,curve_nistp521 test=curve_nistp521
+
+    # br256/384/512
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,eal_bn,ecdh,ecdsa,drbg_hash,entropy,sha2,curve_bp256r1 test=curve_bp256r1
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,eal_bn,ecdh,ecdsa,drbg_hash,entropy,sha2,curve_bp384r1 test=curve_bp384r1
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,eal_bn,ecdh,ecdsa,drbg_hash,entropy,sha2,curve_bp512r1 test=curve_bp512r1
+
+    # sm2 depends on sm3 by default.
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,eal_bn,sm2,drbg_hash,entropy test=sm2
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,eal_bn,sm2_crypt,drbg_hash,entropy test=sm2_crypt
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,eal_bn,sm2_exch,drbg_hash,entropy test=sm2_exch
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,eal_bn,sm2_sign,drbg_hash,entropy test=sm2_sign
+}
+
+test_pkey()
+{
+    NO_LIB="no-tls"
+    if [ "$ASM_TYPE" = "x8664" -o "$ASM_TYPE" = "armv8" ]; then
+        # The pkey that support assembly is: x25519.
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=x25519,sha2,ealinit
+        bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,x25519,drbg_hash,sha2,ealinit test=x25519
+        return
+    fi
+    # rsa
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa,rsa_bssa,drbg_hash,sha1,sha2 test=rsa
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa,drbg_hash,sha1,sha2 test=rsa
+
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_gen,drbg_hash,sha1,sha2 test=rsa_gen
+
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_sign,rsa_emsa_pss,sha1,sha2 test=rsa_sign # no drbg
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_sign,rsa_emsa_pss,drbg_hash,sha1,sha2 test=rsa_sign
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_sign,rsa_emsa_pkcsv15,sha1,sha2 test=rsa_sign # not need drbg
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_verify,rsa_emsa_pss,sha1,sha2 test=rsa_verify # not need drbg
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_verify,rsa_emsa_pkcsv15,sha1,sha2 test=rsa_verify # not need drbg
+
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_encrypt,rsa_no_pad,sha1,sha2 test=rsa_encrypt # not need drbg
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_encrypt,rsaes_oaep,drbg_hash,sha1,sha2 test=rsa_encrypt
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_encrypt,rsaes_pkcsv15,drbg_hash,sha1,sha2 test=rsa_encrypt
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_encrypt,rsaes_pkcsv15_tls,drbg_hash,sha1,sha2 test=rsa_encrypt
+
+    # rsa_decrypt: not need drbg
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_decrypt,rsa_no_pad,sha1,sha2 test=rsa_decrypt
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_decrypt,rsaes_oaep,sha1,sha2 test=rsa_decrypt
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_decrypt,rsaes_pkcsv15,sha1,sha2 test=rsa_decrypt
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_decrypt,rsaes_pkcsv15_tls,sha1,sha2 test=rsa_decrypt
+
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_sign,rsa_blinding,rsa_emsa_pkcsv15,drbg_hash,sha1,sha2 test=rsa_sign
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_decrypt,rsa_blinding,rsaes_oaep,drbg_hash,sha1,sha2 test=rsa_decrypt
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_sign,rsa_bssa,rsa_blinding,rsa_emsa_pss,drbg_hash,sha1,sha2 test=rsa_sign
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_sign,rsa_verify,rsa_bssa,rsa_emsa_pss,drbg_hash,sha1,sha2 test=rsa_sign
+
+    # dsa
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,eal_bn,dsa,drbg_hash,sha2 test=dsa
+
+    # dh
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,dh,drbg_hash,sha2 test=dh
+
+    # curve25519: ed25519 depends on sha512 by default.
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,x25519,drbg_hash,sha2 test=x25519 debug
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,ed25519,drbg_hash,sha2 test=ed25519
+
+    # mldsa
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,mldsa,drbg_hash,sha2 test=mldsa
+
+    # paillier
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,paillier,drbg_hash,sha2 test=paillier
+
+    # mlkem
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,mlkem,drbg_hash,sha2 test=mlkem
+
+    # hybridkem
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,hybridkem,x25519,ecdh,ecc,drbg_hash,sha2 test=hybridkem
+
+    # elgamal
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,elgamal,drbg_hash,sha2 test=elgamal
 }
 
 parse_option
 
-if [ "${ENABLE_C}" = "on" ]; then
-    test_bsl
-    test_md
-    test_mac
-    test_kdf
-    test_cipher
-    test_pkey
-    test_drbg
-    test_bn
-fi
-
-case "${ASM_TYPE}" in
-    "armv8")
-        test_asm_armv8
+case $TEST in
+    "all")
+        test_bsl
+        test_md
+        test_mac
+        test_kdf
+        test_cipher
+        test_bn
+        test_ecc
+        test_pkey
+        ;;
+    "bsl")
+        test_bsl
+        ;;
+    "md")
+        test_md
+        ;;
+    "mac")
+        test_mac
+        ;;
+    "kdf")
+        test_kdf
+        ;;
+    "cipher")
+        test_cipher
+        ;;
+    "bn")
+        test_bn
+        ;;
+    "ecc")
+        test_ecc
+        ;;
+    "pkey")
+        test_pkey
         ;;
     *)
         ;;

@@ -26,6 +26,7 @@ usage()
     printf "%-50s %-30s\n" "* no-tls       : Custom tls testcase."             "bash ${BASH_SOURCE[0]} no-tls"
     printf "%-50s %-30s\n" "* no-pki       : Custom pki testcase."             "bash ${BASH_SOURCE[0]} no-pki"
     printf "%-50s %-30s\n" "* no-auth      : Custom auth testcase."            "bash ${BASH_SOURCE[0]} no-auth"
+    printf "%-50s %-30s\n" "* no-demos     : Not build demos."                 "bash ${BASH_SOURCE[0]} no-auth"
     printf "%-50s %-30s\n" "* verbose      : Show detailse."                   "bash ${BASH_SOURCE[0]} verbose"
     printf "%-50s %-30s\n" "* gcov         : Enable the coverage capability."  "bash ${BASH_SOURCE[0]} gcov"
     printf "%-50s %-30s\n" "* asan         : Enabling the ASAN capability."    "bash ${BASH_SOURCE[0]} asan"
@@ -49,6 +50,7 @@ export_env()
     ENABLE_PKI=${ENABLE_PKI:=ON}
     ENABLE_AUTH=${ENABLE_AUTH:=ON}
     ENABLE_CMVP=${ENABLE_CMVP:=OFF}
+    ENABLE_DEMOS=${ENABLE_DEMOS:=ON}
     ENABLE_UIO_SCTP=${ENABLE_UIO_SCTP:=ON}
     ENABLE_VERBOSE=${ENABLE_VERBOSE:=''}
     RUN_TESTS=${RUN_TESTS:=''}
@@ -132,6 +134,9 @@ process_custom_cases()
 
 build_demos()
 {
+    if [[ ${ENABLE_DEMOS} == "OFF" ]]; then
+        return
+    fi
     pushd ${HITLS_ROOT_DIR}/testcode/demo/
     rm -rf build && mkdir build 
     pushd build
@@ -198,6 +203,9 @@ options()
             no-sctp)
                 ENABLE_UIO_SCTP=OFF
                 ENABLE_TLS=OFF
+                ;;
+            no-demos)
+                ENABLE_DEMOS=OFF
                 ;;
             verbose)
                 ENABLE_VERBOSE='VERBOSE=1'

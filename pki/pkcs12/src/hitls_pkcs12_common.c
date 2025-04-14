@@ -21,7 +21,7 @@
 #include "hitls_cms_local.h"
 #include "bsl_obj_internal.h"
 #include "bsl_err_internal.h"
-#include "crypt_encode.h"
+#include "crypt_encode_decode.h"
 #include "crypt_eal_encode.h"
 #include "bsl_bytes.h"
 #include "crypt_eal_md.h"

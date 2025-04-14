@@ -29,8 +29,10 @@
 #include "crypt_ealinit.h"
 #include "eal_mac_local.h"
 #include "eal_common.h"
+#ifdef HITLS_CRYPTO_PROVIDER
 #include "crypt_eal_implprovider.h"
 #include "crypt_provider.h"
+#endif
 
 #define MAC_TYPE_INVALID 0
 
@@ -46,6 +48,7 @@ static void EalMacCopyMethod(const EAL_MacMethod *src, EAL_MacUnitaryMethod *dst
     dst->freeCtx = src->freeCtx;
 }
 
+#ifdef HITLS_CRYPTO_PROVIDER
 static int32_t CRYPT_EAL_SetMacMethod(CRYPT_EAL_MacCtx *ctx, const CRYPT_EAL_Func *funcs)
 {
     int32_t index = 0;
@@ -132,6 +135,7 @@ CRYPT_EAL_MacCtx *CRYPT_EAL_ProviderMacNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t 
 
     return macCtx;
 }
+#endif
 
 CRYPT_EAL_MacCtx *MacNewDefaultCtx(CRYPT_MAC_AlgId id)
 {

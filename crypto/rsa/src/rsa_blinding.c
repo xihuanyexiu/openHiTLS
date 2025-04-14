@@ -159,4 +159,4 @@ END:
     b->rInv = NULL;
     return ret;
 }
-#endif /* HITLS_CRYPTO_RSA_BLINDING */
+#endif /* HITLS_CRYPTO_RSA_BLINDING || HITLS_CRYPTO_RSA_BSSA */

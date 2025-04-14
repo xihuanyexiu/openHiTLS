@@ -337,12 +337,14 @@ void SDV_CRYPT_EAL_SHA3_FUNC_TC005(int algId, Hex *in, Hex *digest)
     ASSERT_EQ(CRYPT_EAL_MdSqueeze(ctx, out, outLen), CRYPT_SUCCESS);
     ASSERT_EQ(memcmp(out, digest->x, digest->len), 0);
     CRYPT_EAL_MdFreeCtx(ctx);
+#ifdef HITLS_CRYPTO_PROVIDER
     ctx = CRYPT_EAL_ProviderMdNewCtx(NULL, algId, "provider=default");
     ASSERT_TRUE(ctx != NULL);
     ASSERT_EQ(CRYPT_EAL_MdInit(ctx), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_MdUpdate(ctx, in->x, in->len), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_MdSqueeze(ctx, out, outLen), CRYPT_SUCCESS);
     ASSERT_EQ(memcmp(out, digest->x, digest->len), 0);
+#endif
 EXIT:
     CRYPT_EAL_MdFreeCtx(ctx);
 }
@@ -375,6 +377,7 @@ void SDV_CRYPT_EAL_SHA3_FUNC_TC006(int algId, Hex *in, int outLen, Hex *digest)
     ASSERT_EQ(CRYPT_EAL_MdSqueeze(ctx, out + squeezeLen * 3, outLen - squeezeLen * 3), CRYPT_SUCCESS);
     ASSERT_EQ(memcmp(out, digest->x, digest->len), 0);
     CRYPT_EAL_MdFreeCtx(ctx);
+#ifdef HITLS_CRYPTO_PROVIDER
     ctx = CRYPT_EAL_ProviderMdNewCtx(NULL, algId, "provider=default");
     ASSERT_TRUE(ctx != NULL);
     ASSERT_EQ(CRYPT_EAL_MdInit(ctx), CRYPT_SUCCESS);
@@ -384,6 +387,7 @@ void SDV_CRYPT_EAL_SHA3_FUNC_TC006(int algId, Hex *in, int outLen, Hex *digest)
     ASSERT_EQ(CRYPT_EAL_MdSqueeze(ctx, out + squeezeLen * 2, squeezeLen), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_MdSqueeze(ctx, out + squeezeLen * 3, outLen - squeezeLen * 3), CRYPT_SUCCESS);
     ASSERT_EQ(memcmp(out, digest->x, digest->len), 0);
+#endif
 EXIT:
     free(out);
     CRYPT_EAL_MdFreeCtx(ctx);
@@ -465,6 +469,12 @@ EXIT:
 /* BEGIN_CASE */
 void SDV_CRYPTO_SHA3_DEFAULT_PROVIDER_FUNC_TC001(int id, Hex *msg, Hex *hash)
 {
+#ifndef HITLS_CRYPTO_PROVIDER
+    (void)id;
+    (void)msg;
+    (void)hash;
+    SKIP_TEST();
+#else
     TestMemInit();
     CRYPT_EAL_MdCTX *ctx = CRYPT_EAL_ProviderMdNewCtx(NULL, id, "provider=default");
     ASSERT_TRUE(ctx != NULL);
@@ -478,6 +488,7 @@ void SDV_CRYPTO_SHA3_DEFAULT_PROVIDER_FUNC_TC001(int id, Hex *msg, Hex *hash)
 
 EXIT:
     CRYPT_EAL_MdFreeCtx(ctx);
+#endif
 }
 /* END_CASE */
 

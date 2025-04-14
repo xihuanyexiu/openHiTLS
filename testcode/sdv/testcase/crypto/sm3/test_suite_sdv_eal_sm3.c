@@ -371,6 +371,12 @@ EXIT:
 /* BEGIN_CASE */
 void SDV_CRYPTO_SM3_DEFAULT_PROVIDER_FUNC_TC001(int id, Hex *msg, Hex *hash)
 {
+#ifndef HITLS_CRYPTO_PROVIDER
+    (void)id;
+    (void)msg;
+    (void)hash;
+    SKIP_TEST();
+#else
     TestMemInit();
     CRYPT_EAL_MdCTX *ctx = CRYPT_EAL_ProviderMdNewCtx(NULL, id, "provider=default");
     ASSERT_TRUE(ctx != NULL);
@@ -384,6 +390,7 @@ void SDV_CRYPTO_SM3_DEFAULT_PROVIDER_FUNC_TC001(int id, Hex *msg, Hex *hash)
 
 EXIT:
     CRYPT_EAL_MdFreeCtx(ctx);
+#endif
 }
 /* END_CASE */
 

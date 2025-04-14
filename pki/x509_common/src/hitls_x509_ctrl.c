@@ -22,7 +22,7 @@
 #include "bsl_err_internal.h"
 #include "crypt_errno.h"
 #include "crypt_eal_pkey.h"
-#include "crypt_encode.h"
+#include "crypt_encode_decode.h"
 #include "hitls_pki_errno.h"
 #include "hitls_x509_local.h"
 

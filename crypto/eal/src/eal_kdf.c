@@ -22,8 +22,10 @@
 #include "bsl_err_internal.h"
 #include "crypt_local_types.h"
 #include "crypt_eal_mac.h"
+#ifdef HITLS_CRYPTO_PROVIDER
 #include "crypt_eal_implprovider.h"
 #include "crypt_provider.h"
+#endif
 #include "crypt_algid.h"
 #include "crypt_errno.h"
 #include "eal_mac_local.h"
@@ -45,7 +47,6 @@
 #endif
 #include "eal_common.h"
 #include "crypt_utils.h"
-#include "crypt_ealinit.h"
 #include "bsl_sal.h"
 
 static CRYPT_EAL_KdfCTX *KdfAllocCtx(CRYPT_KDF_AlgId id, EAL_KdfUnitaryMethod *method)
@@ -75,6 +76,7 @@ static void EalKdfCopyMethod(const EAL_KdfMethod *method, EAL_KdfUnitaryMethod *
     dest->ctrl = method->ctrl;
 }
 
+#ifdef HITLS_CRYPTO_PROVIDER
 static int32_t CRYPT_EAL_SetKdfMethod(CRYPT_EAL_KdfCTX *ctx, const CRYPT_EAL_Func *funcs)
 {
     int32_t index = 0;
@@ -153,6 +155,7 @@ CRYPT_EAL_KdfCTX *CRYPT_EAL_ProviderKdfNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t 
     ctx->isProvider = true;
     return ctx;
 }
+#endif
 
 CRYPT_EAL_KdfCTX *CRYPT_EAL_KdfNewCtx(CRYPT_KDF_AlgId algId)
 {

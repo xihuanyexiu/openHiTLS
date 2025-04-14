@@ -18,7 +18,7 @@
 
 #include "crypt_local_types.h"
 #include "crypt_sm2.h"
-#include "crypt_encode.h"
+#include "crypt_encode_internal.h"
 
 #define MAX_PLAIN_TEXT_LEN 2048
 #define CIPHER_TEXT_EXTRA_LEN 97
@@ -64,13 +64,9 @@ void SDV_CRYPTO_SM2_ENC_API_TC001(Hex *pubKey, int isProvider)
 
     TestMemInit();
     CRYPT_RandRegist(RandFunc);
-    CRYPT_EAL_PkeyCtx *ctx = NULL;
-    if (isProvider == 1) {
-        ctx = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_SM2,
-            CRYPT_EAL_PKEY_KEYMGMT_OPERATE  + CRYPT_EAL_PKEY_CIPHER_OPERATE, "provider=default");
-    } else {
-        ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_SM2);
-    }
+
+    CRYPT_EAL_PkeyCtx *ctx = TestPkeyNewCtx(NULL, CRYPT_PKEY_SM2,
+        CRYPT_EAL_PKEY_KEYMGMT_OPERATE  + CRYPT_EAL_PKEY_CIPHER_OPERATE, "provider=default", isProvider);
     ASSERT_TRUE(ctx != NULL);
 
     ASSERT_TRUE(CRYPT_EAL_PkeyEncrypt(ctx, plainText, sizeof(plainText), cipherText, &outLen) == CRYPT_SM2_NO_PUBKEY);
@@ -124,13 +120,8 @@ void SDV_CRYPTO_SM2_ENC_API_TC002(Hex *pubKey, int isProvider)
     SetSm2PubKey(&pub, pubKey->x, pubKey->len);
 
     TestMemInit();
-    CRYPT_EAL_PkeyCtx *ctx = NULL;
-    if (isProvider == 1) {
-        ctx = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_SM2,
-            CRYPT_EAL_PKEY_KEYMGMT_OPERATE  + CRYPT_EAL_PKEY_CIPHER_OPERATE, "provider=default");
-    } else {
-        ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_SM2);
-    }
+    CRYPT_EAL_PkeyCtx *ctx = TestPkeyNewCtx(NULL, CRYPT_PKEY_SM2,
+        CRYPT_EAL_PKEY_KEYMGMT_OPERATE  + CRYPT_EAL_PKEY_CIPHER_OPERATE, "provider=default", isProvider);
     ASSERT_TRUE(ctx != NULL);
 
     ASSERT_TRUE(CRYPT_EAL_PkeySetPub(ctx, &pub) == CRYPT_SUCCESS);
@@ -182,13 +173,8 @@ void SDV_CRYPTO_SM2_DEC_API_TC001(Hex *prvKey, Hex *cipherText, int isProvider)
 
     TestRandInit();
     TestMemInit();
-    CRYPT_EAL_PkeyCtx *ctx = NULL;
-    if (isProvider == 1) {
-        ctx = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_SM2,
-            CRYPT_EAL_PKEY_KEYMGMT_OPERATE  + CRYPT_EAL_PKEY_CIPHER_OPERATE, "provider=default");
-    } else {
-        ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_SM2);
-    }
+    CRYPT_EAL_PkeyCtx *ctx = TestPkeyNewCtx(NULL, CRYPT_PKEY_SM2,
+        CRYPT_EAL_PKEY_KEYMGMT_OPERATE  + CRYPT_EAL_PKEY_CIPHER_OPERATE, "provider=default", isProvider);
     ASSERT_TRUE(ctx != NULL);
 
     ASSERT_TRUE(CRYPT_EAL_PkeyDecrypt(ctx, cipherText->x, cipherText->len, plainText, &outLen) == CRYPT_SM2_NO_PRVKEY);
@@ -232,13 +218,8 @@ void SDV_CRYPTO_SM2_CTRL_API_TC001(int isProvider)
     uint32_t ref = 1;
 
     TestMemInit();
-    CRYPT_EAL_PkeyCtx *ctx = NULL;
-    if (isProvider == 1) {
-        ctx = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_SM2,
-            CRYPT_EAL_PKEY_KEYMGMT_OPERATE  + CRYPT_EAL_PKEY_CIPHER_OPERATE, "provider=default");
-    } else {
-        ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_SM2);
-    }
+    CRYPT_EAL_PkeyCtx *ctx = TestPkeyNewCtx(NULL, CRYPT_PKEY_SM2,
+        CRYPT_EAL_PKEY_KEYMGMT_OPERATE  + CRYPT_EAL_PKEY_CIPHER_OPERATE, "provider=default", isProvider);
     ASSERT_TRUE(ctx != NULL);
 
     EAL_MdMethod hashMethod = {0};
@@ -279,13 +260,8 @@ void SDV_CRYPTO_SM2_ENC_FUNC_TC001(Hex *pubKey, Hex *plain, Hex *k, Hex *cipher,
     SetSm2PubKey(&pub, pubKey->x, pubKey->len);
     TestMemInit();
 
-    CRYPT_EAL_PkeyCtx *ctx = NULL;
-    if (isProvider == 1) {
-        ctx = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_SM2,
-            CRYPT_EAL_PKEY_KEYMGMT_OPERATE  + CRYPT_EAL_PKEY_CIPHER_OPERATE, "provider=default");
-    } else {
-        ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_SM2);
-    }
+    CRYPT_EAL_PkeyCtx *ctx = TestPkeyNewCtx(NULL, CRYPT_PKEY_SM2,
+        CRYPT_EAL_PKEY_KEYMGMT_OPERATE  + CRYPT_EAL_PKEY_CIPHER_OPERATE, "provider=default", isProvider);
     ASSERT_TRUE(ctx != NULL);
 
     ASSERT_EQ(CRYPT_EAL_PkeySetPub(ctx, &pub), CRYPT_SUCCESS);
@@ -344,13 +320,8 @@ void SDV_CRYPTO_SM2_DEC_FUNC_TC001(Hex *prvKey, Hex *plain, Hex *cipher, int isP
 
     TestMemInit();
 
-    CRYPT_EAL_PkeyCtx *ctx = NULL;
-    if (isProvider == 1) {
-        ctx = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_SM2,
-            CRYPT_EAL_PKEY_KEYMGMT_OPERATE  + CRYPT_EAL_PKEY_CIPHER_OPERATE, "provider=default");
-    } else {
-        ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_SM2);
-    }
+    CRYPT_EAL_PkeyCtx *ctx = TestPkeyNewCtx(NULL, CRYPT_PKEY_SM2,
+        CRYPT_EAL_PKEY_KEYMGMT_OPERATE  + CRYPT_EAL_PKEY_CIPHER_OPERATE, "provider=default", isProvider);
     ASSERT_TRUE(ctx != NULL);
 
     ASSERT_TRUE(CRYPT_EAL_PkeySetPrv(ctx, &prv) == CRYPT_SUCCESS);
@@ -400,13 +371,8 @@ void SDV_CRYPTO_SM2_DEC_FUNC_TC002(Hex *prvKey, Hex *cipher, int isProvider)
     CRYPT_EAL_PkeyPrv prv = {0};
     SetSm2PrvKey(&prv, prvKey->x, prvKey->len);
 
-    CRYPT_EAL_PkeyCtx *ctx = NULL;
-    if (isProvider == 1) {
-        ctx = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_SM2,
-            CRYPT_EAL_PKEY_KEYMGMT_OPERATE  + CRYPT_EAL_PKEY_CIPHER_OPERATE, "provider=default");
-    } else {
-        ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_SM2);
-    }
+    CRYPT_EAL_PkeyCtx *ctx = TestPkeyNewCtx(NULL, CRYPT_PKEY_SM2,
+        CRYPT_EAL_PKEY_KEYMGMT_OPERATE  + CRYPT_EAL_PKEY_CIPHER_OPERATE, "provider=default", isProvider);
     ASSERT_TRUE(ctx != NULL);
 
     ASSERT_TRUE(CRYPT_EAL_PkeySetPrv(ctx, &prv) == CRYPT_SUCCESS);
@@ -443,13 +409,8 @@ void SDV_CRYPTO_SM2_GEN_CRYPT_FUNC_TC001(Hex *msg, int isProvider)
     uint32_t ptLen = sizeof(plainText);
 
     TestMemInit();
-    CRYPT_EAL_PkeyCtx *ctx = NULL;
-    if (isProvider == 1) {
-        ctx = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_SM2,
-            CRYPT_EAL_PKEY_KEYMGMT_OPERATE  + CRYPT_EAL_PKEY_CIPHER_OPERATE, "provider=default");
-    } else {
-        ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_SM2);
-    }
+    CRYPT_EAL_PkeyCtx *ctx = TestPkeyNewCtx(NULL, CRYPT_PKEY_SM2,
+        CRYPT_EAL_PKEY_KEYMGMT_OPERATE  + CRYPT_EAL_PKEY_CIPHER_OPERATE, "provider=default", isProvider);
     ASSERT_TRUE(ctx != NULL);
 
     CRYPT_RandRegist(RandFunc);
@@ -492,13 +453,8 @@ void SDV_CRYPTO_SM2_GEN_CRYPT_FUNC_TC002(Hex *msg, int isProvider)
     ASSERT_TRUE(memcpy_s(buf, ptLen, msg->x, msg->len) == CRYPT_SUCCESS);
 
     TestMemInit();
-    CRYPT_EAL_PkeyCtx *ctx = NULL;
-    if (isProvider == 1) {
-        ctx = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_SM2,
-            CRYPT_EAL_PKEY_KEYMGMT_OPERATE  + CRYPT_EAL_PKEY_CIPHER_OPERATE, "provider=default");
-    } else {
-        ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_SM2);
-    }
+    CRYPT_EAL_PkeyCtx *ctx = TestPkeyNewCtx(NULL, CRYPT_PKEY_SM2,
+        CRYPT_EAL_PKEY_KEYMGMT_OPERATE  + CRYPT_EAL_PKEY_CIPHER_OPERATE, "provider=default", isProvider);
     ASSERT_TRUE(ctx != NULL);
 
     CRYPT_RandRegist(RandFunc);
@@ -543,20 +499,10 @@ void SDV_CRYPTO_SM2_CMP_FUNC_TC001(Hex *pubKey, int isProvider)
 
     TestMemInit();
 
-    CRYPT_EAL_PkeyCtx *ctx1 = NULL;
-    if (isProvider == 1) {
-        ctx1 = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_SM2,
-            CRYPT_EAL_PKEY_KEYMGMT_OPERATE  + CRYPT_EAL_PKEY_CIPHER_OPERATE, "provider=default");
-    } else {
-        ctx1 = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_SM2);
-    }
-    CRYPT_EAL_PkeyCtx *ctx2 = NULL;
-    if (isProvider == 1) {
-        ctx2 = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_SM2,
-            CRYPT_EAL_PKEY_KEYMGMT_OPERATE  + CRYPT_EAL_PKEY_CIPHER_OPERATE, "provider=default");
-    } else {
-        ctx2 = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_SM2);
-    }
+    CRYPT_EAL_PkeyCtx *ctx1 = TestPkeyNewCtx(NULL, CRYPT_PKEY_SM2,
+        CRYPT_EAL_PKEY_KEYMGMT_OPERATE  + CRYPT_EAL_PKEY_CIPHER_OPERATE, "provider=default", isProvider);
+    CRYPT_EAL_PkeyCtx *ctx2 = TestPkeyNewCtx(NULL, CRYPT_PKEY_SM2,
+        CRYPT_EAL_PKEY_KEYMGMT_OPERATE  + CRYPT_EAL_PKEY_CIPHER_OPERATE, "provider=default", isProvider);
     ASSERT_TRUE(ctx1 != NULL && ctx2 != NULL);
 
     ASSERT_EQ(CRYPT_EAL_PkeyCmp(ctx1, ctx2), CRYPT_ECC_KEY_PUBKEY_NOT_EQUAL);

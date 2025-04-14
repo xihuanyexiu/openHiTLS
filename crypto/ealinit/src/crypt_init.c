@@ -15,17 +15,19 @@
 
 #include "bsl_init.h"
 #include "bsl_err_internal.h"
-#include "crypt_eal_init.h"
 #include "crypt_local_types.h"
 #include "crypt_algid.h"
 #include "crypt_errno.h"
 #include "crypt_eal_rand.h"
 #include "crypt_utils.h"
-#include "crypt_util_rand.h"
 #include "asmcap_local.h"
 #include "crypt_ealinit.h"
+#include "crypt_util_rand.h"
+#ifdef HITLS_CRYPTO_PROVIDER
 #include "crypt_eal_provider.h"
 #include "crypt_provider.h"
+#endif
+#include "crypt_eal_init.h"
 
 static bool g_trigger = false;
 
@@ -65,6 +67,36 @@ static void ProviderModuleFree(uint64_t initOpt)
 }
 #endif
 
+#if defined(HITLS_CRYPTO_DRBG)
+static void RandModuleFree(uint64_t initOpt)
+{
+    if (!(initOpt & CRYPT_INIT_ABILITY_RAND)) {
+        return;
+    }
+    CRYPT_EAL_RandDeinit();
+}
+
+static int32_t RandModuleInit(uint64_t initOpt, int32_t alg)
+{
+    if (!(initOpt & CRYPT_INIT_ABILITY_RAND)) {
+        return BSL_SUCCESS;
+    }
+    return CRYPT_EAL_RandInit(alg, NULL, NULL, NULL, 0);
+}
+#else
+static void RandModuleFree(uint64_t initOpt)
+{
+    (void) initOpt;
+    return;
+}
+
+static int32_t RandModuleInit(uint64_t initOpt, int32_t alg)
+{
+    (void) initOpt;
+    (void) alg;
+    return CRYPT_SUCCESS;
+}
+#endif
 #if defined(HITLS_BSL_INIT)
 static int32_t BslModuleInit(uint64_t initOpt)
 {
@@ -92,37 +124,6 @@ static void BslModuleFree(uint64_t initOpt)
 {
     (void) initOpt;
     return;
-}
-#endif
-
-#if defined(HITLS_CRYPTO_DRBG)
-static void RandModuleFree(uint64_t initOpt)
-{
-    if (!(initOpt & CRYPT_INIT_ABILITY_RAND)) {
-        return;
-    }
-    CRYPT_EAL_RandDeinit();
-}
-
-static int32_t RandModuleInit(uint64_t initOpt, int32_t alg)
-{
-    if (!(initOpt & CRYPT_INIT_ABILITY_RAND)) {
-        return BSL_SUCCESS;
-    }
-    return CRYPT_EAL_RandInit(alg, NULL, NULL, NULL, 0);
-}
-#else
-static void RandModuleFree(uint64_t initOpt)
-{
-    (void) initOpt;
-    return;
-}
-
-static int32_t RandModuleInit(uint64_t initOpt, int32_t alg)
-{
-    (void) alg;
-    (void) initOpt;
-    return CRYPT_SUCCESS;
 }
 #endif
 
@@ -181,7 +182,7 @@ int32_t CRYPT_EAL_Init(uint64_t opts)
     if (ret != CRYPT_SUCCESS) {
         return ret;
     }
-  
+
     ret = RandModuleInit(initOpt, alg);
     if (ret != CRYPT_SUCCESS) {
         BslModuleFree(initOpt);
@@ -256,27 +257,37 @@ static const EAL_CheckAsm HITLS_ASM_SYM_ALG_CHECK[] = {
     {.id = CRYPT_CIPHER_AES128_CTR, .callback = {CRYPT_AES_AsmCheck, NULL}},
     {.id = CRYPT_CIPHER_AES192_CTR, .callback = {CRYPT_AES_AsmCheck, NULL}},
     {.id = CRYPT_CIPHER_AES256_CTR, .callback = {CRYPT_AES_AsmCheck, NULL}},
+    {.id = CRYPT_CIPHER_AES128_ECB, .callback = {CRYPT_AES_AsmCheck, NULL}},
+    {.id = CRYPT_CIPHER_AES192_ECB, .callback = {CRYPT_AES_AsmCheck, NULL}},
+    {.id = CRYPT_CIPHER_AES256_ECB, .callback = {CRYPT_AES_AsmCheck, NULL}},
+    {.id = CRYPT_CIPHER_AES128_XTS, .callback = {CRYPT_AES_AsmCheck, NULL}},
+    {.id = CRYPT_CIPHER_AES256_XTS, .callback = {CRYPT_AES_AsmCheck, NULL}},
     {.id = CRYPT_CIPHER_AES128_CCM, .callback = {CRYPT_AES_AsmCheck, NULL}},
     {.id = CRYPT_CIPHER_AES192_CCM, .callback = {CRYPT_AES_AsmCheck, NULL}},
     {.id = CRYPT_CIPHER_AES256_CCM, .callback = {CRYPT_AES_AsmCheck, NULL}},
+#if defined(HITLS_CRYPTO_GCM_ASM)
+    {.id = CRYPT_CIPHER_AES128_GCM, .callback = {CRYPT_AES_AsmCheck, CRYPT_GHASH_AsmCheck}},
+    {.id = CRYPT_CIPHER_AES192_GCM, .callback = {CRYPT_AES_AsmCheck, CRYPT_GHASH_AsmCheck}},
+    {.id = CRYPT_CIPHER_AES256_GCM, .callback = {CRYPT_AES_AsmCheck, CRYPT_GHASH_AsmCheck}},
+#endif // HITLS_CRYPTO_GCM_ASM
     {.id = CRYPT_CIPHER_AES128_CFB, .callback = {CRYPT_AES_AsmCheck, NULL}},
     {.id = CRYPT_CIPHER_AES192_CFB, .callback = {CRYPT_AES_AsmCheck, NULL}},
     {.id = CRYPT_CIPHER_AES256_CFB, .callback = {CRYPT_AES_AsmCheck, NULL}},
     {.id = CRYPT_CIPHER_AES128_OFB, .callback = {CRYPT_AES_AsmCheck, NULL}},
     {.id = CRYPT_CIPHER_AES192_OFB, .callback = {CRYPT_AES_AsmCheck, NULL}},
     {.id = CRYPT_CIPHER_AES256_OFB, .callback = {CRYPT_AES_AsmCheck, NULL}},
-    {.id = CRYPT_CIPHER_AES128_XTS, .callback = {CRYPT_AES_AsmCheck, NULL}},
-    {.id = CRYPT_CIPHER_AES256_XTS, .callback = {CRYPT_AES_AsmCheck, NULL}},
-#if defined(HITLS_CRYPTO_GCM_ASM)
-    {.id = CRYPT_CIPHER_AES128_GCM, .callback = {CRYPT_AES_AsmCheck, CRYPT_GHASH_AsmCheck}},
-    {.id = CRYPT_CIPHER_AES192_GCM, .callback = {CRYPT_AES_AsmCheck, CRYPT_GHASH_AsmCheck}},
-    {.id = CRYPT_CIPHER_AES256_GCM, .callback = {CRYPT_AES_AsmCheck, CRYPT_GHASH_AsmCheck}},
-#endif // HITLS_CRYPTO_GCM_ASM
 #endif // HITLS_CRYPTO_AES_ASM
+#if defined(HITLS_CRYPTO_CHACHA20_ASM) || defined(HITLS_CRYPTO_CHACHA20POLY1305_ASM)
+    {.id = CRYPT_CIPHER_CHACHA20_POLY1305, .callback = {CRYPT_CHACHA20_AsmCheck, CRYPT_POLY1305_AsmCheck}},
+#endif  // HITLS_CRYPTO_CHACHA20POLY1305_ASM
 #if defined(HITLS_CRYPTO_SM4_ASM)
     {.id = CRYPT_CIPHER_SM4_XTS, .callback = {CRYPT_SM4_AsmCheck, NULL}},
     {.id = CRYPT_CIPHER_SM4_CBC, .callback = {CRYPT_SM4_AsmCheck, NULL}},
+    {.id = CRYPT_CIPHER_SM4_ECB, .callback = {CRYPT_SM4_AsmCheck, NULL}},
     {.id = CRYPT_CIPHER_SM4_CTR, .callback = {CRYPT_SM4_AsmCheck, NULL}},
+#if defined(HITLS_CRYPTO_GCM_ASM)
+    {.id = CRYPT_CIPHER_SM4_GCM, .callback = {CRYPT_SM4_AsmCheck, CRYPT_GHASH_AsmCheck}},
+#endif // HITLS_CRYPTO_GCM_ASM
     {.id = CRYPT_CIPHER_SM4_CFB, .callback = {CRYPT_SM4_AsmCheck, NULL}},
     {.id = CRYPT_CIPHER_SM4_OFB, .callback = {CRYPT_SM4_AsmCheck, NULL}},
 #endif // HITLS_CRYPTO_SM4
@@ -329,7 +340,6 @@ static const EAL_CheckAsm HITLS_ASM_PKEY_ALG_CHECK[] = {
     {.id = CRYPT_PKEY_ECDH, .callback = {CRYPT_BN_AsmCheck, CRYPT_ECP256_AsmCheck}},
 #endif
     {.id = CRYPT_PKEY_SM2, .callback = {CRYPT_BN_AsmCheck, NULL}},
-    {.id = CRYPT_PKEY_SM9, .callback = {CRYPT_BN_AsmCheck, NULL}},
 #endif
     {.id = CRYPT_PKEY_MAX, .callback = {NULL, NULL}},
 };
@@ -358,6 +368,9 @@ static const EAL_CheckAsm HITLS_ASM_DRBG_ALG_CHECK[] = {
     {.id = CRYPT_RAND_HMAC_SHA384, .callback = {CRYPT_SHA2_AsmCheck, NULL}},
     {.id = CRYPT_RAND_HMAC_SHA512, .callback = {CRYPT_SHA2_AsmCheck, NULL}},
 #endif
+#if defined(HITLS_CRYPTO_SM3_ASM)
+    {.id = CRYPT_RAND_SM3, .callback = {CRYPT_SM3_AsmCheck, NULL}},
+#endif
 #if defined(HITLS_CRYPTO_AES_ASM)
     {.id = CRYPT_RAND_AES128_CTR, .callback = {CRYPT_AES_AsmCheck, NULL}},
     {.id = CRYPT_RAND_AES192_CTR, .callback = {CRYPT_AES_AsmCheck, NULL}},
@@ -365,6 +378,9 @@ static const EAL_CheckAsm HITLS_ASM_DRBG_ALG_CHECK[] = {
     {.id = CRYPT_RAND_AES128_CTR_DF, .callback = {CRYPT_AES_AsmCheck, NULL}},
     {.id = CRYPT_RAND_AES192_CTR_DF, .callback = {CRYPT_AES_AsmCheck, NULL}},
     {.id = CRYPT_RAND_AES256_CTR_DF, .callback = {CRYPT_AES_AsmCheck, NULL}},
+#endif
+#if defined(HITLS_CRYPTO_SM4_ASM)
+    {.id = CRYPT_RAND_SM4_CTR_DF, .callback = {CRYPT_SM4_AsmCheck, NULL}},
 #endif
     {.id = CRYPT_RAND_ALGID_MAX, .callback = {NULL, NULL}},
 };
@@ -393,6 +409,14 @@ static const EAL_CheckAsm HITLS_ASM_MAC_ALG_CHECK[] = {
 #endif
 #if defined(HITLS_CRYPTO_SM3_ASM)
     {.id = CRYPT_MAC_HMAC_SM3, .callback = {CRYPT_SM3_AsmCheck, NULL}},
+#endif
+#if defined(HITLS_CRYPTO_AES_ASM)
+    {.id = CRYPT_MAC_CMAC_AES128, .callback = {CRYPT_AES_AsmCheck, NULL}},
+    {.id = CRYPT_MAC_CMAC_AES192, .callback = {CRYPT_AES_AsmCheck, NULL}},
+    {.id = CRYPT_MAC_CMAC_AES256, .callback = {CRYPT_AES_AsmCheck, NULL}},
+    {.id = CRYPT_MAC_GMAC_AES128, .callback = {CRYPT_AES_AsmCheck, NULL}},
+    {.id = CRYPT_MAC_GMAC_AES192, .callback = {CRYPT_AES_AsmCheck, NULL}},
+    {.id = CRYPT_MAC_GMAC_AES256, .callback = {CRYPT_AES_AsmCheck, NULL}},
 #endif
     {.id = CRYPT_MAC_MAX, .callback = {NULL, NULL}},
 };
