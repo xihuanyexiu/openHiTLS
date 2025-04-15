@@ -160,8 +160,8 @@
                         },
                         "mldsa": {"deps": ["sha3", "obj"]},
                         "hybridkem": {"deps": ["mlkem"], "opts": ["ecdh", "x25519"]},
-                        "paillier": {"deps":["bn_rand"]},
-                        "elgamal": {"deps":["bn_rand"]}
+                        "paillier": {"deps":["bn_rand", "bn_prime"]},
+                        "elgamal": {"deps":["bn_rand", "bn_prime"]}
                     },
                     "provider": {"deps": ["params"]},
                     "bn": {

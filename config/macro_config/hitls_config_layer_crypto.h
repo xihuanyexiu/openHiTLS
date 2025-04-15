@@ -453,6 +453,9 @@
     #ifndef HITLS_CRYPTO_BN_RAND
         #define HITLS_CRYPTO_BN_RAND
     #endif
+    #ifndef HITLS_CRYPTO_BN_PRIME
+        #define HITLS_CRYPTO_BN_PRIME
+    #endif
 #endif
 
 #ifdef HITLS_CRYPTO_HYBRIDKEM

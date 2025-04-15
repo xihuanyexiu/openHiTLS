@@ -280,7 +280,7 @@ test_pkey()
 
     bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_gen,drbg_hash,sha1,sha2 test=rsa_gen
 
-    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_sign,rsa_emsa_pss,sha1,sha2 test=rsa_sign # no drbg
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_sign,rsa_emsa_pss,sha1,sha2,drbg_hash test=rsa_sign
     bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_sign,rsa_emsa_pss,drbg_hash,sha1,sha2 test=rsa_sign
     bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_sign,rsa_emsa_pkcsv15,sha1,sha2 test=rsa_sign # not need drbg
     bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,rsa_verify,rsa_emsa_pss,sha1,sha2 test=rsa_verify # not need drbg

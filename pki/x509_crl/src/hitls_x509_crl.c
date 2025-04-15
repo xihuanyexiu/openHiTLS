@@ -1430,7 +1430,7 @@ static int32_t RevokedSet(HITLS_X509_CrlEntry *revoked, int32_t cmd, void *val, 
             return X509_CrlSetRevokedExt(revoked, BSL_CID_CE_INVALIDITYDATE, &buff, sizeof(HITLS_X509_RevokeExtTime),
                 (EncodeExtCb)SetExtInvaildTime);
         case HITLS_X509_CRL_SET_REVOKED_REASON:
-            return X509_CrlSetRevokedExt(revoked, BSL_CID_CE_CRLREASON, &buff, sizeof(HITLS_X509_RevokeExtReason),
+            return X509_CrlSetRevokedExt(revoked, BSL_CID_CE_CRLREASONS, &buff, sizeof(HITLS_X509_RevokeExtReason),
                 (EncodeExtCb)SetExtReason);
         case HITLS_X509_CRL_SET_REVOKED_CERTISSUER:
             return X509_CrlSetRevokedExt(revoked, BSL_CID_CE_CERTIFICATEISSUER, &buff,
@@ -1453,7 +1453,7 @@ static int32_t RevokedGet(HITLS_X509_CrlEntry *revoked, int32_t cmd, void *val, 
             return HITLS_X509_GetExt(revoked->extList, BSL_CID_CE_INVALIDITYDATE, &buff, sizeof(BSL_TIME),
                 (DecodeExtCb)DecodeExtInvaildTime);
         case HITLS_X509_CRL_GET_REVOKED_REASON:
-            return HITLS_X509_GetExt(revoked->extList, BSL_CID_CE_CRLREASON, &buff, sizeof(int32_t),
+            return HITLS_X509_GetExt(revoked->extList, BSL_CID_CE_CRLREASONS, &buff, sizeof(int32_t),
                 (DecodeExtCb)DecodeExtReason);
         case HITLS_X509_CRL_GET_REVOKED_CERTISSUER:
             return HITLS_X509_GetExt(revoked->extList, BSL_CID_CE_CERTIFICATEISSUER, &buff, sizeof(BslList *),

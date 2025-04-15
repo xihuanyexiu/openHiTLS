@@ -234,9 +234,9 @@ static int32_t CmpDnNameByEncode(const void *pDnName1, const void *pDnName2)
 static uint8_t GetAsn1TypeByCid(BslCid cid)
 {
     switch (cid) {
-        case BSL_CID_SERIALNUMBER:
-        case BSL_CID_COUNTRYNAME:
-        case BSL_CID_DNQUALIFIER:
+        case BSL_CID_AT_SERIALNUMBER:
+        case BSL_CID_AT_COUNTRYNAME:
+        case BSL_CID_AT_DNQUALIFIER:
             return BSL_ASN1_TAG_PRINTABLESTRING;
         case BSL_CID_DOMAINCOMPONENT:
             return BSL_ASN1_TAG_IA5STRING;

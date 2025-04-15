@@ -609,21 +609,34 @@ chacha20poly1305, chacha20, rsa"
     #error "[HiTLS] ealinit must be enabled when the hardware entropy source is enabled."
 #endif
 
+#if defined(HITLS_CRYPTO_ENTROPY) && defined(HITLS_CRYPTO_DRBG_CTR) && !defined(HITLS_CRYPTO_DRBG_GM)
+    #if !defined(HITLS_CRYPTO_HMAC) || !defined(HITLS_CRYPTO_SHA256)
+        #error "[HiTLS] Configure the conditioning function. Currently, CRYPT_MAC_HMAC_SHA256 is supported. \
+            others may be supported in the future."
+    #endif
+#endif
+
 #if defined(HITLS_CRYPTO_BN) && !(defined(HITLS_THIRTY_TWO_BITS) || defined(HITLS_SIXTY_FOUR_BITS))
 #error "[HiTLS] To use bn, the number of system bits must be specified first."
 #endif
 
 #if defined(HITLS_CRYPTO_HPKE)
-#if !defined(HITLS_CRYPTO_AES) && !defined(HITLS_CRYPTO_CHACHA20POLY1305)
-#error "[HiTLS] The hpke must work with aes or chacha20poly1305."
-#endif
+    #if !defined(HITLS_CRYPTO_AES) && !defined(HITLS_CRYPTO_CHACHA20POLY1305)
+    #error "[HiTLS] The hpke must work with aes or chacha20poly1305."
+    #endif
 
-#if !defined(HITLS_CRYPTO_CHACHA20POLY1305) && defined(HITLS_CRYPTO_AES) && !defined(HITLS_CRYPTO_GCM)
-#error "[HiTLS] The hpke must work with aes-gcm."
-#endif
+    #if !defined(HITLS_CRYPTO_CHACHA20POLY1305) && defined(HITLS_CRYPTO_AES) && !defined(HITLS_CRYPTO_GCM)
+    #error "[HiTLS] The hpke must work with aes-gcm."
+    #endif
+
+    #if !defined(HITLS_CRYPTO_CURVE_NISTP256) && !defined(HITLS_CRYPTO_CURVE_NISTP384) && \
+        !defined(HITLS_CRYPTO_CURVE_NISTP521) && !defined(HITLS_CRYPTO_X25519)
+    #error "[HiTLS] The hpke must work with p256 or p384 or p521 or x25519."
+    #endif
+#endif /* HITLS_CRYPTO_HPKE */
 
 #if defined(HITLS_CRYPTO_RSA_BLINDING) && !(defined(HITLS_CRYPTO_BN_RAND))
-#error "[HiTLS] The blind must work with bn_rand"
+    #error "[HiTLS] The blind must work with bn_rand"
 #endif
 
 #if defined(HITLS_CRYPTO_RSA_SIGN) || defined(HITLS_CRYPTO_RSA_VERIFY)
@@ -667,7 +680,7 @@ chacha20poly1305, chacha20, rsa"
 #endif
 
 #if defined(HITLS_CRYPTO_RSA_GEN) && !(defined(HITLS_CRYPTO_BN_RAND) && defined(HITLS_CRYPTO_BN_PRIME))
-#error "[HiTLS] The rsa_gen must work with bn_rand and bn_prime"
+    #error "[HiTLS] The rsa_gen must work with bn_rand and bn_prime"
 #endif
 
 #if defined(HITLS_CRYPTO_ECDSA)
@@ -693,16 +706,10 @@ chacha20poly1305, chacha20, rsa"
 #endif
 
 #if (defined(HITLS_CRYPTO_SHA1_ARMV8) || \
-     defined(HITLS_CRYPTO_SHA256_ARMV8) || defined(HITLS_CRYPTO_SHA224_ARMV8) || defined(HITLS_CRYPTO_SHA2_ARMV8)) && \
-    !defined(HITLS_CRYPTO_EALINIT)
-#error "[HiTLS] ealinit must be enabled for sha1_armv8 or sha256_armv8 or sha224_armv8."
+     defined(HITLS_CRYPTO_SHA256_ARMV8) || defined(HITLS_CRYPTO_SHA224_ARMV8) || defined(HITLS_CRYPTO_SHA2_ARMV8) || \
+     defined(HITLS_CRYPTO_SM4_X8664)) && !defined(HITLS_CRYPTO_EALINIT)
+    #error "[HiTLS] ealinit must be enabled for sha1_armv8 or sha256_armv8 or sha224_armv8 or sm4_x8664."
 #endif
-
-#if !defined(HITLS_CRYPTO_CURVE_NISTP256) && !defined(HITLS_CRYPTO_CURVE_NISTP384) && \
-    !defined(HITLS_CRYPTO_CURVE_NISTP521) && !defined(HITLS_CRYPTO_X25519)
-#error "[HiTLS] The hpke must work with p256 or p384 or p521 or x25519."
-#endif
-#endif /* HITLS_CRYPTO_HPKE */
 
 #if defined(HITLS_CRYPTO_HYBRIDKEM)
     #if !defined(HITLS_CRYPTO_X25519) && !defined(HITLS_CRYPTO_ECDH)
