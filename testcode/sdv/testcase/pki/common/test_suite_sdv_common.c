@@ -551,7 +551,7 @@ void SDV_X509_EXT_SetExtendKeyUsage_TC001(void)
     BSL_LIST_DeleteAll(oidList, FreeListData);
 
     // success: normal oid
-    BslOidString *oid = BSL_OBJ_GetOidFromCID(BSL_CID_CE_SERVERAUTH);
+    BslOidString *oid = BSL_OBJ_GetOidFromCID(BSL_CID_KP_SERVERAUTH);
     ASSERT_NE(oid, NULL);
     BSL_Buffer oidBuff = {(uint8_t *)oid->octs, oid->octetLen};
     ASSERT_EQ(BSL_LIST_AddElement(oidList, &oidBuff, BSL_LIST_POS_END), 0);

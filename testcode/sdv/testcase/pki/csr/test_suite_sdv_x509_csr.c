@@ -523,7 +523,7 @@ void SDV_X509_CSR_GEN_PROCESS_TC002(char *privPath, int keyFormat, int keyType)
     CRYPT_EAL_PkeyCtx *key = NULL;
     BSL_Buffer encodeCsr = {0};
     int mdId = CRYPT_MD_SHA256;
-    HITLS_X509_DN dnName[1] = {{BSL_CID_COUNTRYNAME, (uint8_t *)"CN", strlen("CN")}};
+    HITLS_X509_DN dnName[1] = {{BSL_CID_AT_COUNTRYNAME, (uint8_t *)"CN", strlen("CN")}};
 
     TestMemInit();
     ASSERT_EQ(CRYPT_EAL_PriKeyParseFile(keyFormat, keyType, privPath, NULL, &key), 0);
@@ -922,7 +922,7 @@ void SDV_X509_CSR_AddSubjectName_FUNC_TC001(int keyFormat, int keyType, char *pr
     ASSERT_EQ(memcmp(new->reqInfo.reqInfoRawData, expectedReqInfo->x, expectedReqInfo->len), 0);
 
     // error length
-    HITLS_X509_DN dnNameErr[1] = {{BSL_CID_COUNTRYNAME, (uint8_t *)"CNNN", strlen("CNNN")}};
+    HITLS_X509_DN dnNameErr[1] = {{BSL_CID_AT_COUNTRYNAME, (uint8_t *)"CNNN", strlen("CNNN")}};
     ASSERT_EQ(HITLS_X509_CsrCtrl(new, HITLS_X509_ADD_SUBJECT_NAME, dnNameErr, 1),
         HITLS_X509_ERR_SET_DNNAME_INVALID_LEN);
 EXIT:

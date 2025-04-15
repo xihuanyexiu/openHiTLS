@@ -331,9 +331,9 @@ int32_t HITLS_X509_AttrCtrl(HITLS_X509_Attrs *attributes, HITLS_X509_AttrCmd cmd
     }
     switch (cmd) {
         case HITLS_X509_ATTR_SET_REQUESTED_EXTENSIONS:
-            return SetAttr(attributes, BSL_CID_REQ_EXTENSION, val, valLen, EncodeReqExtAttr);
+            return SetAttr(attributes, BSL_CID_EXTENSIONREQUEST, val, valLen, EncodeReqExtAttr);
         case HITLS_X509_ATTR_GET_REQUESTED_EXTENSIONS:
-            return GetAttr(attributes, BSL_CID_REQ_EXTENSION, val, valLen, DecodeReqExtAttr);
+            return GetAttr(attributes, BSL_CID_EXTENSIONREQUEST, val, valLen, DecodeReqExtAttr);
         default:
             BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_INVALID_PARAM);
             return HITLS_X509_ERR_INVALID_PARAM;
