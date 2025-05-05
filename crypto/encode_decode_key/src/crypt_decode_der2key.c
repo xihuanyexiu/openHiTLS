@@ -153,9 +153,9 @@ static int32_t CheckParams(DECODER_Der2Key_Ctx *decoderCtx, const BSL_Param *inP
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-    if (input->value == NULL || input->valueLen == 0) {
-        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
-        return CRYPT_NULL_INPUT;
+    if (input->value == NULL || input->valueLen == 0 || input->valueType != BSL_PARAM_TYPE_OCTETS) {
+        BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);
+        return CRYPT_INVALID_ARG;
     }
     asn1Encode->data = (uint8_t *)(uintptr_t)input->value;
     asn1Encode->dataLen = input->valueLen;

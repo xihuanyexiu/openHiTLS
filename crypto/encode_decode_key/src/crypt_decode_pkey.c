@@ -76,6 +76,7 @@ int32_t CRYPT_EAL_ProviderDecodeBuffKey(CRYPT_EAL_LibCtx *libCtx, const char *at
     BSL_Param *outParam = NULL;
     bool isFreeOutData = false;
     BSL_Param input[3] = {{0}, {0}, BSL_PARAM_END};
+    CRYPT_EAL_PkeyCtx *tmpPKey = NULL;
     if (encode == NULL || encode->data == NULL || encode->dataLen == 0 || ealPKey == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
@@ -101,9 +102,15 @@ int32_t CRYPT_EAL_ProviderDecodeBuffKey(CRYPT_EAL_LibCtx *libCtx, const char *at
         BSL_ERR_PUSH_ERROR(ret);
         goto EXIT;
     }
-    ret = GetObjectFromOutData(outParam, (void **)ealPKey);
+    ret = GetObjectFromOutData(outParam, (void **)(&tmpPKey));
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
+        goto EXIT;
+    }
+    int32_t algId = CRYPT_EAL_PkeyGetId(tmpPKey);
+    if (keyType != BSL_CID_UNKNOWN && algId != keyType) {
+        ret = CRYPT_EAL_ERR_ALGID;
+        BSL_ERR_PUSH_ERROR(CRYPT_EAL_ERR_ALGID);
         goto EXIT;
     }
     ret = CRYPT_DECODE_PoolCtrl(poolCtx, CRYPT_DECODE_POOL_CMD_SET_FLAG_FREE_OUT_DATA, &isFreeOutData, sizeof(bool));
@@ -111,7 +118,7 @@ int32_t CRYPT_EAL_ProviderDecodeBuffKey(CRYPT_EAL_LibCtx *libCtx, const char *at
         BSL_ERR_PUSH_ERROR(ret);
         goto EXIT;
     }
-
+    *ealPKey = tmpPKey;
     BSL_SAL_Free(outParam);
 EXIT:
     CRYPT_DECODE_PoolFreeCtx(poolCtx);

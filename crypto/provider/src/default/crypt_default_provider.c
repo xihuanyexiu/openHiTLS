@@ -197,8 +197,8 @@ static const CRYPT_EAL_AlgInfo g_defKems[] = {
 };
 
 static const CRYPT_EAL_AlgInfo g_defDecoders[] = {
-    {BSL_CID_MAX, g_defPem2Der, "provider=default, inFormat=PEM, outFormat=ASN1"},
-    {BSL_CID_MAX, g_defPrvP8Enc2P8, "provider=default, inFormat=ASN1, inType=PRIKEY_PKCS8_ENCRYPT, outFormat=ASN1, outType=PRIKEY_PKCS8_UNENCRYPT"},
+    {BSL_CID_DECODE_UNKNOWN, g_defPem2Der, "provider=default, inFormat=PEM, outFormat=ASN1"},
+    {BSL_CID_DECODE_UNKNOWN, g_defPrvP8Enc2P8, "provider=default, inFormat=ASN1, inType=PRIKEY_PKCS8_ENCRYPT, outFormat=ASN1, outType=PRIKEY_PKCS8_UNENCRYPT"},
     {CRYPT_PKEY_RSA, g_defRsaPrvDer2Key, "provider=default, inFormat=ASN1, inType=PRIKEY_RSA, outFormat=OBJECT, outType=LOW_KEY"},
     {CRYPT_PKEY_RSA, g_defRsaPubDer2Key, "provider=default, inFormat=ASN1, inType=PUBKEY_RSA, outFormat=OBJECT, outType=LOW_KEY"},
     {CRYPT_PKEY_ECDSA, g_defEcdsaPrvDer2Key, "provider=default, inFormat=ASN1, inType=PRIKEY_ECC, outFormat=OBJECT, outType=LOW_KEY"},
@@ -215,7 +215,7 @@ static const CRYPT_EAL_AlgInfo g_defDecoders[] = {
     {CRYPT_PKEY_ECDSA, g_defSubPubKeyWithoutSeqDer2EcdsaKey, "provider=default, inFormat=ASN1, inType=PUBKEY_SUBKEY_WITHOUT_SEQ, outFormat=OBJECT, outType=LOW_KEY"},
     {CRYPT_PKEY_SM2, g_defSubPubKeyWithoutSeqDer2Sm2Key, "provider=default, inFormat=ASN1, inType=PUBKEY_SUBKEY_WITHOUT_SEQ, outFormat=OBJECT, outType=LOW_KEY"},
     {CRYPT_PKEY_ED25519, g_defSubPubKeyWithoutSeqDer2Ed25519Key, "provider=default, inFormat=ASN1, inType=PUBKEY_SUBKEY_WITHOUT_SEQ, outFormat=OBJECT, outType=LOW_KEY"},
-    {BSL_CID_MAX, g_defLowKeyObject2PkeyObject, "provider=default, inFormat=OBJECT, inType=LOW_KEY, outFormat=OBJECT, outType=HIGH_KEY"},
+    {BSL_CID_DECODE_UNKNOWN, g_defLowKeyObject2PkeyObject, "provider=default, inFormat=OBJECT, inType=LOW_KEY, outFormat=OBJECT, outType=HIGH_KEY"},
     CRYPT_EAL_ALGINFO_END
 };
 

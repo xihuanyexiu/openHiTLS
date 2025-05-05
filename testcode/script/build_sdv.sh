@@ -76,6 +76,7 @@ find_test_suite()
 {
     if [[ ${ENABLE_CRYPTO} == "ON" ]]; then
         crypto_testsuite=$(find ${HITLS_ROOT_DIR}/testcode/sdv/testcase/crypto -name "*.data" | sed -e "s/.data//" | tr -s "\n" " ")
+        crypto_testsuite=${crypto_testsuite}$(find ${HITLS_ROOT_DIR}/testcode/sdv/testcase/encode_decode -name "*.data" | sed -e "s/.data//" | tr -s "\n" " ")
     fi
     if [[ ${ENABLE_BSL} == "ON" ]]; then
         bsl_testsuite=$(find ${HITLS_ROOT_DIR}/testcode/sdv/testcase/bsl -name "*.data" | sed -e "s/.data//" | tr -s "\n" " ")

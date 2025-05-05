@@ -135,7 +135,7 @@ static int32_t ImportTargetPkey(const BSL_Param *param, void *args)
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-    
+
     ImportTargetPkeyArgs *importTargetPkeyArgs = (ImportTargetPkeyArgs *)args;
     void *provCtx = NULL;
     CRYPT_EAL_PkeyMgmtInfo *pkeyAlgInfo = importTargetPkeyArgs->pkeyAlgInfo;

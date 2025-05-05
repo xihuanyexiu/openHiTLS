@@ -79,9 +79,9 @@ int32_t DECODER_Pem2Der_Decode(void *ctx, const BSL_Param *inParam, BSL_Param **
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-    if (input->value == NULL || input->valueLen == 0) {
-        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
-        return CRYPT_NULL_INPUT;
+    if (input->value == NULL || input->valueLen == 0 || input->valueType != BSL_PARAM_TYPE_OCTETS) {
+        BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);
+        return CRYPT_INVALID_ARG;
     }
     BSL_Buffer encode = {(uint8_t *)(uintptr_t)input->value, input->valueLen};
     uint8_t *asn1Encode = NULL;

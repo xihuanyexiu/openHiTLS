@@ -126,13 +126,13 @@ static int32_t SetFlagFreeOutData(CRYPT_DECODER_PoolCtx *poolCtx, void *val, int
         BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);
         return CRYPT_INVALID_ARG;
     }
+    if (poolCtx->decoderPath == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);
+        return CRYPT_INVALID_ARG;
+    }
     CRYPT_DECODER_Node *prevNode = BSL_LIST_GET_PREV(poolCtx->decoderPath);
     if (prevNode == NULL) {
         return CRYPT_SUCCESS;
-    }
-    if (prevNode->decoderCtx == NULL) {
-        BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);
-        return CRYPT_INVALID_ARG;
     }
     bool isFreeOutData = *(bool *)val;
     if (!isFreeOutData) {
@@ -434,6 +434,10 @@ int32_t CRYPT_DECODE_PoolDecode(CRYPT_DECODER_PoolCtx *poolCtx, const BSL_Param 
     if (poolCtx == NULL || inParam == NULL || outParam == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
+    }
+    if (*outParam != NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);
+        return CRYPT_INVALID_ARG;
     }
     int32_t ret = CRYPT_DECODE_ProviderProcessAll(poolCtx->libCtx, CollectDecoder, poolCtx);
     if (ret != CRYPT_SUCCESS) {
