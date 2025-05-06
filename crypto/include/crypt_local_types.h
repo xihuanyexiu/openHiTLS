@@ -134,9 +134,9 @@ typedef int32_t (*PkeyBlind)(void *pkey, int32_t mdAlgId, const uint8_t *input, 
 typedef int32_t (*PkeyUnBlind)(const void *pkey, const uint8_t *input, uint32_t inputLen,
     uint8_t *out, uint32_t *outLen);
 
-typedef int32_t (*PkeyImport)(void *key, int32_t type, const BSL_Param *params);
+typedef int32_t (*PkeyImport)(void *key, const BSL_Param *params);
 
-typedef int32_t (*PkeyExport)(void *key, int32_t flag, int32_t type, CRYPT_EAL_ProcessFuncCb cb, void *args);
+typedef int32_t (*PkeyExport)(const void *key, BSL_Param *params);
 
 /**
 * @ingroup  EAL

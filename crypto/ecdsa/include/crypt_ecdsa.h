@@ -368,23 +368,18 @@ int32_t CRYPT_ECDSA_GetSecBits(const CRYPT_ECDSA_Ctx *ctx);
  * @brief ecdsa import key
  *
  * @param ctx [IN/OUT] ecdsa context structure
- * @param type [IN] type
  * @param params [IN] parameters
  */
-int32_t CRYPT_ECDSA_Import(CRYPT_ECDSA_Ctx *ctx, int32_t type, const BSL_Param *params);
+int32_t CRYPT_ECDSA_Import(CRYPT_ECDSA_Ctx *ctx, const BSL_Param *params);
 
 /**
  * @ingroup ecdsa
  * @brief ecdsa export key
  *
  * @param ctx [IN/OUT] ecdsa context structure
- * @param flag [IN] flag
- * @param type [IN] type
- * @param cb [IN] callback function
- * @param args [IN] callback function arguments
+ * @param params [IN] parameters
  */
-int32_t CRYPT_ECDSA_Export(CRYPT_ECDSA_Ctx *ctx, int32_t flag, int32_t type,
-    CRYPT_EAL_ProcessFuncCb cb, void *args);
+int32_t CRYPT_ECDSA_Export(const CRYPT_ECDSA_Ctx *ctx, BSL_Param *params);
 
 #endif // HITLS_CRYPTO_PROVIDER
 #ifdef __cplusplus

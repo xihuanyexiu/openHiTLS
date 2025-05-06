@@ -155,9 +155,8 @@ typedef int32_t (*CRYPT_EAL_ImplPkeyMgmtCheck)(const void *prv, const void *pub)
 typedef int32_t (*CRYPT_EAL_ImplPkeyMgmtCompare)(const void *ctx1, const void *ctx2);
 typedef int32_t (*CRYPT_EAL_ImplPkeyMgmtCtrl)(void *ctx, int32_t cmd, void *val, uint32_t valLen);
 typedef void (*CRYPT_EAL_ImplPkeyMgmtFreeCtx)(void *ctx);
-typedef int32_t (*CRYPT_EAL_ImplPkeyMgmtImport)(void *ctx, int32_t type, const BSL_Param *param);
-typedef int32_t (*CRYPT_EAL_ImplPkeyMgmtExport)(void *ctx, int32_t flag, int32_t type, CRYPT_EAL_ProcessFuncCb cb,
-    void *args);
+typedef int32_t (*CRYPT_EAL_ImplPkeyMgmtImport)(void *ctx, const BSL_Param *param);
+typedef int32_t (*CRYPT_EAL_ImplPkeyMgmtExport)(const void *ctx,  BSL_Param *param);
 
 // CRYPT_EAL_OPERAID_SIGN
 #define CRYPT_EAL_IMPLPKEYSIGN_SIGN       1

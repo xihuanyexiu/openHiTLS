@@ -331,56 +331,40 @@ static int32_t TestEccPkeyExch(const TestEccKeyCtx *ctx, const TestEccKeyCtx *pu
     return CRYPT_SUCCESS;
 }
 
-int32_t TestEccImport(void *ctx, int32_t type, const BSL_Param *params)
+int32_t TestEccImport(void *ctx, const BSL_Param *params)
 {
     if (ctx == NULL || params == NULL) {
         return CRYPT_NULL_INPUT;
     }
-    int32_t ret;
-    if (type == CRYPT_KEYMGMT_SELECT_UNKNOWN) {
-        BSL_Param *curve = TestFindConstParam(params, CRYPT_PARAM_EC_CURVE_ID);
-        BSL_Param *pub = TestFindConstParam(params, CRYPT_PARAM_EC_POINT_UNCOMPRESSED);
-        BSL_Param *prv = TestFindConstParam(params, CRYPT_PARAM_EC_PRVKEY);
-        if (curve != NULL) {
-            ret = TestEccSetPara(ctx, params);
-            if (ret != CRYPT_SUCCESS) {
-                return ret;
-            }
+    int32_t ret = CRYPT_SUCCESS;
+    BSL_Param *curve = TestFindConstParam(params, CRYPT_PARAM_EC_CURVE_ID);
+    BSL_Param *pub = TestFindConstParam(params, CRYPT_PARAM_EC_POINT_UNCOMPRESSED);
+    BSL_Param *prv = TestFindConstParam(params, CRYPT_PARAM_EC_PRVKEY);
+    if (curve != NULL) {
+        ret = TestEccSetPara(ctx, params);
+        if (ret != CRYPT_SUCCESS) {
+            return ret;
         }
-        if (pub != NULL) {
-            ret = TestEccSetPubKey(ctx, params);
-            if (ret != CRYPT_SUCCESS) {
-                return ret;
-            }
-        }
-        if (prv != NULL) {
-            ret = TestEccSetPrvKey(ctx, params);
-            if (ret != CRYPT_SUCCESS) {
-                return ret;
-            }
-        }
-    } else if ((type & CRYPT_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+    }
+    if (pub != NULL) {
         ret = TestEccSetPubKey(ctx, params);
         if (ret != CRYPT_SUCCESS) {
             return ret;
         }
-    } else if ((type & CRYPT_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+    }
+    if (prv != NULL) {
         ret = TestEccSetPrvKey(ctx, params);
         if (ret != CRYPT_SUCCESS) {
             return ret;
         }
     }
-
-    return CRYPT_SUCCESS;
+    return ret;
 }
 
-int32_t TestEccExport(void *ctx, int32_t flag, int32_t type, CRYPT_EAL_ProcessFuncCb cb, void *args)
+int32_t TestEccExport(void *ctx, BSL_Param *params)
 {
     (void)ctx;
-    (void)flag;
-    (void)type;
-    (void)cb;
-    (void)args;
+    (void)params;
     return CRYPT_SUCCESS;
 }
 

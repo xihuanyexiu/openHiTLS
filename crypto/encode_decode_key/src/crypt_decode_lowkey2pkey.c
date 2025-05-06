@@ -154,7 +154,7 @@ static int32_t ImportTargetPkey(const BSL_Param *param, void *args)
         BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
         return CRYPT_MEM_ALLOC_FAIL;
     }
-    ret = pkeyAlgInfo->keyMgmtMethod->import(keyRef, CRYPT_KEYMGMT_SELECT_UNKNOWN, param);
+    ret = pkeyAlgInfo->keyMgmtMethod->import(keyRef, param);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         pkeyAlgInfo->keyMgmtMethod->freeCtx(keyRef);
@@ -174,9 +174,12 @@ static int32_t TransLowKeyToTargetLowKey(CRYPT_EAL_PkeyMgmtInfo *pkeyAlgInfo, EA
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-
-    int32_t ret = method->export(lowObjectRef, (CRYPT_PKEY_FLAG_DUP | CRYPT_PKEY_FLAG_NEED_EXPORT_CB),
-        CRYPT_KEYMGMT_SELECT_UNKNOWN, ImportTargetPkey, &importTargetPkeyArgs);
+    BSL_Param param[3] = {
+        {CRYPT_PARAM_PKEY_PROCESS_FUNC, BSL_PARAM_TYPE_FUNC_PTR, ImportTargetPkey, 0, 0}, 
+        {CRYPT_PARAM_PKEY_PROCESS_ARGS, BSL_PARAM_TYPE_CTX_PTR, &importTargetPkeyArgs, 0, 0}, 
+        BSL_PARAM_END
+    };
+    int32_t ret = method->export(lowObjectRef, param);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;

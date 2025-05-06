@@ -269,6 +269,16 @@ int32_t CalcHash(const EAL_MdMethod *hashMethod, const CRYPT_ConstData *hashData
 int32_t CRYPT_Mgf1(const EAL_MdMethod *hashMethod, const uint8_t *seed, const uint32_t seedLen,
     uint8_t *mask, uint32_t maskLen);
 
+/**
+ * @brief Retrieves the process function callback and its arguments from a parameter list.
+ *
+ * @param params A pointer to the BSL_Param list containing the parameters.
+ * @param processCb A pointer to a pointer to the process function callback.
+ * @param args A pointer to a pointer to the process function arguments.
+ * @return int32_t Returns CRYPT_SUCCESS if the operation is successful, otherwise an error code.
+ */
+int32_t CRYPT_GetPkeyProcessParams(BSL_Param *params, CRYPT_EAL_ProcessFuncCb *processCb, void **args);
+
 /* Assumes that x is uint32_t and 0 < n < 32 */
 #define ROTL32(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
 
