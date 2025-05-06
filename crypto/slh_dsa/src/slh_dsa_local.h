@@ -146,7 +146,7 @@ struct SlhDsaCtx {
     bool isDeterministic;
     uint8_t *addrand; // optional random bytes, can be set through CTRL interface, or comes from RNG
     uint32_t addrandLen; // length of the optional random bytes
-    CRYPT_MD_AlgId preHashId;
+    bool isPrehash;
     SlhDsaPrvKey prvKey;
     SlhDsaHashFuncs hashFuncs;
     AdrsOps adrsOps;

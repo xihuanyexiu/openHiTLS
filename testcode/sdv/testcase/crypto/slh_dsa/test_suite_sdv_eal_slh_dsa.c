@@ -83,13 +83,10 @@ void SDV_CRYPTO_SLH_DSA_API_CTRL_TC001(void)
     ASSERT_TRUE(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_CTX_INFO, NULL, 0) == CRYPT_INVALID_ARG);
     uint8_t context[128] = {0};
     ASSERT_TRUE(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_CTX_INFO, context, sizeof(context)) == CRYPT_SUCCESS);
-    ASSERT_TRUE(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_SLH_DSA_PREHASH_ID, NULL, 0) == CRYPT_INVALID_ARG);
-    CRYPT_MD_AlgId preHashId = CRYPT_MD_SHA256;
-    ASSERT_TRUE(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_SLH_DSA_PREHASH_ID, &preHashId, sizeof(preHashId)) ==
+    ASSERT_TRUE(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_PREHASH_FLAG, NULL, 0) == CRYPT_INVALID_ARG);
+    bool preHash = true;
+    ASSERT_TRUE(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_PREHASH_FLAG, &preHash, sizeof(preHash)) ==
                 CRYPT_SUCCESS);
-    preHashId = CRYPT_MD_MAX;
-    ASSERT_TRUE(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_SLH_DSA_PREHASH_ID, &preHashId, sizeof(preHashId)) ==
-                CRYPT_SLHDSA_ERR_PREHASH_ID_NOT_SUPPORTED);
 EXIT:
     CRYPT_EAL_PkeyFreeCtx(pkey);
     return;
@@ -301,7 +298,7 @@ EXIT:
 
 // sign pre-hashed msg
 /* BEGIN_CASE */
-void SDV_CRYPTO_SLH_DSA_SIGN_KAT_TC002(int id, Hex *key, Hex *msg, Hex *context, int preHashId, Hex *sig)
+void SDV_CRYPTO_SLH_DSA_SIGN_KAT_TC002(int id, Hex *key, Hex *addrand, Hex *msg, Hex *context, int preHashId, Hex *sig)
 {
     TestMemInit();
 
@@ -312,12 +309,17 @@ void SDV_CRYPTO_SLH_DSA_SIGN_KAT_TC002(int id, Hex *key, Hex *msg, Hex *context,
     ASSERT_EQ(CRYPT_EAL_PkeySetParaById(pkey, algId), CRYPT_SUCCESS);
     uint32_t keyLen = 0;
     ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_GET_SLH_DSA_KEY_LEN, (void *)&keyLen, sizeof(keyLen)), CRYPT_SUCCESS);
-    bool isDeterministic = true;
-    ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_DETERMINISTIC_FLAG, (void *)&isDeterministic,
-                                 sizeof(isDeterministic)),
-              CRYPT_SUCCESS);
-    CRYPT_MD_AlgId prehash = preHashId;
-    ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_SLH_DSA_PREHASH_ID, (void *)&prehash, sizeof(prehash)),
+    if (addrand->len == 0) {
+        bool isDeterministic = true;
+        ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_DETERMINISTIC_FLAG, (void *)&isDeterministic,
+                                     sizeof(isDeterministic)),
+                  CRYPT_SUCCESS);
+    } else {
+        ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_SLH_DSA_ADDRAND, (void *)addrand->x, addrand->len),
+                  CRYPT_SUCCESS);
+    }
+    bool prehash = true;
+    ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_PREHASH_FLAG, (void *)&prehash, sizeof(prehash)),
               CRYPT_SUCCESS);
     CRYPT_EAL_PkeyPrv prv;
     (void)memset_s(&prv, sizeof(CRYPT_EAL_PkeyPrv), 0, sizeof(CRYPT_EAL_PkeyPrv));
@@ -333,7 +335,7 @@ void SDV_CRYPTO_SLH_DSA_SIGN_KAT_TC002(int id, Hex *key, Hex *msg, Hex *context,
     }
     uint8_t sigOut[50000] = {0};
     uint32_t sigOutLen = sizeof(sigOut);
-    ASSERT_EQ(CRYPT_EAL_PkeySign(pkey, CRYPT_MD_SHA256, msg->x, msg->len, sigOut, &sigOutLen), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeySign(pkey, preHashId, msg->x, msg->len, sigOut, &sigOutLen), CRYPT_SUCCESS);
     ASSERT_TRUE(sigOutLen == sig->len);
     ASSERT_TRUE(memcmp(sigOut, sig->x, sigOutLen) == 0);
 EXIT:

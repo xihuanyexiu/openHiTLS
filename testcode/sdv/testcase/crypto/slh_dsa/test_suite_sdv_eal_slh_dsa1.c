@@ -69,3 +69,47 @@ EXIT:
     return;
 }
 /* END_CASE */
+
+/* BEGIN_CASE */
+void SDV_CRYPTO_SLH_DSA_VERIFY_PREHASHED_KAT_TC001(int id, Hex *key, Hex *addrand, Hex *msg, Hex *context, int hashId, Hex *sig, int result)
+{
+    TestMemInit();
+
+    CRYPT_EAL_PkeyCtx *pkey = NULL;
+    pkey = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_SLH_DSA);
+    ASSERT_TRUE(pkey != NULL);
+    int32_t algId = id;
+    ASSERT_EQ(CRYPT_EAL_PkeySetParaById(pkey, algId), CRYPT_SUCCESS);
+    uint32_t keyLen = 0;
+    ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_GET_SLH_DSA_KEY_LEN, (void *)&keyLen, sizeof(keyLen)), CRYPT_SUCCESS);
+    if (addrand->len == 0) {
+        bool isDeterministic = true;
+        ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_DETERMINISTIC_FLAG, (void *)&isDeterministic,
+                                     sizeof(isDeterministic)),
+                  CRYPT_SUCCESS);
+    } else {
+        ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_SLH_DSA_ADDRAND, (void *)addrand->x, addrand->len),
+                  CRYPT_SUCCESS);
+    }
+    bool prehash = true;
+    ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_PREHASH_FLAG, (void *)&prehash, sizeof(prehash)),
+              CRYPT_SUCCESS);
+
+    CRYPT_EAL_PkeyPrv prv;
+    (void)memset_s(&prv, sizeof(CRYPT_EAL_PkeyPrv), 0, sizeof(CRYPT_EAL_PkeyPrv));
+    prv.id = CRYPT_PKEY_SLH_DSA;
+    prv.key.slhDsaPrv.seed = key->x;
+    prv.key.slhDsaPrv.prf = key->x + keyLen;
+    prv.key.slhDsaPrv.pub.seed = key->x + keyLen * 2;
+    prv.key.slhDsaPrv.pub.root = key->x + keyLen * 3;
+    prv.key.slhDsaPrv.pub.len = keyLen;
+    ASSERT_EQ(CRYPT_EAL_PkeySetPrv(pkey, &prv), CRYPT_SUCCESS);
+    if (context->len != 0) {
+        ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_CTX_INFO, context->x, context->len), CRYPT_SUCCESS);
+    }
+    ASSERT_EQ(CRYPT_EAL_PkeyVerify(pkey, hashId, msg->x, msg->len, sig->x, sig->len), result);
+EXIT:
+    CRYPT_EAL_PkeyFreeCtx(pkey);
+    return;
+}
+/* END_CASE */

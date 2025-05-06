@@ -57,30 +57,6 @@ void CRYPT_SLH_DSA_FreeCtx(CryptSlhDsaCtx *ctx);
 int32_t CRYPT_SLH_DSA_Gen(CryptSlhDsaCtx *ctx);
 
 /**
- * @brief Sign data using SLH-DSA, the msg is pre-hashed, and the hash-id should be set before calling this function.
- * 
- * @param ctx Pointer to the SLH-DSA context
- * @param msg Pointer to the message to sign
- * @param msgLen Length of the message
- * @param sig Pointer to the signature
- * @param sigLen Length of the signature
- */
-int32_t CRYPT_SLH_DSA_SignData(CryptSlhDsaCtx *ctx, const uint8_t *msg, uint32_t msgLen, uint8_t *sig,
-                               uint32_t *sigLen);
-
-/**
- * @brief Verify data using SLH-DSA, the msg is pre-hashed, and the hash-id should be set before calling this function.
- * 
- * @param ctx Pointer to the SLH-DSA context
- * @param msg Pointer to the message to verify
- * @param msgLen Length of the message
- * @param sig Pointer to the signature
- * @param sigLen Length of the signature
- */
-int32_t CRYPT_SLH_DSA_VerifyData(const CryptSlhDsaCtx *ctx, const uint8_t *msg, uint32_t msgLen, uint8_t *sig,
-                                 uint32_t sigLen);
-
-/**
  * @brief Sign data using SLH-DSA
  * 
  * @param ctx Pointer to the SLH-DSA context

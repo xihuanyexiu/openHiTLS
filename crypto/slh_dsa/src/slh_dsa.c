@@ -23,6 +23,7 @@
 #include "bsl_asn1.h"
 #include "crypt_errno.h"
 #include "crypt_util_rand.h"
+#include "eal_md_local.h"
 #include "crypt_slh_dsa.h"
 #include "slh_dsa_local.h"
 #include "slh_dsa_hash.h"
@@ -30,6 +31,7 @@
 #include "slh_dsa_xmss.h"
 #include "slh_dsa_hypertree.h"
 
+#define MAX_DIGEST_SIZE 64
 #define BYTE_BITS          8
 #define SLH_DSA_PREFIX_LEN 2
 #define ASN1_HEADER_LEN    2
@@ -253,7 +255,7 @@ CryptSlhDsaCtx *CRYPT_SLH_DSA_NewCtx(void)
         return NULL;
     }
     ctx->para.algId = CRYPT_SLH_DSA_ALG_ID_MAX;
-    ctx->preHashId = CRYPT_MD_MAX;
+    ctx->isPrehash = false;
     ctx->isDeterministic = false;
     return ctx;
 }
@@ -482,28 +484,85 @@ static int32_t CRYPT_SLH_DSA_VerifyInternal(const CryptSlhDsaCtx *ctx, const uin
     return CRYPT_SUCCESS;
 }
 
-int32_t CRYPT_SLH_DSA_Sign(CryptSlhDsaCtx *ctx, int32_t algId, const uint8_t *data, uint32_t dataLen, uint8_t *sign,
-                           uint32_t *signLen)
+static uint32_t GetMdSize(const EAL_MdMethod *hashMethod, int32_t hashId)
 {
-    (void)algId;
-    int32_t ret;
-
-    if (ctx == NULL || data == NULL || dataLen == 0 || sign == NULL || signLen == NULL) {
-        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
-        return CRYPT_NULL_INPUT;
+    if (hashId == CRYPT_MD_SHAKE128) {
+        return 32;  // To use SHAKE128, generate a 32-byte digest.
+    } else if (hashId == CRYPT_MD_SHAKE256) {
+        return 64;  // To use SHAKE256, generate a 64-byte digest.
     }
+    return hashMethod->mdSize;
+}
 
-    uint32_t mpLen = SLH_DSA_PREFIX_LEN + ctx->contextLen + dataLen;
+static int32_t MsgEncode(const CryptSlhDsaCtx *ctx, int32_t algId, const uint8_t *data, uint32_t dataLen, uint8_t **mpOut, uint32_t *mpLenOut)
+{
+    int32_t ret;
+    BslOidString *oid = NULL;
+    uint32_t offset = 0;
+    uint8_t prehash[MAX_DIGEST_SIZE] = {0};
+    uint32_t prehashLen = sizeof(prehash);
+
+    uint32_t mpLen = SLH_DSA_PREFIX_LEN + ctx->contextLen;
+    if (ctx->isPrehash) {
+        oid = BSL_OBJ_GetOidFromCID((BslCid)algId);
+        if (oid == NULL) {
+            BSL_ERR_PUSH_ERROR(CRYPT_SLHDSA_ERR_PREHASH_ID_NOT_SUPPORTED);
+            return CRYPT_SLHDSA_ERR_PREHASH_ID_NOT_SUPPORTED;
+        }
+        mpLen += 2 + oid->octetLen; // asn1 header length is 2
+        prehashLen = GetMdSize(EAL_MdFindMethod(algId), algId);
+        const CRYPT_ConstData constData = {data, dataLen};
+        ret = CalcHash(EAL_MdFindMethod(algId), &constData, 1, prehash, &prehashLen);
+        if (ret != CRYPT_SUCCESS) {
+            BSL_ERR_PUSH_ERROR(ret);
+            return ret;
+        }
+        mpLen += prehashLen;
+    } else {
+        mpLen += dataLen;
+    }
+    
     uint8_t *mp = (uint8_t *)BSL_SAL_Malloc(mpLen);
     if (mp == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
         return CRYPT_MEM_ALLOC_FAIL;
     }
-    mp[0] = 0;
+    mp[0] = ctx->isPrehash ? 1 : 0;
     mp[1] = ctx->contextLen;
     (void)memcpy_s(mp + SLH_DSA_PREFIX_LEN, mpLen - SLH_DSA_PREFIX_LEN, ctx->context, ctx->contextLen);
-    (void)memcpy_s(mp + SLH_DSA_PREFIX_LEN + ctx->contextLen, mpLen - SLH_DSA_PREFIX_LEN - ctx->contextLen, data,
-                   dataLen);
+    offset += SLH_DSA_PREFIX_LEN + ctx->contextLen;
+
+    if (ctx->isPrehash) {
+        // asn1 encoding of hash oid
+        (mp + offset)[0] = BSL_ASN1_TAG_OBJECT_ID;
+        (mp + offset)[1] = oid->octetLen;
+        offset += 2; // asn1 header length is 2
+        (void)memcpy_s(mp + offset, mpLen - offset, oid->octs, oid->octetLen);
+        offset += oid->octetLen;
+        (void)memcpy_s(mp + offset, mpLen - offset, prehash, prehashLen);
+    } else {
+        (void)memcpy_s(mp + offset, mpLen - offset, data, dataLen);
+    }
+    *mpOut = mp;
+    *mpLenOut = mpLen;
+    return CRYPT_SUCCESS;
+}
+
+int32_t CRYPT_SLH_DSA_Sign(CryptSlhDsaCtx *ctx, int32_t algId, const uint8_t *data, uint32_t dataLen, uint8_t *sign,
+                           uint32_t *signLen)
+{
+    int32_t ret;
+    uint8_t *mp = NULL;
+    uint32_t mpLen = 0;
+
+    if (ctx == NULL || data == NULL || dataLen == 0 || sign == NULL || signLen == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    ret = MsgEncode(ctx, algId, data, dataLen, &mp, &mpLen);
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
+    }
     ret = CRYPT_SLH_DSA_SignInternal(ctx, mp, mpLen, sign, signLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_SAL_Free(mp);
@@ -519,114 +578,21 @@ int32_t CRYPT_SLH_DSA_Verify(const CryptSlhDsaCtx *ctx, int32_t algId, const uin
 {
     (void)algId;
     int32_t ret;
+    uint8_t *mp = NULL;
+    uint32_t mpLen = 0;
+
     if (ctx == NULL || data == NULL || dataLen == 0 || sign == NULL || signLen == 0) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-    uint32_t mpLen = SLH_DSA_PREFIX_LEN + ctx->contextLen + dataLen;
-    uint8_t *mp = (uint8_t *)BSL_SAL_Malloc(mpLen);
-    if (mp == NULL) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
+
+    ret = MsgEncode(ctx, algId, data, dataLen, &mp, &mpLen);
+    if (ret != CRYPT_SUCCESS) {
+        return ret;
     }
-    mp[0] = 0;
-    mp[1] = ctx->contextLen;
-    (void)memcpy_s(mp + SLH_DSA_PREFIX_LEN, mpLen - SLH_DSA_PREFIX_LEN, ctx->context, ctx->contextLen);
-    (void)memcpy_s(mp + SLH_DSA_PREFIX_LEN + ctx->contextLen, mpLen - SLH_DSA_PREFIX_LEN - ctx->contextLen, data,
-                   dataLen);
     ret = CRYPT_SLH_DSA_VerifyInternal(ctx, mp, mpLen, sign, signLen);
     BSL_SAL_Free(mp);
     return ret;
-}
-
-int32_t CRYPT_SLH_DSA_SignData(CryptSlhDsaCtx *ctx, const uint8_t *msg, uint32_t msgLen, uint8_t *sig, uint32_t *sigLen)
-{
-    int32_t ret;
-    if (ctx == NULL || msg == NULL || msgLen == 0 || sig == NULL || sigLen == NULL) {
-        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
-        return CRYPT_NULL_INPUT;
-    }
-
-    BslOidString *oid = BSL_OBJ_GetOidFromCID((BslCid)ctx->preHashId);
-    if (oid == NULL) {
-        BSL_ERR_PUSH_ERROR(CRYPT_SLHDSA_ERR_PREHASH_ID_NOT_SUPPORTED);
-        return CRYPT_SLHDSA_ERR_PREHASH_ID_NOT_SUPPORTED;
-    }
-
-    uint32_t mpLen = SLH_DSA_PREFIX_LEN + ctx->contextLen + oid->octetLen + msgLen;
-    uint8_t *mp = (uint8_t *)BSL_SAL_Malloc(mpLen);
-    if (mp == NULL) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
-    }
-    uint32_t offset = 0;
-    // sign pre-hash data
-    mp[0] = 1;
-    mp[1] = ctx->contextLen;
-    offset += SLH_DSA_PREFIX_LEN;
-    (void)memcpy_s(mp + offset, mpLen - offset, ctx->context, ctx->contextLen);
-    offset += ctx->contextLen;
-
-    // asn1 encoding of hash oid
-    (mp + offset)[0] = BSL_ASN1_TAG_OBJECT_ID;
-    (mp + offset)[1] = oid->octetLen;
-    (void)memcpy_s(mp + offset, mpLen - offset, oid->octs, oid->octetLen);
-    offset += oid->octetLen;
-    (void)memcpy_s(mp + offset, mpLen - offset, msg, msgLen);
-    ret = CRYPT_SLH_DSA_SignInternal(ctx, mp, mpLen, sig, sigLen);
-    if (ret != CRYPT_SUCCESS) {
-        BSL_SAL_Free(mp);
-        BSL_ERR_PUSH_ERROR(ret);
-        return ret;
-    }
-    BSL_SAL_Free(mp);
-    return CRYPT_SUCCESS;
-}
-
-int32_t CRYPT_SLH_DSA_VerifyData(const CryptSlhDsaCtx *ctx, const uint8_t *msg, uint32_t msgLen, uint8_t *sig,
-                                 uint32_t sigLen)
-{
-    int32_t ret;
-    if (ctx == NULL || msg == NULL || msgLen == 0 || sig == NULL || sigLen == 0) {
-        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
-        return CRYPT_NULL_INPUT;
-    }
-
-    BslOidString *oid = BSL_OBJ_GetOidFromCID((BslCid)ctx->preHashId);
-    if (oid == NULL) {
-        BSL_ERR_PUSH_ERROR(CRYPT_SLHDSA_ERR_PREHASH_ID_NOT_SUPPORTED);
-        return CRYPT_SLHDSA_ERR_PREHASH_ID_NOT_SUPPORTED;
-    }
-
-    uint32_t mpLen = SLH_DSA_PREFIX_LEN + ctx->contextLen + ASN1_HEADER_LEN + oid->octetLen + msgLen;
-    uint8_t *mp = (uint8_t *)BSL_SAL_Malloc(mpLen);
-    if (mp == NULL) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
-    }
-
-    uint32_t offset = 0;
-    mp[0] = 1;
-    mp[1] = ctx->contextLen;
-    offset += SLH_DSA_PREFIX_LEN;
-    (void)memcpy_s(mp + offset, mpLen - offset, ctx->context, ctx->contextLen);
-    offset += ctx->contextLen;
-
-    // asn1 encoding of hash oid
-    (mp + offset)[0] = BSL_ASN1_TAG_OBJECT_ID;
-    (mp + offset)[1] = oid->octetLen;
-    offset += ASN1_HEADER_LEN;
-    (void)memcpy_s(mp + offset, mpLen - offset, oid->octs, oid->octetLen);
-    offset += oid->octetLen;
-    (void)memcpy_s(mp + offset, mpLen - offset, msg, msgLen);
-    ret = CRYPT_SLH_DSA_VerifyInternal(ctx, mp, mpLen, sig, sigLen);
-    if (ret != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(ret);
-        BSL_SAL_Free(mp);
-        return ret;
-    }
-    BSL_SAL_Free(mp);
-    return CRYPT_SUCCESS;
 }
 
 static void SlhDsaSetAlgId(CryptSlhDsaCtx *ctx, CRYPT_SLH_DSA_AlgId algId)
@@ -669,17 +635,12 @@ int32_t CRYPT_SLH_DSA_Ctrl(CryptSlhDsaCtx *ctx, int32_t opt, void *val, uint32_t
             }
             SlhDsaSetAlgId(ctx, algId);
             return CRYPT_SUCCESS;
-        case CRYPT_CTRL_SET_SLH_DSA_PREHASH_ID:
-            if (val == NULL || len != sizeof(CRYPT_MD_AlgId)) {
+        case CRYPT_CTRL_SET_PREHASH_FLAG:
+            if (val == NULL || len != sizeof(bool)) {
                 BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);
                 return CRYPT_INVALID_ARG;
             }
-            CRYPT_MD_AlgId preHashId = *(CRYPT_MD_AlgId *)val;
-            if (preHashId == CRYPT_MD_MAX) {
-                BSL_ERR_PUSH_ERROR(CRYPT_SLHDSA_ERR_PREHASH_ID_NOT_SUPPORTED);
-                return CRYPT_SLHDSA_ERR_PREHASH_ID_NOT_SUPPORTED;
-            }
-            ctx->preHashId = preHashId;
+            ctx->isPrehash = *(bool *)val;
             return CRYPT_SUCCESS;
         case CRYPT_CTRL_SET_CTX_INFO:
             if (val == NULL) {
