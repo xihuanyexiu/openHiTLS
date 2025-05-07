@@ -595,6 +595,7 @@ typedef enum {
     CRYPT_CTRL_GET_CIPHERTEXT_LEN,       /**< Get the ciphertext length */
     CRYPT_CTRL_SET_DETERMINISTIC_FLAG,   /**< Whether to use deterministic signatures */
     CRYPT_CTRL_SET_CTX_INFO,             /**< Set the context string. */
+    CRYPT_CTRL_SET_PREHASH_FLAG,         /**< Change the SLH-DSA or ML-DSA mode to prehash version or pure version. */
 
     // rsa
     CRYPT_CTRL_SET_RSA_EMSA_PKCSV15 = 200, /**< RSA set the signature padding mode to EMSA_PKCSV15. */
@@ -646,8 +647,7 @@ typedef enum {
     CRYPT_CTRL_GEN_X25519_PUBLICKEY,    /**< Use prikey genarate x25519 pubkey. */
 
     // slh-dsa
-    CRYPT_CTRL_SET_PREHASH_FLAG = 600,  /**< Change the SLH-DSA or ML-DSA mode to prehash version or pure version. */
-    CRYPT_CTRL_GET_SLH_DSA_KEY_LEN,     /**< Get the SLH-DSA key length. */
+    CRYPT_CTRL_GET_SLH_DSA_KEY_LEN = 600,     /**< Get the SLH-DSA key length. */
     CRYPT_CTRL_SET_SLH_DSA_ADDRAND, /**< Set the SLH-DSA additional random bytes. */
 
 	CRYPT_CTRL_SET_MLDSA_ENCODE_FLAG = 700,  /**< Set the flag for encode messages. */

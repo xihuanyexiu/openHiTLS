@@ -485,9 +485,9 @@ static const EAL_PkeyMethod METHODS[] = {
         CRYPT_ML_DSA_GetPubKey,
         CRYPT_ML_DSA_GetPrvKey,
         CRYPT_ML_DSA_Sign, // sign
-        CRYPT_ML_DSA_SignData, // signData
+        NULL, // signData
         CRYPT_ML_DSA_Verify, // verify
-		CRYPT_ML_DSA_VerifyData, // verifyData
+		NULL, // verifyData
         NULL, // recover
         NULL, // computeShareKey
         NULL, // encrypt

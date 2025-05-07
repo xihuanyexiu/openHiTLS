@@ -636,11 +636,11 @@ int32_t CRYPT_SLH_DSA_Ctrl(CryptSlhDsaCtx *ctx, int32_t opt, void *val, uint32_t
             SlhDsaSetAlgId(ctx, algId);
             return CRYPT_SUCCESS;
         case CRYPT_CTRL_SET_PREHASH_FLAG:
-            if (val == NULL || len != sizeof(bool)) {
+            if (val == NULL || len != sizeof(int32_t)) {
                 BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);
                 return CRYPT_INVALID_ARG;
             }
-            ctx->isPrehash = *(bool *)val;
+            ctx->isPrehash = (*(int32_t *)val != 0);
             return CRYPT_SUCCESS;
         case CRYPT_CTRL_SET_CTX_INFO:
             if (val == NULL) {
@@ -668,11 +668,11 @@ int32_t CRYPT_SLH_DSA_Ctrl(CryptSlhDsaCtx *ctx, int32_t opt, void *val, uint32_t
             *(uint32_t *)val = ctx->para.n;
             return CRYPT_SUCCESS;
         case CRYPT_CTRL_SET_DETERMINISTIC_FLAG:
-            if (val == NULL || len != sizeof(bool)) {
+            if (val == NULL || len != sizeof(int32_t)) {
                 BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);
                 return CRYPT_INVALID_ARG;
             }
-            ctx->isDeterministic = *(bool *)val;
+            ctx->isDeterministic = (*(int32_t *)val != 0);
             return CRYPT_SUCCESS;
         case CRYPT_CTRL_SET_SLH_DSA_ADDRAND:
             if (val == NULL || len != ctx->para.n) {

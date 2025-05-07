@@ -42,7 +42,7 @@ void SDV_CRYPTO_SLH_DSA_VERIFY_KAT_TC001(int id, Hex *key, Hex *addrand, Hex *ms
     uint32_t keyLen = 0;
     ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_GET_SLH_DSA_KEY_LEN, (void *)&keyLen, sizeof(keyLen)), CRYPT_SUCCESS);
     if (addrand->len == 0) {
-        bool isDeterministic = true;
+        int32_t isDeterministic = 1;
         ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_DETERMINISTIC_FLAG, (void *)&isDeterministic,
                                      sizeof(isDeterministic)),
                   CRYPT_SUCCESS);
@@ -83,7 +83,7 @@ void SDV_CRYPTO_SLH_DSA_VERIFY_PREHASHED_KAT_TC001(int id, Hex *key, Hex *addran
     uint32_t keyLen = 0;
     ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_GET_SLH_DSA_KEY_LEN, (void *)&keyLen, sizeof(keyLen)), CRYPT_SUCCESS);
     if (addrand->len == 0) {
-        bool isDeterministic = true;
+        int32_t isDeterministic = 1;
         ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_DETERMINISTIC_FLAG, (void *)&isDeterministic,
                                      sizeof(isDeterministic)),
                   CRYPT_SUCCESS);
@@ -91,7 +91,7 @@ void SDV_CRYPTO_SLH_DSA_VERIFY_PREHASHED_KAT_TC001(int id, Hex *key, Hex *addran
         ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_SLH_DSA_ADDRAND, (void *)addrand->x, addrand->len),
                   CRYPT_SUCCESS);
     }
-    bool prehash = true;
+    int32_t prehash = 1;
     ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_PREHASH_FLAG, (void *)&prehash, sizeof(prehash)),
               CRYPT_SUCCESS);
 

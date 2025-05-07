@@ -84,7 +84,7 @@ void SDV_CRYPTO_SLH_DSA_API_CTRL_TC001(void)
     uint8_t context[128] = {0};
     ASSERT_TRUE(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_CTX_INFO, context, sizeof(context)) == CRYPT_SUCCESS);
     ASSERT_TRUE(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_PREHASH_FLAG, NULL, 0) == CRYPT_INVALID_ARG);
-    bool preHash = true;
+    int32_t preHash = 1;
     ASSERT_TRUE(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_PREHASH_FLAG, &preHash, sizeof(preHash)) ==
                 CRYPT_SUCCESS);
 EXIT:
@@ -264,7 +264,7 @@ void SDV_CRYPTO_SLH_DSA_SIGN_KAT_TC001(int id, Hex *key, Hex *addrand, Hex *msg,
     uint32_t keyLen = 0;
     ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_GET_SLH_DSA_KEY_LEN, (void *)&keyLen, sizeof(keyLen)), CRYPT_SUCCESS);
     if (addrand->len == 0) {
-        bool isDeterministic = true;
+        int32_t isDeterministic = 1;
         ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_DETERMINISTIC_FLAG, (void *)&isDeterministic,
                                      sizeof(isDeterministic)),
                   CRYPT_SUCCESS);
@@ -310,7 +310,7 @@ void SDV_CRYPTO_SLH_DSA_SIGN_KAT_TC002(int id, Hex *key, Hex *addrand, Hex *msg,
     uint32_t keyLen = 0;
     ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_GET_SLH_DSA_KEY_LEN, (void *)&keyLen, sizeof(keyLen)), CRYPT_SUCCESS);
     if (addrand->len == 0) {
-        bool isDeterministic = true;
+        int32_t isDeterministic = 1;
         ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_DETERMINISTIC_FLAG, (void *)&isDeterministic,
                                      sizeof(isDeterministic)),
                   CRYPT_SUCCESS);
@@ -318,7 +318,7 @@ void SDV_CRYPTO_SLH_DSA_SIGN_KAT_TC002(int id, Hex *key, Hex *addrand, Hex *msg,
         ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_SLH_DSA_ADDRAND, (void *)addrand->x, addrand->len),
                   CRYPT_SUCCESS);
     }
-    bool prehash = true;
+    int32_t prehash = 1;
     ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_PREHASH_FLAG, (void *)&prehash, sizeof(prehash)),
               CRYPT_SUCCESS);
     CRYPT_EAL_PkeyPrv prv;
