@@ -17,7 +17,7 @@
 #define CRYPT_ENCODE_DECODE_KEY_LOCAL_H
 
 #include "hitls_build.h"
-#ifdef HITLS_CRYPTO_ENCODE_DECODE_KEY
+#ifdef HITLS_CRYPTO_CODECSKEY
 
 #include "bsl_types.h"
 #include "bsl_asn1.h"
@@ -238,6 +238,6 @@ static inline bool IsEcdsaEcParaId(int32_t paraId)
 }
 #endif
 
-#endif // HITLS_CRYPTO_ENCODE_DECODE_KEY
+#endif // HITLS_CRYPTO_CODECSKEY
 
 #endif // CRYPT_ENCODE_DECODE_KEY_LOCAL_H

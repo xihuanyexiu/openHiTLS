@@ -22,7 +22,7 @@
 #include "bsl_err_internal.h"
 #include "crypt_eal_md.h"
 #include "crypt_errno.h"
-#include "crypt_eal_encode.h"
+#include "crypt_eal_codecs.h"
 #include "crypt_util_rand.h"
 #include "auth_privpass_token.h"
 #include "privpass_token.h"

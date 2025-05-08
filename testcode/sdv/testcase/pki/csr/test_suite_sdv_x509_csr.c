@@ -24,7 +24,7 @@
 #include "crypt_types.h"
 #include "crypt_errno.h"
 #include "crypt_encode_decode_key.h"
-#include "crypt_eal_encode.h"
+#include "crypt_eal_codecs.h"
 #include "crypt_eal_rand.h"
 #include "eal_pkey_local.h"
 #include "bsl_list_internal.h"

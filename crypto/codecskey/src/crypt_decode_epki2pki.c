@@ -15,7 +15,7 @@
 
 #include "hitls_build.h"
 
-#if defined(HITLS_CRYPTO_ENCODE_DECODE_KEY) && defined(HITLS_CRYPTO_KEY_EPKI) && defined(HITLS_CRYPTO_PROVIDER)
+#if defined(HITLS_CRYPTO_CODECSKEY) && defined(HITLS_CRYPTO_KEY_EPKI) && defined(HITLS_CRYPTO_PROVIDER)
 #include <string.h>
 #include "crypt_eal_implprovider.h"
 #include "crypt_params_key.h"
@@ -133,4 +133,4 @@ void DECODER_EPki2Pki_FreeOutData(void *ctx, BSL_Param *outParam)
     BSL_SAL_Free(outParam);
 }
 
-#endif /* HITLS_CRYPTO_ENCODE_DECODE_KEY && HITLS_CRYPTO_EPKI2PKI && HITLS_CRYPTO_PROVIDER */
+#endif /* HITLS_CRYPTO_CODECSKEY && HITLS_CRYPTO_EPKI2PKI && HITLS_CRYPTO_PROVIDER */

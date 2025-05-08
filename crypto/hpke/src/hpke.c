@@ -178,26 +178,13 @@ static int32_t InitCipherSuiteCtx(CRYPT_EAL_HpkeCtx *ctx, uint8_t aeadIndex, CRY
 {
     CRYPT_EAL_KdfCTX *kdfCtx = NULL;
     CRYPT_EAL_CipherCtx *cipherCtx = NULL;
-#ifndef HITLS_CRYPTO_PROVIDER
-    (void)libCtx;
-    (void)attrName;
-#endif
-
-#ifdef HITLS_CRYPTO_PROVIDER
     kdfCtx = CRYPT_EAL_ProviderKdfNewCtx(libCtx, CRYPT_KDF_HKDF, attrName);
-#else
-    kdfCtx = CRYPT_EAL_KdfNewCtx(CRYPT_KDF_HKDF);
-#endif
     if (kdfCtx == NULL) {
         return CRYPT_HPKE_FAILED_FETCH_KDF;
     }
 
     if (g_hpkeAeadAlgInfo[aeadIndex].hpkeAeadId != CRYPT_AEAD_EXPORT_ONLY) {
-#ifdef HITLS_CRYPTO_PROVIDER
         cipherCtx = CRYPT_EAL_ProviderCipherNewCtx(libCtx, g_hpkeAeadAlgInfo[aeadIndex].cipherId, attrName);
-#else
-        cipherCtx = CRYPT_EAL_CipherNewCtx(g_hpkeAeadAlgInfo[aeadIndex].cipherId);
-#endif
         if (cipherCtx == NULL) {
             CRYPT_EAL_KdfFreeCtx(kdfCtx);
             return CRYPT_HPKE_FAILED_FETCH_CIPHER;
@@ -1518,11 +1505,7 @@ static int32_t HpkeDeriveKeyPair(uint8_t kemIndex, uint8_t *ikm, uint32_t ikmLen
     uint32_t skLen = g_hpkeKemAlgInfo[kemIndex].privateKeyLen;
 
     CRYPT_EAL_KdfCTX *kdfCtx = NULL;
-#ifdef HITLS_CRYPTO_PROVIDER
     kdfCtx = CRYPT_EAL_ProviderKdfNewCtx(libCtx, CRYPT_KDF_HKDF, attrName);
-#else
-    kdfCtx = CRYPT_EAL_KdfNewCtx(CRYPT_KDF_HKDF);
-#endif
     if (kdfCtx == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_HPKE_FAILED_FETCH_KDF);
         return CRYPT_HPKE_FAILED_FETCH_KDF;

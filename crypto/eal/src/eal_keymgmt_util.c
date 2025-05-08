@@ -14,7 +14,7 @@
  */
 
 #include "hitls_build.h"
-#if defined(HITLS_CRYPTO_ENCODE_DECODE_KEY) && defined(HITLS_CRYPTO_PROVIDER)
+#if defined(HITLS_CRYPTO_CODECSKEY) && defined(HITLS_CRYPTO_PROVIDER)
 #include "crypt_errno.h"
 #include "crypt_eal_pkey.h"
 #include "eal_pkey_local.h"
@@ -67,4 +67,4 @@ int32_t CRYPT_EAL_GetPkeyAlgInfo(CRYPT_EAL_LibCtx *libCtx, int32_t algId, const 
     return CRYPT_SUCCESS;
 }
 
-#endif /* HITLS_CRYPTO_ENCODE_DECODE_KEY && CRYPT_EAL_PROVIDER */
+#endif /* HITLS_CRYPTO_CODECSKEY && CRYPT_EAL_PROVIDER */

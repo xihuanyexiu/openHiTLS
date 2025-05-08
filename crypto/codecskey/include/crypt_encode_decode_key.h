@@ -17,7 +17,7 @@
 #define CRYPT_ENCODE_DECODE_KEY_H
 
 #include "hitls_build.h"
-#ifdef HITLS_CRYPTO_ENCODE_DECODE_KEY
+#ifdef HITLS_CRYPTO_CODECSKEY
 
 #include "bsl_types.h"
 #include "bsl_asn1.h"
@@ -59,10 +59,12 @@ int32_t CRYPT_EAL_EncodePKCS7EncryptDataBuff(CRYPT_EAL_LibCtx *libCtx, const cha
 
 int32_t CRYPT_EAL_GetEncodeFormat(const char *format);
 
+int32_t CRYPT_EAL_GetEncodeType(const char *type);
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif // HITLS_CRYPTO_ENCODE_DECODE_KEY
+#endif // HITLS_CRYPTO_CODECSKEY
 
 #endif // CRYPT_ENCODE_DECODE_KEY_H

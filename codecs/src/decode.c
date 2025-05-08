@@ -15,7 +15,7 @@
 
 #include "hitls_build.h"
 
-#if defined(HITLS_CRYPTO_ENCODE_DECODE) && defined(HITLS_CRYPTO_PROVIDER)
+#if defined(HITLS_CRYPTO_CODECS) && defined(HITLS_CRYPTO_PROVIDER)
 #include "securec.h"
 #include "bsl_sal.h"
 #include "bsl_list.h"
@@ -25,7 +25,7 @@
 #include "crypt_eal_implprovider.h"
 #include "crypt_provider.h"
 #include "crypt_eal_pkey.h"
-#include "crypt_eal_encode.h"
+#include "crypt_eal_codecs.h"
 #include "bsl_types.h"
 #include "crypt_types.h"
 #include "crypt_utils.h"
@@ -256,4 +256,4 @@ void CRYPT_DECODE_FreeOutData(CRYPT_DECODER_Ctx *ctx, BSL_Param *outData)
     ctx->method->freeOutData(ctx->decoderCtx, outData);
 }
 
-#endif /* HITLS_CRYPTO_ENCODE_DECODE && HITLS_CRYPTO_PROVIDER */
+#endif /* HITLS_CRYPTO_CODECS && HITLS_CRYPTO_PROVIDER */

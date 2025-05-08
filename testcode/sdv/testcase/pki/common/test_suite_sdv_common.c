@@ -29,7 +29,7 @@
 #include "bsl_obj_internal.h"
 #include "bsl_uio.h"
 #include "crypt_errno.h"
-#include "crypt_eal_encode.h"
+#include "crypt_eal_codecs.h"
 #include "crypt_eal_rand.h"
 #include "hitls_x509_local.h"
 #include "hitls_print_local.h"

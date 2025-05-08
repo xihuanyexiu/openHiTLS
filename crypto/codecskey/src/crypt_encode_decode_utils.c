@@ -14,7 +14,7 @@
  */
 
 #include "hitls_build.h"
-#ifdef HITLS_CRYPTO_ENCODE_DECODE_KEY
+#ifdef HITLS_CRYPTO_CODECSKEY
 #include <stdint.h>
 #include "securec.h"
 #include "bsl_types.h"
@@ -251,13 +251,7 @@ int32_t CRYPT_ENCODE_DECODE_DecryptEncData(CRYPT_EAL_LibCtx *libctx, const char 
     BSL_Buffer *enData, int32_t alg, bool isEnc, BSL_Buffer *key, uint8_t *output, uint32_t *dataLen)
 {
     uint32_t buffLen = *dataLen;
-#ifdef HITLS_CRYPTO_PROVIDER
     CRYPT_EAL_CipherCtx *ctx = CRYPT_EAL_ProviderCipherNewCtx(libctx, alg, attrName);
-#else
-    (void)libctx;
-    (void)attrName;
-    CRYPT_EAL_CipherCtx *ctx = CRYPT_EAL_CipherNewCtx(alg);
-#endif
     if (ctx == NULL) {
         BSL_ERR_PUSH_ERROR(BSL_MALLOC_FAIL);
         return BSL_MALLOC_FAIL;
@@ -301,13 +295,7 @@ EXIT:
 static int32_t PbkdfDeriveKey(CRYPT_EAL_LibCtx *libctx, const char *attrName, int32_t iter, int32_t prfId,
     BSL_Buffer *salt, const uint8_t *pwd, uint32_t pwdLen, BSL_Buffer *key)
 {
-#ifdef HITLS_CRYPTO_PROVIDER
     CRYPT_EAL_KdfCTX *kdfCtx = CRYPT_EAL_ProviderKdfNewCtx(libctx, CRYPT_KDF_PBKDF2, attrName);
-#else
-    (void)libctx;
-    (void)attrName;
-    CRYPT_EAL_KdfCTX *kdfCtx = CRYPT_EAL_KdfNewCtx(CRYPT_KDF_PBKDF2);
-#endif
     if (kdfCtx == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_PBKDF2_NOT_SUPPORTED);
         return CRYPT_PBKDF2_NOT_SUPPORTED;
@@ -1107,4 +1095,4 @@ int32_t CRYPT_ENCODE_Pkcs8Info(CRYPT_ENCODE_DECODE_Pk8PrikeyInfo *pk8PrikeyInfo,
 }
 
 #endif /* HITLS_CRYPTO_KEY_ENCODE */
-#endif /* HITLS_CRYPTO_ENCODE_DECODE_KEY */
+#endif /* HITLS_CRYPTO_CODECSKEY */

@@ -15,7 +15,7 @@
 
 #include "hitls_build.h"
 
-#if defined(HITLS_CRYPTO_ENCODE_DECODE_KEY) && defined(HITLS_BSL_PEM) && defined(HITLS_CRYPTO_PROVIDER)
+#if defined(HITLS_CRYPTO_CODECSKEY) && defined(HITLS_BSL_PEM) && defined(HITLS_CRYPTO_PROVIDER)
 #include <stdint.h>
 #include <string.h>
 #include "crypt_eal_implprovider.h"
@@ -125,4 +125,4 @@ void DECODER_Pem2Der_FreeCtx(void *ctx)
     }
     BSL_SAL_Free(ctx);
 }
-#endif /* HITLS_CRYPTO_ENCODE_DECODE_KEY && HITLS_BSL_PEM && HITLS_CRYPTO_PROVIDER */
+#endif /* HITLS_CRYPTO_CODECSKEY && HITLS_BSL_PEM && HITLS_CRYPTO_PROVIDER */

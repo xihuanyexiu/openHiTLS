@@ -128,13 +128,7 @@ HITLS_HMAC_Ctx *HITLS_CRYPT_HMAC_Init(HITLS_Lib_Ctx *libCtx, const char *attrNam
         return NULL;
     }
     CRYPT_EAL_MacCtx *ctx = NULL;
-#ifdef HITLS_TLS_FEATURE_PROVIDER
     ctx = CRYPT_EAL_ProviderMacNewCtx(libCtx, id, attrName);
-#else
-    (void)libCtx;
-    (void)attrName;
-    ctx = CRYPT_EAL_MacNewCtx(id);
-#endif
     if (ctx == NULL) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16619, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "MacNewCtx fail", 0, 0, 0, 0);
         return NULL;
@@ -215,13 +209,7 @@ int32_t HITLS_CRYPT_HMAC(HITLS_Lib_Ctx *libCtx, const char *attrName,
         return RETURN_ERROR_NUMBER_PROCESS(HITLS_CRYPT_ERR_HMAC, BINLOG_ID16621, "No proper id");
     }
     CRYPT_EAL_MacCtx *ctx = NULL;
-#ifdef HITLS_TLS_FEATURE_PROVIDER
     ctx = CRYPT_EAL_ProviderMacNewCtx(libCtx, id, attrName);
-#else
-    (void)libCtx;
-    (void)attrName;
-    ctx = CRYPT_EAL_MacNewCtx(id);
-#endif
     if (ctx == NULL) {
         return RETURN_ERROR_NUMBER_PROCESS(HITLS_CRYPT_ERR_HMAC, BINLOG_ID16622, "new ctx fail");
     }
@@ -386,13 +374,8 @@ static int32_t GetCipherInitCtx(HITLS_Lib_Ctx *libCtx, const char *attrName,
     if (*ctx != NULL) {
         return CRYPT_EAL_CipherReinit(*ctx, (uint8_t *)(uintptr_t)cipher->iv, cipher->ivLen);
     }
-#ifdef HITLS_TLS_FEATURE_PROVIDER
+ 
     *ctx = CRYPT_EAL_ProviderCipherNewCtx(libCtx, GetCipherAlgId(cipher->algo), attrName);
-#else
-    (void)libCtx;
-    (void)attrName;
-    *ctx = CRYPT_EAL_CipherNewCtx((CRYPT_CIPHER_AlgId)GetCipherAlgId(cipher->algo));
-#endif
 
     int32_t ret = CRYPT_EAL_CipherInit(*ctx, cipher->key, cipher->keyLen, cipher->iv, cipher->ivLen, enc);
     if (ret != CRYPT_SUCCESS) {
@@ -999,13 +982,7 @@ int32_t HITLS_CRYPT_HkdfExtract(HITLS_Lib_Ctx *libCtx,
         return HITLS_CRYPT_ERR_HMAC;
     }
     CRYPT_EAL_KdfCTX *kdfCtx = NULL;
-#ifdef HITLS_TLS_FEATURE_PROVIDER
     kdfCtx = CRYPT_EAL_ProviderKdfNewCtx(libCtx, CRYPT_KDF_HKDF, attrName);
-#else
-    (void)libCtx;
-    (void)attrName;
-    kdfCtx = CRYPT_EAL_KdfNewCtx(CRYPT_KDF_HKDF);
-#endif
     
     if (kdfCtx == NULL) {
         return HITLS_CRYPT_ERR_HKDF_EXTRACT;
@@ -1054,13 +1031,7 @@ int32_t HITLS_CRYPT_HkdfExpand(HITLS_Lib_Ctx *libCtx,
         return HITLS_CRYPT_ERR_HMAC;
     }
     CRYPT_EAL_KdfCTX *kdfCtx = NULL;
-#ifdef HITLS_TLS_FEATURE_PROVIDER
     kdfCtx = CRYPT_EAL_ProviderKdfNewCtx(libCtx, CRYPT_KDF_HKDF, attrName);
-#else
-    (void)libCtx;
-    (void)attrName;
-    kdfCtx = CRYPT_EAL_KdfNewCtx(CRYPT_KDF_HKDF);
-#endif
     if (kdfCtx == NULL) {
         return HITLS_CRYPT_ERR_HKDF_EXPAND;
     }

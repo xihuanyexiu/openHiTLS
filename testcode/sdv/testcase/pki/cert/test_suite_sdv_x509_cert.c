@@ -29,7 +29,7 @@
 #include "sal_time.h"
 #include "sal_file.h"
 #include "crypt_encode_decode_key.h"
-#include "crypt_eal_encode.h"
+#include "crypt_eal_codecs.h"
 #include "hitls_x509_local.h"
 
 /* END_HEADER */

@@ -117,7 +117,7 @@ static int32_t CRYPT_EAL_SetKdfMethod(CRYPT_EAL_KdfCTX *ctx, const CRYPT_EAL_Fun
     return CRYPT_SUCCESS;
 }
 
-CRYPT_EAL_KdfCTX *CRYPT_EAL_ProviderKdfNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t algId, const char *attrName)
+CRYPT_EAL_KdfCTX *CRYPT_EAL_ProviderKdfNewCtxInner(CRYPT_EAL_LibCtx *libCtx, int32_t algId, const char *attrName)
 {
     const CRYPT_EAL_Func *funcs = NULL;
     void *provCtx = NULL;
@@ -156,6 +156,18 @@ CRYPT_EAL_KdfCTX *CRYPT_EAL_ProviderKdfNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t 
     return ctx;
 }
 #endif // HITLS_CRYPTO_PROVIDER
+
+CRYPT_EAL_KdfCTX *CRYPT_EAL_ProviderKdfNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t algId, const char *attrName)
+{
+#ifdef HITLS_CRYPTO_PROVIDER
+    return CRYPT_EAL_ProviderKdfNewCtxInner(libCtx, algId, attrName);
+#else
+    (void)libCtx;
+    (void)attrName;
+    return CRYPT_EAL_KdfNewCtx(algId);
+    return NULL;
+#endif
+}
 
 CRYPT_EAL_KdfCTX *CRYPT_EAL_KdfNewCtx(CRYPT_KDF_AlgId algId)
 {

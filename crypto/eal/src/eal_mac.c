@@ -94,7 +94,7 @@ static int32_t CRYPT_EAL_SetMacMethod(CRYPT_EAL_MacCtx *ctx, const CRYPT_EAL_Fun
     return CRYPT_SUCCESS;
 }
 
-CRYPT_EAL_MacCtx *CRYPT_EAL_ProviderMacNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t algId, const char *attrName)
+CRYPT_EAL_MacCtx *CRYPT_EAL_ProviderMacNewCtxInner(CRYPT_EAL_LibCtx *libCtx, int32_t algId, const char *attrName)
 {
     const CRYPT_EAL_Func *funcs = NULL;
     void *provCtx = NULL;
@@ -136,6 +136,17 @@ CRYPT_EAL_MacCtx *CRYPT_EAL_ProviderMacNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t 
     return macCtx;
 }
 #endif
+
+CRYPT_EAL_MacCtx *CRYPT_EAL_ProviderMacNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t algId, const char *attrName)
+{
+#ifdef HITLS_CRYPTO_PROVIDER
+    return CRYPT_EAL_ProviderMacNewCtxInner(libCtx, algId, attrName);
+#else
+    (void)libCtx;
+    (void)attrName;
+    return CRYPT_EAL_MacNewCtx(algId);
+#endif
+}
 
 CRYPT_EAL_MacCtx *MacNewDefaultCtx(CRYPT_MAC_AlgId id)
 {
