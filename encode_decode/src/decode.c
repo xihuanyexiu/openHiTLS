@@ -33,11 +33,6 @@
 
 int32_t CRYPT_DECODE_ParseDecoderAttr(const char *attrName, DECODER_AttrInfo *info)
 {
-    if (attrName == NULL || info == NULL) {
-        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
-        return CRYPT_NULL_INPUT;
-    }
-
     char *rest = NULL;
     info->inFormat = NULL;
     info->inType = NULL;
@@ -142,17 +137,19 @@ CRYPT_DECODER_Ctx *CRYPT_DECODE_NewDecoderCtxByMethod(const CRYPT_EAL_Func *func
         BSL_ERR_PUSH_ERROR(ret);
         goto ERR;
     }
-    ret = CRYPT_DECODE_ParseDecoderAttr(attrName, &attrInfo);
-    if (ret != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(ret);
-        goto ERR;
+    if (attrName != NULL) {
+        ret = CRYPT_DECODE_ParseDecoderAttr(attrName, &attrInfo);
+        if (ret != CRYPT_SUCCESS) {
+            BSL_ERR_PUSH_ERROR(ret);
+            goto ERR;
+        }
     }
     ctx->providerMgrCtx = mgrCtx;
     ctx->inFormat = attrInfo.inFormat;
     ctx->inType = attrInfo.inType;
     ctx->outFormat = attrInfo.outFormat;
     ctx->outType = attrInfo.outType;
-    ctx->attrName = attrInfo.attrName;
+    ctx->attrName = attrName != NULL ? attrInfo.attrName : NULL;
     ctx->decoderState = CRYPT_DECODER_STATE_UNTRIED;
     return ctx;
 ERR:

@@ -25,8 +25,8 @@
 #include "crypt_params_key.h"
 #include "crypt_eal_implprovider.h"
 #include "hitls_type.h"
+#include "provider_test_utils.h"
 
-#define BSL_PARAM_MAX_NUMBER 1000
 #define NEW_PARA_ALGID (BSL_CID_MAX + 1)
 #define NEW_PKEY_ALGID (BSL_CID_MAX + 2)
 
@@ -83,24 +83,6 @@ void *TestPkeyMgmtEcNewCtx(void *provCtx, int32_t algId)
         return NULL;
     }
     return (void *)pkeyCtx;
-}
-
-static const BSL_Param *TestFindConstParam(const BSL_Param *param, int32_t key)
-{
-    if (key == 0) {
-        return NULL;
-    }
-    if (param == NULL) {
-        return NULL;
-    }
-    int32_t index = 0;
-    while (param[index].key != 0 && index < BSL_PARAM_MAX_NUMBER) {
-        if (param[index].key == key) {
-            return &param[index];
-        }
-        index++;
-    }
-    return NULL;
 }
 
 static int32_t TestEccSetPara(TestEccKeyCtx *ctx, const BSL_Param *param)
@@ -337,9 +319,9 @@ int32_t TestEccImport(void *ctx, const BSL_Param *params)
         return CRYPT_NULL_INPUT;
     }
     int32_t ret = CRYPT_SUCCESS;
-    BSL_Param *curve = TestFindConstParam(params, CRYPT_PARAM_EC_CURVE_ID);
-    BSL_Param *pub = TestFindConstParam(params, CRYPT_PARAM_EC_POINT_UNCOMPRESSED);
-    BSL_Param *prv = TestFindConstParam(params, CRYPT_PARAM_EC_PRVKEY);
+    const BSL_Param *curve = TestFindConstParam(params, CRYPT_PARAM_EC_CURVE_ID);
+    const BSL_Param *pub = TestFindConstParam(params, CRYPT_PARAM_EC_POINT_UNCOMPRESSED);
+    const BSL_Param *prv = TestFindConstParam(params, CRYPT_PARAM_EC_PRVKEY);
     if (curve != NULL) {
         ret = TestEccSetPara(ctx, params);
         if (ret != CRYPT_SUCCESS) {
@@ -421,7 +403,7 @@ static int32_t TestKemGetPubKey(const TestKemKeyCtx *ctx, BSL_Param *para)
     if (ctx == NULL || para == NULL) {
         return CRYPT_NULL_INPUT;
     }
-    BSL_Param *pub = TestFindConstParam(para, CRYPT_PARAM_PKEY_ENCODE_PUBKEY);
+    BSL_Param *pub = (BSL_Param *)(uintptr_t)TestFindConstParam(para, CRYPT_PARAM_PKEY_ENCODE_PUBKEY);
     if (pub == NULL || pub->value == NULL || pub->valueLen == 0) {
         return CRYPT_NULL_INPUT;
     }
@@ -525,7 +507,7 @@ static int32_t TestKemEncapsulate(const void *pkey, uint8_t *cipher, uint32_t *c
     (void)out;
     (void)outLen;
     printf("TestKemEncapsulate call \n");
-    TestKemKeyCtx *ctx = pkey;
+    TestKemKeyCtx *ctx = (TestKemKeyCtx *)(uintptr_t)pkey;
     if (ctx == NULL || cipherLen == NULL || cipher == NULL) {
         return CRYPT_NULL_INPUT;
     }
@@ -534,9 +516,9 @@ static int32_t TestKemEncapsulate(const void *pkey, uint8_t *cipher, uint32_t *c
     }
     ctx->sharedLen = 20;
     RandFunc(ctx->shared, ctx->sharedLen);
-    memcpy_s(cipher, *cipherLen, ctx->pubkey, ctx->pubkeyLen);
-    memcpy_s(&cipher[ctx->pubkeyLen], *cipherLen - ctx->pubkeyLen, ctx->shared, ctx->sharedLen);
-    memcpy_s(out, *outLen, ctx->shared, ctx->sharedLen);
+    memcpy(cipher, ctx->pubkey, ctx->pubkeyLen);
+    memcpy(&cipher[ctx->pubkeyLen], ctx->shared, ctx->sharedLen);
+    memcpy(out, ctx->shared, ctx->sharedLen);
     *outLen = ctx->sharedLen;
     *cipherLen = ctx->pubkeyLen + ctx->sharedLen;
     return CRYPT_SUCCESS;
@@ -556,7 +538,7 @@ static int32_t TestKemDecapsulate(const void *pkey, uint8_t *data, uint32_t data
     if (memcmp(data, ctx->pubkey, ctx->pubkeyLen) != 0) {
         return CRYPT_INVALID_ARG;
     }
-    memcpy_s(out, *outLen, &data[ctx->pubkeyLen], dataLen - ctx->pubkeyLen);
+    memcpy(out, &data[ctx->pubkeyLen], dataLen - ctx->pubkeyLen);
     *outLen = dataLen - ctx->pubkeyLen; // 20
     return CRYPT_SUCCESS;
 }

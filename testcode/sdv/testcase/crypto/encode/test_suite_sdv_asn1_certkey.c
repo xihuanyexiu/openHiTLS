@@ -837,3 +837,42 @@ EXIT:
 }
 /* END_CASE */
 
+/**
+ * @test SDV_BSL_ASN1_PARSE_BUFF_PROVIDER_TC002
+ * title 1. Test the decode provider and key provider are not same
+ *       2. Test the JSON2Key
+ * 
+ */
+/* BEGIN_CASE */
+void SDV_BSL_ASN1_PARSE_BUFF_PROVIDER_TC002(char *providerPath, char *providerName, int cmd, char *attrName,
+    char *formatStr, char *typeStr, char *path)
+{
+#ifndef HITLS_CRYPTO_PROVIDER
+    (void)providerPath;
+    (void)providerName;
+    (void)cmd;
+    (void)attrName;
+    (void)formatStr;
+    (void)typeStr;
+    (void)path;
+    SKIP_TEST();
+#else
+    RegisterLogFunc();
+    CRYPT_RandRegist(RandFunc);
+    CRYPT_RandRegistEx(RandFuncEx);
+    CRYPT_EAL_PkeyCtx *pkeyCtx = NULL;
+    CRYPT_EAL_LibCtx *libCtx = CRYPT_EAL_LibCtxNew();
+    ASSERT_TRUE(libCtx != NULL);
+    ASSERT_EQ(CRYPT_EAL_ProviderSetLoadPath(libCtx, providerPath), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_ProviderLoad(libCtx, BSL_SAL_LIB_FMT_OFF, "default", NULL, NULL), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_ProviderLoad(libCtx, cmd, providerName, NULL, NULL), CRYPT_SUCCESS);
+
+    ASSERT_EQ(CRYPT_EAL_ProviderDecodeFileKey(libCtx, attrName, BSL_CID_UNKNOWN, formatStr, typeStr, path,
+        NULL, &pkeyCtx), CRYPT_SUCCESS);
+EXIT:
+    CRYPT_EAL_PkeyFreeCtx(pkeyCtx);
+    CRYPT_EAL_LibCtxFree(libCtx);
+    BSL_GLOBAL_DeInit();
+#endif
+}
+/* END_CASE */
