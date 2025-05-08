@@ -997,14 +997,14 @@ void ShallowCopyCtx(CRYPT_RSA_Ctx *ctx, CRYPT_RSA_Ctx *newCtx)
 static bool IsExistPrvKeyParams(const BSL_Param *params)
 {
     const BSL_Param *d = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_RSA_D);
-    const BSL_Param *e = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_RSA_E);
     const BSL_Param *n = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_RSA_N);
     const BSL_Param *p = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_RSA_P);
     const BSL_Param *q = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_RSA_Q);
     const BSL_Param *dp = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_RSA_DP);
     const BSL_Param *dq = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_RSA_DQ);
     const BSL_Param *qInv = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_RSA_QINV);
-    return d != NULL && e != NULL && n != NULL && p != NULL && q != NULL && dp != NULL && dq != NULL && qInv != NULL;
+    return n != NULL && d != NULL && (PARAMISNULL(p) == PARAMISNULL(q)) &&
+        (PARAMISNULL(dp) == PARAMISNULL(dq)) && PARAMISNULL(dq) == PARAMISNULL(qInv);
 }
 
 static bool IsExistPubKeyParams(const BSL_Param *params)

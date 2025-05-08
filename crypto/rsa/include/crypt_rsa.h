@@ -595,8 +595,8 @@ int32_t CRYPT_RSA_Import(CRYPT_RSA_Ctx *ctx, const BSL_Param *params);
  * @ingroup RSA
  * @brief RSA export key
  *
- * @param ctx [IN/OUT] RSA context structure
- * @param args [IN] callback function arguments
+ * @param ctx [IN] RSA context structure
+ * @param params [IN/OUT] key parameters
  */
 int32_t CRYPT_RSA_Export(const CRYPT_RSA_Ctx *ctx, BSL_Param *params);
 #endif // HITLS_CRYPTO_PROVIDER
