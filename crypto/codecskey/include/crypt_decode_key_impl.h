@@ -22,7 +22,7 @@ extern "C" {
 
 #include "hitls_build.h"
 
-#ifdef HITLS_CRYPTO_ENCODE_DECODE_KEY
+#ifdef HITLS_CRYPTO_CODECSKEY
 #include <stdint.h>
 #include "bsl_params.h"
 
@@ -93,7 +93,7 @@ int32_t DECODER_LowKeyObject2PkeyObject_Decode(void *ctx, const BSL_Param *inPar
 void DECODER_LowKeyObject2PkeyObject_FreeOutData(void *ctx, BSL_Param *outParam);
 void DECODER_LowKeyObject2PkeyObject_FreeCtx(void *ctx);
 
-#endif /* HITLS_CRYPTO_ENCODE_DECODE_KEY */
+#endif /* HITLS_CRYPTO_CODECSKEY */
 
 #ifdef __cplusplus
 }

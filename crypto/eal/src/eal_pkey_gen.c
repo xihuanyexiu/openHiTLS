@@ -1575,7 +1575,7 @@ int32_t CRYPT_EAL_ProviderGetAsyAlgFuncs(CRYPT_EAL_LibCtx *libCtx, int32_t algId
     return ret;
 }
 
-CRYPT_EAL_PkeyCtx *CRYPT_EAL_ProviderPkeyNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t algId, uint32_t pkeyOperType,
+CRYPT_EAL_PkeyCtx *CRYPT_EAL_ProviderPkeyNewCtxInner(CRYPT_EAL_LibCtx *libCtx, int32_t algId, uint32_t pkeyOperType,
     const char *attrName)
 {
     void *provCtx = NULL;
@@ -1621,4 +1621,18 @@ CRYPT_EAL_PkeyCtx *CRYPT_EAL_ProviderPkeyNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_
     return ctx;
 }
 #endif // HITLS_CRYPTO_PROVIDER
+
+CRYPT_EAL_PkeyCtx *CRYPT_EAL_ProviderPkeyNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t algId, uint32_t pkeyOperType,
+    const char *attrName)
+{
+#ifdef HITLS_CRYPTO_PROVIDER
+    return CRYPT_EAL_ProviderPkeyNewCtxInner(libCtx, algId, pkeyOperType, attrName);
+#else
+    (void)libCtx;
+    (void)pkeyOperType;
+    (void)attrName;
+    return CRYPT_EAL_PkeyNewCtx(algId);
+#endif
+}
+
 #endif

@@ -17,7 +17,7 @@
 #define DECODE_LOCAL_H
 
 #include "hitls_build.h"
-#ifdef HITLS_CRYPTO_ENCODE_DECODE
+#ifdef HITLS_CRYPTO_CODECS
 #include "crypt_eal_implprovider.h"
 
 #ifdef __cplusplus
@@ -98,6 +98,6 @@ CRYPT_DECODER_Ctx *CRYPT_DECODE_NewDecoderCtxByMethod(const CRYPT_EAL_Func *func
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
-#endif /* HITLS_CRYPTO_ENCODE_DECODE */
+#endif /* HITLS_CRYPTO_CODECS */
 
 #endif /* DECODE_LOCAL_H */

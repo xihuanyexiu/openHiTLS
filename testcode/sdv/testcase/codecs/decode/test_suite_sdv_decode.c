@@ -28,7 +28,7 @@
 #include "crypt_eal_implprovider.h"
 #include "crypt_provider.h"
 #include "crypt_eal_pkey.h"
-#include "crypt_eal_encode.h"
+#include "crypt_eal_codecs.h"
 #include "bsl_types.h"
 #include "crypt_types.h"
 #include "crypt_utils.h"

@@ -266,7 +266,6 @@ EXIT:
 #ifdef HITLS_CRYPTO_CIPHER
 CRYPT_EAL_CipherCtx *TestCipherNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t id, const char *attrName, int isProvider)
 {
-#ifdef HITLS_CRYPTO_PROVIDER
     if (isProvider == 1) {
         if (CRYPT_EAL_Init(0) != CRYPT_SUCCESS) {
             return NULL;
@@ -275,12 +274,6 @@ CRYPT_EAL_CipherCtx *TestCipherNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t id, cons
     } else {
         return CRYPT_EAL_CipherNewCtx(id);
     }
-#else
-    (void)libCtx;
-    (void)attrName;
-    (void)isProvider;
-    return CRYPT_EAL_CipherNewCtx(id);
-#endif
 }
 #endif
 

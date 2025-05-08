@@ -148,7 +148,7 @@ static int32_t CRYPT_EAL_SetMdMethod(CRYPT_EAL_MdCTX *ctx, const CRYPT_EAL_Func 
     return CRYPT_SUCCESS;
 }
 
-CRYPT_EAL_MdCTX *CRYPT_EAL_ProviderMdNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t algId, const char *attrName)
+CRYPT_EAL_MdCTX *CRYPT_EAL_ProviderMdNewCtxInner(CRYPT_EAL_LibCtx *libCtx, int32_t algId, const char *attrName)
 {
     const CRYPT_EAL_Func *funcs = NULL;
     void *provCtx = NULL;
@@ -188,6 +188,17 @@ CRYPT_EAL_MdCTX *CRYPT_EAL_ProviderMdNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t al
     return ctx;
 }
 #endif // HITLS_CRYPTO_PROVIDER
+
+CRYPT_EAL_MdCTX *CRYPT_EAL_ProviderMdNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t algId, const char *attrName)
+{
+#ifdef HITLS_CRYPTO_PROVIDER
+    return CRYPT_EAL_ProviderMdNewCtxInner(libCtx, algId, attrName);
+#else
+    (void)libCtx;
+    (void)attrName;
+    return CRYPT_EAL_MdNewCtx(algId);
+#endif
+}
 
 CRYPT_EAL_MdCTX *CRYPT_EAL_MdNewCtx(CRYPT_MD_AlgId id)
 {

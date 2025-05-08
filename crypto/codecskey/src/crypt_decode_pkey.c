@@ -15,7 +15,7 @@
 
 #include "hitls_build.h"
 
-#if defined(HITLS_CRYPTO_ENCODE_DECODE_KEY) && defined(HITLS_CRYPTO_PROVIDER)
+#if defined(HITLS_CRYPTO_CODECSKEY)
 #include "securec.h"
 #include "bsl_sal.h"
 #include "bsl_list.h"
@@ -24,7 +24,7 @@
 #include "crypt_errno.h"
 #include "crypt_eal_provider.h"
 #include "crypt_eal_implprovider.h"
-#include "crypt_eal_encode.h"
+#include "crypt_eal_codecs.h"
 #include "crypt_provider.h"
 #include "crypt_eal_pkey.h"
 #include "bsl_types.h"
@@ -32,7 +32,9 @@
 #include "crypt_utils.h"
 #include "eal_pkey.h"
 #include "crypt_encode_decode_local.h"
+#include "crypt_encode_decode_key.h"
 
+#if defined(HITLS_CRYPTO_PROVIDER)
 static int32_t SetDecodePoolParamForKey(CRYPT_DECODER_PoolCtx *poolCtx, char *targetType, char *targetFormat)
 {
     int32_t ret = CRYPT_DECODE_PoolCtrl(poolCtx, CRYPT_DECODE_POOL_CMD_SET_TARGET_FORMAT, targetFormat,
@@ -65,7 +67,7 @@ static int32_t GetObjectFromOutData(BSL_Param *outData, void **object)
     return CRYPT_SUCCESS;
 }
 
-int32_t CRYPT_EAL_ProviderDecodeBuffKey(CRYPT_EAL_LibCtx *libCtx, const char *attrName, int32_t keyType,
+int32_t CRYPT_EAL_ProviderDecodeBuffKeyInner(CRYPT_EAL_LibCtx *libCtx, const char *attrName, int32_t keyType,
     const char *format, const char *type, BSL_Buffer *encode, const BSL_Buffer *pwd, CRYPT_EAL_PkeyCtx **ealPKey)
 {
     CRYPT_DECODER_PoolCtx *poolCtx = NULL;
@@ -126,6 +128,28 @@ EXIT:
 }
 
 
+#endif /* HITLS_CRYPTO_PROVIDER */
+
+int32_t CRYPT_EAL_ProviderDecodeBuffKey(CRYPT_EAL_LibCtx *libCtx, const char *attrName, int32_t keyType,
+    const char *format, const char *type, BSL_Buffer *encode, const BSL_Buffer *pwd, CRYPT_EAL_PkeyCtx **ealPKey)
+{
+#ifdef HITLS_CRYPTO_PROVIDER
+    return CRYPT_EAL_ProviderDecodeBuffKeyInner(libCtx, attrName, keyType, format, type, encode, pwd, ealPKey);
+#else
+    (void)libCtx;
+    (void)attrName;
+    (void)keyType;
+    int32_t encodeType = CRYPT_EAL_GetEncodeType(type);
+    int32_t encodeFormat = CRYPT_EAL_GetEncodeFormat(format);
+    if (pwd == NULL) {
+        return CRYPT_EAL_DecodeBuffKey(encodeFormat, encodeType, encode, NULL, 0, ealPKey);
+    } else {
+        return CRYPT_EAL_DecodeBuffKey(encodeFormat, encodeType, encode, pwd->data, pwd->dataLen, ealPKey);
+    }
+#endif
+}
+
+#ifdef HITLS_BSL_SAL_FILE
 int32_t CRYPT_EAL_ProviderDecodeFileKey(CRYPT_EAL_LibCtx *libCtx, const char *attrName, int32_t keyType,
     const char *format, const char *type, const char *path, const BSL_Buffer *pwd, CRYPT_EAL_PkeyCtx **ealPKey)
 {
@@ -146,5 +170,6 @@ int32_t CRYPT_EAL_ProviderDecodeFileKey(CRYPT_EAL_LibCtx *libCtx, const char *at
     BSL_SAL_Free(data);
     return ret;
 }
+#endif /* HITLS_BSL_SAL_FILE */
 
-#endif /* HITLS_CRYPTO_ENCODE_DECODE_KEY && HITLS_CRYPTO_PROVIDER */
+#endif /* HITLS_CRYPTO_CODECSKEY */

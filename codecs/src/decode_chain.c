@@ -16,11 +16,11 @@
 #include "hitls_build.h"
 
 #include "hitls_build.h"
-#if defined(HITLS_CRYPTO_ENCODE_DECODE) && defined(HITLS_CRYPTO_PROVIDER)
+#if defined(HITLS_CRYPTO_CODECS) && defined(HITLS_CRYPTO_PROVIDER)
 #include <stdint.h>
 #include <string.h>
 #include "securec.h"
-#include "crypt_eal_encode.h"
+#include "crypt_eal_codecs.h"
 #include "crypt_eal_implprovider.h"
 #include "crypt_provider.h"
 #include "crypt_params_key.h"
@@ -467,4 +467,4 @@ int32_t CRYPT_DECODE_PoolDecode(CRYPT_DECODER_PoolCtx *poolCtx, const BSL_Param 
     return ret;
 }
 
-#endif /* HITLS_CRYPTO_ENCODE_DECODE && HITLS_CRYPTO_PROVIDER */
+#endif /* HITLS_CRYPTO_CODECS && HITLS_CRYPTO_PROVIDER */

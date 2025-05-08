@@ -14,7 +14,7 @@
  */
 
 #include "hitls_build.h"
-#ifdef HITLS_CRYPTO_ENCODE_DECODE_KEY
+#ifdef HITLS_CRYPTO_CODECSKEY
 
 #include <stdint.h>
 #include <string.h>
@@ -33,7 +33,7 @@
 #include "crypt_errno.h"
 #include "crypt_types.h"
 #include "crypt_eal_pkey.h"
-#include "crypt_eal_encode.h"
+#include "crypt_eal_codecs.h"
 #include "crypt_encode_decode_local.h"
 #include "crypt_encode_decode_key.h"
 
@@ -311,7 +311,7 @@ int32_t CRYPT_EAL_DecodeBuffKey(int32_t format, int32_t type, BSL_Buffer *encode
         case CRYPT_PUBKEY_RSA:
 #endif
             return CRYPT_EAL_PubKeyParseBuff(format, type, encode, ealPKey);
-        case CRYPT_ENCODE_UNKNOW:
+        case CRYPT_ENCDEC_UNKNOW:
             return CRYPT_EAL_UnKnownKeyParseBuff(format, &pwdBuffer, encode, ealPKey);
         default:
             BSL_ERR_PUSH_ERROR(CRYPT_DECODE_NO_SUPPORT_TYPE);
@@ -391,7 +391,7 @@ int32_t CRYPT_EAL_DecodeFileKey(int32_t format, int32_t type, const char *path,
         case CRYPT_PUBKEY_RSA:
             return CRYPT_EAL_PubKeyParseFile(format, type, path, ealPKey);
 #endif
-        case CRYPT_ENCODE_UNKNOW:
+        case CRYPT_ENCDEC_UNKNOW:
             return CRYPT_EAL_UnKnownKeyParseFile(format, path, &pwdBuffer, ealPKey);
         default:
             BSL_ERR_PUSH_ERROR(CRYPT_DECODE_NO_SUPPORT_TYPE);
@@ -485,10 +485,10 @@ int32_t CRYPT_EAL_PubKeyEncodeBuff(CRYPT_EAL_PkeyCtx *ealPubKey,
     return CRYPT_EAL_EncodePubKeyBuffInternal(ealPubKey, format, type, true, encode);
 }
 
-static int32_t CRYPT_EAL_GetEncodeType(const char *type)
+int32_t CRYPT_EAL_GetEncodeType(const char *type)
 {
     if (type == NULL) {
-        return CRYPT_ENCODE_UNKNOW;
+        return CRYPT_ENCDEC_UNKNOW;
     }
     static const struct {
         const char *typeStr;
@@ -509,7 +509,7 @@ static int32_t CRYPT_EAL_GetEncodeType(const char *type)
         }
     }
 
-    return CRYPT_ENCODE_UNKNOW;
+    return CRYPT_ENCDEC_UNKNOW;
 }
 
 static int32_t ProviderEncodeBuffKeyInternal(CRYPT_EAL_LibCtx *libCtx, const char *attrName, CRYPT_EAL_PkeyCtx *ealPKey,
@@ -689,6 +689,6 @@ int32_t CRYPT_EAL_EncodeFileKey(CRYPT_EAL_PkeyCtx *ealPKey, const CRYPT_EncodePa
 }
 #endif // HITLS_BSL_SAL_FILE
 
-#endif // HITLS_CRYPTO_ENCODE_DECODE_KEY
+#endif // HITLS_CRYPTO_KEY_ENCODE
 
-#endif
+#endif // HITLS_CRYPTO_CODECSKEY

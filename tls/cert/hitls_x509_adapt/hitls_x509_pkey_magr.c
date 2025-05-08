@@ -20,7 +20,7 @@
 #include "bsl_types.h"
 #include "bsl_err_internal.h"
 #include "hitls_x509_adapt.h"
-#include "crypt_eal_encode.h"
+#include "crypt_eal_codecs.h"
 #include "crypt_errno.h"
 #include "hitls_cert.h"
 #include "hitls_cert_type.h"
@@ -122,13 +122,13 @@ HITLS_CERT_Key *HITLS_X509_Adapt_KeyParse(HITLS_Config *config, const uint8_t *b
     (void)GetPrivKeyPassword(config, pwd, &pwdLen);
     switch (type) {
         case TLS_PARSE_TYPE_FILE:
-            ret = CRYPT_EAL_DecodeFileKey(format, CRYPT_ENCODE_UNKNOW, (const char *)buf, pwd, pwdLen,
+            ret = CRYPT_EAL_DecodeFileKey(format, CRYPT_ENCDEC_UNKNOW, (const char *)buf, pwd, pwdLen,
                 (CRYPT_EAL_PkeyCtx **)&ealPriKey);
             break;
         case TLS_PARSE_TYPE_BUFF:
             encode.data = (uint8_t *)(uintptr_t)buf;
             encode.dataLen = len;
-            ret = CRYPT_EAL_DecodeBuffKey(format, CRYPT_ENCODE_UNKNOW, &encode, pwd, pwdLen,
+            ret = CRYPT_EAL_DecodeBuffKey(format, CRYPT_ENCDEC_UNKNOW, &encode, pwd, pwdLen,
                 (CRYPT_EAL_PkeyCtx **)&ealPriKey);
             break;
         default:

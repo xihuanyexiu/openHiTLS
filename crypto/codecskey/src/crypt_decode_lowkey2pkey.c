@@ -14,7 +14,7 @@
  */
 
 #include "hitls_build.h"
-#if defined(HITLS_CRYPTO_ENCODE_DECODE_KEY) && defined(HITLS_CRYPTO_PROVIDER)
+#if defined(HITLS_CRYPTO_CODECSKEY) && defined(HITLS_CRYPTO_PROVIDER)
 #include "crypt_eal_implprovider.h"
 #include "crypt_eal_pkey.h"
 #include "crypt_provider.h"

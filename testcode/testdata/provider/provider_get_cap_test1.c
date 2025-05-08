@@ -531,7 +531,7 @@ static int32_t TestKemDecapsulate(const void *pkey, uint8_t *data, uint32_t data
     (void)dataLen;
     (void)out;
     (void)outLen;
-    TestKemKeyCtx *ctx = pkey;
+    const TestKemKeyCtx *ctx = pkey;
     if (dataLen != 40 || ctx->pubkeyLen != 20 || *outLen < 20) {
         return CRYPT_INVALID_ARG;
     }
@@ -825,7 +825,7 @@ static const Provider_Group g_tlsGroupInfo[] = {
     }
 };
 
-static PARAM_InitValue(BSL_Param *param, int32_t key, uint32_t type, void *val, uint32_t valueLen)
+static int32_t PARAM_InitValue(BSL_Param *param, int32_t key, uint32_t type, void *val, uint32_t valueLen)
 {
     if (key == 0) {
         return BSL_PARAMS_INVALID_KEY;
@@ -837,7 +837,6 @@ static PARAM_InitValue(BSL_Param *param, int32_t key, uint32_t type, void *val, 
     if (type != BSL_PARAM_TYPE_FUNC_PTR && type != BSL_PARAM_TYPE_CTX_PTR) {
         /* Parameter validation: param cannot be NULL, if val is NULL, valueLen must be 0 */
         if (val == NULL && valueLen != 0) {
-
             return BSL_INVALID_ARG;
         }
     }

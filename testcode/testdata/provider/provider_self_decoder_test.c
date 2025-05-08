@@ -19,11 +19,13 @@
 #include "crypt_params_key.h"
 #include "crypt_eal_provider.h"
 #include "crypt_eal_implprovider.h"
-#include "crypt_eal_encode.h"
+#include "crypt_eal_codecs.h"
 #include "crypt_eal_pkey.h"
 #include "bsl_types.h"
 #include "crypt_types.h"
 #include "provider_test_utils.h"
+#include <stdlib.h>
+#include <string.h>
 
 #define RSA_MAX_MODULUS_BITS 16384
 #define RSA_MAX_MODULUS_LEN (RSA_MAX_MODULUS_BITS / 8)
@@ -543,10 +545,10 @@ static int32_t TestProvQuery(void *provCtx, int32_t operaId, CRYPT_EAL_AlgInfo *
     int32_t ret = CRYPT_SUCCESS;
     switch (operaId) {
         case CRYPT_EAL_OPERAID_KEYMGMT:
-            *algInfos = g_testKeyMgmt;
+            *algInfos = (CRYPT_EAL_AlgInfo *)(uintptr_t)g_testKeyMgmt;
             break;
         case CRYPT_EAL_OPERAID_DECODER:
-            *algInfos = g_testDecode;
+            *algInfos = (CRYPT_EAL_AlgInfo *)(uintptr_t)g_testDecode;
             break;
         default:
             return CRYPT_NOT_SUPPORT;

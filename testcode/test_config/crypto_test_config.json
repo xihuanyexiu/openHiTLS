@@ -1,7 +1,7 @@
 {
     "testDir":"testcode/sdv/testcase/",
     "testFeatures": {
-        "encode_decode": ["test_suite_sdv_decode"],
+        "codecs": ["test_suite_sdv_decode"],
         "asn1": ["test_suite_sdv_asn1"],
         "base64": ["test_suite_sdv_base64"],
         "buffer": ["test_suite_sdv_buffer"],

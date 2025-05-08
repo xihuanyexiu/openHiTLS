@@ -14,7 +14,7 @@
  */
 
 #include "hitls_build.h"
-#ifdef HITLS_CRYPTO_ENCODE_DECODE_KEY
+#ifdef HITLS_CRYPTO_CODECSKEY
 
 #include "securec.h"
 #include "bsl_asn1.h"
@@ -1458,4 +1458,4 @@ int32_t CRYPT_EAL_EncodePKCS7EncryptDataBuff(CRYPT_EAL_LibCtx *libCtx, const cha
 
 #endif // HITLS_PKI_PKCS12
 
-#endif // HITLS_CRYPTO_ENCODE_DECODE_KEY
+#endif // HITLS_CRYPTO_CODECSKEY

@@ -126,7 +126,7 @@ static int32_t CRYPT_EAL_SetCipherMethod(CRYPT_EAL_CipherCtx *ctx, const CRYPT_E
     return CRYPT_SUCCESS;
 }
 
-CRYPT_EAL_CipherCtx *CRYPT_EAL_ProviderCipherNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t algId, const char *attrName)
+CRYPT_EAL_CipherCtx *CRYPT_EAL_ProviderCipherNewCtxInner(CRYPT_EAL_LibCtx *libCtx, int32_t algId, const char *attrName)
 {
     const CRYPT_EAL_Func *funcs = NULL;
     void *provCtx = NULL;
@@ -167,6 +167,17 @@ CRYPT_EAL_CipherCtx *CRYPT_EAL_ProviderCipherNewCtx(CRYPT_EAL_LibCtx *libCtx, in
     return ctx;
 }
 #endif
+
+CRYPT_EAL_CipherCtx *CRYPT_EAL_ProviderCipherNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t algId, const char *attrName)
+{
+#ifdef HITLS_CRYPTO_PROVIDER
+    return CRYPT_EAL_ProviderCipherNewCtxInner(libCtx, algId, attrName);
+#else
+    (void)libCtx;
+    (void)attrName;
+    return CRYPT_EAL_CipherNewCtx(algId);
+#endif
+}
 
 CRYPT_EAL_CipherCtx *CRYPT_EAL_CipherNewCtx(CRYPT_CIPHER_AlgId id)
 {

@@ -14,7 +14,7 @@
  */
 
 #include "hitls_build.h"
-#if defined(HITLS_CRYPTO_ENCODE_DECODE_KEY) && defined(HITLS_CRYPTO_PROVIDER)
+#if defined(HITLS_CRYPTO_CODECSKEY) && defined(HITLS_CRYPTO_PROVIDER)
 #include <string.h>
 #include <stdbool.h>
 #include "crypt_eal_implprovider.h"
@@ -345,4 +345,4 @@ DECODER_DEFINE_SUBPUBKEY_WITHOUT_SEQ_DER2KEY_DECODE(Ed25519, CRYPT_CURVE25519_Ct
 DECODER_DEFINE_PKCS8_DECODE(Ed25519, CRYPT_CURVE25519_Ctx, CRYPT_ED25519_ParsePkcs8Key)
 #endif
 
-#endif /* HITLS_CRYPTO_ENCODE_DECODE_KEY && defined(HITLS_CRYPTO_PROVIDER) */
+#endif /* HITLS_CRYPTO_CODECSKEY && defined(HITLS_CRYPTO_PROVIDER) */

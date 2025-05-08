@@ -29,7 +29,7 @@
 #include "sal_file.h"
 #include "crypt_eal_pkey.h"
 #include "crypt_errno.h"
-#include "crypt_eal_encode.h"
+#include "crypt_eal_codecs.h"
 #include "crypt_eal_init.h"
 #include "crypt_encode_decode_local.h"
 #include "crypt_encode_decode_key.h"
