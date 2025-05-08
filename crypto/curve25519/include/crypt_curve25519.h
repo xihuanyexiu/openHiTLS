@@ -315,8 +315,8 @@ int32_t CRYPT_CURVE25519_Import(CRYPT_CURVE25519_Ctx *ctx, const BSL_Param *para
  * @ingroup curve25519
  * @brief curve25519 export key
  *
- * @param ctx [IN/OUT] curve25519 context structure
- * @param params [IN] parameters
+ * @param ctx [IN] curve25519 context structure
+ * @param params [IN/OUT] key parameters
  */
 int32_t CRYPT_CURVE25519_Export(const CRYPT_CURVE25519_Ctx *ctx, BSL_Param *params);
 #endif // HITLS_CRYPTO_PROVIDER

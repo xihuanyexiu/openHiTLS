@@ -294,6 +294,24 @@ int32_t CRYPT_SM2_Cmp(const CRYPT_SM2_Ctx *a, const CRYPT_SM2_Ctx *b);
  */
 int32_t CRYPT_SM2_GetSecBits(const CRYPT_SM2_Ctx *ctx);
 
+/**
+ * @ingroup sm2
+ * @brief sm2 import key
+ *
+ * @param ctx [IN/OUT] sm2 context structure
+ * @param params [IN] key parameters
+ */
+int32_t CRYPT_SM2_Import(CRYPT_SM2_Ctx *ctx, const BSL_Param *params);
+
+/**
+ * @ingroup sm2
+ * @brief sm2 export key
+ *
+ * @param ctx [IN] sm2 context structure
+ * @param params [IN/OUT] key parameters
+ */
+int32_t CRYPT_SM2_Export(const CRYPT_SM2_Ctx *ctx, BSL_Param *params);
+
 #ifdef __cplusplus
 }
 #endif

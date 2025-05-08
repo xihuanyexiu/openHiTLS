@@ -277,6 +277,86 @@ int32_t CRYPT_SM2_Gen(CRYPT_SM2_Ctx *ctx)
     return ECC_PkeyGen(ctx->pkey);
 }
 
+#ifdef HITLS_CRYPTO_PROVIDER
+int32_t CRYPT_SM2_Import(CRYPT_SM2_Ctx *ctx, const BSL_Param *params)
+{
+    if (ctx == NULL || params == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    int32_t ret;
+    const BSL_Param *prv = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_EC_PRVKEY);
+    const BSL_Param *pub = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_EC_POINT_UNCOMPRESSED);
+    if (prv != NULL) {
+        ret = CRYPT_SM2_SetPrvKey(ctx, prv);
+        if (ret != CRYPT_SUCCESS) {
+            BSL_ERR_PUSH_ERROR(ret);
+            return ret;
+        }
+    }
+    if (pub != NULL) {
+        ret = CRYPT_SM2_SetPubKey(ctx, pub);
+        if (ret != CRYPT_SUCCESS) {
+            BSL_ERR_PUSH_ERROR(ret);
+            return ret;
+        }
+    }
+
+    return CRYPT_SUCCESS;
+}
+
+int32_t CRYPT_SM2_Export(const CRYPT_SM2_Ctx *ctx, BSL_Param *params)
+{
+    if (ctx == NULL || params == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    uint32_t index = 0;
+    uint32_t keyBytes = (CRYPT_SM2_GetBits(ctx) + 7) / 8;
+    CRYPT_EAL_ProcessFuncCb processCb = NULL;
+    void *args = NULL;
+    BSL_Param sm2Params[3] = {0};
+    int32_t ret = CRYPT_GetPkeyProcessParams(params, &processCb, &args);
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+        return ret;
+    }
+    uint8_t *buffer = BSL_SAL_Calloc(1, keyBytes * 2);
+    if (buffer == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
+        return CRYPT_MEM_ALLOC_FAIL;
+    }
+    if (ctx->pkey->prvkey != NULL) {
+        (void)BSL_PARAM_InitValue(&sm2Params[index], CRYPT_PARAM_EC_PRVKEY, BSL_PARAM_TYPE_OCTETS, buffer, keyBytes);
+        ret = CRYPT_SM2_GetPrvKey(ctx, sm2Params);
+        if (ret != CRYPT_SUCCESS) {
+            BSL_SAL_Free(buffer);
+            BSL_ERR_PUSH_ERROR(ret);
+            return ret;
+        }
+        sm2Params[index].valueLen = sm2Params[index].useLen;
+        index++;
+    }
+    if (ctx->pkey->pubkey != NULL) {
+        (void)BSL_PARAM_InitValue(&sm2Params[index], CRYPT_PARAM_EC_POINT_UNCOMPRESSED, BSL_PARAM_TYPE_OCTETS,
+            buffer, keyBytes);
+        ret = CRYPT_SM2_GetPubKey(ctx, sm2Params);
+        if (ret != CRYPT_SUCCESS) {
+            BSL_SAL_Free(buffer);
+            BSL_ERR_PUSH_ERROR(ret);
+            return ret;
+        }
+        sm2Params[index].valueLen = sm2Params[index].useLen;
+        index++;
+    }
+    ret = processCb(sm2Params, args);
+    BSL_SAL_Free(buffer);
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+    }
+    return ret;
+}
+#endif
 #ifdef HITLS_CRYPTO_SM2_SIGN
 uint32_t CRYPT_SM2_GetSignLen(const CRYPT_SM2_Ctx *ctx)
 {

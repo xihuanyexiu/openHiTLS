@@ -376,8 +376,8 @@ int32_t CRYPT_ECDSA_Import(CRYPT_ECDSA_Ctx *ctx, const BSL_Param *params);
  * @ingroup ecdsa
  * @brief ecdsa export key
  *
- * @param ctx [IN/OUT] ecdsa context structure
- * @param params [IN] parameters
+ * @param ctx [IN] ecdsa context structure
+ * @param params [IN/OUT] key parameters
  */
 int32_t CRYPT_ECDSA_Export(const CRYPT_ECDSA_Ctx *ctx, BSL_Param *params);
 

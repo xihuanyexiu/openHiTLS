@@ -37,8 +37,6 @@ typedef struct {
     BSL_Param *e;    /**< RSA public key parameter marked as e. */
 } CRYPT_RsaPrvParam;
 
-#define PARAMISNULL(a) (a == NULL || a->value == NULL)
-
 static int32_t SetPrvPara(const CRYPT_RSA_PrvKey *prvKey, const CRYPT_RsaPrvParam *prv)
 {
     int32_t ret = BN_Bin2Bn(prvKey->n, prv->n->value, prv->n->valueLen);
