@@ -66,8 +66,10 @@ void SDV_CRYPT_DECODE_PROVIDER_NEW_CTX_API_TC001(void)
     CRYPT_DECODE_Free(NULL);
     /* Test with NULL libCtx */
     ctx = CRYPT_DECODE_ProviderNewCtx(NULL, CRYPT_PKEY_RSA, NULL);
-    ASSERT_TRUE(ctx == NULL);
-    
+    ASSERT_TRUE(ctx != NULL);
+    CRYPT_DECODE_Free(ctx);
+    ctx = NULL;
+
     /* Test with invalid key type */
     ctx = CRYPT_DECODE_ProviderNewCtx(NULL, -1, NULL);
     ASSERT_TRUE(ctx == NULL);
@@ -92,6 +94,58 @@ void SDV_CRYPT_DECODE_PROVIDER_NEW_CTX_API_TC001(void)
     ctx = NULL;
 EXIT:
     CRYPT_DECODE_Free(ctx);
+#endif
+}
+/* END_CASE */
+
+/**
+ * @test SDV_CRYPT_DECODE_PROVIDER_NEW_CTX_API_TC002
+ * @brief When no provider is loaded, CRYPT_DECODE_ProviderNewCtx should return NULL
+ * @precon None
+ */
+/* BEGIN_CASE */
+void SDV_CRYPT_DECODE_PROVIDER_NEW_CTX_API_TC002(void)
+{
+#ifndef HITLS_CRYPTO_PROVIDER
+    SKIP_TEST();
+#else
+    CRYPT_DECODER_Ctx *ctx = NULL;
+    CRYPT_EAL_LibCtx *libCtx = CRYPT_EAL_LibCtxNew();
+    ASSERT_TRUE(libCtx != NULL);
+    ctx = CRYPT_DECODE_ProviderNewCtx(libCtx, CRYPT_PKEY_RSA, "provider=default, inFormat=ASN1, inType=PRIKEY_RSA");
+    ASSERT_TRUE(ctx == NULL);
+EXIT:
+    CRYPT_EAL_LibCtxFree(libCtx);
+#endif
+}
+/* END_CASE */
+
+/**
+ * @test SDV_CRYPT_DECODE_PROVIDER_NEW_CTX_API_TC002
+ * @brief When user provider no decoder implement, CRYPT_DECODE_ProviderNewCtx should return NULL
+ * @precon None
+ */
+/* BEGIN_CASE */
+void SDV_CRYPT_DECODE_PROVIDER_NEW_CTX_API_TC003(char *providerPath, char *providerName, int cmd, int keyType)
+{
+#ifndef HITLS_CRYPTO_PROVIDER
+    (void)providerPath;
+    (void)providerName;
+    (void)cmd;
+    (void)keyType;
+    SKIP_TEST();
+#else
+    CRYPT_DECODER_Ctx *ctx = NULL;
+    CRYPT_EAL_LibCtx *libCtx = CRYPT_EAL_LibCtxNew();
+    ASSERT_TRUE(libCtx != NULL);
+    ASSERT_EQ(CRYPT_EAL_ProviderSetLoadPath(libCtx, providerPath), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_ProviderLoad(libCtx, cmd, providerName, NULL, NULL), CRYPT_SUCCESS);
+
+    ctx = CRYPT_DECODE_ProviderNewCtx(libCtx, keyType, NULL);
+    ASSERT_TRUE(ctx == NULL);
+    
+EXIT:
+    CRYPT_EAL_LibCtxFree(libCtx);
 #endif
 }
 /* END_CASE */
@@ -171,9 +225,9 @@ void SDV_CRYPT_DECODE_DECODE_API_TC001(void)
     ASSERT_TRUE(ctx != NULL);
     
     /* Test with NULL ctx */
-    BSL_Param inParam = {0};
+    BSL_Param inParam[2] = {0};
     BSL_Param *outParam = NULL;
-    int32_t ret = CRYPT_DECODE_Decode(NULL, &inParam, &outParam);
+    int32_t ret = CRYPT_DECODE_Decode(NULL, inParam, &outParam);
     ASSERT_EQ(ret, CRYPT_NULL_INPUT);
     
     /* Test with NULL inParam */
@@ -181,12 +235,12 @@ void SDV_CRYPT_DECODE_DECODE_API_TC001(void)
     ASSERT_EQ(ret, CRYPT_NULL_INPUT);
         
     /* Test with NULL outParam */
-    ret = CRYPT_DECODE_Decode(ctx, &inParam, NULL);
+    ret = CRYPT_DECODE_Decode(ctx, inParam, NULL);
     ASSERT_EQ(ret, CRYPT_NULL_INPUT);
 
     /* Test with NULL decode function */
     ctx->method->decode = NULL;
-    ret = CRYPT_DECODE_Decode(ctx, &inParam, &outParam);
+    ret = CRYPT_DECODE_Decode(ctx, inParam, &outParam);
     ASSERT_EQ(ret, CRYPT_NOT_SUPPORT);
 
 EXIT:
@@ -218,9 +272,12 @@ void SDV_CRYPT_DECODE_DECODE_API_TC002(char *pemPath, char *asn1Path)
     uint32_t asn1DataLen = 0;
     ASSERT_EQ(BSL_SAL_ReadFile(pemPath, &pemData, &pemDataLen), BSL_SUCCESS);
 
-    BSL_Param inParam = {CRYPT_PARAM_DECODE_BUFFER_DATA, BSL_PARAM_TYPE_OCTETS, pemData, pemDataLen, 0};
+    BSL_Param inParam[2] = {
+        {CRYPT_PARAM_DECODE_BUFFER_DATA, BSL_PARAM_TYPE_OCTETS, pemData, pemDataLen, 0},
+        BSL_PARAM_END
+        };
     BSL_Param *outParam = NULL;
-    ASSERT_EQ(CRYPT_DECODE_Decode(ctx, &inParam, &outParam), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_DECODE_Decode(ctx, inParam, &outParam), CRYPT_SUCCESS);
     ASSERT_TRUE(outParam != NULL);
     ASSERT_TRUE(outParam->value != NULL);
     ASSERT_TRUE(outParam->valueLen > 0);
@@ -319,26 +376,26 @@ void SDV_CRYPT_DECODE_POOL_DECODE_API_TC001(void)
     ASSERT_TRUE(poolCtx != NULL);
     
     /* Test with NULL poolCtx */
-    BSL_Param inParam = {0};
+    BSL_Param inParam[2] = {0};
     BSL_Param *outParam = NULL;
-    ASSERT_EQ(CRYPT_DECODE_PoolDecode(NULL, &inParam, &outParam), CRYPT_NULL_INPUT);
+    ASSERT_EQ(CRYPT_DECODE_PoolDecode(NULL, inParam, &outParam), CRYPT_NULL_INPUT);
     
     /* Test with NULL inParam */
     ASSERT_EQ(CRYPT_DECODE_PoolDecode(poolCtx, NULL, &outParam), CRYPT_NULL_INPUT);
     
     /* Test with NULL outParam */
-    ASSERT_EQ(CRYPT_DECODE_PoolDecode(poolCtx, &inParam, NULL), CRYPT_NULL_INPUT);
+    ASSERT_EQ(CRYPT_DECODE_PoolDecode(poolCtx, inParam, NULL), CRYPT_NULL_INPUT);
 
     /* Test with invalid outParam */
-    outParam = &inParam;
-    ASSERT_EQ(CRYPT_DECODE_PoolDecode(poolCtx, &inParam, &outParam), CRYPT_INVALID_ARG);
+    outParam = inParam;
+    ASSERT_EQ(CRYPT_DECODE_PoolDecode(poolCtx, inParam, &outParam), CRYPT_INVALID_ARG);
 
     /* Test with invalid input data */
     uint8_t invalidData[] = "Invalid PEM data";
-    inParam.valueType = BSL_PARAM_TYPE_OCTETS;
-    inParam.value = invalidData;
-    inParam.valueLen = sizeof(invalidData);
-    ASSERT_EQ(CRYPT_DECODE_PoolDecode(poolCtx, &inParam, &outParam), CRYPT_DECODE_ERR_NO_USABLE_DECODER);
+    inParam[0].valueType = BSL_PARAM_TYPE_OCTETS;
+    inParam[0].value = invalidData;
+    inParam[0].valueLen = sizeof(invalidData);
+    ASSERT_EQ(CRYPT_DECODE_PoolDecode(poolCtx, inParam, &outParam), CRYPT_DECODE_ERR_NO_USABLE_DECODER);
 
     
 
@@ -389,7 +446,10 @@ void SDV_CRYPT_DECODE_POOL_DECODE_API_TC002(char *inputFormat, char *inputType, 
     bool isFreeOutData = true;
     ASSERT_EQ(BSL_SAL_ReadFile(path, &inputData, &inputDataLen), BSL_SUCCESS);
 
-    BSL_Param inParam = {CRYPT_PARAM_DECODE_BUFFER_DATA, BSL_PARAM_TYPE_OCTETS, inputData, inputDataLen, 0};
+    BSL_Param inParam[2] = {
+        {CRYPT_PARAM_DECODE_BUFFER_DATA, BSL_PARAM_TYPE_OCTETS, inputData, inputDataLen, 0},
+        BSL_PARAM_END
+    };
     BSL_Param *outParam = NULL;
     
     /* Set target format and type */
@@ -398,7 +458,7 @@ void SDV_CRYPT_DECODE_POOL_DECODE_API_TC002(char *inputFormat, char *inputType, 
     ASSERT_EQ(CRYPT_DECODE_PoolCtrl(poolCtx, CRYPT_DECODE_POOL_CMD_SET_TARGET_TYPE, targetType,
         strlen(targetType)), CRYPT_SUCCESS);
     
-    ASSERT_EQ(CRYPT_DECODE_PoolDecode(poolCtx, &inParam, &outParam), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_DECODE_PoolDecode(poolCtx, inParam, &outParam), CRYPT_SUCCESS);
     ASSERT_TRUE(outParam != NULL);
     ASSERT_TRUE(outParam->value != NULL);
     ASSERT_TRUE(outParam->valueLen > 0);
@@ -501,7 +561,10 @@ void SDV_CRYPT_DECODE_POOL_CTRL_API_TC002(void)
     uint32_t inputDataLen = 0;
     CRYPT_DECODER_PoolCtx *poolCtx = NULL;
     ASSERT_EQ(BSL_SAL_ReadFile("../testdata/cert/asn1/rsa2048key_pkcs1.pem", &inputData, &inputDataLen), BSL_SUCCESS);
-    BSL_Param inParam = {CRYPT_PARAM_DECODE_BUFFER_DATA, BSL_PARAM_TYPE_OCTETS, inputData, inputDataLen, 0};
+    BSL_Param inParam[2] = {
+        {CRYPT_PARAM_DECODE_BUFFER_DATA, BSL_PARAM_TYPE_OCTETS, inputData, inputDataLen, 0},
+        BSL_PARAM_END
+    };
     poolCtx = CRYPT_DECODE_PoolNewCtx(NULL, NULL, CRYPT_PKEY_RSA, "PEM", "PRIKEY_RSA");
     ASSERT_TRUE(poolCtx != NULL);
 
@@ -528,7 +591,7 @@ void SDV_CRYPT_DECODE_POOL_CTRL_API_TC002(void)
     ASSERT_EQ(CRYPT_DECODE_PoolCtrl(poolCtx, CRYPT_DECODE_POOL_CMD_SET_TARGET_TYPE, (void *)targetType,
         strlen(targetType)), CRYPT_SUCCESS);
 
-    ASSERT_EQ(CRYPT_DECODE_PoolDecode(poolCtx, &inParam, &outParam), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_DECODE_PoolDecode(poolCtx, inParam, &outParam), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_DECODE_PoolCtrl(poolCtx, CRYPT_DECODE_POOL_CMD_SET_FLAG_FREE_OUT_DATA, 
         &isFreeOutData, sizeof(bool)), CRYPT_SUCCESS);
 
@@ -545,7 +608,7 @@ void SDV_CRYPT_DECODE_POOL_CTRL_API_TC002(void)
     targetType = "PRIKEY_RSA";
     ASSERT_EQ(CRYPT_DECODE_PoolCtrl(poolCtx, CRYPT_DECODE_POOL_CMD_SET_TARGET_TYPE, (void *)targetType,
         strlen(targetType)), CRYPT_SUCCESS);
-    ASSERT_EQ(CRYPT_DECODE_PoolDecode(poolCtx, &inParam, &outParam), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_DECODE_PoolDecode(poolCtx, inParam, &outParam), CRYPT_SUCCESS);
     isFreeOutData = false;
     ASSERT_EQ(CRYPT_DECODE_PoolCtrl(poolCtx, CRYPT_DECODE_POOL_CMD_SET_FLAG_FREE_OUT_DATA, 
         &isFreeOutData, sizeof(bool)), CRYPT_SUCCESS);
