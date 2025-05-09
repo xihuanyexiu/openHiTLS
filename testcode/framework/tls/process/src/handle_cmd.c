@@ -393,6 +393,10 @@ int ParseCtxConfigFromString(char (*string)[CONTROL_CHANNEL_MAX_MSG_LEN], HLT_Ct
     ctxConfig->allowLegacyRenegotiate = (((int)strtol(string[index++], NULL, 10)) > 0) ? true : false;
     LOG_DEBUG("Remote Process Set Ctx allowLegacyRenegotiate is %d", ctxConfig->allowLegacyRenegotiate);
 
+    // Indicates whether encrypt then mac are supported.
+    ctxConfig->isEncryptThenMac = (((int)strtol(string[index++], NULL, 10)) > 0) ? true : false;
+    LOG_DEBUG("Remote Process Set Ctx isEncryptThenMac is %d", ctxConfig->isEncryptThenMac);
+
     // Setting the info cb
     ctxConfig->infoCb = NULL; // The pointer cannot be transferred. Set this parameter to null.
 

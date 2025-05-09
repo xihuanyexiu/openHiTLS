@@ -606,7 +606,7 @@ HLT_Ctx_Config* HLT_NewCtxConfig(char *setFile, const char *key)
     ctxConfig->isSupportExtendMasterSecret = true;
     ctxConfig->isSupportSessionTicket = false;
     ctxConfig->isSupportDhAuto = true;
-	ctxConfig->isEncryptThenMac = false;
+	ctxConfig->isEncryptThenMac = true;
     ctxConfig->keyExchMode = TLS13_KE_MODE_PSK_WITH_DHE;
     ctxConfig->setSessionCache = HITLS_SESS_CACHE_SERVER;
     ctxConfig->mtu = 0;

@@ -55,6 +55,7 @@
 #include "logger.h"
 #include "alert.h"
 #include "stub_crypt.h"
+#include "rec_wrapper.h"
 
 #define PARSEMSGHEADER_LEN 13           /* Message header length */
 #define ILLEGAL_VALUE 0xFF              /* Invalid value */
