@@ -5637,3 +5637,86 @@ EXIT:
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
 }
+/* END_CASE */
+
+/* @
+* @test  UT_TLS_TLS1_2_RFC5246_CLIENT_PSK_FUNC_TC001
+* @spec  -
+* @title  Client configured with PSK ciphersuite, without PSK callback, clienthello failed to be sent.
+* @precon  nan
+* @brief  1. Use the default configuration items to configure the client and server. Expected result 1 is obtained.
+*         2. Set PSK ciphersuite, expected result 2
+*         3. Call HITLS_Connect to start handshake, expected result 3
+* @expect 1. The initialization is successful.
+*         2. Return success.
+*         3. Clienthello send failed, return HITLS_PACK_CLIENT_CIPHER_SUITE_ERR
+* @prior  Level 1
+* @auto  TRUE
+@ */
+/* BEGIN_CASE */
+void UT_TLS_TLS1_2_RFC5246_CLIENT_PSK_FUNC_TC001()
+{
+    FRAME_Init();
+
+    HITLS_Config *config = HITLS_CFG_NewTLS12Config();
+    ASSERT_TRUE(config != NULL);
+
+    uint16_t cipherSuits[] = {HITLS_RSA_PSK_WITH_AES_128_CBC_SHA};
+    HITLS_CFG_SetCipherSuites(config, cipherSuits, sizeof(cipherSuits) / sizeof(uint16_t));
+
+    FRAME_LinkObj *client = FRAME_CreateLink(config, BSL_UIO_TCP);
+    ASSERT_TRUE(client != NULL);
+    FRAME_LinkObj *server = FRAME_CreateLink(config, BSL_UIO_TCP);
+    ASSERT_TRUE(server != NULL);
+
+    ASSERT_EQ(HITLS_Connect(client->ssl), HITLS_PACK_CLIENT_CIPHER_SUITE_ERR);
+    ASSERT_TRUE(client->ssl->hsCtx->state == TRY_SEND_CLIENT_HELLO);
+EXIT:
+    HITLS_CFG_FreeConfig(config);
+    FRAME_FreeLink(client);
+    FRAME_FreeLink(server);
+}
+/* END_CASE */
+
+/* @
+* @test  UT_TLS_TLS1_2_RFC5246_CLIENT_PSK_FUNC_TC002
+* @spec  -
+* @title  Client configured with PSK ciphersuite, with PSK callback, server use default config and with PSK callback
+* configured. Handshake will success.
+* @precon  nan
+* @brief  1. Use the default configuration items to configure the client and server. Expected result 1
+*         2. Set PSK ciphersuite to client and set psk callback to both client and server, expected result 2
+*         3. Start handshake, expected result 3
+* @expect 1. The initialization is successful.
+*         2. Return success.
+*         3. Handshake success.
+* @prior  Level 1
+* @auto  TRUE
+@ */
+/* BEGIN_CASE */
+void UT_TLS_TLS1_2_RFC5246_CLIENT_PSK_FUNC_TC002()
+{
+    FRAME_Init();
+
+    HITLS_Config *c_config = HITLS_CFG_NewTLS12Config();
+    ASSERT_TRUE(c_config != NULL);
+    HITLS_Config *s_config = HITLS_CFG_NewTLS12Config();
+    ASSERT_TRUE(s_config != NULL);
+    ASSERT_TRUE(HITLS_CFG_SetPskClientCallback(c_config, ExampleClientCb) == 0);
+    ASSERT_TRUE(HITLS_CFG_SetPskServerCallback(s_config, ExampleServerCb) == 0);
+    uint16_t cipherSuits[] = {HITLS_RSA_PSK_WITH_AES_128_CBC_SHA};
+    HITLS_CFG_SetCipherSuites(c_config, cipherSuits, sizeof(cipherSuits) / sizeof(uint16_t));
+
+    FRAME_LinkObj *client = FRAME_CreateLink(c_config, BSL_UIO_TCP);
+    ASSERT_TRUE(client != NULL);
+    FRAME_LinkObj *server = FRAME_CreateLink(s_config, BSL_UIO_TCP);
+    ASSERT_TRUE(server != NULL);
+
+    ASSERT_EQ(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT), HITLS_SUCCESS);
+EXIT:
+    HITLS_CFG_FreeConfig(c_config);
+    HITLS_CFG_FreeConfig(s_config);
+    FRAME_FreeLink(client);
+    FRAME_FreeLink(server);
+}
+/* END_CASE */
