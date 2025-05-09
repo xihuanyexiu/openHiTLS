@@ -91,7 +91,6 @@ static int32_t EstablishEventInRenegotiationState(HITLS_Ctx *ctx)
         }
         return ret;
     }
-    ctx->userRenego = false;
     return HITLS_SUCCESS;
 #else
     (void)ctx;

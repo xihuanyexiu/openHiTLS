@@ -327,7 +327,7 @@ void SDV_TLS_CFG_SET_GET_CLIENTVERIFYUPPORT_FUNC_TC001(int clientverify)
 
     ASSERT_TRUE(HITLS_Renegotiate(client->ssl) == HITLS_SUCCESS);
     ASSERT_TRUE(HITLS_Renegotiate(server->ssl) == HITLS_SUCCESS);
-    ASSERT_EQ(FRAME_CreateConnection(client, server, false, TRY_SEND_CERTIFICATE_REQUEST), HITLS_INTERNAL_EXCEPTION);
+    ASSERT_EQ(FRAME_CreateRenegotiationState(client, server, false, TRY_SEND_CERTIFICATE_REQUEST), HITLS_INTERNAL_EXCEPTION);
     ASSERT_TRUE(HITLS_GetFinishVerifyData(server->ssl, verifyDataNew, sizeof(verifyDataNew),
         &verifyDataNewSize) == HITLS_SUCCESS);
     ASSERT_TRUE(memcmp(verifyDataNew, verifyDataOld, verifyDataOldSize) != 0);

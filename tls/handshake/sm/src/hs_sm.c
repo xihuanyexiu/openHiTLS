@@ -76,6 +76,11 @@ static int32_t HandshakeDone(TLS_Ctx *ctx)
         return HITLS_REC_NORMAL_IO_BUSY;
     }
 
+    // This branch is entered only when the hello request is just sent.
+    if (!ctx->negotiatedInfo.isRenegotiation && ctx->userRenego) {
+        return HITLS_SUCCESS;
+    }
+
     ret = HS_ActiveSctpAuthKey(ctx);
     if (ret != HITLS_SUCCESS) {
         return ret;

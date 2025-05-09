@@ -1238,7 +1238,7 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_RECVERSION_FUNC_TC002(int flag, int type)
 
     ASSERT_TRUE(HITLS_Renegotiate(client->ssl) == HITLS_SUCCESS);
     ASSERT_TRUE(HITLS_Renegotiate(server->ssl) == HITLS_SUCCESS);
-    ASSERT_EQ(FRAME_CreateConnection(client, server, flag, type), HITLS_SUCCESS);
+    ASSERT_EQ(FRAME_CreateRenegotiationState(client, server, flag, type), HITLS_SUCCESS);
 
     if (flag == 1) {
         HITLS_Connect(client->ssl);

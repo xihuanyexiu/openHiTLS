@@ -53,7 +53,7 @@ int32_t RecvUnexpectMsgInTransportingStateProcess(HITLS_Ctx *ctx)
         int32_t ret = CommonEventInRenegotiationState(ctx);
         if (ret == HITLS_SUCCESS) {
             /* The renegotiation initiated by the peer is processed and returned. */
-            return HITLS_REC_NORMAL_RECV_BUF_EMPTY;
+            return ret;
         }
         if (ret != HITLS_REC_NORMAL_RECV_UNEXPECT_MSG) {
             /* If an error is returned during renegotiation, the error code must be sent to the user */
@@ -87,7 +87,7 @@ static int32_t RecvRenegoReqPreprocess(TLS_Ctx *ctx, uint8_t type)
     }
     /* if client renegotiate is not allowed, send no renegotiate alert, change state to CM_STATE_HANDSHAKING to
        finish this process */
-    if (type == CLIENT_HELLO && !ctx->config.tlsConfig.allowClientRenegotiate) {
+    if (type == CLIENT_HELLO && !ctx->config.tlsConfig.allowClientRenegotiate && !ctx->userRenego) {
         ChangeConnState(ctx, CM_STATE_HANDSHAKING);
         (void)HS_ChangeState(ctx, TRY_RECV_CLIENT_HELLO);
         return HITLS_SUCCESS;
@@ -112,6 +112,14 @@ static int32_t RecvRenegoReqPreprocess(TLS_Ctx *ctx, uint8_t type)
 #endif
     ChangeConnState(ctx, CM_STATE_RENEGOTIATION);
     if (type == CLIENT_HELLO) {
+        // When the server start renegotiation, it sends a hello request message first, and the value of
+        // nextSendSeq increases to 1. Then, the hsctx is released and the nextSendSeq is reset to 0.
+        // Therefore, the value of nextSendSeq should return to 1 when sending server hello.
+#ifdef HITLS_TLS_PROTO_DTLS12
+        if (ctx->userRenego && IS_DTLS_VERSION(ctx->negotiatedInfo.version)) {
+            ctx->hsCtx->nextSendSeq++;
+        }
+#endif
         (void)HS_ChangeState(ctx, TRY_RECV_CLIENT_HELLO);
     } else {
         (void)HS_ChangeState(ctx, TRY_RECV_HELLO_REQUEST);
@@ -323,6 +331,14 @@ static int32_t ReadEventInTransportingState(HITLS_Ctx *ctx, uint8_t *data, uint3
         }
 
         if (ALERT_GetFlag(ctx)) {
+#ifdef HITLS_TLS_FEATURE_RENEGOTIATION
+            /* After the server sends a hello request, the status changes to transporting. In this case, the read
+             command is used to read the message. If the no_renegotiation alert is received, the connection
+             needs to be disconnected. */
+            if (ctx->userRenego) {
+                InnerRenegotiationProcess(ctx);
+            }
+#endif
             if (ALERT_HaveExceeded(ctx, MAX_ALERT_COUNT)) {
                 /* If multiple consecutive alerts exist, the link is abnormal and needs to be disconnected */
                 ALERT_Send(ctx, ALERT_LEVEL_FATAL, ALERT_UNEXPECTED_MESSAGE);
@@ -381,11 +397,6 @@ static int32_t ReadEventInRenegotiationState(HITLS_Ctx *ctx, uint8_t *data, uint
         return ret;
     }
 
-    if (!ctx->userRenego) {
-        /* The renegotiation initiated by the peer end is processed and returned. */
-        return HITLS_REC_NORMAL_RECV_BUF_EMPTY;
-    }
-    ctx->userRenego = false;
     return ReadEventInTransportingState(ctx, data, bufSize, readLen);
 #else
     (void)ctx;
