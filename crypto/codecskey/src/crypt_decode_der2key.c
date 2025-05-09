@@ -174,7 +174,7 @@ static int32_t CheckParams(DECODER_Der2Key_Ctx *decoderCtx, const BSL_Param *inP
 
 static int32_t ConstructOutputParams(DECODER_Der2Key_Ctx *decoderCtx, void *key, BSL_Param **outParam)
 {
-    BSL_Param *result = BSL_SAL_Calloc(5, sizeof(BSL_Param));
+    BSL_Param *result = BSL_SAL_Calloc(7, sizeof(BSL_Param));
     if (result == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
         return CRYPT_MEM_ALLOC_FAIL;
@@ -190,13 +190,25 @@ static int32_t ConstructOutputParams(DECODER_Der2Key_Ctx *decoderCtx, void *key,
         BSL_ERR_PUSH_ERROR(ret);
         goto EXIT;
     }
-    ret = BSL_PARAM_InitValue(&result[2], CRYPT_PARAM_DECODE_PKEY_METHOD_FUNC, BSL_PARAM_TYPE_CTX_PTR, \
-        decoderCtx->method, 0);
+    ret = BSL_PARAM_InitValue(&result[2], CRYPT_PARAM_DECODE_PKEY_EXPORT_METHOD_FUNC, BSL_PARAM_TYPE_FUNC_PTR,
+        decoderCtx->method->export, 0);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         goto EXIT;
     }
-    ret = BSL_PARAM_InitValue(&result[3], CRYPT_PARAM_DECODE_PROVIDER_CTX, BSL_PARAM_TYPE_CTX_PTR, \
+    ret = BSL_PARAM_InitValue(&result[3], CRYPT_PARAM_DECODE_PKEY_FREE_METHOD_FUNC, BSL_PARAM_TYPE_FUNC_PTR,
+        decoderCtx->method->freeCtx, 0);
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+        goto EXIT;
+    }
+    ret = BSL_PARAM_InitValue(&result[4], CRYPT_PARAM_DECODE_PKEY_DUP_METHOD_FUNC, BSL_PARAM_TYPE_FUNC_PTR,
+        decoderCtx->method->dupCtx, 0);
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+        goto EXIT;
+    }
+    ret = BSL_PARAM_InitValue(&result[5], CRYPT_PARAM_DECODE_PROVIDER_CTX, BSL_PARAM_TYPE_CTX_PTR,
         decoderCtx->provMgrCtx, 0);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);

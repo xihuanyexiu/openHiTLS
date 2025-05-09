@@ -45,7 +45,7 @@ enum CRYPT_ERROR {
     CRYPT_ERR_ALGID,                    /**< Incorrect algorithm ID. */
     CRYPT_INVALID_ARG,                  /**< Invalid input parameter. */
     CRYPT_NOT_SUPPORT,                  /**< unsupported operation. */
-    CRYPT_INCONSISTENT_OPERATION,       /**< Inconsistent  operation. */
+    CRYPT_INCONSISTENT_OPERATION,       /**< Inconsistent operation. */
 
     CRYPT_BN_BUFF_LEN_NOT_ENOUGH = 0x01020001, /**< Insufficient buffer length. */
     CRYPT_BN_SPACE_NOT_ENOUGH,          /**< Insufficient big number space. */
