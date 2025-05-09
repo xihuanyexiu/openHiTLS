@@ -23,6 +23,7 @@
 #include "bsl_err_internal.h"
 #include "crypt_params_key.h"
 #include "crypt_errno.h"
+#include "crypt_encode_decode_key.h"
 #include "crypt_encode_decode_local.h"
 #include "crypt_eal_kdf.h"
 #include "crypt_eal_cipher.h"
