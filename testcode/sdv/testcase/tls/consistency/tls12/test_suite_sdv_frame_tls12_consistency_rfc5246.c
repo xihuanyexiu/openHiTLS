@@ -5459,7 +5459,7 @@ void UT_TLS_TLS1_2_RFC5246_READ_AFTER_CLOSE_TC002()
     FRAME_Init();
     HITLS_Config *tlsConfig = HITLS_CFG_NewTLS12Config();
     ASSERT_TRUE(tlsConfig != NULL);
-    uint16_t cipherSuits[] = {HITLS_RSA_PSK_WITH_AES_128_CBC_SHA};
+    uint16_t cipherSuits[] = {HITLS_RSA_WITH_AES_128_CBC_SHA256};
     HITLS_CFG_SetCipherSuites(tlsConfig, cipherSuits, sizeof(cipherSuits) / sizeof(uint16_t));
 
     FRAME_CertInfo certInfo = {
@@ -5476,7 +5476,7 @@ void UT_TLS_TLS1_2_RFC5246_READ_AFTER_CLOSE_TC002()
     ASSERT_TRUE(server != NULL);
     HITLS_Ctx *clientTlsCtx = FRAME_GetTlsCtx(client);
     clientTlsCtx->config.tlsConfig.needCheckKeyUsage = true;
-    ASSERT_TRUE(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT) == HITLS_CERT_ERR_KEYUSAGE);
+    ASSERT_EQ(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT), HITLS_CERT_ERR_KEYUSAGE);
 
     ALERT_Info alertInfo = { 0 };
     ALERT_GetInfo(client->ssl, &alertInfo);
