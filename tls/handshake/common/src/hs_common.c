@@ -777,3 +777,37 @@ int32_t HS_CheckReceivedExtension(HITLS_Ctx *ctx, HS_MsgType hsType, uint64_t hs
     }
     return HITLS_SUCCESS;
 }
+
+bool IsCipherSuiteAllowed(const HITLS_Ctx *ctx, uint16_t cipherSuite)
+{
+    if (!CFG_CheckCipherSuiteSupported(cipherSuite)) {
+        return false;
+    }
+
+    uint16_t minVersion = ctx->config.tlsConfig.minVersion;
+    uint16_t maxVersion = ctx->config.tlsConfig.maxVersion;
+    if (!CFG_CheckCipherSuiteVersion(cipherSuite, minVersion, maxVersion)) {
+        return false;
+    }
+
+    CipherSuiteInfo cipherInfo = {0};
+    (void)CFG_GetCipherSuiteInfo(cipherSuite, &cipherInfo);
+    if ((ctx->isClient && ctx->config.tlsConfig.pskClientCb == NULL) ||
+        (!ctx->isClient && ctx->config.tlsConfig.pskServerCb == NULL)) {
+            if ((cipherInfo.kxAlg == HITLS_KEY_EXCH_PSK) ||
+                (cipherInfo.kxAlg == HITLS_KEY_EXCH_DHE_PSK) ||
+                (cipherInfo.kxAlg == HITLS_KEY_EXCH_ECDHE_PSK) ||
+                (cipherInfo.kxAlg == HITLS_KEY_EXCH_RSA_PSK)) {
+                return false;
+            }
+    }
+
+    uint16_t negotiatedVersion = ctx->negotiatedInfo.version;
+    if (negotiatedVersion > 0) {
+        if (!CFG_CheckCipherSuiteVersion(cipherSuite, negotiatedVersion, negotiatedVersion)) {
+            return false;
+        }
+    }
+
+    return true;
+}

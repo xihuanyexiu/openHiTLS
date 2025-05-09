@@ -31,7 +31,7 @@
 #include "hs_ctx.h"
 #include "pack_common.h"
 #include "pack_extensions.h"
-
+#include "hs_common.h"
 
 #define SINGLE_CIPHER_SUITE_SIZE 2u
 #define CIPHER_SUITES_LEN_SIZE   2u
@@ -92,8 +92,6 @@ static int32_t PackCipherSuites(const TLS_Ctx *ctx, uint8_t *buf, uint32_t bufLe
     uint16_t *cipherSuites = NULL;
     uint32_t cipherSuitesSize = 0;
     uint32_t tmpOffset = *offset;
-    uint16_t minVersion = ctx->config.tlsConfig.minVersion;
-    uint16_t maxVersion = ctx->config.tlsConfig.maxVersion;
 #ifdef HITLS_TLS_PROTO_TLS13
     if (isTls13) {
         cipherSuites = ctx->config.tlsConfig.tls13CipherSuites;
@@ -109,8 +107,7 @@ static int32_t PackCipherSuites(const TLS_Ctx *ctx, uint8_t *buf, uint32_t bufLe
 #endif /* HITLS_TLS_PROTO_TLS13 */
 
     for (uint32_t i = 0; i < cipherSuitesSize; i++) {
-        if ((CFG_CheckCipherSuiteSupported(cipherSuites[i]) != true) ||
-		    (CFG_CheckCipherSuiteVersion(cipherSuites[i], minVersion, maxVersion) != true)) {
+        if (!IsCipherSuiteAllowed(ctx, cipherSuites[i])) {
             BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15845, BSL_LOG_LEVEL_WARN, BSL_LOG_BINLOG_TYPE_RUN,
                 "The cipher suite [0x%04x] is NOT supported, index=[%u].", cipherSuites[i], i, 0, 0);
             continue;
@@ -187,10 +184,10 @@ static int32_t PackClientCompressionMethod(uint8_t *buf, uint32_t bufLen, uint32
     uint32_t offset = 0u;
 
     if (bufLen < sizeof(uint8_t) + sizeof(uint8_t)) {
-        BSL_ERR_PUSH_ERROR(HITLS_PACK_CLIENT_CIPHER_SUITE_ERR);
+        BSL_ERR_PUSH_ERROR(HITLS_PACK_NOT_ENOUGH_BUF_LENGTH);
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15734, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "pack compression method error, the buffer length is not enough.", 0, 0, 0, 0);
-        return HITLS_PACK_CLIENT_CIPHER_SUITE_ERR;
+        return HITLS_PACK_NOT_ENOUGH_BUF_LENGTH;
     }
 
     buf[offset] = 1;
