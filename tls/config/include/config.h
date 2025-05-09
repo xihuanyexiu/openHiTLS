@@ -96,13 +96,6 @@ void CFG_CleanConfig(HITLS_Config *config);
 /** copy the TLS configuration */
 int32_t DumpConfig(HITLS_Ctx *ctx, const HITLS_Config *srcConfig);
 
-/**
- * @brief Common function to update config arrays
- */
-int32_t ConfigUpdateTlsConfigArray(uint16_t **destArray, uint32_t *destSize, const void *sourceArray,
-    uint32_t sourceLen, uint32_t versionBits, uint32_t (*getVersionBitsFn)(const void *, uint32_t),
-    uint16_t (*getItemIdFn)(const void *, uint32_t));
-
 #ifdef __cplusplus
 }
 #endif
