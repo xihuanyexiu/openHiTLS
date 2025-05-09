@@ -945,7 +945,6 @@
                         "crypto/sm4/src/sm4_key.c"
                     ],
                     "armv8":[
-                        "crypto/sm4/src/asm/crypt_sm4_xts_armv8.S",
                         "crypto/sm4/src/asm/crypt_sm4_armv8.S",
                         "crypto/sm4/src/asm/crypt_sm4_ex_armv8.S",
                         "crypto/sm4/src/crypt_sm4_armv8.c"
@@ -953,18 +952,14 @@
                     "x8664":{
                         "x8664":[
                             "crypto/sm4/src/asm/crypt_sm4_macro_x86_64.s",
-                            "crypto/sm4/src/asm/crypt_sm4_setkey_x86_64.S",
                             "crypto/sm4/src/asm/crypt_sm4_x86_64.S",
-                            "crypto/sm4/src/asm/crypt_sm4_xts_x86_64.S",
                             "crypto/sm4/src/crypt_sm4_x86_64.c",
                             "crypto/sm4/src/asm/crypt_sm4_modes_macro_x86_64.s",
                             "crypto/sm4/src/asm/crypt_sm4_modes_x86_64.S"
                         ],
                         "avx512":[
                             "crypto/sm4/src/asm/crypt_sm4_macro_x86_64.s",
-                            "crypto/sm4/src/asm/crypt_sm4_setkey_x86_64.S",
                             "crypto/sm4/src/asm/crypt_sm4_x86_64.S",
-                            "crypto/sm4/src/asm/crypt_sm4_xts_x86_64.S",
                             "crypto/sm4/src/crypt_sm4_x86_64.c"
                         ]
                     }
