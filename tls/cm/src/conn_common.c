@@ -260,7 +260,12 @@ int32_t CommonEventInHandshakingState(HITLS_Ctx *ctx)
 
     // If HS_DoHandshake returns success, the connection has been established.
     ChangeConnState(ctx, CM_STATE_TRANSPORTING);
-    HS_DeInit(ctx);
+
+    /* In the UDP scenario, peer may retransmit the finished message even if the local endpoint is connected
+     * Therefore, the hsCtx is not released in the UDP scenario */
+    if (!BSL_UIO_GetUioChainTransportType(ctx->uio, BSL_UIO_UDP)) {
+        HS_DeInit(ctx);
+    }
 
     return HITLS_SUCCESS;
 }
@@ -573,9 +578,8 @@ static bool HS_IsAppDataAllowed(TLS_Ctx *ctx)
     return false;
 }
 
-static int32_t InnerRenegotiationProcess(HITLS_Ctx *ctx, int32_t ret)
+void InnerRenegotiationProcess(HITLS_Ctx *ctx)
 {
-    int32_t updateRet = ret;
     ALERT_Info alertInfo = { 0 };
     ALERT_GetInfo(ctx, &alertInfo);
     if ((alertInfo.level == ALERT_LEVEL_WARNING) && (alertInfo.description == ALERT_NO_RENEGOTIATION)) {
@@ -583,7 +587,6 @@ static int32_t InnerRenegotiationProcess(HITLS_Ctx *ctx, int32_t ret)
             "Receive no renegotiation alert during renegotiation process", 0, 0, 0, 0);
         ctx->method.sendAlert(ctx, ALERT_LEVEL_FATAL, ALERT_HANDSHAKE_FAILURE);
     }
-    return updateRet;
 }
 
 int32_t CommonEventInRenegotiationState(HITLS_Ctx *ctx)
@@ -611,7 +614,7 @@ int32_t CommonEventInRenegotiationState(HITLS_Ctx *ctx)
              * to the user for processing */
             return ret;
         }
-        ret = InnerRenegotiationProcess(ctx, ret);
+        InnerRenegotiationProcess(ctx);
         if (ALERT_HaveExceeded(ctx, MAX_ALERT_COUNT)) {
             /* If multiple consecutive alerts exist, the link is abnormal and needs to be terminated */
             ALERT_Send(ctx, ALERT_LEVEL_FATAL, ALERT_UNEXPECTED_MESSAGE);
@@ -635,11 +638,20 @@ int32_t CommonEventInRenegotiationState(HITLS_Ctx *ctx)
 
     // If the HS_DoHandshake message is returned successfully, the link has been terminated.
     ChangeConnState(ctx, CM_STATE_TRANSPORTING);
-    HS_DeInit(ctx);
 
-    ctx->negotiatedInfo.isRenegotiation = false; /* Disabling renegotiation */
-    BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15952, BSL_LOG_LEVEL_INFO, BSL_LOG_BINLOG_TYPE_RUN, "renegotiate completed.", 0, 0,
-        0, 0);
+    /* In the UDP scenario, the peer end may retransmit the finished message even if the local end is terminated.
+     * Therefore, the hsCtx is not released in the UDP scenario */
+    if (!BSL_UIO_GetUioChainTransportType(ctx->uio, BSL_UIO_UDP)) {
+        HS_DeInit(ctx);
+    }
+
+    // Prevent the renegotiation status from being changed after the Hello Request message is sent.
+    if (ctx->negotiatedInfo.isRenegotiation) {
+        ctx->userRenego = false;
+        ctx->negotiatedInfo.isRenegotiation = false; /* Disabling renegotiation */
+        BSL_LOG_BINLOG_FIXLEN(
+            BINLOG_ID15952, BSL_LOG_LEVEL_INFO, BSL_LOG_BINLOG_TYPE_RUN, "renegotiate completed.", 0, 0, 0, 0);
+    }
     return HITLS_SUCCESS;
 }
 #endif /* HITLS_TLS_FEATURE_RENEGOTIATION */

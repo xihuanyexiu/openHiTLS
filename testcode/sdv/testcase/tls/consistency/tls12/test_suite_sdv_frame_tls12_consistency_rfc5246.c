@@ -1790,7 +1790,7 @@ void UT_TLS_TLS12_RFC5246_CONSISTENCY_RENEGOTIATION_MASTEKEY_TC001()
 
     /* The server sends a Hello Request message. */
     ASSERT_TRUE(HITLS_Renegotiate(testInfo.server->ssl) == HITLS_SUCCESS);
-    ASSERT_TRUE(HITLS_Accept(testInfo.server->ssl) == HITLS_REC_NORMAL_RECV_BUF_EMPTY);
+    ASSERT_TRUE(HITLS_Accept(testInfo.server->ssl) == HITLS_SUCCESS);
     ASSERT_TRUE(FRAME_TrasferMsgBetweenLink(testInfo.server, testInfo.client) == HITLS_SUCCESS);
 
     /* Reconnect the client and retransmit data on the server. */
@@ -1799,7 +1799,7 @@ void UT_TLS_TLS12_RFC5246_CONSISTENCY_RENEGOTIATION_MASTEKEY_TC001()
     uint32_t readLen = 0;
     ASSERT_EQ(HITLS_Read(testInfo.client->ssl, readBuf, READ_BUF_SIZE, &readLen), HITLS_REC_NORMAL_RECV_BUF_EMPTY);
     ASSERT_TRUE(testInfo.client->ssl->state == CM_STATE_RENEGOTIATION);
-    ASSERT_EQ(FRAME_CreateConnection(testInfo.client, testInfo.server, true, HS_STATE_BUTT), HITLS_SUCCESS);
+    ASSERT_EQ(FRAME_CreateRenegotiationState(testInfo.client, testInfo.server, true, HS_STATE_BUTT), HITLS_SUCCESS);
     ASSERT_EQ(testInfo.client->ssl->state, CM_STATE_TRANSPORTING);
 
     /* Obtain the new masterKey based on the client session ID and compare it with the old masterKey. */
