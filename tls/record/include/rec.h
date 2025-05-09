@@ -173,18 +173,6 @@ void REC_ActiveOutdatedWriteState(TLS_Ctx *ctx);
  */
 void REC_DeActiveOutdatedWriteState(TLS_Ctx *ctx);
 
-/**
- * @ingroup record
- * @brief   Delete the expired connect state
- *
- * @attention Invoking point: 1. The tls handshake has completed.
- *            2. Flag indicating that the DTLS handshake is complete: receiving the last finished message
- * in the handshake process, receiving the app message after 2 msl
- *
- * @param   ctx [IN] TLS object
- *
- */
-void REC_DelOutdatedState(TLS_Ctx *ctx);
 
 /**
  * @ingroup record
@@ -241,90 +229,33 @@ int32_t REC_GetMaxWriteSize(const TLS_Ctx *ctx, uint32_t *len);
  */
 int32_t REC_TLS13InitPendingState(const TLS_Ctx *ctx, const REC_SecParameters *param, bool isOut);
 
-#ifdef HITLS_TLS_PROTO_DTLS12
+/**
+ * @ingroup record
+ * @brief   Retransmit a record
+ *
+ * @param   recCtx [IN] Record context
+ * @param   recordType [IN] record type
+ * @param   data [IN] data
+ * @param   dataLen [IN] data length
+ */
+int32_t REC_RetransmitListAppend(REC_Ctx *recCtx, REC_Type recordType, const uint8_t *data, uint32_t dataLen);
 
 /**
- * @brief   Back up the Record context in the TLS object and generate the TLV message.
-* | TLS_REC_CTX | TLV Length | TLV Data |
+ * @ingroup record
+ * @brief   Clean the retransmit list
  *
- * @param   recCtx [IN] RecCtx Structure
- * @param   data [OUT] Message memory allocated by the user
- * @param   length [IN] Buffer length
- * @param   usedLen [OUT] Length of the generated TLV message
- *
- * @retval  HITLS_SUCCESS
+ * @param   recCtx [IN] Record context
  */
-int32_t REC_BackupRecCtx(const REC_Ctx *recCtx, uint8_t *data, uint32_t length, uint32_t *usedLen);
-
-/**
- * @brief   Use TLV data to restore the record context
- *
- * @param   recCtx [OUT] RecCtx Structure
- * @param   data [IN] TLV data of the record
- * @param   length [IN] Data length
- *
- * @retval  HITLS_SUCCESS
- */
-int32_t REC_RestoreRecCtx(REC_Ctx *recCtx, const uint8_t *data, uint32_t length);
-
-#endif /* HITLS_TLS_PROTO_DTLS12 */
-
-/**
- * @brief   Add the message to the retransmission queue
- *
- * @param   recCtx [OUT] RecCtx Structure
- * @param   type [IN] Message type
- * @param   msg [IN] Message content
- * @param   len [IN] Message length
- *
- * @retval  HITLS_SUCCESS
- * @retval  HITLS_MEMALLOC_FAIL Memory allocation failed
- */
-#ifdef HITLS_TLS_PROTO_DTLS12
-int32_t REC_RetransmitListAppend(REC_Ctx *recCtx, REC_Type type, const uint8_t *msg, uint32_t len);
-#endif
-
-/**
- * @brief   Clear the retransmission queue
- *
- * @param   recCtx [OUT] RecCtx Structure
- */
-#ifdef HITLS_TLS_PROTO_DTLS12
 void REC_RetransmitListClean(REC_Ctx *recCtx);
-#endif
+
 
 /**
- * @brief   Send a message in the retransmission queue
- *          UDP sending will not fail. Therefore, the sending failure scenario does not need to be considered
+ * @ingroup record
+ * @brief   Flush the retransmit list
  *
- * @param   recCtx [OUT] tls Context
+ * @param   ctx [IN] TLS object
  */
-#ifdef HITLS_TLS_PROTO_DTLS12
 void REC_RetransmitListFlush(TLS_Ctx *ctx);
-#endif
-
-/**
- * @brief   TTO backup
- * @param   recCtx [IN] RecCtx Structure
- * @param   data [OUT]
- * @param   length [IN] Data Array length
- * @param   usedLen [OUT] Used length
- * @retval  HITLS_SUCCESS
- * @retval  For other error codes, see hitls_error.h
- */
-int32_t REC_BackupEstablished(const REC_Ctx *recCtx, uint8_t *data, uint32_t length, uint32_t *usedLen);
-
-/**
- * @brief   TTO backup and restoration
- * @param   recCtx [IN/OUT] RecCtx Structure
- * @param   data [IN]
- * @param   length [IN] Data Array length
- * @retval  HITLS_SUCCESS
- * @retval  For other error codes, see hitls_error.h
- */
-int32_t REC_RestoreEstablished(TLS_Ctx *ctx, const uint8_t *data, uint32_t length);
-
-int32_t REC_TlsReadNbytes(TLS_Ctx *ctx, REC_Type recordType, uint8_t *buf, uint32_t num);
 
 REC_Type REC_GetUnexpectedMsgType(TLS_Ctx *ctx);
 

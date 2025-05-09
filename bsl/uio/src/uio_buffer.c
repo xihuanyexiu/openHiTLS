@@ -174,6 +174,9 @@ static int32_t BufferCtrl(BSL_UIO *uio, int32_t cmd, int32_t larg, void *parg)
         case BSL_UIO_SET_BUFFER_SIZE:
             return BufferSetBufferSize(uio, larg, parg);
         default:
+        	if (uio->next != NULL) {
+                return BSL_UIO_Ctrl(uio->next, cmd, larg, parg);
+            }
             break;
     }
     BSL_ERR_PUSH_ERROR(BSL_UIO_FAIL);

@@ -52,6 +52,16 @@ CRYPT_ML_KEM_Ctx *CRYPT_ML_KEM_NewCtx(void)
     return keyCtx;
 }
 
+CRYPT_ML_KEM_Ctx *CRYPT_ML_KEM_NewCtxEx(void *libCtx)
+{
+    CRYPT_ML_KEM_Ctx *ctx = CRYPT_ML_KEM_NewCtx();
+    if (ctx == NULL) {
+        return NULL;
+    }
+    ctx->libCtx = libCtx;
+    return ctx;
+}
+
 void CRYPT_ML_KEM_FreeCtx(CRYPT_ML_KEM_Ctx *ctx)
 {
     if (ctx == NULL) {
@@ -168,6 +178,10 @@ static int32_t MlKemGetCipherTextLen(CRYPT_ML_KEM_Ctx *ctx, void *val, uint32_t 
 
 static int32_t MlKemGetSharedLen(CRYPT_ML_KEM_Ctx *ctx, void *val, uint32_t len)
 {
+    if (ctx->info == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_MLKEM_KEYINFO_NOT_SET);
+        return CRYPT_MLKEM_KEYINFO_NOT_SET;
+    }
     if (len != sizeof(uint32_t)) {
         BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);
         return CRYPT_INVALID_ARG;
@@ -183,7 +197,7 @@ int32_t CRYPT_ML_KEM_SetEncapsKey(CRYPT_ML_KEM_Ctx *ctx, const BSL_Param *param)
         return CRYPT_NULL_INPUT;
     }
 
-    const BSL_Param *ek = BSL_PARAM_FindConstParam(param, CRYPT_PARAM_ML_KEM_ENCAPSKEY);
+    const BSL_Param *ek = BSL_PARAM_FindConstParam(param, CRYPT_PARAM_ML_KEM_PUBKEY);
     if (ek == NULL || ek->value == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
@@ -211,7 +225,7 @@ int32_t CRYPT_ML_KEM_GetEncapsKey(const CRYPT_ML_KEM_Ctx *ctx, BSL_Param *param)
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-    BSL_Param *ek = BSL_PARAM_FindParam(param, CRYPT_PARAM_ML_KEM_ENCAPSKEY);
+    BSL_Param *ek = BSL_PARAM_FindParam(param, CRYPT_PARAM_ML_KEM_PUBKEY);
     if (ek == NULL || ek->value == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
@@ -239,7 +253,7 @@ int32_t CRYPT_ML_KEM_SetDecapsKey(CRYPT_ML_KEM_Ctx *ctx, const BSL_Param *param)
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-    const BSL_Param *dk = BSL_PARAM_FindConstParam(param, CRYPT_PARAM_ML_KEM_DECAPSKEY);
+    const BSL_Param *dk = BSL_PARAM_FindConstParam(param, CRYPT_PARAM_ML_KEM_PRVKEY);
     if (dk == NULL || dk->value == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
@@ -269,7 +283,7 @@ int32_t CRYPT_ML_KEM_GetDecapsKey(const CRYPT_ML_KEM_Ctx *ctx, BSL_Param *param)
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-    BSL_Param *dk = BSL_PARAM_FindParam(param, CRYPT_PARAM_ML_KEM_DECAPSKEY);
+    BSL_Param *dk = BSL_PARAM_FindParam(param, CRYPT_PARAM_ML_KEM_PRVKEY);
     if (dk == NULL || dk->value == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
@@ -417,9 +431,9 @@ int32_t CRYPT_ML_KEM_GenKey(CRYPT_ML_KEM_Ctx *ctx)
     }
     uint8_t d[MLKEM_SEED_LEN];
     uint8_t z[MLKEM_SEED_LEN];
-    int32_t ret = CRYPT_Rand(d, MLKEM_SEED_LEN);
+    int32_t ret = CRYPT_RandEx(ctx->libCtx, d, MLKEM_SEED_LEN);
     RETURN_RET_IF(ret != CRYPT_SUCCESS, ret);
-    ret = CRYPT_Rand(z, MLKEM_SEED_LEN);
+    ret = CRYPT_RandEx(ctx->libCtx, z, MLKEM_SEED_LEN);
     RETURN_RET_IF(ret != CRYPT_SUCCESS, ret);
 
     ret = MLKEM_KeyGenInternal(ctx, d, z);
@@ -451,7 +465,7 @@ int32_t CRYPT_ML_KEM_Encaps(const CRYPT_ML_KEM_Ctx *ctx, uint8_t *cipher, uint32
     RETURN_RET_IF(ret != CRYPT_SUCCESS, ret);
 
     uint8_t m[MLKEM_SEED_LEN];
-    ret = CRYPT_Rand(m, MLKEM_SEED_LEN);
+    ret = CRYPT_RandEx(ctx->libCtx, m, MLKEM_SEED_LEN);
     RETURN_RET_IF(ret != CRYPT_SUCCESS, ret);
 
     ret = MLKEM_EncapsInternal(ctx, cipher, cipherLen, share, shareLen, m);

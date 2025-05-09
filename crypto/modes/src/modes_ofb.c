@@ -62,6 +62,7 @@ int32_t MODES_OFB_Crypt(MODES_CipherCommonCtx *ctx, const uint8_t *in, uint8_t *
             left = 0;
         }
     }
+
     return CRYPT_SUCCESS;
 }
 

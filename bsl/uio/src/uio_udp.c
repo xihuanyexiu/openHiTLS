@@ -82,7 +82,7 @@ static int32_t UdpSocketDestroy(BSL_UIO *uio)
 
 static int32_t UdpGetPeerIpAddr(UdpParameters *parameters, int32_t larg,  uint8_t *parg)
 {
-    if (parameters == NULL || parg == NULL || larg != (int32_t)sizeof(BSL_UIO_Addr)) {
+    if (parameters == NULL || parg == NULL || larg < (int32_t)sizeof(BSL_UIO_Addr)) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID05074, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "Uio: Get peer ip address input error.", 0, 0, 0, 0);
         return BSL_NULL_INPUT;
@@ -96,7 +96,7 @@ static int32_t UdpGetPeerIpAddr(UdpParameters *parameters, int32_t larg,  uint8_
 
 static int32_t UdpSetPeerIpAddr(UdpParameters *parameters, const uint8_t *addr, uint32_t size)
 {
-    if (parameters == NULL || addr == NULL || size != (int32_t)sizeof(struct sockaddr)) {
+    if (parameters == NULL || addr == NULL || size < (int32_t)sizeof(struct sockaddr)) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID05073, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "Uio: NULL error.", 0, 0, 0, 0);
         BSL_ERR_PUSH_ERROR(BSL_NULL_INPUT);
@@ -168,7 +168,7 @@ int32_t UdpSocketCtrl(BSL_UIO *uio, int32_t cmd, int32_t larg, void *parg)
             return UdpSetPeerIpAddr(parameters, parg, (uint32_t)larg);
         case BSL_UIO_GET_PEER_IP_ADDR:
             return UdpGetPeerIpAddr(parameters, larg, parg);
-        case BSL_UIO_DGRAM_SET_CONNECTED:
+        case BSL_UIO_UDP_SET_CONNECTED:
             if (parg != NULL) {
                 parameters->connected = 1;
                 return UdpSetPeerIpAddr(parameters, parg, (uint32_t)larg);

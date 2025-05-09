@@ -41,6 +41,17 @@ typedef struct CryptCurve25519Ctx CRYPT_CURVE25519_Ctx;
  * @retval NULL                     Invalid null pointer
  */
 CRYPT_CURVE25519_Ctx *CRYPT_X25519_NewCtx(void);
+
+/**
+ * @ingroup curve25519
+ * @brief curve25519 Create a key pair structure and allocate memory space.
+ * 
+ * @param libCtx [IN] Library context
+ * 
+ * @retval (CRYPT_CURVE25519_Ctx *) Pointer to the key pair structure
+ * @retval NULL                     Invalid null pointer
+ */
+CRYPT_CURVE25519_Ctx *CRYPT_X25519_NewCtxEx(void *libCtx);
 #endif
 
 #ifdef HITLS_CRYPTO_ED25519
@@ -52,6 +63,17 @@ CRYPT_CURVE25519_Ctx *CRYPT_X25519_NewCtx(void);
  * @retval NULL                     Invalid null pointer
  */
 CRYPT_CURVE25519_Ctx *CRYPT_ED25519_NewCtx(void);
+
+/**
+ * @ingroup ed25519
+ * @brief curve25519 Create a key pair structure for ED25519 algorithm and allocate memory space.
+ *
+ * @param libCtx [IN] Library context
+ * 
+ * @retval (CRYPT_CURVE25519_Ctx *) Pointer to the key pair structure
+ * @retval NULL                     Invalid null pointer
+ */
+CRYPT_CURVE25519_Ctx *CRYPT_ED25519_NewCtxEx(void *libCtx);
 #endif
 
 /**
@@ -278,6 +300,26 @@ int32_t CRYPT_CURVE25519_Cmp(const CRYPT_CURVE25519_Ctx *a, const CRYPT_CURVE255
  * @retval security bits
  */
 int32_t CRYPT_CURVE25519_GetSecBits(const CRYPT_CURVE25519_Ctx *ctx);
+
+#ifdef HITLS_CRYPTO_PROVIDER
+/**
+ * @ingroup curve25519
+ * @brief curve25519 import key
+ *
+ * @param ctx [IN/OUT] curve25519 context structure
+ * @param params [IN] parameters
+ */
+int32_t CRYPT_CURVE25519_Import(CRYPT_CURVE25519_Ctx *ctx, const BSL_Param *params);
+
+/**
+ * @ingroup curve25519
+ * @brief curve25519 export key
+ *
+ * @param ctx [IN] curve25519 context structure
+ * @param params [IN/OUT] key parameters
+ */
+int32_t CRYPT_CURVE25519_Export(const CRYPT_CURVE25519_Ctx *ctx, BSL_Param *params);
+#endif // HITLS_CRYPTO_PROVIDER
 
 #ifdef __cplusplus
 }

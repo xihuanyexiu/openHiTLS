@@ -91,7 +91,7 @@ static void HmacCleanseData(uint8_t *tmp, uint32_t tmpLen, uint8_t *ipad, uint32
     BSL_SAL_CleanseData(opad, opadLen);
 }
 
-int32_t CRYPT_HMAC_Init(CRYPT_HMAC_Ctx *ctx, const uint8_t *key, uint32_t len, const BSL_Param *param)
+int32_t CRYPT_HMAC_Init(CRYPT_HMAC_Ctx *ctx, const uint8_t *key, uint32_t len, BSL_Param *param)
 {
     if (ctx == NULL || ctx->method == NULL || (key == NULL && len != 0)) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
@@ -226,8 +226,8 @@ int32_t CRYPT_HMAC_Ctrl(CRYPT_HMAC_Ctx *ctx, CRYPT_MacCtrl opt, void *val, uint3
         default:
             break;
     }
-    BSL_ERR_PUSH_ERROR(CRYPT_ECC_HMAC_ERR_UNSUPPORTED_CTRL_OPTION);
-    return CRYPT_ECC_HMAC_ERR_UNSUPPORTED_CTRL_OPTION;
+    BSL_ERR_PUSH_ERROR(CRYPT_HMAC_ERR_UNSUPPORTED_CTRL_OPTION);
+    return CRYPT_HMAC_ERR_UNSUPPORTED_CTRL_OPTION;
 }
 
 void CRYPT_HMAC_FreeCtx(CRYPT_HMAC_Ctx *ctx)

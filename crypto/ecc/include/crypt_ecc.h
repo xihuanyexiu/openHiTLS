@@ -454,6 +454,17 @@ int32_t ECC_PointToMont(const ECC_Para *para, ECC_Point *pt, BN_Optimizer *opt);
  */
 void ECC_PointFromMont(const ECC_Para *para, ECC_Point *r);
 
+/**
+ * @ingroup ecc
+ * @brief   convert ecc point to mont form
+ * @param   para [IN] Curve parameters
+ * @param   pt [IN/OUT] Point information
+ *
+ * @param libCtx [IN] Pointer to the library context
+ * @param para [OUT] Pointer to the elliptic curve parameters
+ */
+void ECC_SetLibCtx(void *libCtx, ECC_Para *para);
+
 #ifdef __cplusplus
 }
 #endif

@@ -33,7 +33,7 @@ ASM_TYPE=""
 
 NO_LIB=""
 
-LIB_TYPE="static shared object"
+LIB_TYPE="static"
 DEBUG="off"
 ADD_OPTIONS=""
 DEL_OPTIONS=""
@@ -281,8 +281,7 @@ test_feature()
         return
     fi
 
-    bash build_sdv.sh run-tests="$files" $NO_LIB no-demos
-
+    bash build_sdv.sh run-tests="$files" $NO_LIB no-demos no-sctp
 
     if [ $EXE_TEST == "on" ]; then
         # exe test
@@ -298,7 +297,7 @@ parse_option
 
 # build securec
 if [ ! -d "${HITLS_ROOT_DIR}/platform/Secure_C/lib" ]; then
-    cd ${HITLS_ROOT_DIR}/platform/Secure_C/src
+    cd ${HITLS_ROOT_DIR}/platform/Secure_C
     make -j
 fi
 

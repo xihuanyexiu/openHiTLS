@@ -355,16 +355,15 @@ EXIT:
 /* BEGIN_CASE */
 void SDV_CRYPTO_MD5_FUNC_TC005(int id, Hex *msg, Hex *hash)
 {
-#ifndef HITLS_CRYPTO_PROVIDER
-    (void)id;
-    (void)msg;
-    (void)hash;
-    SKIP_TEST();
-#else
     TestMemInit();
     uint8_t output[CRYPT_MD5_DIGESTSIZE];
     uint32_t outLen = CRYPT_MD5_DIGESTSIZE;
-    CRYPT_EAL_MdCTX *ctx = CRYPT_EAL_ProviderMdNewCtx(NULL, id, "provider=default");
+    CRYPT_EAL_MdCTX *ctx = NULL;
+#ifdef HITLS_CRYPTO_PROVIDER
+    ctx = CRYPT_EAL_ProviderMdNewCtx(NULL, id, "provider=default");
+#else
+    ctx = CRYPT_EAL_MdNewCtx(id);
+#endif
     ASSERT_TRUE(ctx != NULL);
 
     ASSERT_EQ(CRYPT_EAL_MdInit(ctx), CRYPT_SUCCESS);
@@ -374,7 +373,6 @@ void SDV_CRYPTO_MD5_FUNC_TC005(int id, Hex *msg, Hex *hash)
     
 EXIT:
     CRYPT_EAL_MdFreeCtx(ctx);
-#endif
 }
 /* END_CASE */
 

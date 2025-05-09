@@ -66,8 +66,8 @@ int main(void)
 
     // Before calling the algorithm APIs, call the **BSL_SAL_CallBack_Ctrl** function to register the **malloc** and **free** functions. Execute this step only once.
     // If the memory allocation ability of Linux is available, the two functions can be registered using Linux by default.
-    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC_CB_FUNC, StdMalloc);
-    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE_CB_FUNC, free);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC, StdMalloc);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE, free);
 
     // Create a context.
     CRYPT_EAL_CipherCtx *ctx = CRYPT_EAL_CipherNewCtx(CRYPT_CIPHER_SM4_CBC);
@@ -194,6 +194,7 @@ This function provides encryption and decryption capabilities based on asymmetri
 #include "crypt_algid.h"
 #include "crypt_errno.h"
 #include "crypt_eal_rand.h"
+#include "crypt_eal_init.h"
 #include "crypt_types.h"
 
 void *StdMalloc(uint32_t len) {
@@ -211,8 +212,14 @@ int main(void) {
     BSL_ERR_Init();  // Initialize the error code module.
     // Before calling the algorithm APIs, call the **BSL_SAL_CallBack_Ctrl** function to register the **malloc** and **free** functions. Execute this step only once.
     // If the memory allocation ability of Linux is available, the two functions can be registered using Linux by default.
-    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC_CB_FUNC, StdMalloc);
-    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE_CB_FUNC, free);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC, StdMalloc);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE, free);
+    ret = CRYPT_EAL_Init(CRYPT_EAL_INIT_CPU | CRYPT_EAL_INIT_PROVIDER);
+    if (ret != CRYPT_SUCCESS) {
+        printf("error code is %x\n", ret);
+        PrintLastError();
+        goto EXIT;
+    }
     CRYPT_EAL_PkeyCtx *pkey = NULL;
     pkey = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_SM2);
     if (pkey == NULL) {
@@ -221,7 +228,7 @@ int main(void) {
     }
 
     // Initialize the random number.
-    ret = CRYPT_EAL_RandInit(CRYPT_RAND_SHA256, NULL, NULL, NULL, 0);
+    ret = CRYPT_EAL_ProviderRandInitCtx(NULL, CRYPT_RAND_SHA256, "provider=default", NULL, 0, NULL);
     if (ret != CRYPT_SUCCESS) {
         printf("CRYPT_EAL_RandInit: error code is %x\n", ret);
         PrintLastError();
@@ -291,6 +298,7 @@ This function provides the signature verification capability based on asymmetric
 #include "bsl_err.h"
 #include "crypt_algid.h"
 #include "crypt_errno.h"
+#include "crypt_eal_init.h"
 #include "crypt_eal_rand.h"
 
 void *StdMalloc(uint32_t len) {
@@ -319,9 +327,12 @@ int main(void)
     BSL_ERR_Init(); // Initialize the error code module.
     // Before calling the algorithm APIs, call the **BSL_SAL_CallBack_Ctrl** function to register the **malloc** and **free** functions. Execute this step only once.
     // If the memory allocation ability of Linux is available, the two functions can be registered using Linux by default.
-    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC_CB_FUNC, StdMalloc);
-    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE_CB_FUNC, free);
-
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC, StdMalloc);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE, free);
+    ret = CRYPT_EAL_Init(CRYPT_EAL_INIT_CPU | CRYPT_EAL_INIT_PROVIDER);
+    if (ret != CRYPT_SUCCESS) {
+        goto EXIT;
+    }
     ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_SM2);
     if (ctx == NULL) {
         goto EXIT;
@@ -336,7 +347,7 @@ int main(void)
     }
 
     // Initialize the random number.
-    ret = CRYPT_EAL_RandInit(CRYPT_RAND_SHA256, NULL, NULL, NULL, 0);
+    ret = CRYPT_EAL_ProviderRandInitCtx(NULL, CRYPT_RAND_SHA256, "provider=default", NULL, 0, NULL);
     if (ret != CRYPT_SUCCESS) {
         printf("error code is %x\n", ret);
         PrintLastError();
@@ -398,6 +409,7 @@ This function provides the key exchange capability based on asymmetric algorithm
 #include "crypt_algid.h"
 #include "crypt_errno.h"
 #include "crypt_eal_rand.h"
+#include "crypt_eal_init.h"
 
 void *StdMalloc(uint32_t len) {
     return malloc((size_t)len);
@@ -437,9 +449,13 @@ int main(void)
     BSL_ERR_Init(); // Initialize the error code module.
     // Before calling the algorithm APIs, call the **BSL_SAL_CallBack_Ctrl** function to register the **malloc** and **free** functions. Execute this step only once.
     // If the memory allocation ability of Linux is available, the two functions can be registered using Linux by default.
-    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC_CB_FUNC, StdMalloc);
-    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE_CB_FUNC, free);
-
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC, StdMalloc);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE, free);
+    ret = CRYPT_EAL_Init(CRYPT_EAL_INIT_CPU | CRYPT_EAL_INIT_PROVIDER);
+    if (ret != CRYPT_SUCCESS) {
+        printf("error code is %x\n", ret);
+        goto EXIT;
+    }
     prvCtx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ECDH);
     pubCtx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ECDH);
     if (prvCtx == NULL || pubCtx == NULL) {
@@ -494,7 +510,7 @@ int main(void)
     }
 
     // Initialize the random number.
-    ret = CRYPT_EAL_RandInit(CRYPT_RAND_SHA256, NULL, NULL, NULL, 0);
+    ret = CRYPT_EAL_ProviderRandInitCtx(NULL, CRYPT_RAND_SHA256, "provider=default", NULL, 0, NULL);
     if (ret != CRYPT_SUCCESS) {
         printf("CRYPT_EAL_RandInit: error code is %x\n", ret);
         PrintLastError();
@@ -591,8 +607,8 @@ int main(void)
      * Execute this step only once. If the memory allocation ability of Linux is available,
      * the two functions can be registered using Linux by default.
     */
-    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC_CB_FUNC, StdMalloc);
-    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE_CB_FUNC, free);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC, StdMalloc);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE, free);
 
     CRYPT_EAL_KdfCTX *ctx = CRYPT_EAL_KdfNewCtx(CRYPT_KDF_PBKDF2);
     if (ctx == NULL) {
@@ -673,6 +689,7 @@ The following uses the DRBG-SHA algorithm as an example to describe the sample c
 #include "bsl_err.h"
 #include "crypt_algid.h"
 #include "crypt_errno.h"
+#include "crypt_eal_init.h"
 #include "crypt_eal_rand.h"
 
 void *StdMalloc(uint32_t len) {
@@ -694,13 +711,17 @@ int main(void)
 
     // Before calling the algorithm APIs, call the **BSL_SAL_CallBack_Ctrl** function to register the **malloc** and **free** functions. Execute this step only once.
     // If the memory allocation ability of Linux is available, the two functions can be registered using Linux by default.
-    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC_CB_FUNC, StdMalloc);
-    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE_CB_FUNC, free);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC, StdMalloc);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE, free);
 
     BSL_ERR_Init();// Initialize the error module.
-
+    ret = CRYPT_EAL_Init(CRYPT_EAL_INIT_CPU | CRYPT_EAL_INIT_PROVIDER);
+    if (ret != CRYPT_SUCCESS) {
+        printf("error code is %x\n", ret);
+        goto EXIT;
+    }
     // Initialize the global random number by using the default entropy source from **/dev/random** of Linux.
-    ret = CRYPT_EAL_RandInit(CRYPT_RAND_SHA256, NULL, NULL, NULL, 0);
+    ret = CRYPT_EAL_ProviderRandInitCtx(NULL, CRYPT_RAND_SHA256, "provider=default", NULL, 0, NULL);
     if (ret != CRYPT_SUCCESS) {
         printf("CRYPT_EAL_RandInit: error code is %x\n", ret);
         PrintLastError();
@@ -708,7 +729,7 @@ int main(void)
     }
 
     // Obtain the random number sequence of the **len** value.
-    ret = CRYPT_EAL_Randbytes(output, len);
+    ret = CRYPT_EAL_RandbytesEx(NULL, output, len);
     if (ret != CRYPT_SUCCESS) {
         printf("CRYPT_EAL_Randbytes: error code is %x\n", ret);
         PrintLastError();
@@ -722,7 +743,7 @@ int main(void)
     printf("\n");
 
     // Reseeding
-    ret = CRYPT_EAL_RandSeed();
+    ret = CRYPT_EAL_RandSeedEx(NULL);
     if (ret != CRYPT_SUCCESS) {
         printf("CRYPT_EAL_RandSeed: error code is %x\n", ret);
         PrintLastError();
@@ -730,7 +751,7 @@ int main(void)
     }
 
     // Obtain the random number sequence of the **len** value.
-    ret = CRYPT_EAL_Randbytes(output, len);
+    ret = CRYPT_EAL_RandbytesEx(NULL, output, len);
     if (ret != CRYPT_SUCCESS) {
         printf("CRYPT_EAL_Randbytes: error code is %x\n", ret);
         PrintLastError();

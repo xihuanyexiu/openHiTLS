@@ -94,7 +94,8 @@ struct EccPara {
     ECC_Point *tableG[16];
     const ECC_Method *method;
     CRYPT_PKEY_ParaId id;
-    BN_Mont *montP;
+	BN_Mont *montP;
+    void *libCtx;
 };
 
 /**

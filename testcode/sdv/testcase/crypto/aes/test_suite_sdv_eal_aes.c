@@ -1251,18 +1251,7 @@ EXIT:
 /* @
 * @test  SDV_CRYPTO_EAL_AES_FUNC_TC001
 * @spec  -
-* @title  CBC,ECB,CTR,XTS: the influence of All-zero and All-F Data Keys on AES Calculation_KAT_20220530114800801
-* @brief  1. invoke the new interface. Expected result 1 is obtained.
-2. Invoke the SetPadding interface to set the padding mode CRYPT_PADDING_NONE. Expected result 2 is obtained.
-3. Invoke the init interface. Expected result 3 is obtained.
-4. Invoke the update interface. Expected result 4 is obtained.
-5. Invoke the final interface. Expected result 5 (NE) is obtained. Expected result 2 is obtained.
-* @expect  1.success，return the context pointer
-2.success，return CRYPT_SUCCESS
-3.init success，return CRYPT_SUCCESS
-4.update success，returnCRYPT_SUCCESS
-5.final success，returnCRYPT_SUCCESS；The calculation result is consistent with the vector value.
-* @prior  Level 1
+* @title  CBC,ECB,CTR,XTS: the influence of All-zero and All-F Data Keys on AES Calculation_KAT
 * @auto  TRUE
 @ */
 /* BEGIN_CASE */
@@ -1300,22 +1289,7 @@ EXIT:
 /* @
 * @test  SDV_CRYPTO_EAL_AES_FUNC_TC005
 * @spec  -
-* @title  CBC,ECB,CTR,XTS: after reinit, re-encrypt and decrypt data_reinit function test_20220530114830542
-* @brief  1.Invoke the new interface. Expected result 1 is obtained.
-2. Call the SetPadding interface to set the padding mode. Expected result 2 is obtained.
-3. Invoke the init interface. Expected result 3 is obtained.
-4. Invoke the update interface. Expected result 4 is obtained.
-5. Invoke the final interface. Expected result 56. Invoke the reinit interface. Expected result 6 is obtained.
-7. Invoke the update interface. Expected result 7 is obtained.
-8. Invoke the final interface. Expected result 8 is obtained.
-* @expect  1. success，return the context pointer
-2.success，return CRYPT_SUCCESS
-3.init success，return CRYPT_SUCCESS
-4.update success，return CRYPT_SUCCESS
-5.final success，return CRYPT_SUCCESS
-6.reinit success，return CRYPT_SUCCESS
-7.update success，return CRYPT_SUCCESS
-8.finalsuccess，return CRYPT_SUCCESS
+* @title  CBC,ECB,CTR,XTS: after reinit, re-encrypt and decrypt data_reinit function test
 * @prior  Level 1
 * @auto  TRUE
 @ */

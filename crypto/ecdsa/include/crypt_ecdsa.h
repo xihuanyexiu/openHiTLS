@@ -21,6 +21,7 @@
 
 #include <stdint.h>
 #include "crypt_types.h"
+#include "crypt_local_types.h"
 #include "crypt_ecc_pkey.h"
 #include "crypt_ecc.h"
 
@@ -42,6 +43,17 @@ typedef struct EccPara CRYPT_EcdsaPara;
  * @retval NULL                Invalid null pointer
  */
 CRYPT_ECDSA_Ctx *CRYPT_ECDSA_NewCtx(void);
+
+/**
+ * @ingroup ecdsa
+ * @brief ecdsa Allocate context memory space.
+ * 
+ * @param libCtx [IN] Library context
+ *
+ * @retval (CRYPT_ECDSA_Ctx *) Pointer to the memory space of the allocated context
+ * @retval NULL                Invalid null pointer
+ */
+CRYPT_ECDSA_Ctx *CRYPT_ECDSA_NewCtxEx(void *libCtx);
 
 /**
  * @ingroup ecdsa
@@ -350,6 +362,26 @@ int32_t CRYPT_ECDSA_Cmp(const CRYPT_ECDSA_Ctx *a, const CRYPT_ECDSA_Ctx *b);
  */
 int32_t CRYPT_ECDSA_GetSecBits(const CRYPT_ECDSA_Ctx *ctx);
 
+#ifdef HITLS_CRYPTO_PROVIDER
+/**
+ * @ingroup ecdsa
+ * @brief ecdsa import key
+ *
+ * @param ctx [IN/OUT] ecdsa context structure
+ * @param params [IN] parameters
+ */
+int32_t CRYPT_ECDSA_Import(CRYPT_ECDSA_Ctx *ctx, const BSL_Param *params);
+
+/**
+ * @ingroup ecdsa
+ * @brief ecdsa export key
+ *
+ * @param ctx [IN] ecdsa context structure
+ * @param params [IN/OUT] key parameters
+ */
+int32_t CRYPT_ECDSA_Export(const CRYPT_ECDSA_Ctx *ctx, BSL_Param *params);
+
+#endif // HITLS_CRYPTO_PROVIDER
 #ifdef __cplusplus
 }
 #endif

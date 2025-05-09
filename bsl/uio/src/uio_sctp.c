@@ -235,7 +235,7 @@ static bool BslSctpCheckPeerAuth(BSL_UIO *uio, void *parg, int32_t larg)
         return BSL_UIO_IO_EXCEPTION;
     }
 
-    uint32_t optLen = sizeof(struct sctp_authchunks) + SCTP_GAUTH_CHUNKS_SIZE;
+    int32_t optLen = (int32_t)sizeof(struct sctp_authchunks) + SCTP_GAUTH_CHUNKS_SIZE;
     struct sctp_authchunks *auth = (struct sctp_authchunks*)BSL_SAL_Calloc(1u, optLen);
     if (auth == NULL) {
         BSL_ERR_PUSH_ERROR(BSL_MALLOC_FAIL);
@@ -407,7 +407,7 @@ static int32_t BslSctpIsSndBuffEmpty(BSL_UIO *uio, void *parg, int32_t larg)
     }
 
     struct sctp_status status = {0};
-    uint32_t statusLen = sizeof(status);
+    int32_t statusLen = sizeof(status);
     int32_t ret = BSL_SAL_GetSockopt(fd, IPPROTO_SCTP, SCTP_STATUS, &status, &statusLen);
     if (ret != BSL_SUCCESS) {
         BSL_ERR_PUSH_ERROR(BSL_SAL_ERR_NET_GETSOCKOPT);
@@ -455,6 +455,8 @@ int32_t SctpCtrl(BSL_UIO *uio, int32_t cmd, int32_t larg, void *parg)
             return BslSctpDelAuthKey(uio, &parameters->prevShareKeyId, sizeof(parameters->shareKeyId));
         case BSL_UIO_SCTP_SND_BUFF_IS_EMPTY:
             return BslSctpIsSndBuffEmpty(uio, parg, larg);
+        case  BSL_UIO_FLUSH:
+            return BSL_SUCCESS;
         default:
             BSL_ERR_PUSH_ERROR(BSL_UIO_FAIL);
             return BSL_UIO_FAIL;

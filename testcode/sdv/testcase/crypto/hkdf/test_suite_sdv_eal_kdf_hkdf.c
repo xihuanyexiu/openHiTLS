@@ -178,14 +178,6 @@ EXIT:
 /* BEGIN_CASE */
 void SDV_CRYPTO_HKDF_DEFAULT_PROVIDER_FUNC_TC001(int algId, Hex *key, Hex *salt, Hex *info, Hex *result)
 {
-#ifndef HITLS_CRYPTO_PROVIDER
-    (void)algId;
-    (void)key;
-    (void)salt;
-    (void)info;
-    (void)result;
-    SKIP_TEST();
-#else
     if (IsHmacAlgDisabled(algId)) {
         SKIP_TEST();
     }
@@ -193,8 +185,12 @@ void SDV_CRYPTO_HKDF_DEFAULT_PROVIDER_FUNC_TC001(int algId, Hex *key, Hex *salt,
     uint32_t outLen = result->len;
     uint8_t *out = malloc(outLen * sizeof(uint8_t));
     ASSERT_TRUE(out != NULL);
-
-    CRYPT_EAL_KdfCTX *ctx = CRYPT_EAL_ProviderKdfNewCtx(NULL, CRYPT_KDF_HKDF, "provider=default");
+    CRYPT_EAL_KdfCTX *ctx = NULL;
+#ifdef HITLS_CRYPTO_PROVIDER
+    ctx = CRYPT_EAL_ProviderKdfNewCtx(NULL, CRYPT_KDF_HKDF, "provider=default");
+#else
+    ctx = CRYPT_EAL_KdfNewCtx(CRYPT_KDF_HKDF);
+#endif
     ASSERT_TRUE(ctx != NULL);
 
     CRYPT_HKDF_MODE mode = CRYPT_KDF_HKDF_MODE_FULL;
@@ -217,6 +213,5 @@ EXIT:
         free(out);
     }
     CRYPT_EAL_KdfFreeCtx(ctx);
-#endif
 }
 /* END_CASE */

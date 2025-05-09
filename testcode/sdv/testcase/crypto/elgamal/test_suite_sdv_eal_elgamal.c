@@ -86,6 +86,11 @@ int32_t RandFunc(uint8_t *randNum, uint32_t randLen)
     return 0;
 }
 
+int32_t RandFuncEx(void *libCtx, uint8_t *randNum, uint32_t randLen)
+{
+    (void)libCtx;
+    return RandFunc(randNum, randLen);
+}
 
 /**
  * @test   SDV_CRYPTO_ELGAMAL_NEW_API_TC001
@@ -317,7 +322,7 @@ void SDV_CRYPTO_ELGAMAL_GET_PUB_API_TC001( Hex *q, int k_bits, int bits, int isP
     ASSERT_EQ(CRYPT_EAL_PkeyGetPub(pkey, &pubKey), CRYPT_BN_BUFF_LEN_NOT_ENOUGH);
     pubKey.key.elgamalPub.qLen = 600;
 EXIT:
-    CRYPT_EAL_RandDeinit();
+    TestRandDeInit();
     CRYPT_EAL_PkeyFreeCtx(pkey);
 }
 /* END_CASE */
@@ -382,7 +387,7 @@ void SDV_CRYPTO_ELGAMAL_GET_PRV_API_TC001(Hex *q, int k_bits,int bits, int isPro
     /* x != NULL, xLen != 0 */
     ASSERT_EQ(CRYPT_EAL_PkeyGetPrv(pkey, &prvKey), CRYPT_SUCCESS);
 EXIT:
-    CRYPT_EAL_RandDeinit();
+    TestRandDeInit();
     CRYPT_EAL_PkeyFreeCtx(pkey);
 }
 /* END_CASE */
@@ -483,7 +488,7 @@ void SDV_CRYPTO_ELGAMAL_SET_PRV_API_TC001(Hex *q,int k_bits, int bits, int isPro
     ASSERT_TRUE_AND_LOG("xLen is 0", CRYPT_EAL_PkeySetPrv(pkey2, &prvKey) == CRYPT_ELGAMAL_ERR_INPUT_VALUE);
     prvKey.key.elgamalPrv.xLen = 600;
 EXIT:
-    CRYPT_EAL_RandDeinit();
+    TestRandDeInit();
     CRYPT_EAL_PkeyFreeCtx(pkey);
     CRYPT_EAL_PkeyFreeCtx(pkey2);
 }
@@ -565,7 +570,7 @@ void SDV_CRYPTO_ELGAMAL_SET_PUB_API_TC001( Hex *q,int k_bits, int bits, int isPr
     ASSERT_TRUE_AND_LOG("set prvKey success", CRYPT_EAL_PkeySetPub(pkey2, &pubKey) == CRYPT_SUCCESS);
 
 EXIT:
-    CRYPT_EAL_RandDeinit();
+    TestRandDeInit();
     CRYPT_EAL_PkeyFreeCtx(pkey);
     CRYPT_EAL_PkeyFreeCtx(pkey2);
 }
@@ -628,7 +633,7 @@ void SDV_CRYPTO_ELGAMAL_ENC_API_TC001(Hex *q,Hex *p, Hex *g, Hex *y, Hex *in, in
 
 EXIT:
     CRYPT_EAL_PkeyFreeCtx(pkey);
-    CRYPT_EAL_RandDeinit();
+    TestRandDeInit();
 }
 /* END_CASE */
 
@@ -768,6 +773,7 @@ void SDV_CRYPTO_ELGAMAL_SET_KEY_API_TC001( Hex *q, int k_bits, int bits, int isP
 
     TestMemInit();
     CRYPT_RandRegist(RandFunc);
+    CRYPT_RandRegistEx(RandFuncEx);
 
     CRYPT_EAL_PkeyCtx *pkey1 = TestPkeyNewCtx(NULL, CRYPT_PKEY_ELGAMAL, CRYPT_EAL_PKEY_KEYMGMT_OPERATE,
         "provider=default", isProvider);
@@ -812,7 +818,8 @@ void SDV_CRYPTO_ELGAMAL_SET_KEY_API_TC001( Hex *q, int k_bits, int bits, int isP
 EXIT:
     CRYPT_EAL_PkeyFreeCtx(pkey1);
     CRYPT_EAL_PkeyFreeCtx(pkey2);
-    CRYPT_EAL_RandDeinit();
+    CRYPT_RandRegist(NULL);
+    CRYPT_RandRegistEx(NULL);
 }
 /* END_CASE */
 
@@ -836,6 +843,7 @@ void SDV_CRYPTO_ELGAMAL_DUP_CTX_API_TC001( Hex *q,int k_bits, int bits, int isPr
 
     TestMemInit();
     CRYPT_RandRegist(RandFunc);
+    CRYPT_RandRegistEx(RandFuncEx);
 
     pkey = TestPkeyNewCtx(NULL, CRYPT_PKEY_ELGAMAL, CRYPT_EAL_PKEY_KEYMGMT_OPERATE, "provider=default", isProvider);
     ASSERT_TRUE(pkey != NULL);
@@ -861,7 +869,8 @@ void SDV_CRYPTO_ELGAMAL_DUP_CTX_API_TC001( Hex *q,int k_bits, int bits, int isPr
 EXIT:
     CRYPT_EAL_PkeyFreeCtx(pkey);
     CRYPT_EAL_PkeyFreeCtx(newPkey);
-    CRYPT_EAL_RandDeinit();
+    CRYPT_RandRegist(NULL);
+    CRYPT_RandRegistEx(NULL);
 }
 /* END_CASE */
 

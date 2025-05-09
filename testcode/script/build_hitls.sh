@@ -22,6 +22,7 @@ paramList=$@
 paramNum=$#
 add_options=""
 del_options=""
+dis_options=""
 get_arch=`arch`
 
 LIB_TYPE="static"
@@ -60,24 +61,24 @@ build_hitls_code()
 {
     # Compile openHiTLS
     cd ${HITLS_ROOT_DIR}/build
-    add_options="${add_options} -DHITLS_CRYPTO_RAND_CB" # HITLS_CRYPTO_RAND_CB: Users can directly mount the DRBG callback.
+    add_options="${add_options} -DHITLS_CRYPTO_RAND_CB" # HITLS_CRYPTO_RAND_CB: add rand callback
     add_options="${add_options} -DHITLS_EAL_INIT_OPTS=9 -DHITLS_CRYPTO_ASM_CHECK" # Get CPU capability
-    add_options="${add_options} -DHITLS_CRYPTO_ENTROPY -DHITLS_CRYPTO_ENTROPY_DEVRANDOM -DHITLS_CRYPTO_ENTROPY_GETENTROPY -DHITLS_CRYPTO_ENTROPY_SYS -DHITLS_CRYPTO_ENTROPY_HARDWARE" # Supports the system entropy source.
+    add_options="${add_options} -DHITLS_CRYPTO_ENTROPY -DHITLS_CRYPTO_ENTROPY_DEVRANDOM -DHITLS_CRYPTO_ENTROPY_GETENTROPY -DHITLS_CRYPTO_ENTROPY_SYS -DHITLS_CRYPTO_ENTROPY_HARDWARE" # add default entropy
     add_options="${add_options} -DHITLS_CRYPTO_DRBG_GM" # enable GM DRBG
     add_options="${add_options} ${test_options}"
     if [[ $get_arch = "x86_64" ]]; then
         echo "Compile: env=x86_64, c, little endian, 64bits"
-        python3 ../configure.py --lib_type ${LIB_TYPE} --asm_type x8664 --add_options="$add_options" --del_options="$del_options" --add_link_flags="-ldl" ${enable_sctp}
+        del_options="${del_options} -DHITLS_CRYPTO_SM2_PRECOMPUTE_512K_TBL" # close the sm2 512k pre-table
+        python3 ../configure.py --lib_type ${LIB_TYPE} --enable all --asm_type x8664 --add_options="$add_options" --del_options="$del_options" --add_link_flags="-ldl" ${enable_sctp} ${dis_options}
     elif [[ $get_arch = "armv8_be" ]]; then
         echo "Compile: env=armv8, asm + c, big endian, 64bits"
-        python3 ../configure.py --lib_type ${LIB_TYPE} --endian big --asm_type armv8 --add_options="$add_options" --del_options="$del_options" --add_link_flags="-ldl" ${enable_sctp}
+        python3 ../configure.py --lib_type ${LIB_TYPE} --enable all --endian big --asm_type armv8 --add_options="$add_options" --del_options="$del_options" --add_link_flags="-ldl" ${enable_sctp} ${dis_options}
     elif [[ $get_arch = "armv8_le" ]]; then
         echo "Compile: env=armv8, asm + c, little endian, 64bits"
-        add_options="${add_options} -DHITLS_SM2_PRECOMPUTE_512K_TBL" # Enable the SM2 512-KB pre-table.
-        python3 ../configure.py --lib_type ${LIB_TYPE} --asm_type armv8 --add_options="$add_options" --del_options="$del_options" --add_link_flags="-ldl" ${enable_sctp}
+        python3 ../configure.py --lib_type ${LIB_TYPE} --enable all --asm_type armv8 --add_options="$add_options" --del_options="$del_options" --add_link_flags="-ldl" ${enable_sctp} ${dis_options}
     else
         echo "Compile: env=$get_arch, c, little endian, 64bits"
-        python3 ../configure.py --lib_type ${LIB_TYPE} --add_options="$add_options" --del_options="$del_options" --add_link_flags="-ldl" ${enable_sctp}
+        python3 ../configure.py --lib_type ${LIB_TYPE} --enable all --add_options="$add_options" --del_options="$del_options" --add_link_flags="-ldl" ${enable_sctp} ${dis_options}
     fi
     cmake ..
     make -j
@@ -90,6 +91,9 @@ parse_option()
         key=${i%%=*}
         value=${i#*=}
         case "${key}" in
+            "no-provider")
+                dis_options="--disable feature_provider provider codecs"
+                ;;
             "gcov")
                 add_options="${add_options} -fno-omit-frame-pointer -fprofile-arcs -ftest-coverage -fdump-rtl-expand"
                 ;;

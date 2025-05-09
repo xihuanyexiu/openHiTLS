@@ -32,6 +32,7 @@
 #include "bn_basic.h"
 #include "securec.h"
 
+#include "crypt_encode_decode_key.h"
 /* END_HEADER */
 
 #define CRYPT_EAL_PKEY_KEYMGMT_OPERATE 0
@@ -77,6 +78,16 @@ void SetPaillierPrvKey(CRYPT_EAL_PkeyPrv *prvKey, uint8_t *lambda, uint32_t lamb
 
 int32_t RandFunc(uint8_t *randNum, uint32_t randLen)
 {
+    const int maxNum = 255;
+    for (uint32_t i = 0; i < randLen; i++) {
+        randNum[i] = (uint8_t)(rand() % maxNum);
+    }
+    return 0;
+}
+
+int32_t RandFuncEx(void *libCtx, uint8_t *randNum, uint32_t randLen)
+{
+    (void)libCtx;
     const int maxNum = 255;
     for (uint32_t i = 0; i < randLen; i++) {
         randNum[i] = (uint8_t)(rand() % maxNum);
@@ -300,7 +311,7 @@ void SDV_CRYPTO_PAILLIER_GET_PUB_API_TC001(Hex *p, Hex *q, int bits, int isProvi
     ASSERT_EQ(CRYPT_EAL_PkeyGetPub(pkey, &pubKey), CRYPT_BN_BUFF_LEN_NOT_ENOUGH);
 
 EXIT:
-    CRYPT_EAL_RandDeinit();
+    TestRandDeInit();
     CRYPT_EAL_PkeyFreeCtx(pkey);
 }
 /* END_CASE */
@@ -378,7 +389,7 @@ void SDV_CRYPTO_PAILLIER_GET_PRV_API_TC001(Hex *p, Hex *q, int bits, int isProvi
     ASSERT_EQ(CRYPT_EAL_PkeyGetPrv(pkey, &prvKey), CRYPT_SUCCESS);
 
 EXIT:
-    CRYPT_EAL_RandDeinit();
+    TestRandDeInit();
     CRYPT_EAL_PkeyFreeCtx(pkey);
 }
 /* END_CASE */
@@ -485,7 +496,7 @@ void SDV_CRYPTO_PAILLIER_SET_PRV_API_TC001(Hex *p, Hex *q, int bits, int isProvi
     ASSERT_TRUE_AND_LOG("n2Len is 0", CRYPT_EAL_PkeySetPrv(pkey2, &prvKey) == CRYPT_PAILLIER_ERR_INPUT_VALUE);
     prvKey.key.paillierPrv.n2Len = 600;
 EXIT:
-    CRYPT_EAL_RandDeinit();
+    TestRandDeInit();
     CRYPT_EAL_PkeyFreeCtx(pkey);
     CRYPT_EAL_PkeyFreeCtx(pkey2);
 }
@@ -544,7 +555,7 @@ void SDV_CRYPTO_PAILLIER_SET_PRV_API_TC002(Hex *p, Hex *q, Hex *n, Hex *n2, int 
     ASSERT_TRUE_AND_LOG("set success", CRYPT_EAL_PkeySetPrv(pkey2, &prvKey) == CRYPT_SUCCESS);
 
 EXIT:
-    CRYPT_EAL_RandDeinit();
+    TestRandDeInit();
     CRYPT_EAL_PkeyFreeCtx(pkey);
     CRYPT_EAL_PkeyFreeCtx(pkey2);
 }
@@ -588,7 +599,7 @@ void SDV_CRYPTO_PAILLIER_SET_PUB_API_TC001(Hex *p, Hex *q, int bits, int isProvi
 
     ASSERT_TRUE(CRYPT_EAL_PkeySetPara(pkey, &para) == CRYPT_SUCCESS);
     ASSERT_TRUE(CRYPT_EAL_PkeySetPara(pkey2, &para) == CRYPT_SUCCESS);
-    ASSERT_TRUE(CRYPT_EAL_PkeyGen(pkey) == CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeyGen(pkey), CRYPT_SUCCESS);
 
     /*pKey is NULL*/
     ASSERT_TRUE(CRYPT_EAL_PkeySetPub(NULL, &pubKey) == CRYPT_NULL_INPUT);
@@ -619,7 +630,7 @@ void SDV_CRYPTO_PAILLIER_SET_PUB_API_TC001(Hex *p, Hex *q, int bits, int isProvi
     ASSERT_TRUE_AND_LOG("set prvKey success", CRYPT_EAL_PkeySetPub(pkey2, &pubKey) == CRYPT_SUCCESS);
 
 EXIT:
-    CRYPT_EAL_RandDeinit();
+    TestRandDeInit();
     CRYPT_EAL_PkeyFreeCtx(pkey);
     CRYPT_EAL_PkeyFreeCtx(pkey2);
 }
@@ -659,7 +670,7 @@ void SDV_CRYPTO_PAILLIER_SET_PUB_API_TC002(Hex *p, Hex *q, Hex *n, Hex *n2, int 
 
     ASSERT_TRUE(CRYPT_EAL_PkeySetPara(pkey, &para) == CRYPT_SUCCESS);
     ASSERT_TRUE(CRYPT_EAL_PkeySetPara(pkey2, &para) == CRYPT_SUCCESS);
-    ASSERT_TRUE(CRYPT_EAL_PkeyGen(pkey) == CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeyGen(pkey), CRYPT_SUCCESS);
     
     pubKey.key.paillierPub.n2 = n->x;
     pubKey.key.paillierPub.n2Len = n->len;
@@ -671,7 +682,7 @@ void SDV_CRYPTO_PAILLIER_SET_PUB_API_TC002(Hex *p, Hex *q, Hex *n, Hex *n2, int 
     ASSERT_TRUE_AND_LOG("set success", CRYPT_EAL_PkeySetPub(pkey2, &pubKey) == CRYPT_SUCCESS);
 
 EXIT:
-    CRYPT_EAL_RandDeinit();
+    TestRandDeInit();
     CRYPT_EAL_PkeyFreeCtx(pkey);
     CRYPT_EAL_PkeyFreeCtx(pkey2);
 }
@@ -732,7 +743,7 @@ void SDV_CRYPTO_PAILLIER_ENC_API_TC001(Hex *n, Hex *g, Hex *n2, Hex *in, int isP
 
 EXIT:
     CRYPT_EAL_PkeyFreeCtx(pkey);
-    CRYPT_EAL_RandDeinit();
+    TestRandDeInit();
 }
 /* END_CASE */
 
@@ -869,6 +880,7 @@ void SDV_CRYPTO_PAILLIER_SET_KEY_API_TC001(Hex *p, Hex *q, int bits, int isProvi
 
     TestMemInit();
     CRYPT_RandRegist(RandFunc);
+    CRYPT_RandRegistEx(RandFuncEx);
 
     CRYPT_EAL_PkeyCtx *pkey1 = TestPkeyNewCtx(NULL, CRYPT_PKEY_PAILLIER, CRYPT_EAL_PKEY_KEYMGMT_OPERATE,
         "provider=default", isProvider);
@@ -911,7 +923,7 @@ void SDV_CRYPTO_PAILLIER_SET_KEY_API_TC001(Hex *p, Hex *q, int bits, int isProvi
 EXIT:
     CRYPT_EAL_PkeyFreeCtx(pkey1);
     CRYPT_EAL_PkeyFreeCtx(pkey2);
-    CRYPT_EAL_RandDeinit();
+    TestRandDeInit();
 }
 /* END_CASE */
 
@@ -934,6 +946,7 @@ void SDV_CRYPTO_PAILLIER_DUP_CTX_API_TC001(Hex *p, Hex *q, int bits, int isProvi
 
     TestMemInit();
     CRYPT_RandRegist(RandFunc);
+    CRYPT_RandRegistEx(RandFuncEx);
 
     pkey = TestPkeyNewCtx(NULL, CRYPT_PKEY_PAILLIER, CRYPT_EAL_PKEY_KEYMGMT_OPERATE, "provider=default", isProvider);
     ASSERT_TRUE(pkey != NULL);
@@ -965,7 +978,7 @@ void SDV_CRYPTO_PAILLIER_DUP_CTX_API_TC001(Hex *p, Hex *q, int bits, int isProvi
 EXIT:
     CRYPT_EAL_PkeyFreeCtx(pkey);
     CRYPT_EAL_PkeyFreeCtx(newPkey);
-    CRYPT_EAL_RandDeinit();
+    TestRandDeInit();
 }
 /* END_CASE */
 

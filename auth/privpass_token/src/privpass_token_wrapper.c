@@ -15,13 +15,14 @@
 
 #include "securec.h"
 #include "crypt_eal_pkey.h"
+#include "crypt_eal_rand.h"
 #include "auth_params.h"
 #include "auth_errno.h"
 #include "bsl_errno.h"
 #include "bsl_err_internal.h"
 #include "crypt_eal_md.h"
 #include "crypt_errno.h"
-#include "crypt_eal_encode.h"
+#include "crypt_eal_codecs.h"
 #include "crypt_util_rand.h"
 #include "auth_privpass_token.h"
 #include "privpass_token.h"
@@ -130,7 +131,7 @@ int32_t PrivPassPubBlind(void *pkeyCtx, int32_t algId, const uint8_t *data, uint
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
-    if (padType != CRYPT_PKEY_EMSA_PSS) {
+    if (padType != CRYPT_EMSA_PSS) {
         BSL_ERR_PUSH_ERROR(HITLS_AUTH_PRIVPASS_INVALID_ALG);
         return HITLS_AUTH_PRIVPASS_INVALID_ALG;
     }
@@ -166,7 +167,7 @@ int32_t PrivPassPubSignData(void *pkeyCtx, const uint8_t *data, uint32_t dataLen
     }
     CRYPT_EAL_PkeyCtx *ctx = (CRYPT_EAL_PkeyCtx *)pkeyCtx;
     uint32_t flag = CRYPT_RSA_BSSA;
-    uint32_t padType = CRYPT_PKEY_EMSA_PSS;
+    uint32_t padType = CRYPT_EMSA_PSS;
     int32_t ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_RSA_PADDING, &padType, sizeof(padType));
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
@@ -200,7 +201,7 @@ int32_t PrivPassPubVerify(void *pkeyCtx, int32_t algId, const uint8_t *data, uin
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
-    if (padType != CRYPT_PKEY_EMSA_PSS) {
+    if (padType != CRYPT_EMSA_PSS) {
         BSL_ERR_PUSH_ERROR(HITLS_AUTH_PRIVPASS_INVALID_ALG);
         return HITLS_AUTH_PRIVPASS_INVALID_ALG;
     }
@@ -228,7 +229,7 @@ static int32_t PubKeyCheck(CRYPT_EAL_PkeyCtx *ctx)
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
-    if (padType != CRYPT_PKEY_EMSA_PSS) {
+    if (padType != CRYPT_EMSA_PSS) {
         BSL_ERR_PUSH_ERROR(HITLS_AUTH_PRIVPASS_INVALID_PUBKEY_PADDING_INFO);
         return HITLS_AUTH_PRIVPASS_INVALID_PUBKEY_PADDING_INFO;
     }
@@ -334,7 +335,7 @@ int32_t PrivPassPubRandom(uint8_t *buffer, uint32_t bufferLen)
         BSL_ERR_PUSH_ERROR(HITLS_AUTH_PRIVPASS_INVALID_INPUT);
         return HITLS_AUTH_PRIVPASS_INVALID_INPUT;
     }
-    return CRYPT_Rand(buffer, bufferLen);
+    return CRYPT_EAL_RandbytesEx(NULL, buffer, bufferLen);
 }
 
 PrivPassCryptCb PrivPassCryptPubCb(void)

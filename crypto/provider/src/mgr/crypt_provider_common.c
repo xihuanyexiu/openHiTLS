@@ -23,12 +23,12 @@
 #include "crypt_eal_entropy.h"
 #include "bsl_err_internal.h"
 #include "eal_entropy.h"
-#include "eal_drbg_local.h"
+#include "crypt_drbg_local.h"
 #include "crypt_drbg.h"
 
 static CRYPT_EAL_LibCtx *g_libCtx = NULL;
 
-CRYPT_EAL_LibCtx* CRYPT_EAL_GetGlobalLibCtx(void)
+CRYPT_EAL_LibCtx *CRYPT_EAL_GetGlobalLibCtx(void)
 {
     return g_libCtx;
 }
@@ -36,7 +36,26 @@ CRYPT_EAL_LibCtx* CRYPT_EAL_GetGlobalLibCtx(void)
 int32_t CRYPT_EAL_ProviderGetFuncs(CRYPT_EAL_LibCtx *libCtx, int32_t operaId, int32_t algId,
     const char *attribute, const CRYPT_EAL_Func **funcs, void **provCtx)
 {
-    if (funcs == NULL) {
+    CRYPT_EAL_ProvMgrCtx *mgrCtx = NULL;
+    int32_t ret = CRYPT_EAL_ProviderGetFuncsAndMgrCtx(libCtx, operaId, algId, attribute, funcs, &mgrCtx);
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+        return ret;
+    }
+    if (mgrCtx == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_PROVIDER_NOT_FOUND);
+        return CRYPT_PROVIDER_NOT_FOUND;
+    }
+    if (provCtx != NULL) {
+        *provCtx = mgrCtx->provCtx;
+    }
+    return CRYPT_SUCCESS;
+}
+
+int32_t CRYPT_EAL_ProviderGetFuncsAndMgrCtx(CRYPT_EAL_LibCtx *libCtx, int32_t operaId, int32_t algId,
+    const char *attribute, const CRYPT_EAL_Func **funcs, CRYPT_EAL_ProvMgrCtx **mgrCtx)
+{
+    if (funcs == NULL || mgrCtx == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
@@ -54,7 +73,7 @@ int32_t CRYPT_EAL_ProviderGetFuncs(CRYPT_EAL_LibCtx *libCtx, int32_t operaId, in
         return CRYPT_PROVIDER_ERR_ATTRIBUTE;
     }
 
-    return CRYPT_EAL_CompareAlgAndAttr(localCtx, operaId, algId, attribute, funcs, provCtx);
+    return CRYPT_EAL_CompareAlgAndAttr(localCtx, operaId, algId, attribute, funcs, mgrCtx);
 }
 
 int32_t CRYPT_EAL_ProvMgrCtrl(CRYPT_EAL_ProvMgrCtx *ctx, int32_t cmd, void *val, uint32_t valLen)
@@ -77,12 +96,6 @@ int32_t CRYPT_EAL_ProvMgrCtrl(CRYPT_EAL_ProvMgrCtx *ctx, int32_t cmd, void *val,
     }
 }
 
-#if defined(HITLS_CRYPTO_ENTROPY) &&                                                        \
-    (defined(HITLS_CRYPTO_ENTROPY_GETENTROPY) || defined(HITLS_CRYPTO_ENTROPY_DEVRANDOM) || \
-    defined(HITLS_CRYPTO_ENTROPY_SYS) || defined(HITLS_CRYPTO_ENTROPY_HARDWARE))
-#define HITLS_CRYPTO_ENTROPY_DEFAULT
-#endif
-
 static void MountMgrMethod(CRYPT_EAL_Func *funcs, CRYPT_EAL_ProvMgrCtx *ctx)
 {
     // Mount function addresses to corresponding positions in mgr according to method definition
@@ -96,6 +109,9 @@ static void MountMgrMethod(CRYPT_EAL_Func *funcs, CRYPT_EAL_ProvMgrCtx *ctx)
                 break;
             case CRYPT_EAL_PROVCB_CTRL:
                 ctx->provCtrlCb = (CRYPT_EAL_ProvCtrlCb)funcs[i].func;
+                break;
+            case CRYPT_EAL_PROVCB_GETCAPS:
+                ctx->provGetCap = (CRYPT_EAL_ProvGetCapsCb)funcs[i].func;
                 break;
             default:
                 break;
@@ -231,7 +247,8 @@ void CRYPT_EAL_ProviderMgrCtxFree(CRYPT_EAL_ProvMgrCtx  *ctx)
     BSL_SAL_Free(ctx);
 }
 
-int32_t CRYPT_EAL_LoadPreDefinedProvider(CRYPT_EAL_LibCtx *libCtx, const char* providerName)
+int32_t CRYPT_EAL_LoadPreDefinedProvider(CRYPT_EAL_LibCtx *libCtx, const char* providerName,
+    CRYPT_EAL_ProvMgrCtx **ctx)
 {
     char *name = BSL_SAL_Dump(providerName, BSL_SAL_Strnlen(providerName, DEFAULT_PROVIDER_NAME_LEN_MAX) + 1);
     if (name == NULL) {
@@ -257,6 +274,9 @@ int32_t CRYPT_EAL_LoadPreDefinedProvider(CRYPT_EAL_LibCtx *libCtx, const char* p
     ret = CRYPT_EAL_InitProviderMethod(mgrCtx, NULL, CRYPT_EAL_DefaultProvInit);
     if (ret == BSL_SUCCESS) {
         ret = BSL_LIST_AddElement(libCtx->providers, mgrCtx, BSL_LIST_POS_END);
+        if (ctx != NULL) {
+            *ctx = mgrCtx;
+        }
     }
     if (ret != BSL_SUCCESS) {
         BSL_SAL_Free(name);
@@ -273,7 +293,7 @@ int32_t CRYPT_EAL_InitPreDefinedProviders(void)
         BSL_ERR_PUSH_ERROR(BSL_MALLOC_FAIL);
         return BSL_MALLOC_FAIL;
     }
-    int32_t ret = CRYPT_EAL_LoadPreDefinedProvider(libCtx, CRYPT_EAL_DEFAULT_PROVIDER);
+    int32_t ret = CRYPT_EAL_LoadPreDefinedProvider(libCtx, CRYPT_EAL_DEFAULT_PROVIDER, NULL);
     if (ret != CRYPT_SUCCESS) {
         BSL_LIST_FREE(libCtx->providers, NULL);
         BSL_SAL_ThreadLockFree(libCtx->lock);
@@ -289,6 +309,11 @@ void CRYPT_EAL_FreePreDefinedProviders(void)
     CRYPT_EAL_LibCtx *libCtx = g_libCtx;
     if (libCtx == NULL) {
         return;
+    }
+
+    if (libCtx->drbg != NULL) {
+        EAL_RandDeinit(libCtx->drbg);
+        libCtx->drbg = NULL;
     }
     // Free the providers list and each EAL_ProviderMgrCtx in it
     if (libCtx->providers != NULL) {

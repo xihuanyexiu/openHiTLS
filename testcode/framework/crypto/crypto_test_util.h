@@ -28,6 +28,8 @@ void TestMemInit(void);
 
 int TestRandInit(void);
 
+void TestRandDeInit(void);
+
 bool IsMdAlgDisabled(int id);
 
 bool IsHmacAlgDisabled(int id);
@@ -55,6 +57,7 @@ bool IsCurveDisabled(int eccId);
 bool IsCurve25519AlgDisabled(int id);
 
 int32_t TestSimpleRand(uint8_t *buff, uint32_t len);
+int32_t TestSimpleRandEx(void *libCtx, uint8_t *buff, uint32_t len);
 
 #if defined(HITLS_CRYPTO_EAL) && defined(HITLS_CRYPTO_MAC)
 uint32_t TestGetMacLen(int algId);

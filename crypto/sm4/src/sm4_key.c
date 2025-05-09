@@ -228,4 +228,4 @@ int32_t CRYPT_SM4_SetKey(CRYPT_SM4_Ctx *ctx, const uint8_t *key, uint32_t keyLen
     t = 0;
     return CRYPT_SUCCESS;
 }
-#endif /* HITLS_CRYPTO_SM4 */
+#endif // HITLS_CRYPTO_SM4

@@ -78,6 +78,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -122,6 +123,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -140,6 +142,7 @@ EXIT:
 /* BEGIN_CASE */
 void UT_TLS_DTLS_CONSISTENCY_RFC5246_SEQ_NUMBER_TC002(int uioType)
 {
+    RegDefaultMemCallback();
     HandshakeTestInfo testInfo = {0};
     FRAME_Msg frameMsg = {0};
     FRAME_Type frameType = {0};
@@ -166,6 +169,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -186,13 +190,14 @@ EXIT:
 /* BEGIN_CASE */
 void UT_TLS_DTLS_CONSISTENCY_RFC5246_SEQ_NUMBER_TC003(int uioType)
 {
+    RegDefaultMemCallback();
     HandshakeTestInfo testInfo = {0};
     FRAME_Msg frameMsg = {0};
     FRAME_Type frameType = {0};
     testInfo.isSupportExtendMasterSecret = true;
     testInfo.state = TRY_RECV_FINISH;
     testInfo.isClient = false;
-    ASSERT_TRUE(DefaultCfgStatusPark(&testInfo, uioType) == HITLS_SUCCESS);
+    ASSERT_EQ(DefaultCfgStatusPark(&testInfo, uioType), HITLS_SUCCESS);
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.server->io);
     uint8_t *recvBuf = ioUserData->recMsg.msg;
     uint32_t recvLen = ioUserData->recMsg.len;
@@ -225,6 +230,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -290,6 +296,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -352,10 +359,12 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_TOOLONG_TC002(int uioType)
     ASSERT_EQ(HITLS_Connect(testInfo.client->ssl), HITLS_REC_NORMAL_RECV_BUF_EMPTY);
     ASSERT_TRUE(testInfo.client->ssl->hsCtx->state == TRY_RECV_CERTIFICATE);
 EXIT:
+
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -410,10 +419,12 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_TOOLONG_TC003(int uioType)
     bool isCcsRecv = testInfo.server->ssl->method.isRecvCCS(testInfo.server->ssl);
     ASSERT_TRUE(isCcsRecv == false);
 EXIT:
+
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -485,10 +496,12 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC001(void)
     ASSERT_TRUE(alertMsg->alertDescription.data == ALERT_DECODE_ERROR);
 
 EXIT:
+
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -558,10 +571,12 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC002(void)
     ASSERT_TRUE(alertMsg->alertDescription.data == ALERT_DECODE_ERROR);
 
 EXIT:
+
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -623,10 +638,12 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC003(void)
     ASSERT_TRUE(alertMsg->alertDescription.data == ALERT_DECODE_ERROR);
 
 EXIT:
+
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -693,10 +710,12 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC004(void)
     ASSERT_EQ(alertMsg->alertDescription.data, ALERT_DECODE_ERROR);
 
 EXIT:
+
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -758,10 +777,12 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC005(void)
     ASSERT_TRUE(alertMsg->alertDescription.data == ALERT_DECODE_ERROR);
 
 EXIT:
+
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -806,10 +827,12 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC006(void)
     ASSERT_EQ(HITLS_Accept(testInfo.server->ssl), HITLS_REC_NORMAL_RECV_BUF_EMPTY);
 
 EXIT:
+
     FRAME_CleanMsg(&frameType1, &frameMsg1);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -854,10 +877,12 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_MSGLENGTH_ZERO_TC007(void)
     ASSERT_EQ(HITLS_Connect(testInfo.client->ssl), HITLS_REC_NORMAL_RECV_BUF_EMPTY);
 
 EXIT:
+
     FRAME_CleanMsg(&frameType1, &frameMsg1);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -919,10 +944,12 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_COMPRESSED_TC001(int uioType)
     ASSERT_EQ(alertMsg->alertDescription.data, ALERT_DECODE_ERROR);
 
 EXIT:
+
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -987,6 +1014,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -1052,6 +1080,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -1118,6 +1147,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -1182,6 +1212,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -1253,6 +1284,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -1318,6 +1350,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -1386,6 +1419,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -1457,6 +1491,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -1519,6 +1554,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -1577,6 +1613,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -1635,6 +1672,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -1701,6 +1739,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -1799,9 +1838,11 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC002(int uioType)
     ASSERT_EQ(clientTlsCtx->hsCtx->state, TRY_RECV_SERVER_HELLO);
 
 EXIT:
+
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -1848,10 +1889,12 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC003(int uioType)
     ASSERT_TRUE(alertMsg->alertLevel.data ==  ALERT_LEVEL_FATAL);
     ASSERT_TRUE(alertMsg->alertDescription.data == ALERT_UNEXPECTED_MESSAGE);
 EXIT:
+
     FRAME_CleanMsg(&frameType, &frameMsg);
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -1887,9 +1930,11 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC004(int uioType)
     ASSERT_EQ(clientTlsCtx->hsCtx->state, TRY_RECV_NEW_SESSION_TICKET);
 
 EXIT:
+
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -1929,9 +1974,11 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC005(int uioType)
     ASSERT_EQ(serverTlsCtx->state, CM_STATE_ALERTED);
 
 EXIT:
+
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -1974,9 +2021,11 @@ void UT_TLS_DTLS_CONSISTENCY_RFC5246_HELLO_REQUEST_TC006(int uioType)
     ASSERT_EQ(memcmp(writeData, readData, readLen), 0);
 
 EXIT:
+
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -2075,6 +2124,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -2111,6 +2161,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -2150,6 +2201,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -2186,6 +2238,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -2224,6 +2277,7 @@ void UT_TLS_DTLS_CONSISTENCY_RFC6347_FINISH_TC004(int uioType)
     ASSERT_EQ(testInfo.server->ssl->state, CM_STATE_HANDSHAKING);
     ASSERT_EQ(FRAME_TrasferMsgBetweenLink(testInfo.server, testInfo.client), HITLS_SUCCESS);
     (void)HITLS_Connect(testInfo.client->ssl);
+    FRAME_RegCryptMethod();
     if (uioType == BSL_UIO_UDP) {
         // anti-replay
         ASSERT_TRUE(HITLS_Read(testInfo.server->ssl, data, MAX_RECORD_LENTH, &len) == HITLS_REC_NORMAL_RECV_BUF_EMPTY);
@@ -2247,6 +2301,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -2291,6 +2346,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -2335,6 +2391,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -2393,6 +2450,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -2450,6 +2508,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -2512,6 +2571,7 @@ EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -2527,7 +2587,7 @@ static int32_t UT_CookieGenerateCb(HITLS_Ctx *ctx, uint8_t *cookie, uint32_t *co
 }
 
 static bool cookie_valid = true;
-static int32_t UT_CookieVerifyCb(HITLS_Ctx *ctx, const uint8_t *cookie, uint8_t cookie_len)
+static int32_t UT_CookieVerifyCb(HITLS_Ctx *ctx, const uint8_t *cookie, uint32_t cookie_len)
 {
     (void)ctx;
     (void)cookie;
@@ -2796,6 +2856,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 
@@ -2863,6 +2924,7 @@ EXIT:
     HITLS_CFG_FreeConfig(testInfo.config);
     FRAME_FreeLink(testInfo.client);
     FRAME_FreeLink(testInfo.server);
+    FRAME_DeRegCryptMethod();
 }
 /* END_CASE */
 

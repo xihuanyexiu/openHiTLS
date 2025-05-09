@@ -44,6 +44,9 @@
 #ifdef HITLS_CRYPTO_ELGAMAL
 #include "crypt_elgamal.h"
 #endif
+#ifdef HITLS_CRYPTO_SLH_DSA
+#include "crypt_slh_dsa.h"
+#endif
 #ifdef HITLS_CRYPTO_MLKEM
 #include "crypt_mlkem.h"
 #endif
@@ -57,10 +60,11 @@
 #include "bsl_log_internal.h"
 #include "bsl_err_internal.h"
 #include "crypt_ealinit.h"
+#include "crypt_default_provider.h"
 
-void *CRYPT_EAL_DefPkeyMgmtNewCtx(void *provCtx, int32_t algId)
+void *CRYPT_EAL_DefPkeyMgmtNewCtx(CRYPT_EAL_DefProvCtx *provCtx, int32_t algId)
 {
-    (void)provCtx;
+    void *pkeyCtx = NULL;
 #ifdef HITLS_CRYPTO_ASM_CHECK
     if (CRYPT_ASMCAP_Pkey(algId) != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(CRYPT_EAL_ALG_ASM_NOT_SUPPORT);
@@ -70,63 +74,84 @@ void *CRYPT_EAL_DefPkeyMgmtNewCtx(void *provCtx, int32_t algId)
     switch (algId) {
 #ifdef HITLS_CRYPTO_DSA
         case CRYPT_PKEY_DSA:
-            return CRYPT_DSA_NewCtx();
+            return CRYPT_DSA_NewCtxEx(provCtx->libCtx);
+            break;
 #endif
 #ifdef HITLS_CRYPTO_ED25519
         case CRYPT_PKEY_ED25519:
-            return CRYPT_ED25519_NewCtx();
+            pkeyCtx = CRYPT_ED25519_NewCtxEx(provCtx->libCtx);
+            break;
 #endif
 #ifdef HITLS_CRYPTO_X25519
         case CRYPT_PKEY_X25519:
-            return CRYPT_X25519_NewCtx();
+            pkeyCtx = CRYPT_X25519_NewCtxEx(provCtx->libCtx);
+            break;
 #endif
 #ifdef HITLS_CRYPTO_RSA
         case CRYPT_PKEY_RSA:
-            return CRYPT_RSA_NewCtx();
+            pkeyCtx = CRYPT_RSA_NewCtxEx(provCtx->libCtx);
+            break;
 #endif
 #ifdef HITLS_CRYPTO_DH
         case CRYPT_PKEY_DH:
-            return CRYPT_DH_NewCtx();
+            pkeyCtx = CRYPT_DH_NewCtxEx(provCtx->libCtx);
+            break;
 #endif
 #ifdef HITLS_CRYPTO_ECDSA
         case CRYPT_PKEY_ECDSA:
-            return CRYPT_ECDSA_NewCtx();
+            pkeyCtx = CRYPT_ECDSA_NewCtxEx(provCtx->libCtx);
+            break;
 #endif
 #ifdef HITLS_CRYPTO_ECDH
         case CRYPT_PKEY_ECDH:
-            return CRYPT_ECDH_NewCtx();
+            pkeyCtx = CRYPT_ECDH_NewCtxEx(provCtx->libCtx);
+            break;
 #endif
 #ifdef HITLS_CRYPTO_SM2
         case CRYPT_PKEY_SM2:
-            return CRYPT_SM2_NewCtx();
+            pkeyCtx = CRYPT_SM2_NewCtxEx(provCtx->libCtx);
+            break;
 #endif
 #ifdef HITLS_CRYPTO_PAILLIER
         case CRYPT_PKEY_PAILLIER:
-            return CRYPT_PAILLIER_NewCtx();
+            pkeyCtx = CRYPT_PAILLIER_NewCtxEx(provCtx->libCtx);
+            break;
 #endif
 #ifdef HITLS_CRYPTO_ELGAMAL
         case CRYPT_PKEY_ELGAMAL:
-            return CRYPT_ELGAMAL_NewCtx();
+            pkeyCtx = CRYPT_ELGAMAL_NewCtxEx(provCtx->libCtx);
+            break;
+#endif
+#ifdef HITLS_CRYPTO_SLH_DSA
+        case CRYPT_PKEY_SLH_DSA:
+            pkeyCtx = CRYPT_SLH_DSA_NewCtxEx(provCtx->libCtx);
+            break;
 #endif
 #ifdef HITLS_CRYPTO_MLKEM
         case CRYPT_PKEY_ML_KEM:
-            return CRYPT_ML_KEM_NewCtx();
+            pkeyCtx = CRYPT_ML_KEM_NewCtxEx(provCtx->libCtx);
+            break;
 #endif
 #ifdef HITLS_CRYPTO_MLDSA
-        case CRYPT_PKEY_MLDSA:
-            return CRYPT_ML_DSA_NewCtx();
+        case CRYPT_PKEY_ML_DSA:
+            pkeyCtx = CRYPT_ML_DSA_NewCtxEx(provCtx->libCtx);
+            break;
 #endif
 #ifdef HITLS_CRYPTO_HYBRIDKEM
         case CRYPT_PKEY_HYBRID_KEM:
-            return CRYPT_HYBRID_KEM_NewCtx();
+            pkeyCtx = CRYPT_HYBRID_KEM_NewCtx();
+            break;
 #endif
-        default:
-        	BSL_ERR_PUSH_ERROR(CRYPT_PROVIDER_NOT_SUPPORT);
-        	return NULL;
     }
+    if (pkeyCtx == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_PROVIDER_NOT_SUPPORT);
+        return NULL;
+    }
+    return pkeyCtx;
 };
 
 const CRYPT_EAL_Func g_defKeyMgmtDsa[] = {
+#ifdef HITLS_CRYPTO_DSA
     {CRYPT_EAL_IMPLPKEYMGMT_NEWCTX, (CRYPT_EAL_ImplPkeyMgmtNewCtx)CRYPT_EAL_DefPkeyMgmtNewCtx},
     {CRYPT_EAL_IMPLPKEYMGMT_SETPARAM, (CRYPT_EAL_ImplPkeyMgmtSetParam)CRYPT_DSA_SetPara},
     {CRYPT_EAL_IMPLPKEYMGMT_GETPARAM, (CRYPT_EAL_ImplPkeyMgmtGetParam)CRYPT_DSA_GetPara},
@@ -139,6 +164,7 @@ const CRYPT_EAL_Func g_defKeyMgmtDsa[] = {
     {CRYPT_EAL_IMPLPKEYMGMT_COMPARE, (CRYPT_EAL_ImplPkeyMgmtCompare)CRYPT_DSA_Cmp},
     {CRYPT_EAL_IMPLPKEYMGMT_CTRL, (CRYPT_EAL_ImplPkeyMgmtCtrl)CRYPT_DSA_Ctrl},
     {CRYPT_EAL_IMPLPKEYMGMT_FREECTX, (CRYPT_EAL_ImplPkeyMgmtFreeCtx)CRYPT_DSA_FreeCtx},
+#endif
     CRYPT_EAL_FUNC_END,
 };
 
@@ -154,6 +180,8 @@ const CRYPT_EAL_Func g_defKeyMgmtEd25519[] = {
     {CRYPT_EAL_IMPLPKEYMGMT_COMPARE, (CRYPT_EAL_ImplPkeyMgmtCompare)CRYPT_CURVE25519_Cmp},
     {CRYPT_EAL_IMPLPKEYMGMT_CTRL, (CRYPT_EAL_ImplPkeyMgmtCtrl)CRYPT_CURVE25519_Ctrl},
     {CRYPT_EAL_IMPLPKEYMGMT_FREECTX, (CRYPT_EAL_ImplPkeyMgmtFreeCtx)CRYPT_CURVE25519_FreeCtx},
+    {CRYPT_EAL_IMPLPKEYMGMT_IMPORT, (CRYPT_EAL_ImplPkeyMgmtImport)CRYPT_CURVE25519_Import},
+    {CRYPT_EAL_IMPLPKEYMGMT_EXPORT, (CRYPT_EAL_ImplPkeyMgmtExport)CRYPT_CURVE25519_Export},
 #endif
     CRYPT_EAL_FUNC_END,
 };
@@ -187,6 +215,8 @@ const CRYPT_EAL_Func g_defKeyMgmtRsa[] = {
     {CRYPT_EAL_IMPLPKEYMGMT_COMPARE, (CRYPT_EAL_ImplPkeyMgmtCompare)CRYPT_RSA_Cmp},
     {CRYPT_EAL_IMPLPKEYMGMT_CTRL, (CRYPT_EAL_ImplPkeyMgmtCtrl)CRYPT_RSA_Ctrl},
     {CRYPT_EAL_IMPLPKEYMGMT_FREECTX, (CRYPT_EAL_ImplPkeyMgmtFreeCtx)CRYPT_RSA_FreeCtx},
+    {CRYPT_EAL_IMPLPKEYMGMT_IMPORT, (CRYPT_EAL_ImplPkeyMgmtImport)CRYPT_RSA_Import},
+    {CRYPT_EAL_IMPLPKEYMGMT_EXPORT, (CRYPT_EAL_ImplPkeyMgmtExport)CRYPT_RSA_Export},
 #endif
     CRYPT_EAL_FUNC_END,
 };
@@ -223,6 +253,8 @@ const CRYPT_EAL_Func g_defKeyMgmtEcdsa[] = {
     {CRYPT_EAL_IMPLPKEYMGMT_COMPARE, (CRYPT_EAL_ImplPkeyMgmtCompare)CRYPT_ECDSA_Cmp},
     {CRYPT_EAL_IMPLPKEYMGMT_CTRL, (CRYPT_EAL_ImplPkeyMgmtCtrl)CRYPT_ECDSA_Ctrl},
     {CRYPT_EAL_IMPLPKEYMGMT_FREECTX, (CRYPT_EAL_ImplPkeyMgmtFreeCtx)CRYPT_ECDSA_FreeCtx},
+    {CRYPT_EAL_IMPLPKEYMGMT_IMPORT, (CRYPT_EAL_ImplPkeyMgmtImport)CRYPT_ECDSA_Import},
+    {CRYPT_EAL_IMPLPKEYMGMT_EXPORT, (CRYPT_EAL_ImplPkeyMgmtExport)CRYPT_ECDSA_Export},
 #endif
     CRYPT_EAL_FUNC_END,
 };
@@ -257,6 +289,8 @@ const CRYPT_EAL_Func g_defKeyMgmtSm2[] = {
     {CRYPT_EAL_IMPLPKEYMGMT_COMPARE, (CRYPT_EAL_ImplPkeyMgmtCompare)CRYPT_SM2_Cmp},
     {CRYPT_EAL_IMPLPKEYMGMT_CTRL, (CRYPT_EAL_ImplPkeyMgmtCtrl)CRYPT_SM2_Ctrl},
     {CRYPT_EAL_IMPLPKEYMGMT_FREECTX, (CRYPT_EAL_ImplPkeyMgmtFreeCtx)CRYPT_SM2_FreeCtx},
+    {CRYPT_EAL_IMPLPKEYMGMT_IMPORT, (CRYPT_EAL_ImplPkeyMgmtImport)CRYPT_SM2_Import},
+    {CRYPT_EAL_IMPLPKEYMGMT_EXPORT, (CRYPT_EAL_ImplPkeyMgmtExport)CRYPT_SM2_Export},
 #endif
     CRYPT_EAL_FUNC_END,
 };
@@ -321,6 +355,20 @@ const CRYPT_EAL_Func g_defKeyMgmtMlDsa[] = {
     {CRYPT_EAL_IMPLPKEYMGMT_COMPARE, (CRYPT_EAL_ImplPkeyMgmtCompare)CRYPT_ML_DSA_Cmp},
     {CRYPT_EAL_IMPLPKEYMGMT_CTRL, (CRYPT_EAL_ImplPkeyMgmtCtrl)CRYPT_ML_DSA_Ctrl},
     {CRYPT_EAL_IMPLPKEYMGMT_FREECTX, (CRYPT_EAL_ImplPkeyMgmtFreeCtx)CRYPT_ML_DSA_FreeCtx},
+#endif
+    CRYPT_EAL_FUNC_END,
+};
+
+const CRYPT_EAL_Func g_defKeyMgmtSlhDsa[] = {
+#ifdef HITLS_CRYPTO_SLH_DSA
+    {CRYPT_EAL_IMPLPKEYMGMT_NEWCTX, (CRYPT_EAL_ImplPkeyMgmtNewCtx)CRYPT_EAL_DefPkeyMgmtNewCtx},
+    {CRYPT_EAL_IMPLPKEYMGMT_GENKEY, (CRYPT_EAL_ImplPkeyMgmtGenKey)CRYPT_SLH_DSA_Gen},
+    {CRYPT_EAL_IMPLPKEYMGMT_SETPRV, (CRYPT_EAL_ImplPkeyMgmtSetPrv)CRYPT_SLH_DSA_SetPrvKey},
+    {CRYPT_EAL_IMPLPKEYMGMT_SETPUB, (CRYPT_EAL_ImplPkeyMgmtSetPub)CRYPT_SLH_DSA_SetPubKey},
+    {CRYPT_EAL_IMPLPKEYMGMT_GETPRV, (CRYPT_EAL_ImplPkeyMgmtGetPrv)CRYPT_SLH_DSA_GetPrvKey},
+    {CRYPT_EAL_IMPLPKEYMGMT_GETPUB, (CRYPT_EAL_ImplPkeyMgmtGetPub)CRYPT_SLH_DSA_GetPubKey},
+    {CRYPT_EAL_IMPLPKEYMGMT_CTRL, (CRYPT_EAL_ImplPkeyMgmtCtrl)CRYPT_SLH_DSA_Ctrl},
+    {CRYPT_EAL_IMPLPKEYMGMT_FREECTX, (CRYPT_EAL_ImplPkeyMgmtFreeCtx)CRYPT_SLH_DSA_FreeCtx},
 #endif
     CRYPT_EAL_FUNC_END,
 };

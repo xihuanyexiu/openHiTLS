@@ -61,5 +61,6 @@ void Vpsm4Cfb128Decrypt(const uint8_t *in, uint8_t *out, uint64_t len, const uin
 void Vpsm4Ctr32EncryptBlocks(const uint8_t *in, uint8_t *out, uint64_t blocks, const uint32_t *key, uint8_t *iv);
 #endif
 
-#endif /* HITLS_CRYPTO_SM4 */
+#endif // HITLS_CRYPTO_SM4
+
 #endif

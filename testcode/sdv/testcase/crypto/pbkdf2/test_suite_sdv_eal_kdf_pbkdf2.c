@@ -190,14 +190,6 @@ EXIT:
 /* BEGIN_CASE */
 void SDV_CRYPTO_PBKDF2_DEFAULT_PROVIDER_FUNC_TC001(int algId, Hex *key, Hex *salt, int it, Hex *result)
 {
-#ifndef HITLS_CRYPTO_PROVIDER
-    (void)algId;
-    (void)key;
-    (void)salt;
-    (void)it;
-    (void)result;
-    SKIP_TEST();
-#else
     if (IsHmacAlgDisabled(algId)) {
         SKIP_TEST();
     }
@@ -205,8 +197,13 @@ void SDV_CRYPTO_PBKDF2_DEFAULT_PROVIDER_FUNC_TC001(int algId, Hex *key, Hex *sal
     uint32_t outLen = result->len;
     uint8_t *out = malloc(outLen * sizeof(uint8_t));
     ASSERT_TRUE(out != NULL);
+    CRYPT_EAL_KdfCTX *ctx = NULL;
 
-    CRYPT_EAL_KdfCTX *ctx = CRYPT_EAL_ProviderKdfNewCtx(NULL, CRYPT_KDF_PBKDF2, "provider=default");
+#ifdef HITLS_CRYPTO_PROVIDER
+    ctx = CRYPT_EAL_ProviderKdfNewCtx(NULL, CRYPT_KDF_PBKDF2, "provider=default");
+#else
+    ctx = CRYPT_EAL_KdfNewCtx(CRYPT_KDF_PBKDF2);
+#endif
     ASSERT_TRUE(ctx != NULL);
 
     BSL_Param params[5] = {{0}, {0}, {0}, {0}, BSL_PARAM_END};
@@ -226,6 +223,5 @@ EXIT:
         free(out);
     }
     CRYPT_EAL_KdfFreeCtx(ctx);
-#endif
 }
 /* END_CASE */

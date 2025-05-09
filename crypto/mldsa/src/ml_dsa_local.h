@@ -72,8 +72,10 @@ struct CryptMlDsaCtx {
     uint32_t ctxLen;
     bool isMuMsg;
     bool needEncodeCtx;
+    bool needPreHash;
     bool deterministicSignFlag;
     BSL_SAL_RefCount references;
+    void *libCtx;
 };
 
 void MLDSA_ComputesNTT(int32_t w[MLDSA_N]);

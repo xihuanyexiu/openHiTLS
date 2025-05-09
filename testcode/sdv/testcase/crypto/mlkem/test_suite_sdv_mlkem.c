@@ -31,6 +31,12 @@ static int32_t TEST_KyberRandom(uint8_t *randNum, uint32_t randLen)
     return 0;
 }
 
+static int32_t TEST_KyberRandomEx(void *libCtx, uint8_t *randNum, uint32_t randLen)
+{
+    (void)libCtx;
+    return TEST_KyberRandom(randNum, randLen);
+}
+
 /* @
 * @test  SDV_CRYPTO_MLKEM_CTRL_API_TC001
 * @spec  -
@@ -70,6 +76,7 @@ void SDV_CRYPTO_MLKEM_CTRL_API_TC001(int bits)
     ASSERT_EQ(ret, CRYPT_MLKEM_CTRL_INIT_REPEATED);
 EXIT:
     CRYPT_EAL_PkeyFreeCtx(ctx);
+    CRYPT_RandRegist(NULL);
     return;
 }
 /* END_CASE */
@@ -90,9 +97,12 @@ EXIT:
 void SDV_CRYPTO_MLKEM_KEYGEN_API_TC001(int bits)
 {
     TestMemInit();
-    CRYPT_RandRegist(NULL);
-
-    CRYPT_EAL_PkeyCtx *ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ML_KEM);
+    CRYPT_EAL_PkeyCtx *ctx = NULL;
+#ifdef HITLS_CRYPTO_PROVIDER
+        ctx = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_ML_KEM, CRYPT_EAL_PKEY_KEM_OPERATE, "provider=default");
+#else
+        ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ML_KEM);
+#endif
     ASSERT_TRUE(ctx != NULL);
 
     int32_t ret = CRYPT_EAL_PkeyGen(ctx);
@@ -108,6 +118,7 @@ void SDV_CRYPTO_MLKEM_KEYGEN_API_TC001(int bits)
     ASSERT_EQ(ret, CRYPT_NO_REGIST_RAND);
 
     CRYPT_RandRegist(TestSimpleRand);
+    CRYPT_RandRegistEx(TestSimpleRandEx);
     ret = CRYPT_EAL_PkeyGen(ctx);
     ASSERT_EQ(ret, CRYPT_SUCCESS);
 
@@ -115,6 +126,40 @@ void SDV_CRYPTO_MLKEM_KEYGEN_API_TC001(int bits)
     ASSERT_EQ(ret, CRYPT_SUCCESS);
 EXIT:
     CRYPT_EAL_PkeyFreeCtx(ctx);
+    CRYPT_RandRegist(NULL);
+    CRYPT_RandRegistEx(NULL);
+    return;
+}
+/* END_CASE */
+
+/* Use default random numbers for end-to-end testing */
+/* BEGIN_CASE */
+void SDV_CRYPTO_MLKEM_KEYGEN_API_TC002(int bits)
+{
+    TestMemInit();
+    TestRandInit();
+    CRYPT_EAL_PkeyCtx *ctx = NULL;
+#ifdef HITLS_CRYPTO_PROVIDER
+    ctx = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_ML_KEM, CRYPT_EAL_PKEY_KEM_OPERATE, "provider=default");
+#else
+    ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ML_KEM);
+#endif
+    ASSERT_TRUE(ctx != NULL);
+
+    uint32_t val = (uint32_t)bits;
+    int32_t ret = CRYPT_EAL_PkeySetParaById(ctx, val);
+    ASSERT_EQ(ret, CRYPT_SUCCESS);
+    ret = CRYPT_EAL_PkeyEncapsInit(ctx, NULL);
+    ASSERT_EQ(ret, CRYPT_SUCCESS);
+
+    ret = CRYPT_EAL_PkeyGen(ctx);
+    ASSERT_EQ(ret, CRYPT_SUCCESS);
+
+    ret = CRYPT_EAL_PkeyGen(ctx);
+    ASSERT_EQ(ret, CRYPT_SUCCESS);
+EXIT:
+    CRYPT_EAL_PkeyFreeCtx(ctx);
+    TestRandDeInit();
     return;
 }
 /* END_CASE */
@@ -135,9 +180,14 @@ EXIT:
 void SDV_CRYPTO_MLKEM_ENCAPS_API_TC001(int bits)
 {
     TestMemInit();
-    CRYPT_RandRegist(TestSimpleRand);
 
-    CRYPT_EAL_PkeyCtx *ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ML_KEM);
+    TestRandInit();
+    CRYPT_EAL_PkeyCtx *ctx = NULL;
+#ifdef HITLS_CRYPTO_PROVIDER
+    ctx = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_ML_KEM, CRYPT_EAL_PKEY_KEM_OPERATE, "provider=default");
+#else
+    ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ML_KEM);
+#endif
     ASSERT_TRUE(ctx != NULL);
 
     uint32_t val = (uint32_t)bits;
@@ -183,12 +233,13 @@ EXIT:
     CRYPT_EAL_PkeyFreeCtx(ctx);
     BSL_SAL_Free(ciphertext);
     BSL_SAL_Free(sharedKey);
+    TestRandDeInit();
     return;
 }
 /* END_CASE */
 
 /* @
-* @test  SDV_CRYPTO_MLKEM_ENCAPS_API_TC001
+* @test  SDV_CRYPTO_MLKEM_DECAPS_API_TC001
 * @spec  -
 * @title  CRYPT_EAL_PkeyEncaps test
 * @precon  nan
@@ -203,9 +254,14 @@ EXIT:
 void SDV_CRYPTO_MLKEM_DECAPS_API_TC001(int bits)
 {
     TestMemInit();
-    CRYPT_RandRegist(TestSimpleRand);
 
-    CRYPT_EAL_PkeyCtx *ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ML_KEM);
+    TestRandInit();
+    CRYPT_EAL_PkeyCtx *ctx = NULL;
+#ifdef HITLS_CRYPTO_PROVIDER
+    ctx = CRYPT_EAL_ProviderPkeyNewCtx(NULL, CRYPT_PKEY_ML_KEM, CRYPT_EAL_PKEY_KEM_OPERATE, "provider=default");
+#else
+    ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ML_KEM);
+#endif
     ASSERT_TRUE(ctx != NULL);
 
     uint32_t val = (uint32_t)bits;
@@ -252,6 +308,7 @@ EXIT:
     CRYPT_EAL_PkeyFreeCtx(ctx);
     BSL_SAL_Free(ciphertext);
     BSL_SAL_Free(sharedKey);
+    TestRandDeInit();
     return;
 }
 /* END_CASE */
@@ -310,6 +367,7 @@ void SDV_CRYPTO_MLKEM_SETPUB_API_TC002(int bits, Hex *testEK)
 EXIT:
     CRYPT_EAL_PkeyFreeCtx(ctx);
     BSL_SAL_Free(ek.key.kemEk.data);
+    CRYPT_RandRegist(NULL);
     return;
 }
 /* END_CASE */
@@ -368,6 +426,7 @@ void SDV_CRYPTO_MLKEM_SETPRV_API_TC002(int bits, Hex *testDK)
 EXIT:
     CRYPT_EAL_PkeyFreeCtx(ctx);
     BSL_SAL_Free(dk.key.kemDk.data);
+    CRYPT_RandRegist(NULL);
     return;
 }
 /* END_CASE */
@@ -396,6 +455,7 @@ void SDV_CRYPTO_MLKEM_KEYCMP_FUNC_TC001(int bits, Hex *r0, Hex *r1, Hex *r2, int
     memcpy_s(gKyberRandBuf[1], 32, r1->x, r1->len);
     memcpy_s(gKyberRandBuf[2], 32, r2->x, r2->len);
     CRYPT_RandRegist(TEST_KyberRandom);
+    CRYPT_RandRegistEx(TEST_KyberRandomEx);
 
     CRYPT_EAL_PkeyCtx *ctx = TestPkeyNewCtx(NULL, CRYPT_PKEY_ML_KEM, CRYPT_EAL_PKEY_KEM_OPERATE,
         "provider=default", isProvider);
@@ -443,6 +503,8 @@ EXIT:
     CRYPT_EAL_PkeyFreeCtx(ctx3);
     CRYPT_EAL_PkeyFreeCtx(ctx4);
     CRYPT_EAL_PkeyFreeCtx(ctx5);
+    CRYPT_RandRegist(NULL);
+    CRYPT_RandRegistEx(NULL);
     return;
 }
 /* END_CASE */
@@ -471,6 +533,7 @@ void SDV_CRYPTO_MLKEM_KEYGEN_FUNC_TC001(int bits, Hex *z, Hex *d, Hex *testEK, H
     memcpy_s(gKyberRandBuf[0], 32, d->x, d->len);
     memcpy_s(gKyberRandBuf[1], 32, z->x, z->len);
     CRYPT_RandRegist(TEST_KyberRandom);
+    CRYPT_RandRegistEx(TEST_KyberRandomEx);
 
     CRYPT_EAL_PkeyCtx *ctx = TestPkeyNewCtx(NULL, CRYPT_PKEY_ML_KEM, CRYPT_EAL_PKEY_KEM_OPERATE,
         "provider=default", isProvider);
@@ -505,6 +568,8 @@ EXIT:
     BSL_SAL_Free(ek.key.kemEk.data);
     BSL_SAL_Free(dk.key.kemDk.data);
     CRYPT_EAL_PkeyFreeCtx(ctx);
+    CRYPT_RandRegist(NULL);
+    CRYPT_RandRegistEx(NULL);
     return;
 }
 /* END_CASE */
@@ -532,6 +597,7 @@ void SDV_CRYPTO_MLKEM_ENCAPS_DECAPS_FUNC_TC001(int bits, Hex *m, Hex *testEK, He
     gKyberRandNum = 0;
     memcpy_s(gKyberRandBuf[0], 32, m->x, m->len);
     CRYPT_RandRegist(TEST_KyberRandom);
+    CRYPT_RandRegistEx(TEST_KyberRandomEx);
 
     CRYPT_EAL_PkeyCtx *ctx = TestPkeyNewCtx(NULL, CRYPT_PKEY_ML_KEM, CRYPT_EAL_PKEY_KEM_OPERATE,
         "provider=default", isProvider);
@@ -584,6 +650,8 @@ EXIT:
     BSL_SAL_Free(sharedKey);
     BSL_SAL_Free(decSharedKey);
     CRYPT_EAL_PkeyFreeCtx(ctx);
+    CRYPT_RandRegist(NULL);
+    CRYPT_RandRegistEx(NULL);
     return;
 }
 /* END_CASE */
@@ -670,6 +738,7 @@ EXIT:
     CRYPT_EAL_PkeyFreeCtx(ctx1);
     CRYPT_EAL_PkeyFreeCtx(ctx2);
     CRYPT_EAL_PkeyFreeCtx(ctx3);
+    CRYPT_RandRegist(NULL);
     return;
 }
 /* END_CASE */
@@ -694,6 +763,7 @@ void SDV_CRYPTO_MLKEM_ABNORMAL_DECAPS_FUNC_TC001(int bits, Hex *m, Hex *testEK, 
     gKyberRandNum = 0;
     memcpy_s(gKyberRandBuf[0], 32, m->x, m->len);
     CRYPT_RandRegist(TEST_KyberRandom);
+    CRYPT_RandRegistEx(TEST_KyberRandomEx);
 
     CRYPT_EAL_PkeyCtx *ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ML_KEM);
     uint32_t val = (uint32_t)bits;
@@ -749,6 +819,8 @@ EXIT:
     BSL_SAL_Free(sharedKey);
     BSL_SAL_Free(decSharedKey);
     CRYPT_EAL_PkeyFreeCtx(ctx);
+    CRYPT_RandRegist(NULL);
+    CRYPT_RandRegistEx(NULL);
     return;
 }
 /* END_CASE */
@@ -774,6 +846,7 @@ void SDV_CRYPTO_MLKEM_ABNORMAL_DECAPS_FUNC_TC002(int bits, Hex *m, Hex *testEK, 
     gKyberRandNum = 0;
     memcpy_s(gKyberRandBuf[0], 32, m->x, m->len);
     CRYPT_RandRegist(TEST_KyberRandom);
+    CRYPT_RandRegistEx(TEST_KyberRandomEx);
 
     CRYPT_EAL_PkeyCtx *ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ML_KEM);
     uint32_t val = (uint32_t)bits;
@@ -829,6 +902,8 @@ EXIT:
     BSL_SAL_Free(sharedKey);
     BSL_SAL_Free(decSharedKey);
     CRYPT_EAL_PkeyFreeCtx(ctx);
+    CRYPT_RandRegist(NULL);
+    CRYPT_RandRegistEx(NULL);
     return;
 }
 /* END_CASE */
@@ -854,6 +929,7 @@ void SDV_CRYPTO_MLKEM_ABNORMAL_DECAPS_FUNC_TC003(int bits, Hex *m, Hex *testDK, 
     gKyberRandNum = 0;
     memcpy_s(gKyberRandBuf[0], 32, m->x, m->len);
     CRYPT_RandRegist(TEST_KyberRandom);
+    CRYPT_RandRegistEx(TEST_KyberRandomEx);
 
     CRYPT_EAL_PkeyCtx *ctx = CRYPT_EAL_PkeyNewCtx(CRYPT_PKEY_ML_KEM);
     uint32_t val = (uint32_t)bits;
@@ -907,6 +983,8 @@ EXIT:
     BSL_SAL_Free(sharedKey);
     BSL_SAL_Free(decSharedKey);
     CRYPT_EAL_PkeyFreeCtx(ctx);
+    CRYPT_RandRegist(NULL);
+    CRYPT_RandRegistEx(NULL);
     return;
 }
 /* END_CASE */

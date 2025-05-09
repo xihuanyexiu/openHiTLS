@@ -94,7 +94,7 @@ void SDV_CRYPTO_RSA_CRYPT_FUNC_TC001(
     uint8_t ct[MAX_CIPHERTEXT_LEN] = {0};
     uint32_t ctLen = MAX_CIPHERTEXT_LEN;
 #endif
-    int32_t noPad = CRYPT_PKEY_RSA_NO_PAD;
+    int32_t noPad = CRYPT_RSA_NO_PAD;
 
     SetRsaPrvKey(&prvkey, n->x, n->len, d->x, d->len);
     SetRsaPubKey(&pubkey, n->x, n->len, e->x, e->len);
@@ -119,6 +119,7 @@ void SDV_CRYPTO_RSA_CRYPT_FUNC_TC001(
 #ifdef HITLS_CRYPTO_DRBG
     if (padMode != CRYPT_CTRL_SET_RSA_PADDING) {
         CRYPT_RandRegist(RandFunc);
+        CRYPT_RandRegistEx(RandFuncEx);
     }
 #endif
 
@@ -201,6 +202,7 @@ void SDV_CRYPTO_RSA_CRYPT_FUNC_TC002(Hex *n, Hex *e, Hex *d, Hex *plaintext, int
 
 #ifdef HITLS_CRYPTO_DRBG
     CRYPT_RandRegist(RandFunc);
+    CRYPT_RandRegistEx(RandFuncEx);
 #endif
 
     /* HiTLS public key encrypt: OAEP */
@@ -278,6 +280,7 @@ void SDV_CRYPTO_RSA_CRYPT_FUNC_TC003(Hex *n, Hex *e, Hex *d, Hex *plaintext, Hex
 
 #ifdef HITLS_CRYPTO_DRBG
     CRYPT_RandRegist(RandFunc);
+    CRYPT_RandRegistEx(RandFuncEx);
 #endif
 
     /* HiTLS pubenc, prvdec */

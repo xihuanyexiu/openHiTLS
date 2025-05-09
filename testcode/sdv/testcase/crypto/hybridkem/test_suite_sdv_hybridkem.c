@@ -93,11 +93,24 @@ void SDV_CRYPTO_HYBRID_ENCAPS_DECAPS_FUNC_TC001(int algid, int type, int isProvi
 {
     TestMemInit();
     CRYPT_RandRegist(TestSimpleRand);
-
-    CRYPT_EAL_PkeyCtx *ctxA = TestPkeyNewCtx(NULL, algid, CRYPT_EAL_PKEY_KEM_OPERATE,
-        "provider=default", isProvider);
-    CRYPT_EAL_PkeyCtx *ctxB = TestPkeyNewCtx(NULL, algid, CRYPT_EAL_PKEY_KEM_OPERATE,
-        "provider=default", isProvider);
+    CRYPT_RandRegistEx(TestSimpleRandEx);
+    CRYPT_EAL_PkeyCtx *ctxA = NULL;
+    CRYPT_EAL_PkeyCtx *ctxB = NULL;
+#ifdef HITLS_CRYPTO_PROVIDER
+    if (isProvider == 1) {
+        ctxA = CRYPT_EAL_ProviderPkeyNewCtx(NULL, algid, CRYPT_EAL_PKEY_KEM_OPERATE, "provider=default");
+        ASSERT_TRUE(ctxA != NULL);
+        ctxB = CRYPT_EAL_ProviderPkeyNewCtx(NULL, algid, CRYPT_EAL_PKEY_KEM_OPERATE, "provider=default");
+        ASSERT_TRUE(ctxB != NULL);
+    } else
+#endif    
+    {
+        (void) isProvider;
+        ctxA = CRYPT_EAL_PkeyNewCtx(algid);
+        ASSERT_TRUE(ctxA != NULL);
+        ctxB = CRYPT_EAL_PkeyNewCtx(algid);
+        ASSERT_TRUE(ctxB != NULL);
+    }
 
     uint32_t val = (uint32_t)type;
     ASSERT_EQ(CRYPT_EAL_PkeySetParaById(ctxA, val), CRYPT_SUCCESS);
@@ -140,6 +153,77 @@ EXIT:
     BSL_SAL_Free(sharedKeyB);
     CRYPT_EAL_PkeyFreeCtx(ctxA);
     CRYPT_EAL_PkeyFreeCtx(ctxB);
+    CRYPT_RandRegist(NULL);
+    CRYPT_RandRegistEx(NULL);
+    return;
+}
+/* END_CASE */
+
+/* Use default random numbers for end-to-end testing */
+/* BEGIN_CASE */
+void SDV_CRYPTO_HYBRID_ENCAPS_DECAPS_API_TC002(int algid, int type, int isProvider)
+{
+    TestMemInit();
+    TestRandInit();
+    CRYPT_EAL_PkeyCtx *ctxA = NULL;
+    CRYPT_EAL_PkeyCtx *ctxB = NULL;
+#ifdef HITLS_CRYPTO_PROVIDER
+    if (isProvider == 1) {
+        ctxA = CRYPT_EAL_ProviderPkeyNewCtx(NULL, algid, CRYPT_EAL_PKEY_KEM_OPERATE, "provider=default");
+        ASSERT_TRUE(ctxA != NULL);
+        ctxB = CRYPT_EAL_ProviderPkeyNewCtx(NULL, algid, CRYPT_EAL_PKEY_KEM_OPERATE, "provider=default");
+        ASSERT_TRUE(ctxB != NULL);
+    } else
+#endif    
+    {
+        (void) isProvider;
+        ctxA = CRYPT_EAL_PkeyNewCtx(algid);
+        ASSERT_TRUE(ctxA != NULL);
+        ctxB = CRYPT_EAL_PkeyNewCtx(algid);
+        ASSERT_TRUE(ctxB != NULL);
+    }
+
+    uint32_t val = (uint32_t)type;
+    ASSERT_EQ(CRYPT_EAL_PkeySetParaById(ctxA, val), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeySetParaById(ctxB, val), CRYPT_SUCCESS);
+
+    uint32_t encapsKeyLen = 0;
+    ASSERT_EQ(CRYPT_EAL_PkeyCtrl(ctxA, CRYPT_CTRL_GET_PUBKEY_LEN, &encapsKeyLen, sizeof(encapsKeyLen)),
+        CRYPT_SUCCESS);
+    uint32_t cipherLen = 0;
+    ASSERT_EQ(CRYPT_EAL_PkeyCtrl(ctxA, CRYPT_CTRL_GET_CIPHERTEXT_LEN, &cipherLen, sizeof(cipherLen)),
+        CRYPT_SUCCESS);
+    uint8_t *ciphertext = BSL_SAL_Malloc(cipherLen);
+
+    CRYPT_EAL_PkeyPub ek = { 0 };
+    ek.id = algid;
+    ek.key.kemEk.len = encapsKeyLen;
+    ek.key.kemEk.data = BSL_SAL_Malloc(encapsKeyLen);
+    ASSERT_TRUE(ek.key.kemEk.data != NULL);
+
+    uint32_t sharedLenA = 0;
+    ASSERT_EQ(CRYPT_EAL_PkeyCtrl(ctxA, CRYPT_CTRL_GET_SHARED_KEY_LEN, &sharedLenA, sizeof(sharedLenA)), CRYPT_SUCCESS);
+    uint8_t *sharedKeyA = BSL_SAL_Malloc(sharedLenA);
+    ASSERT_TRUE(sharedKeyA != NULL);
+    uint32_t sharedLenB = sharedLenA;
+    uint8_t *sharedKeyB = BSL_SAL_Malloc(sharedLenB);
+    ASSERT_TRUE(sharedKeyB != NULL);
+
+    ASSERT_EQ(CRYPT_EAL_PkeyGen(ctxA), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeyGetPub(ctxA, &ek), CRYPT_SUCCESS);
+
+    ASSERT_EQ(CRYPT_EAL_PkeySetPub(ctxB, &ek), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeyEncaps(ctxB, ciphertext, &cipherLen, sharedKeyA, &sharedLenA), CRYPT_SUCCESS);
+
+    ASSERT_EQ(CRYPT_EAL_PkeyDecaps(ctxA, ciphertext, cipherLen, sharedKeyB, &sharedLenB), CRYPT_SUCCESS);
+EXIT:
+    BSL_SAL_Free(ek.key.kemEk.data);
+    BSL_SAL_Free(ciphertext);
+    BSL_SAL_Free(sharedKeyA);
+    BSL_SAL_Free(sharedKeyB);
+    CRYPT_EAL_PkeyFreeCtx(ctxA);
+    CRYPT_EAL_PkeyFreeCtx(ctxB);
+    TestRandDeInit();
     return;
 }
 /* END_CASE */
@@ -164,10 +248,24 @@ void SDV_CRYPTO_HYBRID_ENCAPS_DECAPS_FUNC_TC002(int algid, int type, int isProvi
 {
     TestMemInit();
     CRYPT_RandRegist(TestSimpleRand);
-    CRYPT_EAL_PkeyCtx *ctxA = TestPkeyNewCtx(NULL, algid, CRYPT_EAL_PKEY_KEM_OPERATE,
-        "provider=default", isProvider);
-    CRYPT_EAL_PkeyCtx *ctxB = TestPkeyNewCtx(NULL, algid, CRYPT_EAL_PKEY_KEM_OPERATE,
-        "provider=default", isProvider);
+    CRYPT_RandRegistEx(TestSimpleRandEx);
+    CRYPT_EAL_PkeyCtx *ctxA = NULL;
+    CRYPT_EAL_PkeyCtx *ctxB = NULL;
+#ifdef HITLS_CRYPTO_PROVIDER
+    if (isProvider == 1) {
+        ctxA = CRYPT_EAL_ProviderPkeyNewCtx(NULL, algid, CRYPT_EAL_PKEY_KEM_OPERATE, "provider=default");
+        ASSERT_TRUE(ctxA != NULL);
+        ctxB = CRYPT_EAL_ProviderPkeyNewCtx(NULL, algid, CRYPT_EAL_PKEY_KEM_OPERATE, "provider=default");
+        ASSERT_TRUE(ctxB != NULL);
+    } else
+#endif
+    {
+        (void)isProvider;
+        ctxA = CRYPT_EAL_PkeyNewCtx(algid);
+        ASSERT_TRUE(ctxA != NULL);
+        ctxB = CRYPT_EAL_PkeyNewCtx(algid);
+        ASSERT_TRUE(ctxB != NULL);
+    }
     uint32_t val = (uint32_t)type;
     ASSERT_EQ(CRYPT_EAL_PkeySetParaById(ctxA, val), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeySetParaById(ctxB, val), CRYPT_SUCCESS);
@@ -215,6 +313,8 @@ EXIT:
     BSL_SAL_Free(sharedKeyB);
     CRYPT_EAL_PkeyFreeCtx(ctxA);
     CRYPT_EAL_PkeyFreeCtx(ctxB);
+    CRYPT_RandRegist(NULL);
+    CRYPT_RandRegistEx(NULL);
     return;
 }
 /* END_CASE */

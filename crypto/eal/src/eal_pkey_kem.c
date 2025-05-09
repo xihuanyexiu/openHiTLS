@@ -25,7 +25,7 @@
 #include "eal_common.h"
 #include "crypt_eal_md.h"
 
-int32_t CRYPT_EAL_PkeyEncapsInit(CRYPT_EAL_PkeyCtx *pkey, const BSL_Param *params)
+int32_t CRYPT_EAL_PkeyEncapsInit(CRYPT_EAL_PkeyCtx *pkey, BSL_Param *params)
 {
     if (pkey == NULL) {
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_PKEY, CRYPT_PKEY_MAX, CRYPT_NULL_INPUT);
@@ -45,7 +45,7 @@ int32_t CRYPT_EAL_PkeyEncapsInit(CRYPT_EAL_PkeyCtx *pkey, const BSL_Param *param
     return ret;
 }
 
-int32_t CRYPT_EAL_PkeyDecapsInit(CRYPT_EAL_PkeyCtx *pkey, const BSL_Param *params)
+int32_t CRYPT_EAL_PkeyDecapsInit(CRYPT_EAL_PkeyCtx *pkey, BSL_Param *params)
 {
     if (pkey == NULL) {
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_PKEY, CRYPT_PKEY_MAX, CRYPT_NULL_INPUT);
@@ -65,8 +65,8 @@ int32_t CRYPT_EAL_PkeyDecapsInit(CRYPT_EAL_PkeyCtx *pkey, const BSL_Param *param
     return ret;
 }
 
-int32_t CRYPT_EAL_PkeyEncaps(const CRYPT_EAL_PkeyCtx *pkey, uint8_t *cipher, uint32_t *cipherLen,
-    uint8_t *sharekey, uint32_t *shareLen)
+int32_t CRYPT_EAL_PkeyEncaps(const CRYPT_EAL_PkeyCtx *pkey, uint8_t *cipher, uint32_t *cipherLen, uint8_t *sharekey,
+    uint32_t *shareKeyLen)
 {
     if (pkey == NULL) {
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_PKEY, CRYPT_PKEY_MAX, CRYPT_NULL_INPUT);
@@ -76,14 +76,13 @@ int32_t CRYPT_EAL_PkeyEncaps(const CRYPT_EAL_PkeyCtx *pkey, uint8_t *cipher, uin
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_PKEY, pkey->id, CRYPT_EAL_ALG_NOT_SUPPORT);
         return CRYPT_EAL_ALG_NOT_SUPPORT;
     }
-
-    int32_t ret = pkey->method->encaps(pkey->key, cipher, cipherLen, sharekey, shareLen);
+    int32_t ret = pkey->method->encaps(pkey->key, cipher, cipherLen, sharekey, shareKeyLen);
     EAL_ERR_REPORT((ret == CRYPT_SUCCESS) ? CRYPT_EVENT_ENCAPS : CRYPT_EVENT_ERR, CRYPT_ALGO_PKEY, pkey->id, ret);
     return ret;
 }
 
-int32_t CRYPT_EAL_PkeyDecaps(const CRYPT_EAL_PkeyCtx *pkey, uint8_t *cipher, uint32_t cipherLen,
-    uint8_t *sharekey, uint32_t *shareLen)
+int32_t CRYPT_EAL_PkeyDecaps(const CRYPT_EAL_PkeyCtx *pkey, uint8_t *cipher, uint32_t cipherLen, uint8_t *sharekey,
+    uint32_t *shareKeyLen)
 {
     if (pkey == NULL) {
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_PKEY, CRYPT_PKEY_MAX, CRYPT_NULL_INPUT);
@@ -93,8 +92,7 @@ int32_t CRYPT_EAL_PkeyDecaps(const CRYPT_EAL_PkeyCtx *pkey, uint8_t *cipher, uin
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_PKEY, pkey->id, CRYPT_EAL_ALG_NOT_SUPPORT);
         return CRYPT_EAL_ALG_NOT_SUPPORT;
     }
-
-    int32_t ret = pkey->method->decaps(pkey->key, cipher, cipherLen, sharekey, shareLen);
+    int32_t ret = pkey->method->decaps(pkey->key, cipher, cipherLen, sharekey, shareKeyLen);
     EAL_ERR_REPORT((ret == CRYPT_SUCCESS) ? CRYPT_EVENT_DECAPS : CRYPT_EVENT_ERR, CRYPT_ALGO_PKEY, pkey->id, ret);
     return ret;
 }

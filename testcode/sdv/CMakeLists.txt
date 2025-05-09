@@ -150,8 +150,8 @@ target_include_directories(TEST_INTF
         ${openHiTLS_SRC}/crypto/elgamal/include
         ${openHiTLS_SRC}/crypto/elgamal/src
         ${openHiTLS_SRC}/crypto/encode/include
-        ${openHiTLS_SRC}/crypto/encode_decode/include
-        ${openHiTLS_SRC}/crypto/encode_decode/src
+        ${openHiTLS_SRC}/crypto/codecskey/include
+        ${openHiTLS_SRC}/crypto/codecskey/src
         ${openHiTLS_SRC}/bsl/err/include
         ${openHiTLS_SRC}/bsl/err/src
         ${openHiTLS_SRC}/include/tls
@@ -198,7 +198,9 @@ target_include_directories(TEST_INTF
         ${openHiTLS_SRC}/config/macro_config
         ${openHiTLS_SRC}/tls/handshake/parse/src
         ${openHiTLS_SRC}/auth/privpass_token/include
-        ${openHiTLS_SRC}/config/macro_config)
+        ${openHiTLS_SRC}/config/macro_config
+        ${openHiTLS_SRC}/codecs/include
+        ${openHiTLS_SRC}/tls/feature/custom_extensions/include)
 
 add_library(TESTCASE_PRE ${TEST_SOURCE})
 target_link_libraries(TESTCASE_PRE PRIVATE TEST_INTF)

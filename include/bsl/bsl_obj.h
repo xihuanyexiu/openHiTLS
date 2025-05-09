@@ -415,6 +415,8 @@ typedef enum {
     BSL_CID_HARDWAREMODULENAME = 349,
     BSL_CID_AT_DESCRIPTION = 350,
 
+    BSL_CID_DECODE_UNKNOWN = 1000,
+
     BSL_CID_HMAC_SHA3_224 = 2000,        /* identifies hmac with SHA3_224 */
     BSL_CID_HMAC_SHA3_256 = 2001,        /* identifies hmac with SHA3_256 */
     BSL_CID_HMAC_SHA3_384 = 2002,        /* identifies hmac with SHA3_384 */
@@ -547,10 +549,51 @@ typedef enum {
     BSL_CID_ECC_SM9 = 5202,
     BSL_CID_PAILLIER = 5203,
     BSL_CID_ELGAMAL = 5204,
+    BSL_CID_SLH_DSA = 5205,         /**< Identifies SLH-DSA algorithm */
+
+    BSL_CID_MAC_AEAD = 5300,
+
+    BSL_CID_AES128_CCM8,
+    BSL_CID_AES256_CCM8,
 
     BSL_CID_MAX,
     BSL_CID_EXTEND = 0x60000000,
 } BslCid;
+
+typedef struct {
+    uint32_t octetLen;
+    char *octs;
+    uint32_t flags;
+} BslOidString;
+
+/**
+ * @ingroup bsl_obj
+ * @brief Create an object identifier mapping
+ * @param[in] oid The object identifier string
+ * @param[in] oidName The name of the object identifier
+ * @param[in] cid The algorithm ID to map to
+ * @return HITLS_OK on success, error code on failure
+ */
+int32_t BSL_OBJ_Create(const BslOidString *oid, const char *oidName, int32_t cid);
+
+
+/**
+ * @ingroup bsl_obj
+ * @brief Create a signature algorithm ID mapping
+ * @param[in] signId The signature algorithm ID
+ * @param[in] asymId The asymmetric algorithm ID
+ * @param[in] hashId The hash algorithm ID
+ * @return HITLS_OK on success, error code on failure
+ */
+int32_t BSL_OBJ_CreateSignId(int32_t signId, int32_t asymId, int32_t hashId);
+
+/**
+ * @ingroup bsl_obj
+ * @brief Get the object identifier string from the algorithm ID
+ * @param[in] inputCid The algorithm ID
+ * @return The object identifier string
+ */
+BslOidString *BSL_OBJ_GetOidFromCID(BslCid inputCid);
 
 #ifdef __cplusplus
 }

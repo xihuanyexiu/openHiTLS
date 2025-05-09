@@ -157,6 +157,8 @@ char *HITLS_PSK_Ciphersuite[] = {
 char *HITLS_GM_Ciphersuite[] = {
     "HITLS_ECDHE_SM4_CBC_SM3",
     "HITLS_ECC_SM4_CBC_SM3",
+    "HITLS_ECDHE_SM4_GCM_SM3",
+    "HITLS_ECC_SM4_GCM_SM3",
 };
 
 static void CONNECT(int version, int connType, char *Ciphersuite, int hasPsk, char *cert)
@@ -187,7 +189,6 @@ static void CONNECT(int version, int connType, char *Ciphersuite, int hasPsk, ch
 
     serverCtxConfig->securitylevel = g_testSecurityLevel;
     clientCtxConfig->securitylevel = g_testSecurityLevel;
-
     if (version == TLCP1_1 || version == DTLCP1_1) {
         SetGMCert(serverCtxConfig, clientCtxConfig, cert);
     } else {

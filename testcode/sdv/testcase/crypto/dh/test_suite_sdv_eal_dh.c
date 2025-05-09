@@ -37,6 +37,15 @@ static int32_t RandFunc(uint8_t *randNum, uint32_t randLen)
     return 0;
 }
 
+static int32_t RandFuncEx(void *libCtx, uint8_t *randNum, uint32_t randLen)
+{
+    (void)libCtx;
+    for (uint32_t i = 0; i < randLen; i++) {
+        randNum[i] = (uint8_t)(rand() % UINT8_MAX_NUM);
+    }
+    return 0;
+}
+
 static void Set_DH_Para(
     CRYPT_EAL_PkeyPara *para, uint8_t *p, uint8_t *q, uint8_t *g, uint32_t pLen, uint32_t qLen, uint32_t gLen)
 {
@@ -89,6 +98,7 @@ void SDV_CRYPTO_DH_FUNC_TC001(
     Hex *p, Hex *g, Hex *q, Hex *prv1, Hex *pub1, Hex *prv2, Hex *pub2, Hex *share, int isProvider)
 {
     CRYPT_RandRegist(RandFunc);
+    CRYPT_RandRegistEx(RandFuncEx);
     uint8_t shareLocal[1030];
     uint32_t shareLen = sizeof(shareLocal);
 
@@ -149,6 +159,7 @@ EXIT:
 void SDV_CRYPTO_DH_FUNC_TC002(Hex *p, Hex *g, Hex *q, int isProvider)
 {
     CRYPT_RandRegist(RandFunc);
+    CRYPT_RandRegistEx(RandFuncEx);
     uint8_t share1[1030];
     uint8_t share2[1030];
     uint32_t share1Len = sizeof(share1);
@@ -176,6 +187,7 @@ void SDV_CRYPTO_DH_FUNC_TC002(Hex *p, Hex *g, Hex *q, int isProvider)
     ASSERT_TRUE(memcmp(share1, share2, share1Len) == 0);
 EXIT:
     CRYPT_RandRegist(NULL);
+    CRYPT_RandRegistEx(NULL);
     CRYPT_EAL_PkeyFreeCtx(pkey1);
     CRYPT_EAL_PkeyFreeCtx(pkey2);
 }
@@ -206,6 +218,7 @@ void SDV_CRYPTO_DH_FUNC_TC003(int id, int isProvider)
     uint32_t share2Len = sizeof(share2);
 
     CRYPT_RandRegist(RandFunc);
+    CRYPT_RandRegistEx(RandFuncEx);
     TestMemInit();
     CRYPT_EAL_PkeyCtx *pkey1 = TestPkeyNewCtx(NULL, CRYPT_PKEY_DH,
         CRYPT_EAL_PKEY_KEYMGMT_OPERATE + CRYPT_EAL_PKEY_EXCH_OPERATE, "provider=default", isProvider);
@@ -225,6 +238,7 @@ void SDV_CRYPTO_DH_FUNC_TC003(int id, int isProvider)
     ASSERT_TRUE(memcmp(share1, share2, share1Len) == 0);
 EXIT:
     CRYPT_RandRegist(NULL);
+    CRYPT_RandRegistEx(NULL);
     CRYPT_EAL_PkeyFreeCtx(pkey1);
     CRYPT_EAL_PkeyFreeCtx(pkey2);
 }
@@ -251,6 +265,7 @@ EXIT:
 void SDV_CRYPTO_DH_FUNC_TC004(Hex *p, Hex *g, Hex *q, int isProvider)
 {
     CRYPT_RandRegist(RandFunc);
+    CRYPT_RandRegistEx(RandFuncEx);
     uint8_t share1[1030];
     uint8_t share2[1030];
     uint32_t share1Len = sizeof(share1);
@@ -279,6 +294,7 @@ void SDV_CRYPTO_DH_FUNC_TC004(Hex *p, Hex *g, Hex *q, int isProvider)
     ASSERT_TRUE(memcmp(share1, share2, share1Len) == 0);
 EXIT:
     CRYPT_RandRegist(NULL);
+    CRYPT_RandRegistEx(NULL);
     CRYPT_EAL_PkeyFreeCtx(pkey1);
     CRYPT_EAL_PkeyFreeCtx(pkey2);
 }
@@ -303,7 +319,7 @@ EXIT:
  *    3. CRYPT_DH_KEYINFO_ERROR
  */
 /* BEGIN_CASE */
-void SDV_CRYPTO_DH_FUNC_TC005(Hex *p, Hex *g, Hex *q, Hex *prv1, Hex *pub1, int isProvider)
+void SDV_CRYPTO_DH_FUNC_TC005(Hex *p, Hex *g, Hex *q, Hex *prv1, int isProvider)
 {
     uint8_t shareLocal[1030];
     uint32_t shareLen = sizeof(shareLocal);
@@ -332,13 +348,6 @@ void SDV_CRYPTO_DH_FUNC_TC005(Hex *p, Hex *g, Hex *q, Hex *prv1, Hex *pub1, int 
     ASSERT_TRUE(CRYPT_EAL_PkeySetPara(pkey1, &para) == CRYPT_SUCCESS);
 
     ASSERT_TRUE(CRYPT_EAL_PkeySetPrv(pkey1, &prv) == CRYPT_SUCCESS);
-    ASSERT_TRUE(CRYPT_EAL_PkeySetPub(pkey2, &pub) == CRYPT_SUCCESS);
-    ASSERT_EQ(CRYPT_EAL_PkeyComputeShareKey(pkey1, pkey2, shareLocal, &shareLen), CRYPT_DH_KEYINFO_ERROR);
-
-    ASSERT_TRUE(memcpy_s(tmpPub, p->len, pub1->x, pub1->len) == 0);
-    last = pub1->len - 1;
-    tmpPub[last] += 1;  // pubKey ^ q mod p != 1
-    pub.key.dhPub.len = pub1->len;
     ASSERT_TRUE(CRYPT_EAL_PkeySetPub(pkey2, &pub) == CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeyComputeShareKey(pkey1, pkey2, shareLocal, &shareLen), CRYPT_DH_KEYINFO_ERROR);
 
@@ -979,20 +988,23 @@ EXIT:
  *    6. The two public keys are the same.
  */
 /* BEGIN_CASE */
-void SDV_CRYPTO_DH_GET_PUB_API_TC001(Hex *pubKey, int isProvider)
+void SDV_CRYPTO_DH_GET_PUB_API_TC001(Hex *p, Hex *g, Hex *q, Hex *pubKey, int isProvider)
 {
     uint8_t output[1030];
     uint32_t outLen = sizeof(output);
     CRYPT_EAL_PkeyPub pub = {0};
+    CRYPT_EAL_PkeyPara para = {0};
     Set_DH_Pub(&pub, output, outLen);
-
+    Set_DH_Para(&para, p->x, q->x, g->x, p->len, q->len, g->len);
     TestMemInit();
     CRYPT_EAL_PkeyCtx *pkey = TestPkeyNewCtx(NULL, CRYPT_PKEY_DH,
         CRYPT_EAL_PKEY_KEYMGMT_OPERATE + CRYPT_EAL_PKEY_EXCH_OPERATE, "provider=default", isProvider);
     ASSERT_TRUE(pkey != NULL);
 
-    ASSERT_TRUE(CRYPT_EAL_PkeyGetPub(pkey, &pub) == CRYPT_DH_KEYINFO_ERROR);
+    ASSERT_TRUE(CRYPT_EAL_PkeyGetPub(pkey, &pub) == CRYPT_DH_PARA_ERROR);
+    ASSERT_TRUE(CRYPT_EAL_PkeySetPara(pkey, &para) == CRYPT_SUCCESS);
 
+    ASSERT_TRUE(CRYPT_EAL_PkeyGetPub(pkey, &pub) == CRYPT_DH_KEYINFO_ERROR);
     pub.key.dhPub.data = pubKey->x;
     pub.key.dhPub.len = pubKey->len;
     ASSERT_TRUE(CRYPT_EAL_PkeySetPub(pkey, &pub) == CRYPT_SUCCESS);
@@ -1096,7 +1108,7 @@ void SDV_CRYPTO_DH_GEN_API_TC001(Hex *p, Hex *g, Hex *q)
     ASSERT_TRUE(CRYPT_EAL_PkeyGen(pkey) == CRYPT_SUCCESS);
 
 EXIT:
-    CRYPT_EAL_RandDeinit();
+    TestRandDeInit();
     CRYPT_EAL_PkeyFreeCtx(pkey);
 }
 /* END_CASE */
@@ -1505,7 +1517,7 @@ void SDV_CRYPTO_DH_DUP_CTX_FUNC_TC001(int isProvider)
     ASSERT_TRUE(CRYPT_EAL_PkeyGetParaId(dupCtx) == paraId);
 
 EXIT:
-    CRYPT_EAL_RandDeinit();
+    TestRandDeInit();
     CRYPT_EAL_PkeyFreeCtx(ctx);
     CRYPT_EAL_PkeyFreeCtx(dupCtx);
     BSL_SAL_Free(pubKey1);

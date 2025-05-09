@@ -13,7 +13,7 @@
  * See the Mulan PSL v2 for more details.
  */
 #include "hitls_build.h"
-#ifdef HITLS_TLS_CALLBACK_CERT
+#if defined(HITLS_TLS_CALLBACK_CERT) || defined(HITLS_TLS_FEATURE_PROVIDER)
 #include <stdint.h>
 #include <string.h>
 #include "bsl_sal.h"
@@ -98,8 +98,8 @@ int32_t HITLS_X509_Adapt_VerifyCertChain(HITLS_Ctx *ctx, HITLS_CERT_Store *store
     }
     int64_t sysTime = BSL_SAL_CurrentSysTimeGet();
     if (sysTime == 0) {
-        ret = HITLS_X509_ADAPT_INVALID_TIME;
-        BSL_ERR_PUSH_ERROR(HITLS_X509_ADAPT_INVALID_TIME);
+        ret = HITLS_CERT_SELF_ADAPT_INVALID_TIME;
+        BSL_ERR_PUSH_ERROR(HITLS_CERT_SELF_ADAPT_INVALID_TIME);
         goto EXIT;
     }
     ret = HITLS_X509_StoreCtxCtrl((HITLS_X509_StoreCtx *)store, HITLS_X509_STORECTX_SET_TIME, &sysTime,
@@ -108,7 +108,7 @@ int32_t HITLS_X509_Adapt_VerifyCertChain(HITLS_Ctx *ctx, HITLS_CERT_Store *store
         BSL_ERR_PUSH_ERROR(ret);
         goto EXIT;
     }
-    ret = HITLS_X509_StoreCtxCtrl((HITLS_X509_StoreCtx *)store, HITLS_X509_STORECTX_SET_VEY_SM2_USERID,
+    ret = HITLS_X509_StoreCtxCtrl((HITLS_X509_StoreCtx *)store, HITLS_X509_STORECTX_SET_VFY_SM2_USERID,
         sm2DefaultUserid, strlen(sm2DefaultUserid));
     if (ret != HITLS_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
@@ -123,4 +123,4 @@ EXIT:
     BSL_LIST_FREE(certList, (BSL_LIST_PFUNC_FREE)HITLS_X509_CertFree);
     return ret;
 }
-#endif /* HITLS_TLS_CALLBACK_CERT */
+#endif /* defined(HITLS_TLS_CALLBACK_CERT) || defined(HITLS_TLS_FEATURE_PROVIDER) */

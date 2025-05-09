@@ -142,20 +142,26 @@ ERR:
     return ret;
 }
 
+/**
+ * In NIST.SP.800-56 Ar3, the FFC Full Public-Key Validation Routine needs to check nQ = Ø.
+ * For performance considerations, we perform Partial public-key Validation (Section 5.6.2.3.4) when
+ * setting the Public Key.
+*/
 int32_t ECC_PkeySetPubKey(ECC_Pkey *ctx, const BSL_Param *para)
 {
     if (ctx == NULL || ctx->para == NULL || para == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
+    // assume that the two scenarios will not coexist.
     const BSL_Param *pub = BSL_PARAM_FindConstParam(para, CRYPT_PARAM_EC_POINT_UNCOMPRESSED);
+    if (pub == NULL) {
+        pub = BSL_PARAM_FindConstParam(para, CRYPT_PARAM_PKEY_ENCODE_PUBKEY);
+    }
     if (pub == NULL || pub->value == NULL || pub->valueLen == 0) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-    BN_BigNum *paraN = NULL;
-    ECC_Point *pointQ = NULL;
-
     ECC_Point *newPubKey = ECC_NewPoint(ctx->para);
     if (newPubKey == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
@@ -163,38 +169,12 @@ int32_t ECC_PkeySetPubKey(ECC_Pkey *ctx, const BSL_Param *para)
     }
 
     int32_t ret = ECC_DecodePoint(ctx->para, newPubKey, pub->value, pub->valueLen);
-    if (ret != CRYPT_SUCCESS) {
-        goto EXIT;
+    if (ret == CRYPT_SUCCESS) {
+        ECC_FreePoint(ctx->pubkey);
+        ctx->pubkey = newPubKey;
+        return ret;
     }
-
-    // Check whether n * pubKey is equal to infinity.
-    paraN = ECC_GetParaN(ctx->para);
-    pointQ = ECC_NewPoint(ctx->para);
-    if ((paraN == NULL) || (pointQ == NULL)) {
-        ret = CRYPT_MEM_ALLOC_FAIL;
-        goto EXIT;
-    }
-
-    ret = ECC_PointMul(ctx->para, pointQ, paraN, newPubKey);
-    if (ret != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(ret);
-        goto EXIT;
-    }
-
-    if (BN_IsZero(pointQ->z) == false) {
-        ret = CRYPT_ECC_PKEY_ERR_INVALID_PUBLIC_KEY;
-        BSL_ERR_PUSH_ERROR(ret);
-        goto EXIT;
-    }
-
-    ECC_FreePoint(ctx->pubkey);
-    ctx->pubkey = newPubKey;
-    newPubKey = NULL;
-
-EXIT:
     ECC_FreePoint(newPubKey);
-    BN_Destroy(paraN);
-    ECC_FreePoint(pointQ);
     return ret;
 }
 
@@ -229,7 +209,12 @@ int32_t ECC_PkeyGetPubKey(const ECC_Pkey *ctx, BSL_Param *para)
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
+    // assume that the two scenarios will not coexist.
     BSL_Param *pub = BSL_PARAM_FindParam(para, CRYPT_PARAM_EC_POINT_UNCOMPRESSED);
+    if (pub == NULL) {
+        pub = BSL_PARAM_FindParam(para, CRYPT_PARAM_PKEY_ENCODE_PUBKEY);
+    }
+
     if (pub == NULL || pub->value == NULL || pub->valueLen == 0) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
@@ -274,7 +259,7 @@ static int32_t GenPrivateKey(ECC_Pkey *ctx)
         }
     }
     do {
-        ret = BN_RandRange(ctx->prvkey, paraN);
+        ret = BN_RandRangeEx(ctx->libCtx, ctx->prvkey, paraN);
         if (ret != CRYPT_SUCCESS) {
             BSL_ERR_PUSH_ERROR(ret);
             goto EXIT;
@@ -450,7 +435,7 @@ static int32_t GetEccName(ECC_Pkey *ctx, void *val, uint32_t len)
     return CRYPT_SUCCESS;
 }
 
-static int32_t GetEccPointFormat(ECC_Pkey *ctx, void *val, uint32_t len)
+static int32_t SetEccPointFormat(ECC_Pkey *ctx, void *val, uint32_t len)
 {
     uint32_t pointFormat = *(uint32_t *)val;
     if (len != sizeof(uint32_t)) {
@@ -488,7 +473,7 @@ int32_t ECC_PkeyCtrl(ECC_Pkey *ctx, int32_t opt, void *val, uint32_t len)
         case CRYPT_CTRL_GET_ECC_PUB_Y_BIN:
             return ECC_GetPubXYBnBin(ctx, opt, val, len);
         case CRYPT_CTRL_SET_ECC_POINT_FORMAT:
-            return GetEccPointFormat(ctx, val, len);
+            return SetEccPointFormat(ctx, val, len);
         case CRYPT_CTRL_SET_ECC_USE_COFACTOR_MODE:
             return SetEccUseCofactorMode(ctx, val, len);
         case CRYPT_CTRL_GEN_ECC_PUBLICKEY:

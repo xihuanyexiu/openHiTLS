@@ -76,6 +76,7 @@ find_test_suite()
 {
     if [[ ${ENABLE_CRYPTO} == "ON" ]]; then
         crypto_testsuite=$(find ${HITLS_ROOT_DIR}/testcode/sdv/testcase/crypto -name "*.data" | sed -e "s/.data//" | tr -s "\n" " ")
+        crypto_testsuite=${crypto_testsuite}$(find ${HITLS_ROOT_DIR}/testcode/sdv/testcase/codecs -name "*.data" | sed -e "s/.data//" | tr -s "\n" " ")
     fi
     if [[ ${ENABLE_BSL} == "ON" ]]; then
         bsl_testsuite=$(find ${HITLS_ROOT_DIR}/testcode/sdv/testcase/bsl -name "*.data" | sed -e "s/.data//" | tr -s "\n" " ")
@@ -140,7 +141,7 @@ build_demos()
     pushd ${HITLS_ROOT_DIR}/testcode/demo/
     rm -rf build && mkdir build 
     pushd build
-    cmake -DENABLE_GCOV=${ENABLE_GCOV} -DENABLE_ASAN=${ENABLE_ASAN} ../
+    cmake -DENABLE_GCOV=${ENABLE_GCOV} -DCUSTOM_CFLAGS="${CUSTOM_CFLAGS}" -DENABLE_ASAN=${ENABLE_ASAN} ../
     make -j
     popd
     popd
@@ -200,6 +201,9 @@ options()
             no-tls)
                 ENABLE_TLS=OFF
                 ;;
+            no-demos)
+                ENABLE_DEMOS=OFF
+                ;;
             no-sctp)
                 ENABLE_UIO_SCTP=OFF
                 ENABLE_TLS=OFF
@@ -239,4 +243,6 @@ down_depend_code
 find_test_suite
 process_custom_cases
 build_test_suite
-build_demos
+if [[ ${ENABLE_DEMOS} == "ON" ]]; then
+    build_demos
+fi

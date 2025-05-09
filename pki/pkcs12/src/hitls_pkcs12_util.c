@@ -13,8 +13,12 @@
  * See the Mulan PSL v2 for more details.
  */
 
+#include "hitls_build.h"
+#ifdef HITLS_PKI_PKCS12
 #include "bsl_sal.h"
+#ifdef HITLS_BSL_SAL_FILE
 #include "sal_file.h"
+#endif
 #include "securec.h"
 #include "hitls_pkcs12_local.h"
 #include "bsl_sal.h"
@@ -36,7 +40,6 @@ void HITLS_PKCS12_AttributesFree(void *attribute)
     HITLS_PKCS12_SafeBagAttr *attr = attribute;
     BSL_SAL_FREE(attr->attrValue.data);
     BSL_SAL_FREE(attr);
-    return;
 }
 
 void HITLS_PKCS12_SafeBagFree(HITLS_PKCS12_SafeBag *safeBag)
@@ -119,6 +122,17 @@ HITLS_PKCS12 *HITLS_PKCS12_New(void)
     p12->version = 3; // RFC7292 required the version = 3;
     p12->certList = certList;
     p12->macData = macData;
+    return p12;
+}
+
+HITLS_PKCS12 *HITLS_PKCS12_ProviderNew(HITLS_PKI_LibCtx *libCtx, const char *attrName)
+{
+    HITLS_PKCS12 *p12 = HITLS_PKCS12_New();
+    if (p12 == NULL) {
+        return NULL;
+    }
+    p12->libCtx = libCtx;
+    p12->attrName = attrName;
     return p12;
 }
 
@@ -554,7 +568,8 @@ static int32_t ParamCheckAndInit(HITLS_PKCS12_MacData *macData, BSL_Buffer *pwd,
             BSL_ERR_PUSH_ERROR(BSL_MALLOC_FAIL);
             return BSL_MALLOC_FAIL;
         }
-        int32_t ret = CRYPT_EAL_Randbytes(salt, macData->macSalt->dataLen);
+        int32_t ret;
+        ret = CRYPT_EAL_RandbytesEx(NULL, salt, macData->macSalt->dataLen);
         if (ret != CRYPT_SUCCESS) {
             BSL_SAL_Free(salt);
             BSL_ERR_PUSH_ERROR(ret);
@@ -617,3 +632,4 @@ int32_t HITLS_PKCS12_CalMac(BSL_Buffer *output, BSL_Buffer *pwd, BSL_Buffer *ini
     output->dataLen = macSize;
     return ret;
 }
+#endif // HITLS_PKI_PKCS12

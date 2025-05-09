@@ -17,6 +17,7 @@
 #define CRYPT_DEFAULT_H
 #include <stdint.h>
 #include "hitls_crypt_type.h"
+#include "hitls_crypt_reg.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -343,6 +344,43 @@ int32_t CRYPT_DEFAULT_HkdfExtract(const HITLS_CRYPT_HkdfExtractInput *input, uin
  * @retval Other         failure
  */
 int32_t CRYPT_DEFAULT_HkdfExpand(const HITLS_CRYPT_HkdfExpandInput *input, uint8_t *okm, uint32_t okmLen);
+
+/**
+ * @brief Initialize the hash context.
+ *
+ * This function initializes the hash context with the given hash algorithm.
+ *
+ * @param hashAlgo   [IN] Hash algorithm to be used in the hash operation, e.g., HITLS_SHA256.
+ *
+ * @return hash context
+ *         Returns a pointer to the initialized hash context.
+ *         Returns NULL if the initialization fails.
+ */
+HITLS_HASH_Ctx *CRYPT_DEFAULT_DigestInit(HITLS_HashAlgo hashAlgo);
+
+/**
+ * @brief KEM-Encapsulate
+ *
+ * @param params [IN] KEM encapsulation parameters
+ *
+ * @retval HITLS_SUCCESS succeeded.
+ */
+int32_t CRYPT_DEFAULT_KemEncapsulate(HITLS_KemEncapsulateParams *params);
+
+/**
+ * @brief KEM-Decapsulate
+ *
+ * @param key [IN] Key handle
+ * @param ciphertext [IN] Ciphertext data
+ * @param ciphertextLen [IN] Ciphertext data length
+ * @param sharedSecret [OUT] Shared key
+ * @param sharedSecretLen [IN/OUT] IN: Maximum length of data padding OUT: length of the shared key
+ *
+ * @retval HITLS_SUCCESS succeeded.
+ * @retval Other         failure
+ */
+int32_t CRYPT_DEFAULT_KemDecapsulate(HITLS_CRYPT_Key *key, const uint8_t *ciphertext, uint32_t ciphertextLen,
+    uint8_t *sharedSecret, uint32_t *sharedSecretLen);
 
 #ifdef __cplusplus
 }

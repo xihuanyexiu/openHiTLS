@@ -969,7 +969,7 @@ EXIT:
  * @precon  nan
  * @brief
  *    1. Call BSL_UIO_New to create a tcp uio. Expected result 1 is obtained.
- *    2. Call BSL_UIO_SetFd to set fd to uio. Call BSL_UIO_Ctrl and transfer the BSL_UIO_GET_FD parameter to obtain
+ *    2. Call BSL_UIO_SetFD to set fd to uio. Call BSL_UIO_Ctrl and transfer the BSL_UIO_GET_FD parameter to obtain
  *       the fd1 of uio. Compare the two fds. Expected result 2 is obtained.
  * @expect
  *    1. The TCP UIO is successfully created.
@@ -986,7 +986,7 @@ void SDV_BSL_UIO_SET_FD_TC001(void)
     ASSERT_TRUE(uio != NULL);
     BSL_UIO_SetIsUnderlyingClosedByUio(uio, true);
 
-    BSL_UIO_SetFd(uio, fd);
+    BSL_UIO_SetFD(uio, fd);
     int32_t fd1 = -1;
     ASSERT_TRUE(BSL_UIO_Ctrl(uio, BSL_UIO_GET_FD, (int32_t)sizeof(fd1), &fd1) == BSL_SUCCESS);
     ASSERT_TRUE(fd == fd1);
@@ -1036,7 +1036,7 @@ EXIT:
  *    1. Call BSL_UIO_UdpMethod to create a UDP method. Expected result 1 is obtained.
  *    2. The input cmd is BSL_UIO_SET_PEER_IP_ADDR when BSL_UIO_Ctrl is invoked. Expected result 2 is obtained.
  *    3. The input cmd is BSL_UIO_GET_PEER_IP_ADDR when BSL_UIO_Ctrl is invoked. Expected result 3 is obtained.
- *    4. The input cmd is BSL_UIO_DGRAM_SET_CONNECTED when BSL_UIO_Ctrl is invoked. Expected result 3 is obtained.
+ *    4. The input cmd is BSL_UIO_UDP_SET_CONNECTED when BSL_UIO_Ctrl is invoked. Expected result 3 is obtained.
  * @expect
  *    1. The UDP method is successfully created.
  *    2. Return BSL_SUCCESS
@@ -1070,10 +1070,10 @@ void SDV_BSL_UIO_UDP_API_TC001(void)
 
     ASSERT_TRUE(memcmp(getAddr.addr.sa_data, peerAddr.addr.sa_data, IP_V4_LEN) == 0);
 
-    ret = BSL_UIO_Ctrl(uio, BSL_UIO_DGRAM_SET_CONNECTED, sizeof(peerAddr.addr), &peerAddr);
+    ret = BSL_UIO_Ctrl(uio, BSL_UIO_UDP_SET_CONNECTED, sizeof(peerAddr.addr), &peerAddr);
     ASSERT_TRUE(ret == BSL_SUCCESS);
 
-    ret = BSL_UIO_Ctrl(uio, BSL_UIO_DGRAM_SET_CONNECTED, 0, NULL);
+    ret = BSL_UIO_Ctrl(uio, BSL_UIO_UDP_SET_CONNECTED, 0, NULL);
     ASSERT_TRUE(ret == BSL_SUCCESS);
 EXIT:
     BSL_UIO_Free(uio);

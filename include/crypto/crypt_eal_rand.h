@@ -37,12 +37,44 @@ extern "C" {
   * @ingroup crypt_eal_rand
   * @brief rand generate callback
   *
-  * rand£ºstring
-  * randLen£º len
+  * rand[out] randomdata
+  * randLen[in] len
   *
   * @return  int32_t, defined by users.
   */
-typedef int32_t (*CRYPT_EAL_RandFunc)(uint8_t *rand, uint32_t randLen);
+  typedef int32_t (*CRYPT_EAL_RandFunc)(uint8_t *rand, uint32_t randLen);
+
+  /**
+    * @ingroup crypt_eal_rand
+    * @brief set rand func callback
+    *
+    * func[in] rand func
+    *
+    * @return  void.
+    */
+  void CRYPT_EAL_SetRandCallBack(CRYPT_EAL_RandFunc func);
+
+/**
+  * @ingroup crypt_eal_rand
+  * @brief rand generate callback
+  *
+  * ctx[in] ctx
+  * rand[out] randomdata
+  * randLen[in] len
+  *
+  * @return  int32_t, defined by users.
+  */
+typedef int32_t (*CRYPT_EAL_RandFuncEx)(void *ctx, uint8_t *rand, uint32_t randLen);
+
+/**
+  * @ingroup crypt_eal_rand
+  * @brief set rand func callback
+  *
+  * func[in] rand func
+  *
+  * @return  void.
+  */
+void CRYPT_EAL_SetRandCallBackEx(CRYPT_EAL_RandFuncEx func);
 
 /**
  * @ingroup crypt_eal_rand
@@ -103,6 +135,16 @@ void CRYPT_EAL_RandDeinit(void);
 
 /**
  * @ingroup crypt_eal_rand
+ * @brief   Deinitializing the libCtx RAND interface, this interface does not support multiple threads.
+ *
+ * @param libCtx [IN] Library context
+ * 
+ * @retval  void, no return value.
+ */
+void CRYPT_EAL_RandDeinitEx(CRYPT_EAL_LibCtx *libCtx);
+
+/**
+ * @ingroup crypt_eal_rand
  * @brief   Generate a random number.
  *
  * The addtional data marked as "addin" can be NULL, and additional data specified by the user.
@@ -119,6 +161,24 @@ int32_t CRYPT_EAL_RandbytesWithAdin(uint8_t *byte, uint32_t len, uint8_t *addin,
 
 /**
  * @ingroup crypt_eal_rand
+ * @brief   Generate a random number.
+ *
+ * The addtional data marked as "addin" can be NULL, and additional data specified by the user.
+ * This interface does not support multiple threads.
+ *
+ * @param libCtx [IN] Library context
+ * @param byte  [OUT] Output random numbers, the memory is provided by the user.
+ * @param len   [IN] Required random number length, the maximum length is (0, 65536].
+ * @param addin [IN] Addtional data, which can set be NULL.
+ * @param addinLen [IN] Addtional data length, the maximum length is[0,0x7FFFFFF0].
+ * @retval #CRYPT_SUCCESS, if successful.
+ *         For other error codes, see the crypt_errno.h file.
+ */
+int32_t CRYPT_EAL_RandbytesWithAdinEx(CRYPT_EAL_LibCtx *libCtx,
+    uint8_t *byte, uint32_t len, uint8_t *addin, uint32_t addinLen);
+
+/**
+ * @ingroup crypt_eal_rand
  *
  * Generate a random number, which is equivalent to CRYPT_EAL_RandbytesWithAdin(bytes, len, NULL, 0).
  * This interface supports multi-thread access.
@@ -132,6 +192,20 @@ int32_t CRYPT_EAL_Randbytes(uint8_t *byte, uint32_t len);
 
 /**
  * @ingroup crypt_eal_rand
+ *
+ * Generate a random number
+ * This interface supports multi-thread access.
+ *
+ * @param libCtx [IN] Library context
+ * @param byte [OUT] Used to store output random numbers, the memory is provided by the user.
+ * @param len  [IN] Required random number length, the length range is(0, 65536].
+ * @retval #CRYPT_SUCCESS, if successful.
+ *         For other error codes, see the crypt_errno.h file.
+ */
+int32_t CRYPT_EAL_RandbytesEx(CRYPT_EAL_LibCtx *libCtx, uint8_t *byte, uint32_t len);
+
+/**
+ * @ingroup crypt_eal_rand
  * @brief Regenerate the seed.
  *
  * @attention The addtional data can set be NULL, and this interface supports multi-thread access.
@@ -139,6 +213,8 @@ int32_t CRYPT_EAL_Randbytes(uint8_t *byte, uint32_t len);
  * @param addinLen [IN] Addtional data length, the range is [0,0x7FFFFFF0].
  * @retval #CRYPT_SUCCESS, if successful.
  *         For other error codes, see crypt_errno.h.
+ * 
+ * @note After forking, it is necessary to manually supplement the entropy source for the new program
  */
 int32_t CRYPT_EAL_RandSeedWithAdin(uint8_t *addin, uint32_t addinLen);
 
@@ -150,8 +226,23 @@ int32_t CRYPT_EAL_RandSeedWithAdin(uint8_t *addin, uint32_t addinLen);
  *
  * @retval  #CRYPT_SUCCESS
  *          For other error codes, see crypt_errno.h.
+ * 
+ * @note After forking, it is necessary to manually supplement the entropy source for the new program
  */
 int32_t CRYPT_EAL_RandSeed(void);
+
+/**
+ * @ingroup crypt_eal_rand
+ *
+ * Regenerate the seed, which is equivalent to CRYPT_EAL_RandSeedWithAdin(NULL, 0), and the interface
+ * supports multi-thread access.
+ * @param libCtx [IN] Library context
+ * @retval  #CRYPT_SUCCESS
+ *          For other error codes, see crypt_errno.h.
+ * 
+ * @note After forking, it is necessary to manually supplement the entropy source for the new program
+ */
+int32_t CRYPT_EAL_RandSeedEx(CRYPT_EAL_LibCtx *libCtx);
 
 typedef struct EAL_RndCtx CRYPT_EAL_RndCtx;
 
