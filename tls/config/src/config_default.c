@@ -137,6 +137,9 @@ static void BasicInitConfig(HITLS_Config *config)
 #if defined(HITLS_TLS_PROTO_TLS_BASIC) || defined(HITLS_TLS_PROTO_DTLS12)
     config->allowLegacyRenegotiate = false;
 #endif
+#ifdef HITLS_TLS_FEATURE_ETM
+    config->isEncryptThenMac = true;
+#endif
 }
 static void InitConfig(HITLS_Config *config)
 {

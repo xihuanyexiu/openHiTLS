@@ -501,3 +501,104 @@ void SDV_TLS_TLS12_RFC5246_MALFORMED_CIPHER_SUITE_LEN_FUN_TC001()
     return;
 }
 /* END_CASE */
+
+static void TEST_Server_check_etm_ext(HITLS_Ctx *ctx, uint8_t *data, uint32_t *len,
+    uint32_t bufSize, void *user)
+{
+    (void)ctx;
+    (void)user;
+    (void)bufSize;
+    FRAME_Type frameType = {0};
+    frameType.versionType = HITLS_VERSION_TLS12;
+    FRAME_Msg frameMsg = {0};
+    frameMsg.recType.data = REC_TYPE_HANDSHAKE;
+    frameMsg.length.data = *len;
+    frameMsg.recVersion.data = HITLS_VERSION_TLS12;
+    uint32_t parseLen = 0;
+    FRAME_ParseMsgBody(&frameType, data, *len, &frameMsg, &parseLen);
+    ASSERT_EQ(parseLen, *len);
+    ASSERT_EQ(frameMsg.body.hsMsg.type.data, SERVER_HELLO);
+    FRAME_ServerHelloMsg *serverMsg = &frameMsg.body.hsMsg.body.serverHello;
+    ASSERT_EQ(serverMsg->encryptThenMac.exType.data, HS_EX_TYPE_ENCRYPT_THEN_MAC);
+
+EXIT:
+    FRAME_CleanMsg(&frameType, &frameMsg);
+    return;
+}
+
+/* @
+* @test  SDV_TLS_TLS1_2_RFC5246_HANDSHAKE_FUNC_TC001
+* @spec  -
+* @title  Test link establishment when the tls1.2 client cipher suite does not match the certificate.
+* @precon  nan
+* @brief
+1. Configure the ecdhe_ecdsa cipher suite, certificate, and RSA certificate chain on the server. Expected result 1 is obtained.
+2. Configure the RSA certificate and ecdsa certificate chain on the client. Expected result 2 is obtained.
+3. Establish a link between the two ends. Expected result 3 is obtained.
+4. Read and write data. Expected result 4 is obtained.
+* @expect
+1. A success message is returned.
+2. A success message is returned.
+3. A success message is returned.
+4. Return a success message.
+* @prior  Level 1
+* @auto  TRUE
+@ */
+/* BEGIN_CASE */
+void SDV_TLS_TLS1_2_RFC5246_HANDSHAKE_FUNC_TC001()
+{
+    HLT_Tls_Res *serverRes = NULL;
+    HLT_Tls_Res *clientRes = NULL;
+    HLT_Process *localProcess = NULL;
+    HLT_Process *remoteProcess = NULL;
+
+    localProcess = HLT_InitLocalProcess(HITLS);
+    ASSERT_TRUE(localProcess != NULL);
+    remoteProcess = HLT_LinkRemoteProcess(HITLS, TCP, g_uiPort, true);
+    ASSERT_TRUE(remoteProcess != NULL);
+
+    HLT_Ctx_Config *serverCtxConfig = HLT_NewCtxConfig(NULL, "SERVER");
+    ASSERT_TRUE(serverCtxConfig != NULL);
+
+    // Configure the ecdhe_ecdsa cipher suite, certificate, and RSA certificate chain on the server.
+    HLT_SetCertPath(serverCtxConfig,
+        RSA_SHA_CA_PATH, RSA_SHA_CHAIN_PATH, ECDSA_SHA256_EE_PATH, ECDSA_SHA256_PRIV_PATH, "NULL", "NULL");
+    HLT_SetClientVerifySupport(serverCtxConfig, true);
+    HLT_SetNoClientCertSupport(serverCtxConfig, false);
+    HLT_SetCipherSuites(serverCtxConfig, "HITLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA");
+
+    HLT_Ctx_Config *clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
+    ASSERT_TRUE(clientCtxConfig != NULL);
+
+    // Configure the RSA certificate and ecdsa certificate chain on the client.
+    HLT_SetCertPath(clientCtxConfig,
+        ECDSA_SHA_CA_PATH, ECDSA_SHA_CHAIN_PATH, RSA_SHA1_EE_PATH, RSA_SHA1_PRIV_PATH, "NULL", "NULL");
+    RecWrapper wrapper = {
+        TRY_SEND_SERVER_HELLO,
+        REC_TYPE_HANDSHAKE,
+        false,
+        NULL,
+        TEST_Server_check_etm_ext
+    };
+    RegisterWrapper(wrapper);
+    // Establish a link between the two ends.
+    serverRes = HLT_ProcessTlsAccept(localProcess, TLS1_2, serverCtxConfig, NULL);
+    ASSERT_TRUE(serverRes != NULL);
+
+    clientRes = HLT_ProcessTlsConnect(remoteProcess, TLS1_2, clientCtxConfig, NULL);
+    ASSERT_TRUE(clientRes != NULL);
+    ASSERT_TRUE(HLT_GetTlsAcceptResult(serverRes) == 0);
+
+    // Read and write data.
+    ASSERT_TRUE(HLT_ProcessTlsWrite(localProcess, serverRes, (uint8_t *)"Hello World", strlen("Hello World")) == 0);
+    uint8_t readBuf[READ_BUF_LEN_18K] = {0};
+    uint32_t readLen;
+    ASSERT_TRUE(HLT_ProcessTlsRead(remoteProcess, clientRes, readBuf, sizeof(readBuf), &readLen) == 0);
+    ASSERT_TRUE(readLen == strlen("Hello World"));
+    ASSERT_TRUE(memcmp("Hello World", readBuf, readLen) == 0);
+
+EXIT:
+    ClearWrapper();
+    HLT_FreeAllProcess();
+}
+/* END_CASE */

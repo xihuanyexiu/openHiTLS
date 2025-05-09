@@ -81,7 +81,7 @@ int HLT_RpcProviderTlsNewCtx(HLT_Process *peerProcess, TLS_VERSION tlsVersion, b
         ASSERT_RETURN(ret > 0, "sprintf_s Error");
         offset += ret;
     }
-    
+
     for (int i = 0; i < providerCnt - 1; i++) {
         ret = sprintf_s(dataBuf.data + offset, sizeof(dataBuf.data) - offset, "%s,%d:", providerNames[i],
             providerLibFmts[i]);
@@ -178,7 +178,7 @@ int HLT_RpcTlsSetCtx(HLT_Process *peerProcess, int ctxId, HLT_Ctx_Config *config
     "%s|%d|%d|"
     "%u|%d|%d|"
     "%d|%d|%d|"
-    "%d|%u|%d|",
+    "%d|%u|%d|%d|",
     g_cmdIndex, __FUNCTION__, ctxId,
     config->minVersion, config->maxVersion, config->cipherSuites, config->tls13CipherSuites,
     config->pointFormats, config->groups, config->signAlgorithms, config->isSupportRenegotiation,
@@ -190,7 +190,7 @@ int HLT_RpcTlsSetCtx(HLT_Process *peerProcess, int ctxId, HLT_Ctx_Config *config
     config->alpnUserData, config->securitylevel, config->isSupportDhAuto,
     config->keyExchMode, config->SupportType, config->isSupportPostHandshakeAuth,
     config->readAhead, config->needCheckKeyUsage, config->isSupportVerifyNone,
-    config->allowClientRenegotiate, config->emptyRecordsNum, config->allowLegacyRenegotiate);
+    config->allowClientRenegotiate, config->emptyRecordsNum, config->allowLegacyRenegotiate, config->isEncryptThenMac);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;

@@ -786,6 +786,17 @@ int32_t HITLS_GetSharedGroup(const HITLS_Ctx *ctx, int32_t nmatch, uint16_t *gro
 
 /**
  * @ingroup hitls
+ * @brief   Set the DTLS timeout interval callback.
+ * @param   ctx [IN] TLS connection handle.
+ * @param   cb [IN] DTLS obtaining timeout interval callback.
+ * @return  HITLS_SUCCESS, if successful.
+ *          For details about other error codes, see hitls_error.h.
+ */
+int32_t HITLS_SetDtlsTimerCb(HITLS_Ctx *ctx, HITLS_DtlsTimerCb cb);
+
+
+/**
+ * @ingroup hitls
  * @brief   Obtain the supported version number.
  *
  * @param   ctx [IN] TLS connection handle.

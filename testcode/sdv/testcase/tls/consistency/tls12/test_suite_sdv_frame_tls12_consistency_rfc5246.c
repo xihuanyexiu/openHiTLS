@@ -5578,3 +5578,62 @@ EXIT:
     HITLS_CFG_FreeConfig(tlsConfig);
 }
 /* END_CASE */
+
+/* @
+* @test  UT_TLS_TLS1_2_RFC5246_CLIENT_HELLO_ENCRYPT_THEN_MAC_TC001
+* @spec  -
+* @title  Check the encrypt then mac extension carried in the clientHello message.
+* @precon  nan
+* @brief  1. Use configuration items to configure the client and server. Expected result 1 is obtained.
+*         2. Obtain and parse the client Hello message. Expected result 2 is obtained.
+* @expect 1. The initialization is successful.
+*         2. The  encrypt then mac extension carried in the client Hello message.
+* @prior  Level 1
+* @auto  TRUE
+@ */
+
+/* BEGIN_CASE */
+void UT_TLS_TLS1_2_RFC5246_CLIENT_HELLO_ENCRYPT_THEN_MAC_TC001(void)
+{
+    HandshakeTestInfo testInfo = { 0 };
+    FRAME_Msg frameMsg = { 0 };
+    FRAME_Type frameType = { 0 };
+    testInfo.state = TRY_RECV_CLIENT_HELLO;
+
+    FRAME_Init();
+
+    /* Use configuration items to configure the client and server. */
+    testInfo.config = HITLS_CFG_NewTLS12Config();
+    ASSERT_TRUE(testInfo.config != NULL);
+
+    testInfo.client = FRAME_CreateLink(testInfo.config, BSL_UIO_TCP);
+    ASSERT_TRUE(testInfo.client != NULL);
+    ASSERT_EQ(testInfo.client->ssl->config.tlsConfig.isEncryptThenMac, 1);
+
+    testInfo.server = FRAME_CreateLink(testInfo.config, BSL_UIO_TCP);
+    ASSERT_TRUE(testInfo.server != NULL);
+    ASSERT_EQ(testInfo.server->ssl->config.tlsConfig.isEncryptThenMac, 1);
+
+    ASSERT_TRUE(FRAME_CreateConnection(testInfo.client, testInfo.server, testInfo.isClient, testInfo.state) ==
+        HITLS_SUCCESS);
+    /* Obtain and parse the client Hello message. */
+    FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.server->io);
+    uint8_t *recvBuf = ioUserData->recMsg.msg;
+    uint32_t recvLen = ioUserData->recMsg.len;
+    uint32_t parseLen = 0;
+
+    frameType.versionType = HITLS_VERSION_TLS12;
+    frameType.recordType = REC_TYPE_HANDSHAKE;
+    frameType.handshakeType = CLIENT_HELLO;
+    frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
+
+    FRAME_ClientHelloMsg *clientMsg = &frameMsg.body.hsMsg.body.clientHello;
+    ASSERT_EQ(clientMsg->encryptThenMac.exType.data, HS_EX_TYPE_ENCRYPT_THEN_MAC);
+
+EXIT:
+    FRAME_CleanMsg(&frameType, &frameMsg);
+    HITLS_CFG_FreeConfig(testInfo.config);
+    FRAME_FreeLink(testInfo.client);
+    FRAME_FreeLink(testInfo.server);
+}
