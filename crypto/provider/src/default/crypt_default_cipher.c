@@ -16,8 +16,6 @@
 #include "hitls_build.h"
 #ifdef HITLS_CRYPTO_PROVIDER
 
-#include "crypt_errno.h"
-#include "bsl_err_internal.h"
 #include "crypt_eal_implprovider.h"
 #include "crypt_modes_cbc.h"
 #include "crypt_modes_ccm.h"
@@ -29,6 +27,8 @@
 #include "crypt_modes_cfb.h"
 #include "crypt_modes_xts.h"
 #include "crypt_local_types.h"
+#include "crypt_errno.h"
+#include "bsl_err_internal.h"
 #include "crypt_ealinit.h"
 
 static void *CRYPT_EAL_DefCipherNewCtx(void *provCtx, int32_t algId)

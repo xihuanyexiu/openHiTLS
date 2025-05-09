@@ -531,5 +531,4 @@ void ScalarMultiPoint(uint8_t out[32], const uint8_t scalar[32], const uint8_t p
     PolynomialToData(out, t2);
 }
 #endif // uint128
-
 #endif /* HITLS_CRYPTO_X25519 */

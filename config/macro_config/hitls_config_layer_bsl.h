@@ -77,7 +77,7 @@
     #endif
 #endif
 
-#ifdef HITLS_BSL_UIO_UDP
+#if defined(HITLS_BSL_UIO_TCP) || defined(HITLS_BSL_UIO_UDP)
     #ifndef HITLS_BSL_UIO_ADDR
         #define HITLS_BSL_UIO_ADDR
     #endif

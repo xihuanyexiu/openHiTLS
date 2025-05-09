@@ -171,7 +171,7 @@ static int32_t GetLegendreZ(BN_BigNum *z, const BN_BigNum *p, BN_Optimizer *opt)
     GOTO_ERR_IF_EX(BN_Rshift(exp, exp, 1), ret);
 
     while (maxCnt > 0) {
-        GOTO_ERR_IF_EX(BN_RandRange(z, p), ret);
+        GOTO_ERR_IF_EX(BN_RandRangeEx(opt->libCtx, z, p), ret);
 
         maxCnt--;
         if (BN_IsZero(z)) {

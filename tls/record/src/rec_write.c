@@ -150,7 +150,6 @@ static int32_t DtlsRecOutBufInit(RecCtx *recordCtx, uint32_t bufSize)
     return HITLS_SUCCESS;
 }
 
-
 static int32_t DtlsTrySendMessage(TLS_Ctx *ctx, RecCtx *recordCtx, REC_Type recordType, RecConnState *state)
 {
     /* Notify the uio whether the service message is being sent. rfc6083 4.4. Stream Usage: For non-app messages, the
@@ -228,7 +227,7 @@ int32_t DtlsRecordWrite(TLS_Ctx *ctx, REC_Type recordType, const uint8_t *data, 
     }
 
     /** Encrypt the record body */
-    ret = RecConnEncrypt(state, &plainMsg, &outBuf[REC_DTLS_RECORD_HEADER_LEN], cipherTextLen);
+    ret = RecConnEncrypt(ctx, state, &plainMsg, &outBuf[REC_DTLS_RECORD_HEADER_LEN], cipherTextLen);
     if (ret != HITLS_SUCCESS) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID17280, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "RecConnEncrypt fail", 0, 0, 0, 0);
@@ -416,7 +415,7 @@ int32_t TlsRecordWrite(TLS_Ctx *ctx, REC_Type recordType, const uint8_t *data, u
     }
 
     /** Encrypt the record body */
-    ret = RecConnEncrypt(state, &plainMsg, writeBuf->buf + REC_TLS_RECORD_HEADER_LEN, ciphertextLen);
+    ret = RecConnEncrypt(ctx, state, &plainMsg, writeBuf->buf + REC_TLS_RECORD_HEADER_LEN, ciphertextLen);
     BSL_SAL_FREE(recPlaintext.plainData);
     if (ret != HITLS_SUCCESS) {
         return ret;

@@ -63,6 +63,7 @@ struct BnOptimizer {
     uint32_t deep;      /* depth of stack */
     uint32_t used[CRYPT_OPTIMIZER_MAXDEEP];   /* size of the used stack */
     Chunk *curChunk;         /** < chunk, the last point*/
+    void *libCtx;
 };
 
 #ifdef __cplusplus

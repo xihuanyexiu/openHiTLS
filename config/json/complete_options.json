@@ -171,6 +171,9 @@
             "-DHITLS_THIRTY_TWO_BITS",
             "-DHITLS_BSL_SAL_LINUX",
             "-DHITLS_CRYPTO_NIST_ECC_ACCELERATE",
+            "-DHITLS_CRYPTO_SHA1_SMALL_MEM",
+            "-DHITLS_CRYPTO_SHA256_SMALL_MEM",
+            "-DHITLS_CRYPTO_SHA512_SMALL_MEM",
             "-DHITLS_CRYPTO_ENTROPY_DEVRANDOM",
             "-DHITLS_CRYPTO_ENTROPY_GETENTROPY",
             "-DHITLS_CRYPTO_ENTROPY_SYS",
@@ -185,7 +188,8 @@
             "-DHITLS_CRYPTO_RAND_CB",
             "-DHITLS_CRYPTO_BN_CB",
             "-DHITLS_CRYPTO_RSA_BSSA",
-            "-DHITLS_AARCH64_PACIASP"
+            "-DHITLS_AARCH64_PACIASP",
+            "-DHITLS_CRYPTO_SM2_PRECOMPUTE_512K_TBL"
         ],
         "CC_DEBUG_FLAGS": [
             "-g",

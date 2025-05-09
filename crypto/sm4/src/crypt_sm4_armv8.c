@@ -20,6 +20,7 @@
 #include "crypt_sm4.h"
 #include "bsl_err_internal.h"
 #include "crypt_errno.h"
+
 #ifdef HITLS_CRYPTO_XTS
 // key[0..16]: data key
 // key[16..32]: tweak key
@@ -67,6 +68,7 @@ int32_t CRYPT_SM4_XTS_SetDecryptKey(CRYPT_SM4_Ctx *ctx, const uint8_t *key, uint
     CRYPT_SM4_Ctx *tmk = (CRYPT_SM4_Ctx *)&ctx[1];
     Vpsm4SetDecryptKey(key, (SM4_KEY *)ctx->rk);
     Vpsm4SetEncryptKey(key + CRYPT_SM4_BLOCKSIZE, (SM4_KEY *)tmk->rk);
+
     return CRYPT_SUCCESS;
 }
 
@@ -197,7 +199,7 @@ int32_t CRYPT_SM4_CBC_Decrypt(CRYPT_SM4_Ctx *ctx, const uint8_t *in, uint8_t *ou
     Vpsm4CbcEncrypt(in, out, len, ctx->rk, iv, 0);
     return CRYPT_SUCCESS;
 }
-#endif
+#endif // HITLS_CRYPTO_CBC
 
 #ifdef HITLS_CRYPTO_CFB
 int32_t CRYPT_SM4_CFB_Encrypt(CRYPT_SM4_Ctx *ctx, const uint8_t *in, uint8_t *out, uint32_t len,
@@ -249,4 +251,4 @@ int32_t CRYPT_SM4_CTR_Decrypt(CRYPT_SM4_Ctx *ctx, const uint8_t *in, uint8_t *ou
 }
 #endif
 
-#endif /* HITLS_CRYPTO_SM4 */
+#endif // HITLS_CRYPTO_SM4

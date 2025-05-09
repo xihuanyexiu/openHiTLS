@@ -38,7 +38,10 @@
 #include "session.h"
 #include "hs_verify.h"
 #include "pack_common.h"
+#include "custom_extensions.h"
 #include "pack_extensions.h"
+#include "config_type.h"
+
 
 #define EXTENSION_MSG(exMsgT, needP, packF) \
     .exMsgType = (exMsgT), \
@@ -609,8 +612,11 @@ static int32_t PackClientKeyShare(const TLS_Ctx *ctx, uint8_t *buf, uint32_t buf
         BSL_ERR_PUSH_ERROR(HITLS_NULL_INPUT);
         return HITLS_NULL_INPUT;
     }
-    KeyShareParam *keyShare = &(kxCtx->keyExchParam.share);
 
+    uint16_t keyShareLen = 0;
+
+    KeyShareParam *keyShare = &(kxCtx->keyExchParam.share);
+    uint32_t secondPubKeyLen = 0u;
     uint32_t pubKeyLen = SAL_CRYPT_GetCryptLength(ctx, HITLS_CRYPT_INFO_CMD_GET_PUBLIC_KEY_LEN, keyShare->group);
     if (pubKeyLen == 0u) {
         BSL_ERR_PUSH_ERROR(HITLS_PACK_INVALID_KX_PUBKEY_LENGTH);
@@ -619,18 +625,25 @@ static int32_t PackClientKeyShare(const TLS_Ctx *ctx, uint8_t *buf, uint32_t buf
         return HITLS_PACK_INVALID_KX_PUBKEY_LENGTH;
     }
 
-    /* Calculate the extension length */
-    uint16_t exMsgHeaderLen = sizeof(uint16_t);
-    /* Length of group + Length of KeyExChange + KeyExChange */
-    uint16_t exMsgDataLen = sizeof(uint16_t) + sizeof(uint16_t) + (uint16_t)pubKeyLen;
+    keyShareLen += sizeof(uint16_t) + sizeof(uint16_t) + pubKeyLen;
+    if (keyShare->secondGroup != HITLS_NAMED_GROUP_BUTT) {
+        secondPubKeyLen = SAL_CRYPT_GetCryptLength(ctx, HITLS_CRYPT_INFO_CMD_GET_PUBLIC_KEY_LEN, keyShare->secondGroup);
+        if (secondPubKeyLen == 0u) {
+            BSL_ERR_PUSH_ERROR(HITLS_PACK_INVALID_KX_PUBKEY_LENGTH);
+            BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15422, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
+                "invalid keyShare length.", 0, 0, 0, 0);
+            return HITLS_PACK_INVALID_KX_PUBKEY_LENGTH;
+        }
+        keyShareLen += sizeof(uint16_t) + sizeof(uint16_t) + secondPubKeyLen;
+    }
 
-    int32_t ret = PackExtensionHeader(HS_EX_TYPE_KEY_SHARE, exMsgHeaderLen + exMsgDataLen, buf, bufLen);
+    int32_t ret = PackExtensionHeader(HS_EX_TYPE_KEY_SHARE, sizeof(uint16_t) + keyShareLen, buf, bufLen);
     if (ret != HITLS_SUCCESS) {
         return ret;
     }
     offset += HS_EX_HEADER_LEN;
     /* Pack the total length of client_keyShare */
-    BSL_Uint16ToByte(exMsgDataLen, &buf[offset]);
+    BSL_Uint16ToByte(keyShareLen, &buf[offset]);
     offset += sizeof(uint16_t);
     /* Pack a group */
     BSL_Uint16ToByte((uint16_t)keyShare->group, &buf[offset]);
@@ -649,8 +662,24 @@ static int32_t PackClientKeyShare(const TLS_Ctx *ctx, uint8_t *buf, uint32_t buf
             "encode client keyShare key fail.", 0, 0, 0, 0);
         return HITLS_CRYPT_ERR_ENCODE_ECDH_KEY;
     }
+    offset += pubKeyLen;
+
+    if (keyShare->secondGroup != HITLS_NAMED_GROUP_BUTT) {
+        BSL_Uint16ToByte((uint16_t)keyShare->secondGroup, &buf[offset]);
+        offset += sizeof(uint16_t);
+        BSL_Uint16ToByte((uint16_t)secondPubKeyLen, &buf[offset]);
+        offset += sizeof(uint16_t);
+        ret = SAL_CRYPT_EncodeEcdhPubKey(kxCtx->secondKey, &buf[offset], secondPubKeyLen, &pubKeyUsedLen);
+        if (ret != HITLS_SUCCESS || pubKeyUsedLen != secondPubKeyLen) {
+            BSL_ERR_PUSH_ERROR(HITLS_CRYPT_ERR_ENCODE_ECDH_KEY);
+            BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15423, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
+                "encode client keyShare key fail.", 0, 0, 0, 0);
+            return HITLS_CRYPT_ERR_ENCODE_ECDH_KEY;
+        }
+        offset += secondPubKeyLen;
+    }
+    *usedLen = offset;
     ctx->hsCtx->extFlag.haveKeyShare = true;
-    *usedLen = offset + pubKeyLen;
     return HITLS_SUCCESS;
 }
 
@@ -743,6 +772,7 @@ static int32_t PackClientPreSharedKey(const TLS_Ctx *ctx, uint8_t *buf, uint32_t
     *usedLen = minLen;
     return HITLS_SUCCESS;
 }
+
 #ifdef HITLS_TLS_FEATURE_PHA
 static bool IsNeedPackPha(const TLS_Ctx *ctx)
 {
@@ -855,12 +885,22 @@ static int32_t PackClientExtensions(const TLS_Ctx *ctx, uint8_t *buf, uint32_t b
 #endif /* HITLS_TLS_PROTO_TLS13 */
     };
 
-    uint32_t tmpBufLen = bufLen;
-    ret = PackExtensions(ctx, buf, &tmpBufLen, extMsgList, sizeof(extMsgList) / sizeof(extMsgList[0]));
+    uint32_t exLen = 0;
+    uint32_t offset = 0;
+    if (IsPackNeedCustomExtensions(ctx->customExts, HITLS_EX_TYPE_CLIENT_HELLO)) {
+        ret = PackCustomExtensions(ctx, &buf[offset], bufLen - offset, &exLen, HITLS_EX_TYPE_CLIENT_HELLO);
+        if (ret != HITLS_SUCCESS) {
+            return ret;
+        }
+        offset += exLen;
+    }
+
+    uint32_t tmpBufLen = bufLen - offset;
+    ret = PackExtensions(ctx, &buf[offset], &tmpBufLen, extMsgList, sizeof(extMsgList) / sizeof(extMsgList[0]));
     if (ret != HITLS_SUCCESS) {
         return ret;
     }
-    *usedLen = tmpBufLen;
+    *usedLen = tmpBufLen + exLen;
 #ifdef HITLS_TLS_FEATURE_PHA
     ctx->hsCtx->extFlag.havePostHsAuth = isNeedPha;
 #endif /* HITLS_TLS_FEATURE_PHA */
@@ -992,8 +1032,14 @@ static int32_t PackServerKeyShare(const TLS_Ctx *ctx, uint8_t *buf, uint32_t buf
     if (kxCtx->peerPubkey == NULL) {
         return HITLS_SUCCESS;
     }
-    pubKeyLen = SAL_CRYPT_GetCryptLength(ctx, HITLS_CRYPT_INFO_CMD_GET_PUBLIC_KEY_LEN, keyShare->group);
-    if (pubKeyLen == 0u) {
+    const TLS_GroupInfo *groupInfo = ConfigGetGroupInfo(&ctx->config.tlsConfig, ctx->negotiatedInfo.negotiatedGroup);
+    if (groupInfo == NULL) {
+        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16246, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
+            "group info not found", 0, 0, 0, 0);
+        return HITLS_INVALID_INPUT;
+    }
+    pubKeyLen = groupInfo->isKem ? groupInfo->ciphertextLen : groupInfo->pubkeyLen;
+    if (pubKeyLen == 0u || (groupInfo->isKem && pubKeyLen != kxCtx->ciphertextLen)) {
         BSL_ERR_PUSH_ERROR(HITLS_PACK_INVALID_KX_PUBKEY_LENGTH);
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15428, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "invalid keyShare length.", 0, 0, 0, 0);
@@ -1018,14 +1064,18 @@ static int32_t PackServerKeyShare(const TLS_Ctx *ctx, uint8_t *buf, uint32_t buf
     offset += sizeof(uint16_t);
 
     uint32_t pubKeyUsedLen = 0;
-    /* Pack KeyExChange */
-    ret = SAL_CRYPT_EncodeEcdhPubKey(kxCtx->key, &buf[offset], pubKeyLen, &pubKeyUsedLen);
-    if (ret != HITLS_SUCCESS || pubKeyLen != pubKeyUsedLen) {
-        BSL_ERR_PUSH_ERROR(HITLS_CRYPT_ERR_ENCODE_ECDH_KEY);
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15429, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
-            "encode server keyShare key fail.", 0, 0, 0, 0);
-        return HITLS_CRYPT_ERR_ENCODE_ECDH_KEY;
+    if (groupInfo->isKem) {
+        (void)memcpy_s(&buf[offset], pubKeyLen, kxCtx->ciphertext, kxCtx->ciphertextLen);
+    } else {
+        ret = SAL_CRYPT_EncodeEcdhPubKey(kxCtx->key, &buf[offset], pubKeyLen, &pubKeyUsedLen);
+        if (ret != HITLS_SUCCESS || pubKeyLen != pubKeyUsedLen) {
+            BSL_ERR_PUSH_ERROR(HITLS_CRYPT_ERR_ENCODE_ECDH_KEY);
+            BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15429, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
+                "encode server keyShare key fail.", 0, 0, 0, 0);
+            return HITLS_CRYPT_ERR_ENCODE_ECDH_KEY;
+        }
     }
+    /* Pack KeyExChange */
 
     ctx->hsCtx->extFlag.haveKeyShare = true;
     *usedLen = offset + pubKeyLen;
@@ -1168,6 +1218,7 @@ static int32_t PackServerExtensions(const TLS_Ctx *ctx, uint8_t *buf, uint32_t b
     uint32_t offset = 0u;
 #ifdef HITLS_TLS_PROTO_TLS13
     uint32_t version = HS_GetVersion(ctx);
+    uint32_t context = 0;
     bool isHrrKeyshare = IsHrrKeyShare(ctx);
     bool isTls13 = Tls13NeedPack(ctx, version);
 #endif /* HITLS_TLS_PROTO_TLS13 */
@@ -1212,6 +1263,25 @@ static int32_t PackServerExtensions(const TLS_Ctx *ctx, uint8_t *buf, uint32_t b
         { EXTENSION_MSG(HS_EX_TYPE_PRE_SHARED_KEY, IsNeedPreSharedKey(ctx), PackServerPreSharedKey) },
 #endif /* HITLS_TLS_PROTO_TLS13 */
     };
+
+    if (isTls13) {
+        if (isHrrKeyshare) {
+            context = HITLS_EX_TYPE_HELLO_RETRY_REQUEST;
+        } else {
+            context = HITLS_EX_TYPE_TLS1_3_SERVER_HELLO;
+        }
+    } else {
+        context = HITLS_EX_TYPE_TLS1_2_SERVER_HELLO;
+    }
+
+    exLen = 0u;
+    if (IsPackNeedCustomExtensions(ctx->customExts, context)) {
+        ret = PackCustomExtensions(ctx, &buf[offset], bufLen - offset, &exLen, context);
+        if (ret != HITLS_SUCCESS) {
+            return ret;
+        }
+        offset += exLen;
+    }
 
     /* Calculate the number of extended types */
     listSize = sizeof(extMsgList) / sizeof(extMsgList[0]);

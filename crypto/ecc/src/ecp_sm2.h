@@ -81,7 +81,7 @@ int32_t ECP_Sm2Point2Affine(const ECC_Para *para, ECC_Point *r, const ECC_Point 
 
 /**
  * @ingroup sm2
- * @brief   Calculate r = k * pt，
+ * @brief   Calculate r = k * pt,
  *          Non-consttime calculation
  *
  * @param   para [IN] Curve parameter information

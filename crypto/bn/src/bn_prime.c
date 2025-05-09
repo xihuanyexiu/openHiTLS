@@ -224,7 +224,7 @@ static int32_t ProbablePrime(BN_BigNum *rnd, BN_BigNum *e, uint32_t bits, bool h
         }
         // 'top' can control whether to set the most two significant bits to 1.
         // RSA key generation usually focuses on this parameter to ensure the length of p*q.
-        ret = BN_Rand(rnd, bits, top, BN_RAND_BOTTOM_ONEBIT);
+        ret = BN_RandEx(opt->libCtx, rnd, bits, top, BN_RAND_BOTTOM_ONEBIT);
         if (ret != CRYPT_SUCCESS) {
             BSL_ERR_PUSH_ERROR(ret);
             OptimizerEnd(opt);
@@ -279,9 +279,10 @@ static int32_t BnCheck(const BN_BigNum *bnSubOne, const BN_BigNum *bnSubThree,
     }
     return CRYPT_SUCCESS;
 }
-static int32_t GenRnd(BN_BigNum *rnd, const BN_BigNum *bnSubThree)
+
+static int32_t GenRnd(void *libCtx, BN_BigNum *rnd, const BN_BigNum *bnSubThree)
 {
-    int32_t ret = BN_RandRange(rnd, bnSubThree);
+    int32_t ret = BN_RandRangeEx(libCtx, rnd, bnSubThree);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -306,7 +307,7 @@ int32_t MillerRabinCheckCore(const BN_BigNum *bn, BN_Mont *mont, BN_BigNum *rnd,
     BN_BigNum *sum = rnd;
     for (i = 0; i < checks; i++) {
         // 3.1  Generate a random number rnd, 2 < rnd < n-1
-        ret = GenRnd(rnd, bnSubThree);
+        ret = GenRnd(opt->libCtx, rnd, bnSubThree);
         if (ret != CRYPT_SUCCESS) {
             BSL_ERR_PUSH_ERROR(ret);
             return ret;
@@ -439,6 +440,7 @@ int32_t BN_PrimeCheck(const BN_BigNum *bn, uint32_t checkTimes, BN_Optimizer *op
     }
     // Check whether the number is negative.
     if (bn->sign == 1) {
+        BSL_ERR_PUSH_ERROR(CRYPT_BN_NOR_CHECK_PRIME);
         return CRYPT_BN_NOR_CHECK_PRIME;
     }
     ret = LimbCheck(bn);
@@ -479,7 +481,7 @@ static int32_t GenPrimeLimb(BN_BigNum *bn, uint32_t bits, bool half, BN_Optimize
         return CRYPT_BN_OPTIMIZER_GET_FAIL;
     }
     (void)BN_SetLimb(bnCnt, cnt[bits - 2]); /* offset, the minimum bit of the interface is 2. */
-    ret = BN_RandRange(bnRnd, bnCnt);
+    ret = BN_RandRangeEx(opt->libCtx, bnRnd, bnCnt);
     if (ret != CRYPT_SUCCESS) {
         OptimizerEnd(opt);
         BSL_ERR_PUSH_ERROR(ret);

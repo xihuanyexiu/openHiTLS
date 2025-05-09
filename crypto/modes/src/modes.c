@@ -62,6 +62,7 @@ int32_t MODE_NewCtxInternal(MODES_CipherCtx *ctx, const EAL_SymMethod *method)
     // block mode blockSize equal symm blockSize
     ctx->commonCtx.blockSize = method->blockSize;
     ctx->commonCtx.ciphMeth = method;
+    ctx->commonCtx.offset = 0;
 
     return CRYPT_SUCCESS;
 }
@@ -504,6 +505,7 @@ int32_t MODES_CipherCtrl(MODES_CipherCtx *ctx, int32_t opt, void *val, uint32_t 
         case CRYPT_CTRL_REINIT_STATUS:
             (void)memset_s(ctx->data, EAL_MAX_BLOCK_LENGTH, 0, EAL_MAX_BLOCK_LENGTH);
             ctx->dataLen = 0;
+            ctx->pad = CRYPT_PADDING_NONE;
             return MODES_SetIv(&ctx->commonCtx, val, len);
         case CRYPT_CTRL_GET_IV:
             return MODES_GetIv(&ctx->commonCtx, (uint8_t *)val, len);

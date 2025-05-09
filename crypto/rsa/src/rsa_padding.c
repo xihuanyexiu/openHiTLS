@@ -29,77 +29,6 @@
 
 #define UINT32_SIZE 4
 
-#if defined(HITLS_CRYPTO_RSA_EMSA_PSS) || defined(HITLS_CRYPTO_RSAES_OAEP)
-// outlen should be hash len
-static int32_t CalcHash(const EAL_MdMethod *hashMethod, const CRYPT_Data *hashData, uint32_t size,
-    uint8_t *out, uint32_t outlen)
-{
-    uint32_t hLen = outlen;
-    void *mdCtx = hashMethod->newCtx();
-    if (mdCtx == NULL) {
-        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
-        return CRYPT_MEM_ALLOC_FAIL;
-    }
-    int32_t ret = hashMethod->init(mdCtx, NULL);
-    if (ret != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(ret);
-        goto EXIT;
-    }
-    for (uint32_t i = 0; i < size; i++) {
-        ret = hashMethod->update(mdCtx, hashData[i].data, hashData[i].len);
-        if (ret != CRYPT_SUCCESS) {
-            BSL_ERR_PUSH_ERROR(ret);
-            goto EXIT;
-        }
-    }
-    ret = hashMethod->final(mdCtx, out, &hLen);
-    if (ret != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(ret);
-    }
-EXIT:
-    hashMethod->freeCtx(mdCtx);
-    return ret;
-}
-
-// T init to empty
-// loop: T = T || Hash(mgfSeed || C), C = I2OSP (counter, 4), counter from 0 to ceil(maskLen / hLen) - 1
-static int32_t Mgf(const EAL_MdMethod *hashMethod, const uint8_t *seed, const uint32_t seedLen,
-    uint8_t *mask, uint32_t maskLen)
-{
-    uint32_t hashLen = hashMethod->mdSize;
-    if (hashLen > HASH_MAX_MDSIZE) {
-        BSL_ERR_PUSH_ERROR(CRYPT_RSA_ERR_INPUT_VALUE);
-        return CRYPT_RSA_ERR_INPUT_VALUE;
-    }
-    uint8_t md[HASH_MAX_MDSIZE];
-    uint8_t counter[UINT32_SIZE];
-
-    const CRYPT_Data hashData[] = {
-        {(uint8_t *)(uintptr_t)seed, seedLen}, // mgfSeed
-        {counter, sizeof(counter)}  // counter
-    };
-    int32_t ret = CRYPT_RSA_ERR_INPUT_VALUE;
-    uint32_t i, outLen, partLen;
-    for (i = 0, outLen = 0; outLen < maskLen; i++, outLen += partLen) {
-        PUT_UINT32_BE(i, counter, 0);
-        ret = CalcHash(hashMethod, hashData, sizeof(hashData) / sizeof(hashData[0]), md, hashLen);
-        if (ret != CRYPT_SUCCESS) {
-            goto EXIT;
-        }
-        // Output the leading maskLen octets of T as the octet string mask
-        partLen = (outLen + hashLen <= maskLen) ? hashLen : (maskLen - outLen);
-        if (memcpy_s(mask + outLen, maskLen - outLen, md, partLen) != EOK) {
-            ret = CRYPT_SECUREC_FAIL;
-            BSL_ERR_PUSH_ERROR(ret);
-            goto EXIT;
-        }
-    }
-EXIT:
-    BSL_SAL_CleanseData(md, sizeof(md));
-    return ret;
-}
-#endif
-
 #ifdef HITLS_CRYPTO_RSA_EMSA_PSS
 // maskedDB: [in] maskDB from MGF
 //           [out] maskedDB = DB xor maskDB
@@ -157,13 +86,14 @@ static int32_t PssEncodeLengthCheck(uint32_t modBits, uint32_t hLen,
 }
 
 #if defined(HITLS_CRYPTO_RSA_SIGN) || defined(HITLS_CRYPTO_RSA_BSSA)
-int32_t GenPssSalt(CRYPT_Data *salt, const EAL_MdMethod *mdMethod, int32_t saltLen, uint32_t padBuffLen)
+int32_t GenPssSalt(void *libCtx, CRYPT_Data *salt, const EAL_MdMethod *mdMethod, int32_t saltLen, uint32_t padBuffLen)
 {
     uint32_t hashLen = mdMethod->mdSize;
     if (saltLen == CRYPT_RSA_SALTLEN_TYPE_HASHLEN) { // saltLen is -1
         salt->len = hashLen;
-    } else if (saltLen == CRYPT_RSA_SALTLEN_TYPE_MAXLEN || saltLen == CRYPT_RSA_SALTLEN_TYPE_AUTOLEN) {
-        salt->len = padBuffLen - hashLen - 2; // rfc8017 page42: maximum emLen = hLen + sLen + 2
+    } else if (saltLen == CRYPT_RSA_SALTLEN_TYPE_MAXLEN ||
+        saltLen == CRYPT_RSA_SALTLEN_TYPE_AUTOLEN) { // saltLen is -2 or -3
+        salt->len = padBuffLen - hashLen - 2; // salt, obtains from the DRBG
     } else {
         salt->len = (uint32_t)saltLen;
     }
@@ -174,7 +104,7 @@ int32_t GenPssSalt(CRYPT_Data *salt, const EAL_MdMethod *mdMethod, int32_t saltL
         return CRYPT_MEM_ALLOC_FAIL;
     }
     // Obtain the salt through the public random number.
-    int32_t ret = CRYPT_Rand(salt->data, salt->len);
+    int32_t ret = CRYPT_RandEx(libCtx, salt->data, salt->len);
     if (ret != CRYPT_SUCCESS) {
         BSL_SAL_FREE(salt->data);
         BSL_ERR_PUSH_ERROR(ret);
@@ -182,7 +112,7 @@ int32_t GenPssSalt(CRYPT_Data *salt, const EAL_MdMethod *mdMethod, int32_t saltL
     return ret;
 }
 
-/*
+/**
  * EMSA-PSS Encoding Operation
  *                                    +-----------+
  *                                    |     M     |
@@ -247,23 +177,23 @@ int32_t CRYPT_RSA_SetPss(const EAL_MdMethod *hashMethod, const EAL_MdMethod *mgf
     em[emLen - 1] = 0xbc; // EM = maskedDB || H || 0xbc.
 
     // set H
-    static const uint8_t zeroes8[8] = {0}; // 8 zeros
-    const CRYPT_Data hashData[] = {
-        {(uint8_t *)(uintptr_t)zeroes8, sizeof(zeroes8)},
-        {(uint8_t *)(uintptr_t)data, dataLen}, // mHash
-        {(uint8_t *)(uintptr_t)salt, saltLen}  // salt
+    static const uint8_t zeros8[8] = {0};
+    const CRYPT_ConstData hashData[] = {
+        {zeros8, sizeof(zeros8)},
+        {data, dataLen}, // mHash
+        {salt, saltLen}  // salt
     };
 
     const uint32_t maskedDBLen = emLen - hLen - 1;
     uint8_t *h = em + maskedDBLen;
-    ret = CalcHash(hashMethod, hashData, sizeof(hashData) / sizeof(hashData[0]), h, hLen);
+    ret = CalcHash(hashMethod, hashData, sizeof(hashData) / sizeof(hashData[0]), h, &hLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
 
     // set maskedDB
-    ret = Mgf(mgfMethod, h, hLen, em, maskedDBLen);
+    ret = CRYPT_Mgf1(mgfMethod, h, hLen, em, maskedDBLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -312,7 +242,7 @@ static int32_t GetAndVerifyDB(const EAL_MdMethod *mgfMethod, const CRYPT_Data *e
     uint32_t hLen = emData->len - maskedDBLen - 1;
     uint32_t tmpSaltLen = *saltLen;
     const uint8_t *h = emData->data + maskedDBLen;
-    int32_t ret = Mgf(mgfMethod, h, hLen, dbBuff->data, dbBuff->len);
+    int32_t ret = CRYPT_Mgf1(mgfMethod, h, hLen, dbBuff->data, dbBuff->len);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -336,15 +266,15 @@ static int32_t GetAndVerifyDB(const EAL_MdMethod *mgfMethod, const CRYPT_Data *e
 static int32_t VerifyH(const EAL_MdMethod *hashMethod, const CRYPT_Data *mHash, const CRYPT_Data *salt,
     const CRYPT_Data *h, const CRYPT_Data *hBuff)
 {
-    static const uint8_t zeroes8[8] = {0}; // 8 zeros
-    const CRYPT_Data hashData[] = {
-        {(uint8_t *)(uintptr_t)zeroes8, sizeof(zeroes8)},
-        *mHash,
-        *salt
+    static const uint8_t zeros8[8] = {0};
+    const CRYPT_ConstData hashData[] = {
+        {zeros8, sizeof(zeros8)},
+        {mHash->data, mHash->len},
+        {salt->data, salt->len}
     };
 
     uint32_t hLen = hBuff->len;
-    int32_t ret = CalcHash(hashMethod, hashData, sizeof(hashData) / sizeof(hashData[0]), hBuff->data, hLen);
+    int32_t ret = CalcHash(hashMethod, hashData, sizeof(hashData) / sizeof(hashData[0]), hBuff->data, &hLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -677,7 +607,7 @@ static int32_t OaepSetMaskedDB(const EAL_MdMethod *mgfMethod, uint8_t *db, uint8
         return CRYPT_MEM_ALLOC_FAIL;
     }
 
-    ret = Mgf(mgfMethod, seed, hashLen, maskedDB, maskedDBLen);
+    ret = CRYPT_Mgf1(mgfMethod, seed, hashLen, maskedDB, maskedDBLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         goto EXIT;
@@ -696,11 +626,10 @@ static int32_t OaepSetSeedMask(const EAL_MdMethod *mgfMethod, uint8_t *db, uint8
 {
     uint32_t i;
     int32_t ret;
-    // max hash size HASH_MAX_MDSIZE
     uint8_t seedmask[HASH_MAX_MDSIZE];
     uint32_t maskedDBLen = padLen - hashLen - 1;
 
-    ret = Mgf(mgfMethod, db, maskedDBLen, seedmask, hashLen);
+    ret = CRYPT_Mgf1(mgfMethod, db, maskedDBLen, seedmask, hashLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         goto EXIT;
@@ -713,7 +642,7 @@ EXIT:
     return ret;
 }
 
-/*
+/**
 *    _________________________________________________________________
 *
 *                                +----------+------+--+-------+
@@ -738,10 +667,11 @@ EXIT:
 *
 *                   Figure 1: EME-OAEP Encoding Operation <rfc8017>
 */
-int32_t CRYPT_RSA_SetPkcs1Oaep(const EAL_MdMethod *hashMethod, const EAL_MdMethod *mgfMethod, const uint8_t *in,
-    uint32_t inLen, const uint8_t *param, uint32_t paramLen, uint8_t *pad, uint32_t padLen)
+int32_t CRYPT_RSA_SetPkcs1Oaep(CRYPT_RSA_Ctx *ctx, const uint8_t *in, uint32_t inLen, uint8_t *pad, uint32_t padLen)
 {
     int32_t ret;
+    const EAL_MdMethod *hashMethod = ctx->pad.para.oaep.mdMeth;
+    const EAL_MdMethod *mgfMethod = ctx->pad.para.oaep.mgfMeth;
 
     if (hashMethod == NULL || mgfMethod == NULL || (in == NULL && inLen != 0) || pad == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
@@ -762,7 +692,7 @@ int32_t CRYPT_RSA_SetPkcs1Oaep(const EAL_MdMethod *hashMethod, const EAL_MdMetho
     *pad = 0x00;
     uint8_t *seed = pad + 1;
     // Generate a random octet string seed of length hLen<rfc8017>
-    ret = CRYPT_Rand(seed, hashLen);
+    ret = CRYPT_RandEx(ctx->libCtx, seed, hashLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -770,8 +700,8 @@ int32_t CRYPT_RSA_SetPkcs1Oaep(const EAL_MdMethod *hashMethod, const EAL_MdMetho
     uint8_t *db = seed + hashLen;
 
     // Calculate hash
-    CRYPT_Data data = {(uint8_t *)(uintptr_t)param, paramLen};
-    ret = CalcHash(hashMethod, &data, 1, db, hashLen);
+    const CRYPT_ConstData data = {ctx->label.data, ctx->label.len};
+    ret = CalcHash(hashMethod, &data, 1, db, &hashLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -829,7 +759,7 @@ static int32_t OaepDecodeSeedMask(const EAL_MdMethod *mgfMethod, const uint8_t *
     uint32_t maskedDBLen = inLen - hashLen - 1;
     const uint8_t *maskedDB = maskedSeed + hashLen;
 
-    ret = Mgf(mgfMethod, maskedDB, maskedDBLen, seedMask->data, hashLen);
+    ret = CRYPT_Mgf1(mgfMethod, maskedDB, maskedDBLen, seedMask->data, hashLen);
     if (ret != CRYPT_SUCCESS) {
         return ret;
     }
@@ -847,7 +777,7 @@ static int32_t OaepDecodeMaskedDB(const EAL_MdMethod *mgfMethod, const CRYPT_Dat
     const uint8_t *maskedDB = in->data + 1 + hashLen;
     uint32_t maskedDBLen = in->len - hashLen - 1;
 
-    ret = Mgf(mgfMethod, seedMask, hashLen, dbMaskData->data, maskedDBLen);
+    ret = CRYPT_Mgf1(mgfMethod, seedMask, hashLen, dbMaskData->data, maskedDBLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -864,7 +794,8 @@ static int32_t OaepVerifyHashMaskDB(const EAL_MdMethod *hashMethod, CRYPT_Data *
 {
     int32_t ret;
     uint8_t hashVal[HASH_MAX_MDSIZE];
-    ret = CalcHash(hashMethod, paramData, 1, hashVal, hashLen);
+    CRYPT_ConstData data = {paramData->data, paramData->len};
+    ret = CalcHash(hashMethod, &data, 1, hashVal, &hashLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -947,7 +878,8 @@ ERR:
 #if defined(HITLS_CRYPTO_RSA_ENCRYPT) && \
     (defined(HITLS_CRYPTO_RSAES_PKCSV15_TLS) || defined(HITLS_CRYPTO_RSAES_PKCSV15))
 // Pad output format: EM = 00 || 02 || PS || 00 || M; where M indicates message.
-int32_t CRYPT_RSA_SetPkcsV15Type2(const uint8_t *in, uint32_t inLen, uint8_t *out, uint32_t outLen)
+int32_t CRYPT_RSA_SetPkcsV15Type2(void *libCtx, const uint8_t *in, uint32_t inLen,
+    uint8_t *out, uint32_t outLen)
 {
     // If mLen > k - 11, output "message too long" and stop.<rfc8017>
     if (inLen + 11 > outLen) {
@@ -971,7 +903,7 @@ int32_t CRYPT_RSA_SetPkcsV15Type2(const uint8_t *in, uint32_t inLen, uint8_t *ou
     }
 
     // cal ps
-    ret = CRYPT_Rand(ps, psLen);
+    ret = CRYPT_RandEx(libCtx, ps, psLen);
     if (ret != CRYPT_SUCCESS) {
         return ret;
     }
@@ -982,7 +914,7 @@ int32_t CRYPT_RSA_SetPkcsV15Type2(const uint8_t *in, uint32_t inLen, uint8_t *ou
         }
         do {
             // no zero
-            ret = CRYPT_Rand(ps + i, 1);
+            ret = CRYPT_RandEx(libCtx, ps + i, 1);
             if (ret != CRYPT_SUCCESS) {
                 return ret;
             }

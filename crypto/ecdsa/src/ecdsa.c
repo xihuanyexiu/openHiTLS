@@ -43,6 +43,16 @@ CRYPT_ECDSA_Ctx *CRYPT_ECDSA_NewCtx(void)
     return ctx;
 }
 
+CRYPT_ECDSA_Ctx *CRYPT_ECDSA_NewCtxEx(void *libCtx)
+{
+    CRYPT_ECDSA_Ctx *ctx = CRYPT_ECDSA_NewCtx();
+    if (ctx == NULL) {
+        return NULL;
+    }
+    ctx->libCtx = libCtx;
+    return ctx;
+}
+
 CRYPT_ECDSA_Ctx *CRYPT_ECDSA_DupCtx(CRYPT_ECDSA_Ctx *ctx)
 {
     return ECC_DupCtx(ctx);
@@ -50,6 +60,9 @@ CRYPT_ECDSA_Ctx *CRYPT_ECDSA_DupCtx(CRYPT_ECDSA_Ctx *ctx)
 
 void CRYPT_ECDSA_FreeCtx(CRYPT_ECDSA_Ctx *ctx)
 {
+    if (ctx == NULL) {
+        return;
+    }
     ECC_FreeCtx(ctx);
 }
 
@@ -92,21 +105,7 @@ int32_t CRYPT_ECDSA_GetPara(const CRYPT_ECDSA_Ctx *ctx, BSL_Param *param)
 
 int32_t CRYPT_ECDSA_SetParaEx(CRYPT_ECDSA_Ctx *ctx, CRYPT_EcdsaPara *para)
 {
-    if (para == NULL) {
-        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
-        return CRYPT_NULL_INPUT;
-    }
-
-    // Refresh the public and private keys.
-    BN_Destroy(ctx->prvkey);
-    ctx->prvkey = NULL;
-    ECC_FreePoint(ctx->pubkey);
-    ctx->pubkey = NULL;
-
-    ECC_FreePara(ctx->para);
-    ctx->para = para;
-
-    return CRYPT_SUCCESS;
+    return ECC_SetPara(ctx, para);
 }
 
 int32_t CRYPT_ECDSA_SetPara(CRYPT_ECDSA_Ctx *ctx, const BSL_Param *para)
@@ -129,7 +128,7 @@ int32_t CRYPT_ECDSA_SetPara(CRYPT_ECDSA_Ctx *ctx, const BSL_Param *para)
 
     ECC_FreePara(ctx->para);
     ctx->para = ecdsaPara;
-
+    ECC_SetLibCtx(ctx->libCtx, ctx->para);
     return CRYPT_SUCCESS;
 }
 
@@ -240,7 +239,7 @@ static int32_t EcdsaSignCore(const CRYPT_ECDSA_Ctx *ctx, const BN_BigNum *paraN,
     }
 
     for (i = 0; i < CRYPT_ECC_TRY_MAX_CNT; i++) {
-        GOTO_ERR_IF(BN_RandRange(k, paraN), ret);
+        GOTO_ERR_IF(BN_RandRangeEx(ctx->libCtx, k, paraN), ret);
         if (BN_IsZero(k)) {
             continue;
         }
@@ -522,7 +521,7 @@ int32_t CRYPT_ECDSA_Ctrl(CRYPT_ECDSA_Ctx *ctx, int32_t opt, void *val, uint32_t 
         case CRYPT_CTRL_SET_ECC_USE_COFACTOR_MODE:
             BSL_ERR_PUSH_ERROR(CRYPT_ECDSA_ERR_UNSUPPORTED_CTRL_OPTION);
             return CRYPT_ECDSA_ERR_UNSUPPORTED_CTRL_OPTION;
-        case CRYPT_CTRL_GET_PARAM_ID:
+        case CRYPT_CTRL_GET_PARAID:
             return CRYPT_ECDSA_GetLen(ctx, (GetLenFunc)CRYPT_ECDSA_GetParaId, val, len);
         case CRYPT_CTRL_GET_BITS:
             return CRYPT_ECDSA_GetLen(ctx, (GetLenFunc)CRYPT_ECDSA_GetBits, val, len);
@@ -552,4 +551,124 @@ int32_t CRYPT_ECDSA_GetSecBits(const CRYPT_ECDSA_Ctx *ctx)
     }
     return ECC_GetSecBits(ctx->para);
 }
+
+#ifdef HITLS_CRYPTO_PROVIDER
+
+static int32_t SetCurveInfo(CRYPT_ECDSA_Ctx *ctx, const BSL_Param *curve)
+{
+    if (curve->value == NULL || curve->valueType != BSL_PARAM_TYPE_INT32 ||
+        curve->valueLen != sizeof(int32_t)) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    int32_t ret = CRYPT_ECDSA_SetParaEx(ctx, CRYPT_ECDSA_NewParaById(*(CRYPT_PKEY_ParaId *)curve->value));
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+    }
+    return ret;
+}
+
+int32_t CRYPT_ECDSA_Import(CRYPT_ECDSA_Ctx *ctx, const BSL_Param *params)
+{
+    if (ctx == NULL || params == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    int32_t ret = CRYPT_SUCCESS;
+    const BSL_Param *prv = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_EC_PRVKEY);
+    const BSL_Param *pub = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_EC_POINT_UNCOMPRESSED);
+    const BSL_Param *curve = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_EC_CURVE_ID);
+    if (curve != NULL) {
+        ret = SetCurveInfo(ctx, curve);
+        if (ret != CRYPT_SUCCESS) {
+            BSL_ERR_PUSH_ERROR(ret);
+            return ret;
+        }
+    }
+    if (prv != NULL) {
+        ret = CRYPT_ECDSA_SetPrvKey(ctx, params);
+        if (ret != CRYPT_SUCCESS) {
+            BSL_ERR_PUSH_ERROR(ret);
+            return ret;
+        }
+    }
+    if (pub != NULL) {
+        ret = CRYPT_ECDSA_SetPubKey(ctx, params);
+        if (ret != CRYPT_SUCCESS) {
+            BSL_ERR_PUSH_ERROR(ret);
+            return ret;
+        }
+    }
+    return ret;
+}
+
+int32_t CRYPT_ECDSA_Export(const CRYPT_ECDSA_Ctx *ctx, BSL_Param *params)
+{
+    if (ctx == NULL || params == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    CRYPT_PKEY_ParaId curveId = CRYPT_ECDSA_GetParaId(ctx);
+    if (curveId == CRYPT_PKEY_PARAID_MAX) {
+        BSL_ERR_PUSH_ERROR(CRYPT_ECC_ERR_PARA);
+        return CRYPT_ECC_ERR_PARA;
+    }
+    uint32_t keyBytes = (CRYPT_ECDSA_GetBits(ctx) + 7) / 8;
+    if (keyBytes == 0) {
+        BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);
+        return CRYPT_INVALID_ARG;
+    }
+    int32_t ret;
+    int index = 1;
+    void *args = NULL;
+    CRYPT_EAL_ProcessFuncCb processCb = NULL;
+    BSL_Param ecdsaParams[4] = {
+        {CRYPT_PARAM_EC_CURVE_ID, BSL_PARAM_TYPE_INT32, (int32_t *)&curveId, sizeof(int32_t), 0},
+        {0},
+        {0},
+        BSL_PARAM_END
+    };
+    ret = CRYPT_GetPkeyProcessParams(params, &processCb, &args);
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+        return ret;
+    }
+    uint8_t *buffer = BSL_SAL_Calloc(1, keyBytes * 2); // 2 denote private + public key
+    if (buffer == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
+        return CRYPT_MEM_ALLOC_FAIL;
+    }
+    if (ctx->pubkey != NULL) {
+        (void)BSL_PARAM_InitValue(&ecdsaParams[index], CRYPT_PARAM_EC_POINT_UNCOMPRESSED, BSL_PARAM_TYPE_OCTETS,
+            buffer, keyBytes);
+        ret = CRYPT_ECDSA_GetPubKey(ctx, ecdsaParams);
+        if (ret != CRYPT_SUCCESS) {
+            BSL_SAL_Free(buffer);
+            BSL_ERR_PUSH_ERROR(ret);
+            return ret;
+        }
+        ecdsaParams[index].valueLen = ecdsaParams[index].useLen;
+        index++;
+    }
+    if (ctx->prvkey != NULL) {
+        (void)BSL_PARAM_InitValue(&ecdsaParams[index], CRYPT_PARAM_EC_PRVKEY, BSL_PARAM_TYPE_OCTETS,
+            buffer + keyBytes, keyBytes);
+        ret = CRYPT_ECDSA_GetPrvKey(ctx, ecdsaParams);
+        if (ret != CRYPT_SUCCESS) {
+            BSL_SAL_Free(buffer);
+            BSL_ERR_PUSH_ERROR(ret);
+            return ret;
+        }
+        ecdsaParams[index].valueLen = ecdsaParams[index].useLen;
+        index++;
+    }
+    ret = processCb(ecdsaParams, args);
+    BSL_SAL_Free(buffer);
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+    }
+    return ret;
+}
+#endif // HITLS_CRYPTO_PROVIDER
+
 #endif /* HITLS_CRYPTO_ECDSA */

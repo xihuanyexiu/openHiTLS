@@ -21,12 +21,10 @@
     defined(HITLS_CRYPTO_RSA) || defined(HITLS_CRYPTO_BN_RAND)
 
 #include <stdint.h>
-
+#include "crypt_eal_rand.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef int32_t (*CRYPT_EAL_RandFunc)(uint8_t *rand, uint32_t randLen);
 
 /**
  * @brief   Random number registration
@@ -46,6 +44,27 @@ void CRYPT_RandRegist(CRYPT_EAL_RandFunc func);
  * @retval  Error returned when the registered random number fails during the generate.
  */
 int32_t CRYPT_Rand(uint8_t *rand, uint32_t randLen);
+
+/**
+ * @brief   Random number registration
+ *
+ * @param   func [IN] Interface for obtaining random numbers
+ */
+void CRYPT_RandRegistEx(CRYPT_EAL_RandFuncEx func);
+
+
+/**
+ * @brief   Generate a random number
+ *
+ * @param   libCtx [IN] Library context
+ * @param   rand [OUT] buffer of random number
+ * @param   randLen [IN] length of random number
+ *
+ * @retval  CRYPT_SUCCESS           A random number is generated successfully.
+ * @retval  CRYPT_NO_REGIST_RAND    The random number function is not registered.
+ * @retval  Error returned when the registered random number fails during the generate.
+ */
+int32_t CRYPT_RandEx(void *libCtx, uint8_t *rand, uint32_t randLen);
 
 #if defined(HITLS_CRYPTO_EAL)
 #ifdef HITLS_CRYPTO_ENTROPY

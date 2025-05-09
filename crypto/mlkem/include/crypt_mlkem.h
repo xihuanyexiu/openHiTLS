@@ -23,6 +23,8 @@ typedef struct CryptMlKemCtx CRYPT_ML_KEM_Ctx;
 
 CRYPT_ML_KEM_Ctx *CRYPT_ML_KEM_NewCtx(void);
 
+CRYPT_ML_KEM_Ctx *CRYPT_ML_KEM_NewCtxEx(void *libCtx);
+
 void CRYPT_ML_KEM_FreeCtx(CRYPT_ML_KEM_Ctx *ctx);
 
 CRYPT_ML_KEM_Ctx *CRYPT_ML_KEM_DupCtx(CRYPT_ML_KEM_Ctx *ctx);

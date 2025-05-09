@@ -85,6 +85,7 @@ static int32_t MODES_CFB_BytesEncrypt(MODES_CipherCFBCtx *ctx, const uint8_t *in
             left = 0;
         }
     }
+
     return CRYPT_SUCCESS;
 }
 
@@ -307,7 +308,7 @@ int32_t MODES_CFB_BitCrypt(MODES_CipherCFBCtx *ctx, const uint8_t *in, uint8_t *
             return ret;
         }
         // Divide by 8 to obtain the current byte position. Assign the out encryption bit to 0.
-        out[i / 8] = out[i / 8] & ~(1 << pos);
+        out[i / 8] = out[i / 8] & ~(1u << pos);
         // Divide by 8 to obtain the current byte position. tmpOut[0] >> 7 to obtain the most significant bit.
         out[i / 8] |= (tmp[1] >> 7) << pos; // Assign the out encryption bit to the encrypted/decrypted value.
     }

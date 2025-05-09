@@ -38,6 +38,16 @@ CRYPT_RSA_Ctx *CRYPT_RSA_NewCtx(void)
     return keyCtx;
 }
 
+CRYPT_RSA_Ctx *CRYPT_RSA_NewCtxEx(void *libCtx)
+{
+    CRYPT_RSA_Ctx *keyCtx = CRYPT_RSA_NewCtx();
+    if (keyCtx == NULL) {
+        return NULL;
+    }
+    keyCtx->libCtx = libCtx;
+    return keyCtx;
+}
+
 static CRYPT_RSA_PubKey *RSAPubKeyDupCtx(CRYPT_RSA_PubKey *pubKey)
 {
     CRYPT_RSA_PubKey *newPubKey = BSL_SAL_Malloc(sizeof(CRYPT_RSA_PubKey));
@@ -59,7 +69,7 @@ static CRYPT_RSA_PubKey *RSAPubKeyDupCtx(CRYPT_RSA_PubKey *pubKey)
 
     return newPubKey;
 
-ERR :
+ERR:
     RSA_FREE_PUB_KEY(newPubKey);
     return NULL;
 }
@@ -85,8 +95,8 @@ static CRYPT_RSA_PrvKey *RSAPriKeyDupCtx(CRYPT_RSA_PrvKey *prvKey)
 
     return newPriKey;
 ERR:
-     RSA_FREE_PRV_KEY(newPriKey);
-     return NULL;
+    RSA_FREE_PRV_KEY(newPriKey);
+    return NULL;
 }
 
 static CRYPT_RSA_Para *RSAParaDupCtx(CRYPT_RSA_Para *para)
@@ -105,7 +115,7 @@ static CRYPT_RSA_Para *RSAParaDupCtx(CRYPT_RSA_Para *para)
     GOTO_ERR_IF_SRC_NOT_NULL(newPara->q, para->q, BN_Dup(para->q), CRYPT_MEM_ALLOC_FAIL);
     return newPara;
 
-ERR :
+ERR:
     RSA_FREE_PARA(newPara);
     return NULL;
 }
@@ -184,7 +194,8 @@ CRYPT_RSA_Ctx *CRYPT_RSA_DupCtx(CRYPT_RSA_Ctx *keyCtx)
     GOTO_ERR_IF_SRC_NOT_NULL(newKeyCtx->para, keyCtx->para, RSAParaDupCtx(keyCtx->para), CRYPT_MEM_ALLOC_FAIL);
     BSL_SAL_ReferencesInit(&(newKeyCtx->references));
     return newKeyCtx;
-ERR :
+
+ERR:
     CRYPT_RSA_FreeCtx(newKeyCtx);
     return NULL;
 }
@@ -905,6 +916,7 @@ int32_t CRYPT_RSA_Gen(CRYPT_RSA_Ctx *ctx)
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
+
     int32_t ret = CRYPT_MEM_ALLOC_FAIL;
     BN_Optimizer *optimizer = NULL;
     CRYPT_RSA_Ctx *newCtx = CRYPT_RSA_NewCtx();
@@ -978,5 +990,189 @@ void ShallowCopyCtx(CRYPT_RSA_Ctx *ctx, CRYPT_RSA_Ctx *newCtx)
     ctx->pad = newCtx->pad;
     ctx->flags = newCtx->flags;
 }
+
 #endif // HITLS_CRYPTO_RSA_GEN
+
+#ifdef HITLS_CRYPTO_PROVIDER
+static bool IsExistPrvKeyParams(const BSL_Param *params)
+{
+    const BSL_Param *d = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_RSA_D);
+    const BSL_Param *n = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_RSA_N);
+    const BSL_Param *p = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_RSA_P);
+    const BSL_Param *q = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_RSA_Q);
+    const BSL_Param *dp = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_RSA_DP);
+    const BSL_Param *dq = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_RSA_DQ);
+    const BSL_Param *qInv = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_RSA_QINV);
+    return n != NULL && d != NULL && (PARAMISNULL(p) == PARAMISNULL(q)) &&
+        (PARAMISNULL(dp) == PARAMISNULL(dq)) && PARAMISNULL(dq) == PARAMISNULL(qInv);
+}
+
+static bool IsExistPubKeyParams(const BSL_Param *params)
+{
+    const BSL_Param *e = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_RSA_E);
+    const BSL_Param *n = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_RSA_N);
+    return e != NULL && n != NULL;
+}
+
+static bool IsExistRsaParam(const BSL_Param *params)
+{
+    const BSL_Param *bits = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_RSA_BITS);
+    const BSL_Param *e = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_RSA_E);
+    return bits != NULL && e != NULL;
+}
+
+int32_t CRYPT_RSA_Import(CRYPT_RSA_Ctx *ctx, const BSL_Param *params)
+{
+    int32_t ret = CRYPT_SUCCESS;
+    if (IsExistPrvKeyParams(params)) {
+        ret = CRYPT_RSA_SetPrvKey(ctx, params);
+        if (ret != CRYPT_SUCCESS) {
+            BSL_ERR_PUSH_ERROR(ret);
+            return ret;
+        }
+    }
+    if (IsExistPubKeyParams(params)) {
+        ret = CRYPT_RSA_SetPubKey(ctx, params);
+        if (ret != CRYPT_SUCCESS) {
+            BSL_ERR_PUSH_ERROR(ret);
+            return ret;
+        }
+    }
+    if (IsExistRsaParam(params)) {
+        ret = CRYPT_RSA_SetPara(ctx, params);
+        if (ret != CRYPT_SUCCESS) {
+            BSL_ERR_PUSH_ERROR(ret);
+            return ret;
+        }
+    }
+    const BSL_Param *mdIdParam = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_RSA_MD_ID);
+    const BSL_Param *mgf1IdParam = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_RSA_MGF1_ID);
+    const BSL_Param *saltLenParam = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_RSA_SALTLEN);
+    if (mdIdParam != NULL && mgf1IdParam != NULL && saltLenParam != NULL) {
+        ret = CRYPT_RSA_Ctrl(ctx, CRYPT_CTRL_SET_RSA_EMSA_PSS, (void *)(uintptr_t)params, 0);
+    } else if (mdIdParam != NULL && mdIdParam->valueType == BSL_PARAM_TYPE_INT32 && mdIdParam->value != NULL) {
+        int32_t mdId = *(int32_t *)mdIdParam->value;
+        ret = CRYPT_RSA_Ctrl(ctx, CRYPT_CTRL_SET_RSA_EMSA_PKCSV15, &mdId, sizeof(mdId));
+    }
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+    }
+    return ret;
+}
+
+static void InitRsaPubKeyParams(BSL_Param *params, uint32_t *index, uint8_t *buffer, int32_t len)
+{
+    (void)BSL_PARAM_InitValue(&params[*index], CRYPT_PARAM_RSA_E,
+        BSL_PARAM_TYPE_OCTETS, buffer + ((*index) * len), len);
+    (*index)++;
+    (void)BSL_PARAM_InitValue(&params[*index], CRYPT_PARAM_RSA_N,
+        BSL_PARAM_TYPE_OCTETS, buffer + ((*index) * len), len);
+    (*index)++;
+}
+
+static void InitRsaPrvKeyParams(BSL_Param *params, uint32_t *index, uint8_t *buffer, int32_t len)
+{
+    (void)BSL_PARAM_InitValue(&params[*index], CRYPT_PARAM_RSA_D, 
+        BSL_PARAM_TYPE_OCTETS, buffer + ((*index) * len), len);
+    (*index)++;
+    (void)BSL_PARAM_InitValue(&params[*index], CRYPT_PARAM_RSA_P,
+        BSL_PARAM_TYPE_OCTETS, buffer + ((*index) * len), len);
+    (*index)++;
+    (void)BSL_PARAM_InitValue(&params[*index], CRYPT_PARAM_RSA_Q,
+        BSL_PARAM_TYPE_OCTETS, buffer + ((*index) * len), len);
+    (*index)++;
+    (void)BSL_PARAM_InitValue(&params[*index], CRYPT_PARAM_RSA_DP,
+        BSL_PARAM_TYPE_OCTETS, buffer + ((*index) * len), len);
+    (*index)++;
+    (void)BSL_PARAM_InitValue(&params[*index], CRYPT_PARAM_RSA_DQ,
+        BSL_PARAM_TYPE_OCTETS, buffer + ((*index) * len), len);
+    (*index)++;
+    (void)BSL_PARAM_InitValue(&params[*index], CRYPT_PARAM_RSA_QINV,
+        BSL_PARAM_TYPE_OCTETS, buffer + ((*index) * len), len);
+    (*index)++;
+}
+
+static void ExportRsaPssParams(const CRYPT_RSA_Ctx *ctx, BSL_Param *params, uint32_t *index)
+{
+    (void)BSL_PARAM_InitValue(&params[*index], CRYPT_PARAM_RSA_MD_ID, 
+        BSL_PARAM_TYPE_UINT32, (void *)(uintptr_t)&ctx->pad.para.pss.mdId, sizeof(uint32_t));
+    params[(*index)++].useLen = sizeof(uint32_t);
+    (void)BSL_PARAM_InitValue(&params[*index], CRYPT_PARAM_RSA_MGF1_ID, 
+        BSL_PARAM_TYPE_UINT32, (void *)(uintptr_t)&ctx->pad.para.pss.mgfId, sizeof(uint32_t));
+    params[(*index)++].useLen = sizeof(uint32_t);
+    (void)BSL_PARAM_InitValue(&params[*index], CRYPT_PARAM_RSA_SALTLEN, 
+        BSL_PARAM_TYPE_UINT32, (void *)(uintptr_t)&ctx->pad.para.pss.saltLen, sizeof(uint32_t));
+    params[(*index)++].useLen = sizeof(uint32_t);
+}
+
+static void ExportRsaPkcsParams(const CRYPT_RSA_Ctx *ctx, BSL_Param *params, uint32_t *index)
+{
+    (void)BSL_PARAM_InitValue(&params[*index], CRYPT_PARAM_RSA_MD_ID, 
+        BSL_PARAM_TYPE_UINT32, (void *)(uintptr_t)&ctx->pad.para.pkcsv15.mdId, sizeof(uint32_t));
+    params[(*index)++].useLen = sizeof(uint32_t);
+}
+
+int32_t CRYPT_RSA_Export(const CRYPT_RSA_Ctx *ctx, BSL_Param *params)
+{
+    if (ctx == NULL || params == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    uint32_t index = 1;
+    void *args = NULL;
+    CRYPT_EAL_ProcessFuncCb processCb = NULL;
+    uint32_t keyBits = CRYPT_RSA_GetBits(ctx);
+    if (keyBits == 0) {
+        BSL_ERR_PUSH_ERROR(CRYPT_RSA_NO_KEY_INFO);
+        return CRYPT_RSA_NO_KEY_INFO;
+    }
+    uint32_t bytes = BN_BITS_TO_BYTES(keyBits);
+    BSL_Param rsaParams[13] = {
+        {CRYPT_PARAM_RSA_BITS, BSL_PARAM_TYPE_UINT32, &keyBits, sizeof(uint32_t), sizeof(uint32_t)},
+        {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, BSL_PARAM_END};
+    int32_t ret = CRYPT_GetPkeyProcessParams(params, &processCb, &args);
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+        return ret;
+    }
+    uint8_t *buffer = BSL_SAL_Calloc(1, keyBits * 8);
+    if (buffer == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
+        return CRYPT_MEM_ALLOC_FAIL;
+    }
+    if (ctx->pubKey != NULL) {
+        InitRsaPubKeyParams(rsaParams, &index, buffer, bytes);
+        ret = CRYPT_RSA_GetPubKey(ctx, rsaParams);
+        if (ret != CRYPT_SUCCESS) {
+            BSL_SAL_Free(buffer);
+            BSL_ERR_PUSH_ERROR(ret);
+            return ret;
+        }
+    }
+    if (ctx->prvKey != NULL) {
+        InitRsaPrvKeyParams(rsaParams, &index, buffer, bytes);
+        ret = CRYPT_RSA_GetPrvKey(ctx, rsaParams);
+        if (ret != CRYPT_SUCCESS) {
+            BSL_SAL_Free(buffer);
+            BSL_ERR_PUSH_ERROR(ret);
+            return ret;
+        }
+    }
+    if (ctx->pad.type == EMSA_PSS) {
+        ExportRsaPssParams(ctx, rsaParams, &index);
+    } else if (ctx->pad.type == EMSA_PKCSV15) {
+        ExportRsaPkcsParams(ctx, rsaParams, &index);
+    }
+    for (uint32_t i = 0; i < index; i++) {
+        rsaParams[i].valueLen = rsaParams[i].useLen;
+    }
+    ret = processCb(rsaParams, args);
+    BSL_SAL_Free(buffer);
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+    }
+    return ret;
+}
+#endif // HITLS_CRYPTO_PROVIDER
 #endif /* HITLS_CRYPTO_RSA */
+

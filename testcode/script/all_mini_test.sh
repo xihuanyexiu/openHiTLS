@@ -27,7 +27,7 @@ parse_option()
     for i in $PARAM_LIST
     do
         case "${i}" in
-            "bsl"|"md"|"mac"|"kdf"|"cipher"|"bn"|"ecc"|"pkey"|"all")
+            "bsl"|"md"|"mac"|"kdf"|"cipher"|"bn"|"ecc"|"pkey"|"pki"|"all")
                 TEST=$i
                 ;;
             "x8664"|"armv8")
@@ -67,6 +67,7 @@ test_bsl()
     bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=list test=list
     bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=log test=log
     bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=obj test=obj
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=obj,hash,sal_thread test=obj # depends on thread to init hash
     bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=params test=params
     bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=pem test=pem
 
@@ -309,7 +310,7 @@ test_pkey()
     bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,dh,drbg_hash,sha2 test=dh
 
     # curve25519: ed25519 depends on sha512 by default.
-    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,x25519,drbg_hash,sha2 test=x25519 debug
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,x25519,drbg_hash,sha2 test=x25519
     bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,ed25519,drbg_hash,sha2 test=ed25519
 
     # mldsa
@@ -326,6 +327,90 @@ test_pkey()
 
     # elgamal
     bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,elgamal,drbg_hash,sha2 test=elgamal
+
+    # slh_dsa
+    bash mini_build_test.sh $COMMON_PARAM $NO_LIB enable=eal,slh_dsa,drbg_hash,sha2 test=slh_dsa
+}
+
+test_pki()
+{
+    if [ "$ASM_TYPE" != "" ]; then
+        return
+    fi
+    bash mini_build_test.sh no-tls enable=eal,codecskey,rsa,drbg_hash,cipher,modes,sha256,hmac
+    bash mini_build_test.sh no-tls enable=eal,key_epki,key_encode,rsa,drbg_hash,cipher,modes,sha256,hmac
+    bash mini_build_test.sh no-tls enable=eal,key_encode,rsa,sha256,drbg_hash
+    bash mini_build_test.sh no-tls enable=eal,key_decode,rsa,sha256,drbg_hash
+    bash mini_build_test.sh no-tls enable=eal,x509,rsa,sha256,drbg_hash
+    bash mini_build_test.sh no-tls enable=eal,x509_crt,rsa,sha256,drbg_hash
+    bash mini_build_test.sh no-tls enable=eal,x509_crt_gen,rsa,sha256,drbg_hash
+    bash mini_build_test.sh no-tls enable=eal,x509_crt_parse,rsa,sha256,drbg_hash
+    bash mini_build_test.sh no-tls enable=eal,x509_csr,rsa,sha256,drbg_hash
+    bash mini_build_test.sh no-tls enable=eal,x509_csr_gen,rsa,sha256,drbg_hash
+    bash mini_build_test.sh no-tls enable=eal,x509_csr_parse,rsa,sha256,drbg_hash
+    bash mini_build_test.sh no-tls enable=eal,x509_crl,rsa,sha256,drbg_hash
+    bash mini_build_test.sh no-tls enable=eal,x509_crl_gen,rsa,sha256,drbg_hash
+    bash mini_build_test.sh no-tls enable=eal,x509_crl_parse,rsa,sha256,drbg_hash
+    bash mini_build_test.sh no-tls enable=eal,x509_vfy,rsa,sha256,drbg_hash
+    bash mini_build_test.sh no-tls enable=eal,pkcs12,rsa,sha256,drbg_hash,md,cipher,modes,hmac
+    bash mini_build_test.sh no-tls enable=eal,pkcs12_gen,rsa,sha256,drbg_hash,md,cipher,modes,hmac
+    bash mini_build_test.sh no-tls enable=eal,pkcs12_parse,rsa,drbg_hash,md,cipher,modes,hmac
+    bash mini_build_test.sh no-tls enable=eal,info,x509_crt,rsa,drbg_hash,md,cipher,modes,hmac
+
+    ### key gen ####
+    bash mini_build_test.sh no-tls enable=eal,key_encode,sal_file,pem,rsa,sha256,drbg_hash test=key_encode linux
+    bash mini_build_test.sh no-tls enable=eal,key_encode,pem,ed25519,drbg_hash test=key_encode
+    bash mini_build_test.sh no-tls enable=eal,key_encode,sal_file,sm2,sha256,drbg_hash test=key_encode linux
+    bash mini_build_test.sh no-tls enable=eal,key_encode,pem,ecdsa,curve_nistp256,sha256,drbg_hash test=key_encode
+
+    #### key parse ####
+    bash mini_build_test.sh no-tls enable=eal,key_decode,sal_file,pem,rsa,sha256,drbg_hash test=key_decode linux
+    bash mini_build_test.sh no-tls enable=eal,key_decode,sal_file,pem,ed25519 test=key_decode linux
+    bash mini_build_test.sh no-tls enable=eal,key_decode,sal_file,sm2,sha256 test=key_decode linux
+    bash mini_build_test.sh no-tls enable=eal,key_decode,sal_file,pem,ecdsa,curve_nistp256,sha256 test=key_decode linux
+
+    #### crl gen ####
+    bash mini_build_test.sh no-tls enable=eal,x509_crl_gen,rsa,sal_file,pem,sha256,drbg_hash test=x509_crl_gen linux
+    bash mini_build_test.sh no-tls enable=eal,x509_crl_gen,pem,ed25519,drbg_hash test=x509_crl_gen
+    bash mini_build_test.sh no-tls enable=eal,x509_crl_gen,sm2,sha256,drbg_hash test=x509_crl_gen
+    bash mini_build_test.sh no-tls enable=eal,x509_crl_gen,sal_file,ecdsa,curve_nistp256,sha256,drbg_hash test=x509_crl_gen linux
+
+    #### crl parse ####
+    bash mini_build_test.sh no-tls enable=eal,x509_crl_parse,pem,sal_file,rsa,sha256,drbg_hash test=x509_crl_parse linux
+    bash mini_build_test.sh no-tls enable=eal,x509_crl_parse,sal_file,ed25519,sha256 test=x509_crl_parse linux
+    bash mini_build_test.sh no-tls enable=eal,x509_crl_parse,pem,sal_file,sm2,sha256 test=x509_crl_parse linux
+    bash mini_build_test.sh no-tls enable=eal,x509_crl_parse,sal_file,ecdsa,curve_nistp256,sha256 test=x509_crl_parse linux
+
+    #### csr gen ####
+    bash mini_build_test.sh no-tls enable=eal,x509_csr_gen,pem,rsa,sha256,drbg_hash test=x509_csr_gen
+    bash mini_build_test.sh no-tls enable=eal,x509_csr_gen,sal_file,ed25519,drbg_hash test=x509_csr_gen linux
+    bash mini_build_test.sh no-tls enable=eal,x509_csr_gen,sm2,sha256,drbg_hash test=x509_csr_gen
+    bash mini_build_test.sh no-tls enable=eal,x509_csr_gen,sal_file,pem,ecdsa,curve_nistp256,sha256,drbg_hash test=x509_csr_gen linux
+
+    #### csr parse ####
+    bash mini_build_test.sh no-tls enable=eal,x509_csr_parse,sal_file,rsa,sha256,drbg_hash test=x509_csr_parse linux
+    bash mini_build_test.sh no-tls enable=eal,x509_csr_parse,sal_file,pem,ed25519,drbg_hash test=x509_csr_parse linux
+    bash mini_build_test.sh no-tls enable=eal,x509_csr_parse,sal_file,pem,sm2,sha256,drbg_hash test=x509_csr_parse linux
+    bash mini_build_test.sh no-tls enable=eal,x509_csr_parse,sal_file,ecdsa,curve_nistp256,sha256,drbg_hash test=x509_csr_parse linux
+
+    #### cert gen ####
+    bash mini_build_test.sh no-tls enable=eal,x509_crt_gen,pem,rsa,sha256,drbg_hash test=x509_crt_gen
+    bash mini_build_test.sh no-tls enable=eal,x509_crt_gen,sal_file,pem,ed25519,drbg_hash test=x509_crt_gen linux
+    bash mini_build_test.sh no-tls enable=eal,x509_crt_gen,sal_file,sm2,sha256,drbg_hash test=x509_crt_gen linux
+    bash mini_build_test.sh no-tls enable=eal,x509_crt_gen,ecdsa,curve_nistp256,sha256,drbg_hash test=x509_crt_gen
+
+    ### cert parse ####hitls_x509_verify.c:699
+    bash mini_build_test.sh no-tls enable=eal,x509_crt_parse,sal_file,pem,rsa,sha256,drbg_hash test=x509_crt_parse linux
+    bash mini_build_test.sh no-tls enable=eal,x509_crt_parse,sal_file,ed25519,drbg_hash test=x509_crt_parse linux
+    bash mini_build_test.sh no-tls enable=eal,x509_crt_parse,sal_file,sm2,sha256,drbg_hash test=x509_crt_parse linux
+    bash mini_build_test.sh no-tls enable=eal,x509_crt_parse,sal_file,pem,ecdsa,curve_nistp256,curve_nistp384,sha256,drbg_hash test=x509_crt_parse linux
+
+    ### cert chain ####
+    bash mini_build_test.sh no-tls enable=eal,x509_vfy,sal_file,pem,rsa,ecdsa,curve_nistp256,curve_nistp384,ed25519,sm2,sha2,drbg_hash test=x509_vfy linux
+
+    ### pkcs12 gen ####
+    bash mini_build_test.sh no-tls enable=eal,pkcs12_gen,key_decode,sal_file,pem,rsa,ecdsa,curve_nistp256,ed25519,sm2,drbg_hash,cipher,modes,md,hmac test=pkcs12_gen linux
+    bash mini_build_test.sh no-tls enable=eal,pkcs12_parse,sal_file,pem,rsa,ecdsa,curve_nistp256,curve_nistp384,curve_nistp521,ed25519,sm2,cipher,modes,md,drbg_hash,hmac test=pkcs12_parse linux debug
 }
 
 parse_option
@@ -364,6 +449,9 @@ case $TEST in
         ;;
     "pkey")
         test_pkey
+        ;;
+    "pki")
+        test_pki
         ;;
     *)
         ;;

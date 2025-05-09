@@ -13,6 +13,9 @@
  * See the Mulan PSL v2 for more details.
  */
 
+#include "hitls_build.h"
+#ifdef HITLS_PKI_X509
+
 #include "hitls_x509_local.h"
 #include "securec.h"
 #include "bsl_sal.h"
@@ -22,19 +25,40 @@
 #include "crypt_eal_pkey.h"
 #include "bsl_obj_internal.h"
 #include "bsl_err_internal.h"
+
+#ifdef HITLS_BSL_PEM
 #include "bsl_pem_internal.h"
-#include "crypt_encode_decode.h"
+#endif // HITLS_BSL_PEM
+
+#include "crypt_encode_decode_key.h"
 #include "bsl_params.h"
 #include "crypt_params_key.h"
 #include "hitls_pki_utils.h"
 
+int32_t HITLS_X509_AddListItemDefault(void *item, uint32_t len, BSL_ASN1_List *list)
+{
+    void *node = BSL_SAL_Malloc(len);
+    if (node == NULL) {
+        BSL_ERR_PUSH_ERROR(BSL_MALLOC_FAIL);
+        return BSL_MALLOC_FAIL;
+    }
+    (void)memcpy_s(node, len, item, len);
+    int32_t ret = BSL_LIST_AddElement(list, node, BSL_LIST_POS_AFTER);
+    if (ret != BSL_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+        BSL_SAL_Free(node);
+    }
+    return ret;
+}
+
+#if defined(HITLS_PKI_X509_CRT_PARSE) || defined(HITLS_PKI_X509_CRL_PARSE) || defined(HITLS_PKI_X509_CSR_PARSE)
 int32_t HITLS_X509_ParseTbsRawData(uint8_t *encode, uint32_t encodeLen, uint8_t **tbsRawData, uint32_t *tbsRawDataLen)
 {
     uint8_t *temp = encode;
     uint32_t tempLen = encodeLen;
-    uint32_t valen;
+    uint32_t valLen;
     // x509
-    int32_t ret = BSL_ASN1_DecodeTagLen(BSL_ASN1_TAG_CONSTRUCTED | BSL_ASN1_TAG_SEQUENCE, &temp, &tempLen, &valen);
+    int32_t ret = BSL_ASN1_DecodeTagLen(BSL_ASN1_TAG_CONSTRUCTED | BSL_ASN1_TAG_SEQUENCE, &temp, &tempLen, &valLen);
     if (ret != BSL_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -42,19 +66,19 @@ int32_t HITLS_X509_ParseTbsRawData(uint8_t *encode, uint32_t encodeLen, uint8_t 
     uint32_t len = tempLen;
     *tbsRawData = temp;
     // tbs
-    ret = BSL_ASN1_DecodeTagLen(BSL_ASN1_TAG_CONSTRUCTED | BSL_ASN1_TAG_SEQUENCE, &temp, &tempLen, &valen);
+    ret = BSL_ASN1_DecodeTagLen(BSL_ASN1_TAG_CONSTRUCTED | BSL_ASN1_TAG_SEQUENCE, &temp, &tempLen, &valLen);
     if (ret != BSL_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
 
-    *tbsRawDataLen = len - tempLen + valen;
+    *tbsRawDataLen = len - tempLen + valLen;
     return ret;
 }
 
 int32_t HITLS_X509_ParseSignAlgInfo(BSL_ASN1_Buffer *algId, BSL_ASN1_Buffer *param, HITLS_X509_Asn1AlgId *x509Alg)
 {
-    int32_t ret;
+    int32_t ret = HITLS_PKI_SUCCESS;
     BslOidString oidStr = {algId->len, (char *)algId->buff, 0};
     BslCid cid = BSL_OBJ_GetCIDFromOid(&oidStr);
     if (cid == BSL_CID_UNKNOWN) {
@@ -62,15 +86,22 @@ int32_t HITLS_X509_ParseSignAlgInfo(BSL_ASN1_Buffer *algId, BSL_ASN1_Buffer *par
         return HITLS_X509_ERR_ALG_OID;
     }
     if (cid == BSL_CID_RSASSAPSS) {
+#ifdef HITLS_CRYPTO_RSA
         ret = CRYPT_EAL_ParseRsaPssAlgParam(param, &x509Alg->rsaPssParam);
         if (ret != BSL_SUCCESS) {
             BSL_ERR_PUSH_ERROR(ret);
             return ret;
         }
+#else
+        (void)param;
+        BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_ALG_UNSUPPORT);
+        return HITLS_X509_ERR_ALG_UNSUPPORT;
+#endif
     }
     x509Alg->algId = cid;
-    return HITLS_PKI_SUCCESS;
+    return ret;
 }
+#endif
 
 static int32_t HITLS_X509_ParseNameNode(BSL_ASN1_Buffer *asn, HITLS_X509_NameNode *node)
 {
@@ -137,29 +168,14 @@ int32_t HITLS_X509_ParseNameList(BSL_ASN1_Buffer *name, BSL_ASN1_List *list)
     uint8_t expTag[] = {BSL_ASN1_TAG_CONSTRUCTED | BSL_ASN1_TAG_SET,
         BSL_ASN1_TAG_CONSTRUCTED | BSL_ASN1_TAG_SEQUENCE};
     BSL_ASN1_DecodeListParam listParam = {2, expTag};
-    int32_t ret = BSL_ASN1_DecodeListItem(&listParam, name, &HITLS_X509_ParseListAsnItem, NULL, list);
+    int32_t ret = BSL_ASN1_DecodeListItem(&listParam, name, HITLS_X509_ParseListAsnItem, NULL, list);
     if (ret != BSL_SUCCESS) {
         BSL_LIST_DeleteAll(list, NULL);
     }
     return ret;
 }
 
-int32_t HITLS_X509_AddListItemDefault(void *item, uint32_t len, BSL_ASN1_List *list)
-{
-    void *node = BSL_SAL_Malloc(len);
-    if (node == NULL) {
-        BSL_ERR_PUSH_ERROR(BSL_MALLOC_FAIL);
-        return BSL_MALLOC_FAIL;
-    }
-    (void)memcpy_s(node, len, item, len);
-    int32_t ret = BSL_LIST_AddElement(list, node, BSL_LIST_POS_AFTER);
-    if (ret != BSL_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(ret);
-        BSL_SAL_Free(node);
-    }
-    return ret;
-}
-
+#if defined(HITLS_PKI_X509_CRT_PARSE) || defined(HITLS_PKI_X509_CSR_PARSE) || defined(HITLS_PKI_X509_CRL)
 int32_t HITLS_X509_ParseTime(BSL_ASN1_Buffer *before, BSL_ASN1_Buffer *after, HITLS_X509_ValidTime *time)
 {
     int32_t ret = BSL_ASN1_DecodePrimitiveItem(before, &time->start);
@@ -185,7 +201,9 @@ int32_t HITLS_X509_ParseTime(BSL_ASN1_Buffer *before, BSL_ASN1_Buffer *after, HI
     }
     return ret;
 }
+#endif
 
+#if defined(HITLS_PKI_X509_CSR_GEN) || defined(HITLS_PKI_X509_CRT_GEN) || defined(HITLS_PKI_X509_CRL_GEN)
 static bool X509_CheckIsRsa(uint32_t algId)
 {
     switch (algId) {
@@ -216,7 +234,11 @@ int32_t HITLS_X509_EncodeSignAlgInfo(HITLS_X509_Asn1AlgId *x509Alg, BSL_ASN1_Buf
     asnArr[0].len = oidStr->octetLen;
     asnArr[0].tag = BSL_ASN1_TAG_OBJECT_ID;
     if (x509Alg->algId == BSL_CID_RSASSAPSS) {
+#ifdef HITLS_CRYPTO_RSA
         ret = CRYPT_EAL_EncodeRsaPssAlgParam(&(x509Alg->rsaPssParam), &asnArr[1].buff, &asnArr[1].len);
+#else
+        ret = HITLS_X509_ERR_ALG_UNSUPPORT;
+#endif
         if (ret != BSL_SUCCESS) {
             BSL_ERR_PUSH_ERROR(ret);
             return ret;
@@ -314,7 +336,9 @@ EXIT:
     BSL_SAL_Free(asnBuf);
     return ret;
 }
+#endif
 
+#ifdef HITLS_BSL_PEM
 static void X509_GetPemSymbol(bool isCert, BSL_PEM_Symbol *symbol)
 {
     if (isCert) {
@@ -325,30 +349,38 @@ static void X509_GetPemSymbol(bool isCert, BSL_PEM_Symbol *symbol)
         symbol->tail = BSL_PEM_CRL_END_STR;
     }
 }
+#endif // HITLS_BSL_PEM
 
-static int32_t X509_ParseAndAddRes(BSL_Buffer *asn1Buf, X509_ParseFuncCbk *parsefun, HITLS_X509_List *list)
+static int32_t X509_ParseAndAddRes(CRYPT_EAL_LibCtx *libCtx, const char *attrName, BSL_Buffer *asn1Buf,
+    X509_ParseFuncCbk *parseFun, HITLS_X509_List *list)
 {
-    void *res = parsefun->x509New();
+    void *res = NULL;
+    if (parseFun->x509ProviderNew != NULL) {
+        res = parseFun->x509ProviderNew(libCtx, attrName);
+    } else if (parseFun->x509New != NULL) {
+        res = parseFun->x509New();
+    }
     if (res == NULL) {
         BSL_ERR_PUSH_ERROR(BSL_MALLOC_FAIL);
         return BSL_MALLOC_FAIL;
     }
-    int32_t ret = parsefun->asn1Parse(&(asn1Buf->data), &(asn1Buf->dataLen), res);
+    int32_t ret = parseFun->asn1Parse(&(asn1Buf->data), &(asn1Buf->dataLen), res);
     if (ret != HITLS_PKI_SUCCESS) {
-        parsefun->x509Free(res);
+        parseFun->x509Free(res);
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
     ret = BSL_LIST_AddElement(list, res, BSL_LIST_POS_AFTER);
     if (ret != BSL_SUCCESS) {
-        parsefun->x509Free(res);
+        parseFun->x509Free(res);
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
     return HITLS_PKI_SUCCESS;
 }
 
-static int32_t HITLS_X509_ParseAsn1(const BSL_Buffer *encode, X509_ParseFuncCbk *parsefun, HITLS_X509_List *list)
+static int32_t HITLS_X509_ParseAsn1(CRYPT_EAL_LibCtx *libCtx, const char *attrName, const BSL_Buffer *encode,
+    X509_ParseFuncCbk *parseFun, HITLS_X509_List *list)
 {
     uint8_t *data = encode->data;
     uint32_t dataLen = encode->dataLen;
@@ -363,7 +395,7 @@ static int32_t HITLS_X509_ParseAsn1(const BSL_Buffer *encode, X509_ParseFuncCbk 
         if (asn1Buf.data == NULL) {
             return BSL_DUMP_FAIL;
         }
-        ret = X509_ParseAndAddRes(&asn1Buf, parsefun, list);
+        ret = X509_ParseAndAddRes(libCtx, attrName, &asn1Buf, parseFun, list);
         if (ret != HITLS_PKI_SUCCESS) {
             BSL_SAL_Free(asn1Buf.data);
             return ret;
@@ -374,8 +406,9 @@ static int32_t HITLS_X509_ParseAsn1(const BSL_Buffer *encode, X509_ParseFuncCbk 
     return HITLS_PKI_SUCCESS;
 }
 
-static int32_t HITLS_X509_ParsePem(const BSL_Buffer *encode, bool isCert, X509_ParseFuncCbk *parsefun,
-    HITLS_X509_List *list)
+#ifdef HITLS_BSL_PEM
+static int32_t HITLS_X509_ParsePem(CRYPT_EAL_LibCtx *libCtx, const char *attrName, const BSL_Buffer *encode,
+    bool isCert, X509_ParseFuncCbk *parseFun, HITLS_X509_List *list)
 {
     char *nextEncode = (char *)(encode->data);
     uint32_t nextEncodeLen = encode->dataLen;
@@ -388,7 +421,7 @@ static int32_t HITLS_X509_ParsePem(const BSL_Buffer *encode, bool isCert, X509_P
         if (ret != HITLS_PKI_SUCCESS) {
             break;
         }
-        ret = X509_ParseAndAddRes(&asn1Buf, parsefun, list);
+        ret = X509_ParseAndAddRes(libCtx, attrName, &asn1Buf, parseFun, list);
         if (ret != HITLS_PKI_SUCCESS) {
             BSL_SAL_Free(asn1Buf.data);
             return ret;
@@ -400,34 +433,41 @@ static int32_t HITLS_X509_ParsePem(const BSL_Buffer *encode, bool isCert, X509_P
     }
     return HITLS_PKI_SUCCESS;
 }
+#endif // HITLS_BSL_PEM
 
-static int32_t HITLS_X509_ParseUnknown(const BSL_Buffer *encode, bool isCert, X509_ParseFuncCbk *parsefun,
-    HITLS_X509_List *list)
+static int32_t HITLS_X509_ParseUnknown(CRYPT_EAL_LibCtx *libCtx, const char *attrName, const BSL_Buffer *encode,
+    bool isCert, X509_ParseFuncCbk *parseFun, HITLS_X509_List *list)
 {
+#ifdef HITLS_BSL_PEM
     bool isPem = BSL_PEM_IsPemFormat((char *)(encode->data), encode->dataLen);
     if (isPem) {
-        return HITLS_X509_ParsePem(encode, isCert, parsefun, list);
-    } else {
-        return HITLS_X509_ParseAsn1(encode, parsefun, list);
+        return HITLS_X509_ParsePem(libCtx, attrName, encode, isCert, parseFun, list);
     }
+#else
+    (void)isCert;
+#endif // HITLS_BSL_PEM
+    return HITLS_X509_ParseAsn1(libCtx, attrName, encode, parseFun, list);
 }
 
-int32_t HITLS_X509_ParseX509(int32_t format, const BSL_Buffer *encode, bool isCert, X509_ParseFuncCbk *parsefun,
-    HITLS_X509_List *list)
+int32_t HITLS_X509_ParseX509(CRYPT_EAL_LibCtx *libCtx, const char *attrName, int32_t format, const BSL_Buffer *encode,
+    bool isCert, X509_ParseFuncCbk *parseFun, HITLS_X509_List *list)
 {
     switch (format) {
         case BSL_FORMAT_ASN1:
-            return HITLS_X509_ParseAsn1(encode, parsefun, list);
+            return HITLS_X509_ParseAsn1(libCtx, attrName, encode, parseFun, list);
+#ifdef HITLS_BSL_PEM
         case BSL_FORMAT_PEM:
-            return HITLS_X509_ParsePem(encode, isCert, parsefun, list);
+            return HITLS_X509_ParsePem(libCtx, attrName, encode, isCert, parseFun, list);
+#endif // HITLS_BSL_PEM
         case BSL_FORMAT_UNKNOWN:
-            return HITLS_X509_ParseUnknown(encode, isCert, parsefun, list);
+            return HITLS_X509_ParseUnknown(libCtx, attrName, encode, isCert, parseFun, list);
         default:
-            BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_NOT_SUPPORT_FORMAT);
-            return HITLS_X509_ERR_NOT_SUPPORT_FORMAT;
+            BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_FORMAT_UNSUPPORT);
+            return HITLS_X509_ERR_FORMAT_UNSUPPORT;
     }
 }
 
+#ifdef HITLS_PKI_X509_VFY
 static int32_t X509_NodeNameCompare(BSL_ASN1_Buffer *src, BSL_ASN1_Buffer *dest)
 {
     if (src->tag != dest->tag) {
@@ -506,7 +546,9 @@ int32_t HITLS_X509_CmpNameNode(BSL_ASN1_List *nameOri, BSL_ASN1_List *name)
     }
     return 0;
 }
+#endif // HITLS_PKI_X509_VFY
 
+#ifdef HITLS_CRYPTO_RSA
 /**
  * RFC 4055 section 3.3
  *
@@ -524,7 +566,7 @@ static int32_t X509_CheckPssParam(CRYPT_EAL_PkeyCtx *key, int32_t algId, const C
         return HITLS_X509_ERR_MD_NOT_MATCH;
     }
     CRYPT_MD_AlgId mdId;
-    int32_t ret = CRYPT_EAL_PkeyCtrl(key, CRYPT_CTRL_GET_RSA_MD, &mdId, sizeof(uint32_t));
+    int32_t ret = CRYPT_EAL_PkeyCtrl(key, CRYPT_CTRL_GET_RSA_MD, &mdId, sizeof(int32_t));
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -559,6 +601,7 @@ static int32_t X509_CheckPssParam(CRYPT_EAL_PkeyCtx *key, int32_t algId, const C
     }
     return HITLS_PKI_SUCCESS;
 }
+#endif // HITLS_CRYPTO_RSA
 
 int32_t HITLS_X509_CheckAlg(CRYPT_EAL_PkeyCtx *pubkey, const HITLS_X509_Asn1AlgId *subAlg)
 {
@@ -568,15 +611,20 @@ int32_t HITLS_X509_CheckAlg(CRYPT_EAL_PkeyCtx *pubkey, const HITLS_X509_Asn1AlgI
         return HITLS_X509_ERR_VFY_GET_SIGNID;
     }
     if (pubKeyId == CRYPT_PKEY_RSA) {
+#ifdef HITLS_CRYPTO_RSA
         CRYPT_RsaPadType pad;
         int32_t ret = CRYPT_EAL_PkeyCtrl(pubkey, CRYPT_CTRL_GET_RSA_PADDING, &pad, sizeof(pad));
         if (ret != CRYPT_SUCCESS) {
             BSL_ERR_PUSH_ERROR(ret);
             return ret;
         }
-        if (pad == CRYPT_PKEY_EMSA_PSS) {
+        if (pad == CRYPT_EMSA_PSS) {
             return X509_CheckPssParam(pubkey, subAlg->algId, &subAlg->rsaPssParam);
         }
+#else
+        BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_ALG_UNSUPPORT);
+        return HITLS_X509_ERR_ALG_UNSUPPORT;
+#endif
     }
     BslCid subSignAlg = BSL_OBJ_GetAsymIdFromSignId(subAlg->algId);
     if (subSignAlg == BSL_CID_UNKNOWN) {
@@ -590,6 +638,7 @@ int32_t HITLS_X509_CheckAlg(CRYPT_EAL_PkeyCtx *pubkey, const HITLS_X509_Asn1AlgI
     return HITLS_PKI_SUCCESS;
 }
 
+#if defined(HITLS_PKI_X509_CRT_GEN) || defined(HITLS_PKI_X509_CRL_GEN) || defined(HITLS_PKI_X509_CSR_GEN)
 int32_t HITLS_X509_SignAsn1Data(CRYPT_EAL_PkeyCtx *priv, CRYPT_MD_AlgId mdId,
     BSL_ASN1_Buffer *asn1Buff, BSL_Buffer *rawSignBuff, BSL_ASN1_BitString *sign)
 {
@@ -621,6 +670,7 @@ int32_t HITLS_X509_SignAsn1Data(CRYPT_EAL_PkeyCtx *priv, CRYPT_MD_AlgId mdId,
 
     return ret;
 }
+#endif
 
 static uint32_t X509_GetHashId(const HITLS_X509_Asn1AlgId *alg)
 {
@@ -634,9 +684,14 @@ static uint32_t X509_GetHashId(const HITLS_X509_Asn1AlgId *alg)
     return BSL_CID_UNKNOWN;
 }
 
+#if defined(HITLS_CRYPTO_RSA) || defined(HITLS_CRYPTO_SM2)
 static int32_t X509_CtrlAlgInfo(const CRYPT_EAL_PkeyCtx *pubKey, uint32_t hashId, const HITLS_X509_Asn1AlgId *alg)
 {
+#ifndef HITLS_CRYPTO_RSA
+    (void)hashId;
+#endif
     switch (alg->algId) {
+#ifdef HITLS_CRYPTO_RSA
         case BSL_CID_MD5WITHRSA:
         case BSL_CID_SHA1WITHRSA:
         case BSL_CID_SHA224WITHRSAENCRYPTION:
@@ -658,20 +713,25 @@ static int32_t X509_CtrlAlgInfo(const CRYPT_EAL_PkeyCtx *pubKey, uint32_t hashId
             };
             return CRYPT_EAL_PkeyCtrl((CRYPT_EAL_PkeyCtx *)(uintptr_t)pubKey, CRYPT_CTRL_SET_RSA_EMSA_PSS, param, 0);
         }
+#endif
+#ifdef HITLS_CRYPTO_SM2
         case BSL_CID_SM2DSAWITHSM3:
             if (alg->sm2UserId.data != NULL) {
                 return CRYPT_EAL_PkeyCtrl((CRYPT_EAL_PkeyCtx *)(uintptr_t)pubKey, CRYPT_CTRL_SET_SM2_USER_ID,
                     alg->sm2UserId.data, alg->sm2UserId.dataLen);
             }
             return HITLS_PKI_SUCCESS;
+#endif
         default:
             return HITLS_PKI_SUCCESS;
         }
 }
+#endif
 
 int32_t HITLS_X509_CheckSignature(const CRYPT_EAL_PkeyCtx *pubKey, uint8_t *rawData, uint32_t rawDataLen,
     const HITLS_X509_Asn1AlgId *alg, const BSL_ASN1_BitString *signature)
 {
+    int32_t ret;
     uint32_t hashId = X509_GetHashId(alg);
     if (hashId == BSL_CID_UNKNOWN) {
         BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_VFY_GET_HASHID);
@@ -682,12 +742,14 @@ int32_t HITLS_X509_CheckSignature(const CRYPT_EAL_PkeyCtx *pubKey, uint8_t *rawD
         BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_VFY_DUP_PUBKEY);
         return HITLS_X509_ERR_VFY_DUP_PUBKEY;
     }
-    int32_t ret = X509_CtrlAlgInfo(verifyPubKey, hashId, alg);
+#if defined(HITLS_CRYPTO_RSA) || defined(HITLS_CRYPTO_SM2)
+    ret = X509_CtrlAlgInfo(verifyPubKey, hashId, alg);
     if (ret != HITLS_PKI_SUCCESS) {
         CRYPT_EAL_PkeyFreeCtx(verifyPubKey);
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
+#endif
     ret = CRYPT_EAL_PkeyVerify(verifyPubKey, hashId, rawData, rawDataLen, signature->buff, signature->len);
     CRYPT_EAL_PkeyFreeCtx(verifyPubKey);
     if (ret != CRYPT_SUCCESS) {
@@ -696,7 +758,8 @@ int32_t HITLS_X509_CheckSignature(const CRYPT_EAL_PkeyCtx *pubKey, uint8_t *rawD
     return ret;
 }
 
-int32_t HITLS_X509_CheckAki(HITLS_X509_Ext *issueExt, HITLS_X509_Ext *subjectExt, BSL_ASN1_List *subName,
+#ifdef HITLS_PKI_X509_VFY
+int32_t HITLS_X509_CheckAki(HITLS_X509_Ext *issueExt, HITLS_X509_Ext *subjectExt, BSL_ASN1_List *issueName,
     BSL_ASN1_Buffer *serialNum)
 {
     HITLS_X509_ExtAki aki = {0};
@@ -719,25 +782,43 @@ int32_t HITLS_X509_CheckAki(HITLS_X509_Ext *issueExt, HITLS_X509_Ext *subjectExt
     }
     if (ski.kid.dataLen != aki.kid.dataLen || memcmp(ski.kid.data, aki.kid.data, ski.kid.dataLen) != 0) {
         HITLS_X509_ClearAuthorityKeyId(&aki);
+        BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_VFY_AKI_SKI_NOT_MATCH);
         return HITLS_X509_ERR_VFY_AKI_SKI_NOT_MATCH;
     }
     if (aki.issuerName != NULL) {
-        ret = HITLS_X509_CmpNameNode(aki.issuerName, subName);
+        HITLS_X509_GeneralName *name = NULL;
+        for (HITLS_X509_GeneralName *tmp = BSL_LIST_GET_FIRST(aki.issuerName); tmp != NULL;
+            tmp = BSL_LIST_GET_NEXT(aki.issuerName)) {
+            if (tmp->type == HITLS_X509_GN_DNNAME) {
+                name = tmp;
+                break;
+            }
+        }
+        if (name == NULL) {
+            BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_VFY_AKI_SKI_NOT_MATCH);
+            return HITLS_X509_ERR_VFY_AKI_SKI_NOT_MATCH;
+        }
+        ret = HITLS_X509_CmpNameNode((BslList *)name->value.data, issueName);
         HITLS_X509_ClearAuthorityKeyId(&aki);
         if (ret != 0) {
+            BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_VFY_AKI_SKI_NOT_MATCH);
             return HITLS_X509_ERR_VFY_AKI_SKI_NOT_MATCH;
         }
     }
     if (aki.serialNum.dataLen != 0 && aki.serialNum.data != NULL) {
         if (aki.serialNum.dataLen != serialNum->len ||
             memcmp(aki.serialNum.data, serialNum->buff, aki.serialNum.dataLen) != 0) {
+            BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_VFY_AKI_SKI_NOT_MATCH);
             return HITLS_X509_ERR_VFY_AKI_SKI_NOT_MATCH;
         }
     }
 
     return HITLS_PKI_SUCCESS;
 }
+#endif // HITLS_PKI_X509_VFY
 
+#if defined(HITLS_PKI_X509_CRT_GEN) || defined(HITLS_PKI_X509_CRL_GEN) || defined(HITLS_PKI_X509_CSR_GEN)
+#ifdef HITLS_CRYPTO_RSA
 static int32_t X509_SetRsaPssDefaultParam(CRYPT_EAL_PkeyCtx *prvKey, int32_t mdId, HITLS_X509_Asn1AlgId *signAlgId)
 {
     int32_t currentHash;
@@ -814,7 +895,7 @@ static int32_t X509_SetRsaPssParam(CRYPT_EAL_PkeyCtx *prvKey, int32_t mdId, cons
 static int32_t X509_SetRsaPkcsParam(CRYPT_EAL_PkeyCtx *prvKey, int32_t mdId, bool setPadding)
 {
     if (setPadding) {
-        CRYPT_RsaPadType pad = CRYPT_PKEY_EMSA_PKCSV15;
+        CRYPT_RsaPadType pad = CRYPT_EMSA_PKCSV15;
         int32_t ret = CRYPT_EAL_PkeyCtrl(prvKey, CRYPT_CTRL_SET_RSA_PADDING, &pad, sizeof(CRYPT_RsaPadType));
         if (ret != CRYPT_SUCCESS) {
             BSL_ERR_PUSH_ERROR(ret);
@@ -836,13 +917,13 @@ static int32_t X509_SetRsaSignParam(CRYPT_EAL_PkeyCtx *prvKey, int32_t mdId, con
     }
 
     switch (pad) {
-        case CRYPT_PKEY_EMSA_PSS:
+        case CRYPT_EMSA_PSS:
             if (algParam != NULL) {
                 return X509_SetRsaPssParam(prvKey, mdId, algParam, true, signAlgId);
             } else {
                 return X509_SetRsaPssDefaultParam(prvKey, mdId, signAlgId);
             }
-        case CRYPT_PKEY_EMSA_PKCSV15:
+        case CRYPT_EMSA_PKCSV15:
             if (algParam != NULL) {
                 BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_SIGN_PARAM);
                 return HITLS_X509_ERR_SIGN_PARAM;
@@ -868,21 +949,19 @@ static int32_t X509_SetRsaSignParam(CRYPT_EAL_PkeyCtx *prvKey, int32_t mdId, con
     }
     return HITLS_PKI_SUCCESS;
 }
+#endif // HITLS_CRYPTO_RSA
 
+#ifdef HITLS_CRYPTO_SM2
 static int32_t X509_SetSm2SignParam(CRYPT_EAL_PkeyCtx *prvKey, int32_t mdId, const HITLS_X509_SignAlgParam *algParam,
     HITLS_X509_Asn1AlgId *signAlgId)
 {
     int32_t ret;
-    signAlgId->algId = BSL_OBJ_GetSignIdFromHashAndAsymId((BslCid)CRYPT_PKEY_SM2, (BslCid)mdId);
-    if (signAlgId->algId == BSL_CID_UNKNOWN) {
+    if (mdId != BSL_CID_SM3) {
         BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_ENCODE_SIGNID);
         return HITLS_X509_ERR_ENCODE_SIGNID;
     }
+    signAlgId->algId = BSL_CID_SM2DSAWITHSM3;
     if (algParam != NULL && algParam->sm2UserId.data != NULL && algParam->sm2UserId.dataLen != 0) {
-        if (algParam->algId != BSL_CID_SM2DSAWITHSM3) {
-            BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_MD_NOT_MATCH);
-            return HITLS_X509_ERR_MD_NOT_MATCH;
-        }
         ret = CRYPT_EAL_PkeyCtrl(prvKey, CRYPT_CTRL_SET_SM2_USER_ID, algParam->sm2UserId.data,
             algParam->sm2UserId.dataLen);
         if (ret != CRYPT_SUCCESS) {
@@ -899,10 +978,14 @@ static int32_t X509_SetSm2SignParam(CRYPT_EAL_PkeyCtx *prvKey, int32_t mdId, con
 
     return HITLS_PKI_SUCCESS;
 }
+#endif // HITLS_CRYPTO_SM2
 
 int32_t HITLS_X509_Sign(int32_t mdId, const CRYPT_EAL_PkeyCtx *prvKey, const HITLS_X509_SignAlgParam *algParam,
     void *obj, HITLS_X509_SignCb signCb)
 {
+#if !defined(HITLS_CRYPTO_RSA) && !defined(HITLS_CRYPTO_SM2)
+    (void)algParam;
+#endif
     if (!X509_IsValidHashAlg(mdId)) {
         BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_HASHID);
         return HITLS_X509_ERR_HASHID;
@@ -917,6 +1000,7 @@ int32_t HITLS_X509_Sign(int32_t mdId, const CRYPT_EAL_PkeyCtx *prvKey, const HIT
     CRYPT_EAL_PkeyCtx *signKey = (CRYPT_EAL_PkeyCtx *)(uintptr_t)prvKey;
     HITLS_X509_Asn1AlgId signAlgId = {0};
     switch (keyAlgId) {
+#ifdef HITLS_CRYPTO_RSA
         case CRYPT_PKEY_RSA:
             signKey = CRYPT_EAL_PkeyDupCtx(prvKey);
             if (signKey == NULL) {
@@ -930,13 +1014,18 @@ int32_t HITLS_X509_Sign(int32_t mdId, const CRYPT_EAL_PkeyCtx *prvKey, const HIT
                 return ret;
             }
             break;
+#endif
+#if defined(HITLS_CRYPTO_ECDSA) || defined(HITLS_CRYPTO_ED25519)
         case CRYPT_PKEY_ECDSA:
+        case CRYPT_PKEY_ED25519:
             signAlgId.algId = BSL_OBJ_GetSignIdFromHashAndAsymId((BslCid)keyAlgId, (BslCid)mdId);
             if (signAlgId.algId == BSL_CID_UNKNOWN) {
                 BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_ENCODE_SIGNID);
                 return HITLS_X509_ERR_ENCODE_SIGNID;
             }
             break;
+#endif
+#ifdef HITLS_CRYPTO_SM2
         case CRYPT_PKEY_SM2:
             signKey = CRYPT_EAL_PkeyDupCtx(prvKey);
             if (signKey == NULL) {
@@ -950,14 +1039,20 @@ int32_t HITLS_X509_Sign(int32_t mdId, const CRYPT_EAL_PkeyCtx *prvKey, const HIT
                 return ret;
             }
             break;
+#endif
         default:
             BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_CERT_SIGN_ALG);
             return HITLS_X509_ERR_CERT_SIGN_ALG;
     }
 
     ret = signCb(mdId, signKey, &signAlgId, obj);
+#if defined(HITLS_CRYPTO_RSA) || defined(HITLS_CRYPTO_SM2)
     if (keyAlgId == CRYPT_PKEY_RSA || keyAlgId == CRYPT_PKEY_SM2) {
         CRYPT_EAL_PkeyFreeCtx(signKey);
     }
+#endif
     return ret;
 }
+#endif // HITLS_PKI_X509_CRT_GEN || HITLS_PKI_X509_CRL_GEN || HITLS_PKI_X509_CSR_GEN
+
+#endif // HITLS_PKI_X509

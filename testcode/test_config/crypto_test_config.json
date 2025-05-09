@@ -1,6 +1,7 @@
 {
     "testDir":"testcode/sdv/testcase/",
     "testFeatures": {
+        "codecs": ["test_suite_sdv_decode"],
         "asn1": ["test_suite_sdv_asn1"],
         "base64": ["test_suite_sdv_base64"],
         "buffer": ["test_suite_sdv_buffer"],
@@ -103,9 +104,21 @@
         "elgamal": ["test_suite_sdv_eal_elgamal"],
         "hybridkem": ["test_suite_sdv_hybridkem"],
         "mlkem": ["test_suite_sdv_mlkem"],
-        
+        "slh_dsa": ["test_suite_sdv_eal_slh_dsa"],
+
         "encode": ["test_suite_sdv_encode"],
-        "provider": ["test_suite_sdv_eal_provider_load"]
+        "provider": ["test_suite_sdv_eal_provider_load"],
+        "key_encode": ["test_suite_sdv_x509"],
+        "key_decode": ["test_suite_sdv_x509"],
+        "x509_crl_gen": ["test_suite_sdv_x509"],
+        "x509_crl_parse": ["test_suite_sdv_x509"],
+        "x509_csr_gen": ["test_suite_sdv_x509"],
+        "x509_csr_parse": ["test_suite_sdv_x509"],
+        "x509_crt_gen": ["test_suite_sdv_x509"],
+        "x509_crt_parse": ["test_suite_sdv_x509"],
+        "x509_vfy": ["test_suite_sdv_x509"],
+        "pkcs12_gen": ["test_suite_sdv_pkcs12"],
+        "pkcs12_parse": ["test_suite_sdv_pkcs12"]
     },
     "testSuiteCases": {
         "test_suite_sdv_asn1": [],
@@ -266,6 +279,9 @@
         "test_suite_sdv_hybridkem": [],
         "test_suite_sdv_eal_paillier": [],
         "test_suite_sdv_mlkem": [],
-        "test_suite_sdv_eal_elgamal": []
+        "test_suite_sdv_eal_slh_dsa": [],
+        "test_suite_sdv_eal_elgamal": [],
+        "test_suite_sdv_x509": [],
+        "test_suite_sdv_pkcs12": []
     }
 }

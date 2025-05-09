@@ -32,6 +32,8 @@
 #include "pack.h"
 #include "send_process.h"
 #include "hs_kx.h"
+#include "config_type.h"
+
 #if defined(HITLS_TLS_PROTO_TLS_BASIC) || defined(HITLS_TLS_PROTO_DTLS12)
 #ifdef HITLS_TLS_FEATURE_SESSION
 static int32_t ServerPrepareSessionId(TLS_Ctx *ctx)
@@ -149,7 +151,7 @@ int32_t ServerSendServerHelloProcess(TLS_Ctx *ctx)
             return ret;
         }
 #endif
-        ret = SAL_CRYPT_Rand(hsCtx->serverRandom, HS_RANDOM_SIZE);
+        ret = SAL_CRYPT_Rand(LIBCTX_FROM_CTX(ctx), hsCtx->serverRandom, HS_RANDOM_SIZE);
         if (ret != HITLS_SUCCESS) {
             BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15548, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
                 "get server random error.", 0, 0, 0, 0);
@@ -163,14 +165,15 @@ int32_t ServerSendServerHelloProcess(TLS_Ctx *ctx)
             ret = DowngradeServerRandom(ctx);
             if (ret != EOK) {
                 BSL_ERR_PUSH_ERROR(HITLS_MEMCPY_FAIL);
-                BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16135, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
+                BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16248, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
                     "copy down grade random fail.", 0, 0, 0, 0);
                 return HITLS_MEMCPY_FAIL;
             }
         }
 #endif /* HITLS_TLS_PROTO_TLS13 && HITLS_TLS_PROTO_TLS_BASIC */
         /* Set the verify information. */
-        ret = VERIFY_SetHash(hsCtx->verifyCtx, ctx->negotiatedInfo.cipherSuiteInfo.hashAlg);
+        ret = VERIFY_SetHash(LIBCTX_FROM_CTX(ctx), ATTRIBUTE_FROM_CTX(ctx),
+            hsCtx->verifyCtx, ctx->negotiatedInfo.cipherSuiteInfo.hashAlg);
         if (ret != HITLS_SUCCESS) {
             BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15549, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "set verify info fail.",
                 0, 0, 0, 0);
@@ -206,14 +209,22 @@ static int32_t Tls13ServerPrepareKeyShare(TLS_Ctx *ctx)
                                    need to be calculated again */
         return HITLS_SUCCESS;
     }
-
+    const TLS_GroupInfo *groupInfo = ConfigGetGroupInfo(&ctx->config.tlsConfig, keyShare->group);
+    if (groupInfo == NULL) {
+        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16243, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
+            "group info not found", 0, 0, 0, 0);
+        return HITLS_INVALID_INPUT;
+    }
+    if (groupInfo->isKem) {
+        return HITLS_SUCCESS;
+    }
     HITLS_ECParameters curveParams = {
         .type = HITLS_EC_CURVE_TYPE_NAMED_CURVE,
         .param.namedcurve = keyShare->group,
     };
     HITLS_CRYPT_Key *key = NULL;
      /* The ecdhe and dhe groups can invoke the same interface to generate keys. */
-    key = SAL_CRYPT_GenEcdhKeyPair(&curveParams);
+    key = SAL_CRYPT_GenEcdhKeyPair(ctx, &curveParams);
     if (key == NULL) {
         BSL_ERR_PUSH_ERROR(HITLS_CRYPT_ERR_ENCODE_ECDH_KEY);
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15552, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
@@ -237,7 +248,7 @@ int32_t Tls13ServerSendServerHelloProcess(TLS_Ctx *ctx)
             return ret;
         }
 
-        ret = SAL_CRYPT_Rand(hsCtx->serverRandom, HS_RANDOM_SIZE);
+        ret = SAL_CRYPT_Rand(LIBCTX_FROM_CTX(ctx), hsCtx->serverRandom, HS_RANDOM_SIZE);
         if (ret != HITLS_SUCCESS) {
             BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15553, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
                 "get server random error.", 0, 0, 0, 0);
@@ -245,10 +256,20 @@ int32_t Tls13ServerSendServerHelloProcess(TLS_Ctx *ctx)
         }
 
         /* Set the verify information */
-        ret = VERIFY_SetHash(hsCtx->verifyCtx, ctx->negotiatedInfo.cipherSuiteInfo.hashAlg);
+        ret = VERIFY_SetHash(LIBCTX_FROM_CTX(ctx), ATTRIBUTE_FROM_CTX(ctx),
+            hsCtx->verifyCtx, ctx->negotiatedInfo.cipherSuiteInfo.hashAlg);
         if (ret != HITLS_SUCCESS) {
             BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15554, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "set verify info fail.",
                 0, 0, 0, 0);
+            return ret;
+        }
+
+        /* Server secret derivation */
+        ret = HS_TLS13CalcServerHelloProcessSecret(ctx);
+        if (ret != HITLS_SUCCESS) {
+            BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16190, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
+                "Derive-Sevret failed.", 0, 0, 0, 0);
+            ctx->method.sendAlert(ctx, ALERT_LEVEL_FATAL, ALERT_ILLEGAL_PARAMETER);
             return ret;
         }
 
@@ -256,14 +277,6 @@ int32_t Tls13ServerSendServerHelloProcess(TLS_Ctx *ctx)
         if (ret != HITLS_SUCCESS) {
             BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15555, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
                 "pack tls1.3 server hello msg fail.", 0, 0, 0, 0);
-            return ret;
-        }
-        /* Server secret derivation */
-        ret = HS_TLS13CalcServerHelloProcessSecret(ctx);
-        if (ret != HITLS_SUCCESS) {
-            BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16190, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
-                "Derive-Sevret failed.", 0, 0, 0, 0);
-            ctx->method.sendAlert(ctx, ALERT_LEVEL_FATAL, ALERT_ILLEGAL_PARAMETER);
             return ret;
         }
     }

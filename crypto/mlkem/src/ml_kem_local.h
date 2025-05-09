@@ -67,6 +67,7 @@ struct CryptMlKemCtx {
     uint8_t *dk;
     uint32_t dkLen;
     BSL_SAL_RefCount references;
+    void *libCtx;
 };
 
 void MLKEM_ComputNTT(int16_t *a, const int16_t *psi, uint32_t pruLength);

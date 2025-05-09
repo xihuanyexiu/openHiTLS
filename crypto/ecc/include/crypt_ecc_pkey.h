@@ -24,6 +24,7 @@
 #include "crypt_algid.h"
 #include "bsl_params.h"
 #include "sal_atomic.h"
+#include "bsl_params.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,6 +42,7 @@ typedef struct ECC_PkeyCtx {
     CRYPT_PKEY_PointFormat pointFormat;   // Public key point format
     uint32_t useCofactorMode;   // Indicates whether to use the cofactor mode. 1 indicates yes, and 0 indicates no.
     BSL_SAL_RefCount references;
+    void *libCtx;
 } ECC_Pkey;
 
 /**
@@ -209,6 +211,18 @@ ECC_Pkey *ECC_PkeyNewCtx(CRYPT_PKEY_ParaId id);
  * @retval For other error codes, see crypt_errno.h.
  */
 int32_t ECC_PkeyCmp(const ECC_Pkey *a, const ECC_Pkey *b);
+
+/**
+ * @ingroup ecc
+ * @brief Set the parameter of the ECC context
+ *
+ * @param ctx [IN] ECC context
+ * @param para [IN] ECC parameter
+ *
+ * @retval CRYPT_SUCCESS succeeded.
+ * @retval For details about other errors, see crypt_errno.h.
+ */
+int32_t ECC_SetPara(ECC_Pkey *ctx, ECC_Para *para);
 
 #ifdef __cplusplus
 }

@@ -94,7 +94,7 @@ static int32_t CRYPT_EAL_SetMacMethod(CRYPT_EAL_MacCtx *ctx, const CRYPT_EAL_Fun
     return CRYPT_SUCCESS;
 }
 
-CRYPT_EAL_MacCtx *CRYPT_EAL_ProviderMacNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t algId, const char *attrName)
+CRYPT_EAL_MacCtx *CRYPT_EAL_ProviderMacNewCtxInner(CRYPT_EAL_LibCtx *libCtx, int32_t algId, const char *attrName)
 {
     const CRYPT_EAL_Func *funcs = NULL;
     void *provCtx = NULL;
@@ -136,6 +136,17 @@ CRYPT_EAL_MacCtx *CRYPT_EAL_ProviderMacNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t 
     return macCtx;
 }
 #endif
+
+CRYPT_EAL_MacCtx *CRYPT_EAL_ProviderMacNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t algId, const char *attrName)
+{
+#ifdef HITLS_CRYPTO_PROVIDER
+    return CRYPT_EAL_ProviderMacNewCtxInner(libCtx, algId, attrName);
+#else
+    (void)libCtx;
+    (void)attrName;
+    return CRYPT_EAL_MacNewCtx(algId);
+#endif
+}
 
 CRYPT_EAL_MacCtx *MacNewDefaultCtx(CRYPT_MAC_AlgId id)
 {
@@ -304,20 +315,20 @@ int32_t CRYPT_EAL_MacFinal(CRYPT_EAL_MacCtx *ctx, uint8_t *out, uint32_t *len)
     return CRYPT_SUCCESS;
 }
 
-int32_t CRYPT_EAL_MacDeinit(CRYPT_EAL_MacCtx *ctx)
+void CRYPT_EAL_MacDeinit(CRYPT_EAL_MacCtx *ctx)
 {
     if (ctx == NULL) {
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_MAC, CRYPT_MAC_MAX, CRYPT_NULL_INPUT);
-        return CRYPT_NULL_INPUT;
+        return;
     }
     if (ctx->macMeth == NULL || ctx->macMeth->deinit == NULL) {
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_MAC, ctx->id, CRYPT_EAL_ALG_NOT_SUPPORT);
-        return CRYPT_EAL_ALG_NOT_SUPPORT;
+        return;
     }
     ctx->macMeth->deinit(ctx->ctx);
 
     ctx->state = CRYPT_MAC_STATE_NEW;
-    return CRYPT_SUCCESS;
+    return;
 }
 
 int32_t CRYPT_EAL_MacReinit(CRYPT_EAL_MacCtx *ctx)

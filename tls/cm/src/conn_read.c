@@ -185,7 +185,7 @@ static int32_t RecvNSTPreprocess(TLS_Ctx *ctx)
 #if defined(HITLS_TLS_PROTO_DTLS12) && defined(HITLS_BSL_UIO_UDP)
 static int32_t RecvPostFinishPreprocess(TLS_Ctx *ctx)
 {
-    if (!IS_DTLS_VERSION(ctx->config.tlsConfig.maxVersion)) {
+    if (!IS_SUPPORT_DATAGRAM(ctx->config.tlsConfig.originVersionMask)) {
         BSL_LOG_BINLOG_VARLEN(BINLOG_ID16131, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "Unexpected %s handshake state message.", HS_GetMsgTypeStr(ctx->hsCtx->msgBuf[0]));
         ctx->method.sendAlert(ctx, ALERT_LEVEL_FATAL, ALERT_UNEXPECTED_MESSAGE);

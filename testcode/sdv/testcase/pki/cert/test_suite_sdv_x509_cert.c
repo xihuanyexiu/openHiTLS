@@ -28,8 +28,8 @@
 #include "bsl_obj_internal.h"
 #include "sal_time.h"
 #include "sal_file.h"
-#include "crypt_encode_decode.h"
-#include "crypt_eal_encode.h"
+#include "crypt_encode_decode_key.h"
+#include "crypt_eal_codecs.h"
 #include "hitls_x509_local.h"
 
 /* END_HEADER */
@@ -414,7 +414,7 @@ EXIT:
 /* END_CASE */
 
 /* BEGIN_CASE */
-void SDV_X509_CERT_CTRL_FUNC_TC001(char *path, int expRawDataLen, int expSignAlg,
+void SDV_X509_CERT_CTRL_FUNC_TC001(char *path, int expRawDataLen, int expSignAlg, int expSignMdAlg,
     int expKuDigitailSign, int expKuCertSign, int expKuKeyAgreement)
 {
     HITLS_X509_Cert *cert = NULL;
@@ -433,8 +433,12 @@ void SDV_X509_CERT_CTRL_FUNC_TC001(char *path, int expRawDataLen, int expSignAlg
     CRYPT_EAL_PkeyFreeCtx(ealKey);
 
     int32_t alg = 0;
+    int32_t mdAlg = 0;
     ASSERT_EQ(HITLS_X509_CertCtrl(cert, HITLS_X509_GET_SIGNALG, &alg, sizeof(alg)), HITLS_PKI_SUCCESS);
     ASSERT_EQ(alg, expSignAlg);
+    ASSERT_EQ(HITLS_X509_CertCtrl(cert, HITLS_X509_GET_SIGN_MDALG, &mdAlg, sizeof(mdAlg) - 1), HITLS_X509_ERR_INVALID_PARAM);
+    ASSERT_EQ(HITLS_X509_CertCtrl(cert, HITLS_X509_GET_SIGN_MDALG, &mdAlg, sizeof(mdAlg)), HITLS_PKI_SUCCESS);
+    ASSERT_EQ(mdAlg, expSignMdAlg);
 
     int32_t ref = 0;
     ASSERT_EQ(HITLS_X509_CertCtrl(cert, HITLS_X509_REF_UP, &ref, sizeof(ref)), HITLS_PKI_SUCCESS);
@@ -867,7 +871,7 @@ void SDV_X509_CERT_SETANDGEN_TC001(char *derCertPath, char *privPath, int keyTyp
     memset_s(&algParam, sizeof(HITLS_X509_SignAlgParam), 0, sizeof(HITLS_X509_SignAlgParam));
     if (pad == 0) {
         algParamPtr = NULL;
-    } else if (pad == CRYPT_PKEY_EMSA_PSS) {
+    } else if (pad == CRYPT_EMSA_PSS) {
         algParam.algId = BSL_CID_RSASSAPSS;
         algParam.rsaPss.mdId = mdId;
         algParam.rsaPss.mgfId = mgfId;
@@ -891,11 +895,11 @@ void SDV_X509_CERT_SETANDGEN_TC001(char *derCertPath, char *privPath, int keyTyp
 
     ASSERT_EQ(HITLS_X509_CertSign(mdId, privKey, algParamPtr, new), 0);
     ASSERT_EQ(HITLS_X509_CertGenBuff(BSL_FORMAT_ASN1, new, &encodeNew), 0);
-    if (pad != CRYPT_PKEY_EMSA_PSS) {
+    if (pad != CRYPT_EMSA_PSS) {
         ASSERT_TRUE(encodeRaw.dataLen == encodeNew.dataLen || encodeRaw.dataLen == encodeNew.dataLen - 1 ||
             encodeRaw.dataLen == encodeNew.dataLen + 1);
     }
-    if (pkeyId == CRYPT_PKEY_RSA && pad == CRYPT_PKEY_EMSA_PKCSV15) {
+    if (pkeyId == CRYPT_PKEY_RSA && pad == CRYPT_EMSA_PKCSV15) {
         ASSERT_COMPARE("Gen cert", encodeNew.data, encodeNew.dataLen, encodeRaw.data, encodeRaw.dataLen);
     }
 

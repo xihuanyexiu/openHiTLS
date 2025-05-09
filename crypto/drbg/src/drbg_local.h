@@ -50,8 +50,7 @@ struct DrbgCtx {
     DRBG_State state; /* DRBG state */
 
     uint32_t reseedCtr; /* reseed counter */
-    uint32_t reseedInterval; /* threshold of the number of reseed times */
-
+    uint32_t reseedInterval; /* reseed interval times */
 #if defined(HITLS_CRYPTO_DRBG_GM)
     uint64_t lastReseedTime; /* last reseed time, uint: second */
     uint64_t reseedIntervalTime; /* Time threshold for reseed, uint: second */

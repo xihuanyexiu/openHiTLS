@@ -49,8 +49,8 @@ void TestMemInit(void)
 #ifdef HITLS_BSL_SAL_MEM
     return;
 #else
-    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC_CB_FUNC, TestMalloc);
-    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE_CB_FUNC, free);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC, TestMalloc);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE, free);
 #endif
 }
 
@@ -115,9 +115,16 @@ int32_t TestSimpleRand(uint8_t *buff, uint32_t len)
     return 0;
 }
 
+int32_t TestSimpleRandEx(void *libCtx, uint8_t *buff, uint32_t len)
+{
+    (void)libCtx;
+    return TestSimpleRand(buff, len);
+}
+
 int TestRandInit(void)
 {
     int drbgAlgId = GetAvailableRandAlgId();
+    int32_t ret;
     if (drbgAlgId == -1) {
         Print("Drbg algs are disabled.");
         return CRYPT_NOT_SUPPORT;
@@ -129,9 +136,37 @@ int TestRandInit(void)
     CRYPT_Data tempEntropy = {entropy, sizeof(entropy)};
     DRBG_Vec_t seedCtx = {0};
     seedCtx.entropy = &tempEntropy;
-    return CRYPT_EAL_RandInit(drbgAlgId, &seedMeth, (void *)&seedCtx, NULL, 0);
+#endif
+
+#ifdef HITLS_CRYPTO_PROVIDER
+ #ifndef HITLS_CRYPTO_ENTROPY
+    BSL_Param param[4] = {0};
+    (void)BSL_PARAM_InitValue(&param[0], CRYPT_PARAM_RAND_SEEDCTX, BSL_PARAM_TYPE_CTX_PTR, &seedCtx, 0);
+    (void)BSL_PARAM_InitValue(&param[1], CRYPT_PARAM_RAND_SEED_GETENTROPY, BSL_PARAM_TYPE_FUNC_PTR, seedMeth.getEntropy, 0);
+    (void)BSL_PARAM_InitValue(&param[2], CRYPT_PARAM_RAND_SEED_CLEANENTROPY, BSL_PARAM_TYPE_FUNC_PTR, seedMeth.cleanEntropy, 0);
+    ret = CRYPT_EAL_ProviderRandInitCtx(NULL, (CRYPT_RAND_AlgId)drbgAlgId, "provider=default", NULL, 0, param);
+ #else
+    ret = CRYPT_EAL_ProviderRandInitCtx(NULL, (CRYPT_RAND_AlgId)drbgAlgId, "provider=default", NULL, 0, NULL);
+ #endif
 #else
-    return CRYPT_EAL_RandInit(drbgAlgId, NULL, NULL, NULL, 0);
+ #ifndef HITLS_CRYPTO_ENTROPY
+    ret = CRYPT_EAL_RandInit(drbgAlgId, &seedMeth, (void *)&seedCtx, NULL, 0);
+ #else
+    ret = CRYPT_EAL_RandInit(drbgAlgId, NULL, NULL, NULL, 0);
+ #endif
+#endif
+    if (ret == CRYPT_EAL_ERR_DRBG_REPEAT_INIT) {
+        ret = CRYPT_SUCCESS;
+    }
+    return ret;
+}
+
+void TestRandDeInit(void)
+{
+#ifdef HITLS_CRYPTO_PROVIDER
+    CRYPT_EAL_RandDeinitEx(NULL);
+#else
+    CRYPT_EAL_RandDeinit();
 #endif
 }
 #endif
@@ -231,7 +266,6 @@ EXIT:
 #ifdef HITLS_CRYPTO_CIPHER
 CRYPT_EAL_CipherCtx *TestCipherNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t id, const char *attrName, int isProvider)
 {
-#ifdef HITLS_CRYPTO_PROVIDER
     if (isProvider == 1) {
         if (CRYPT_EAL_Init(0) != CRYPT_SUCCESS) {
             return NULL;
@@ -240,12 +274,6 @@ CRYPT_EAL_CipherCtx *TestCipherNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t id, cons
     } else {
         return CRYPT_EAL_CipherNewCtx(id);
     }
-#else
-    (void)libCtx;
-    (void)attrName;
-    (void)isProvider;
-    return CRYPT_EAL_CipherNewCtx(id);
-#endif
 }
 #endif
 

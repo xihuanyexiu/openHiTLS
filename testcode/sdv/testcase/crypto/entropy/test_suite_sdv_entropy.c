@@ -265,6 +265,7 @@ EXIT:
     return NULL;
 }
 
+#ifdef HITLS_CRYPTO_ENTROPY_SYS
 static uint32_t ErrorGetEsEntropy(CRYPT_EAL_Es *esCtx, uint8_t *data, uint32_t len)
 {
     (void)esCtx;
@@ -273,6 +274,7 @@ static uint32_t ErrorGetEsEntropy(CRYPT_EAL_Es *esCtx, uint8_t *data, uint32_t l
 
     return 0;
 }
+#endif
 
 static CRYPT_EAL_SeedPoolCtx *GetPoolCtx(uint32_t ent1, uint32_t ent2, bool pes1, bool pes2)
 {
@@ -1162,7 +1164,7 @@ void SDV_CRYPTO_SEEDPOOL_DrbgTest(int isNull, int algId)
     CRYPT_EAL_EsPara para2 = {false, 7, NULL, (CRYPT_EAL_EntropyGet)EntropyGetNormal};
     ASSERT_TRUE(CRYPT_EAL_SeedPoolAddEs(pool, &para1) == CRYPT_SUCCESS);
     ASSERT_TRUE(CRYPT_EAL_SeedPoolAddEs(pool, &para2) == CRYPT_SUCCESS);
-    CRYPT_RandSeedMethod meth = {NULL};
+    CRYPT_RandSeedMethod meth = {0};
     ASSERT_TRUE(EAL_SetDefaultEntropyMeth(&meth) == CRYPT_SUCCESS);
     CRYPT_EAL_RandDeinit();
     ASSERT_TRUE(CRYPT_EAL_RandInit((CRYPT_RAND_AlgId)algId, &meth, (void *)pool, NULL, 0) == CRYPT_SUCCESS);
@@ -1236,7 +1238,7 @@ void SDV_CRYPTO_SEEDPOOL_MutiTest(void)
     CRYPT_EAL_EsPara para2 = {false, 7, NULL, (CRYPT_EAL_EntropyGet)EntropyGetNormal};
     ASSERT_TRUE(CRYPT_EAL_SeedPoolAddEs(pool, &para1) == CRYPT_SUCCESS);
     ASSERT_TRUE(CRYPT_EAL_SeedPoolAddEs(pool, &para2) == CRYPT_SUCCESS);
-    CRYPT_RandSeedMethod meth = {NULL};
+    CRYPT_RandSeedMethod meth = {0};
     ASSERT_TRUE(EAL_SetDefaultEntropyMeth(&meth) == CRYPT_SUCCESS);
     for (int32_t index = 0; index < 3; index++) {
         BSL_SAL_ThreadId thrd;
@@ -1478,7 +1480,11 @@ void SDV_CRYPTO_SEEDPOOL_CompleteTest(void)
 #endif
     CRYPT_RandSeedMethod meth = {0};
     ASSERT_TRUE(EAL_SetDefaultEntropyMeth(&meth) == CRYPT_SUCCESS);
+#ifdef HITLS_CRYPTO_DRBG_GM
     rndCtx = CRYPT_EAL_DrbgNew(CRYPT_RAND_SM4_CTR_DF, &meth, pool);
+#else
+    rndCtx = CRYPT_EAL_DrbgNew(CRYPT_RAND_AES256_CTR_DF, &meth, pool);
+#endif
     ASSERT_TRUE(rndCtx != NULL);
     ASSERT_TRUE(CRYPT_EAL_DrbgInstantiate(rndCtx, NULL, 0) == CRYPT_SUCCESS);
     uint8_t out[16] = {0};

@@ -29,13 +29,15 @@
 #include "bsl_obj_internal.h"
 #include "bsl_uio.h"
 #include "crypt_errno.h"
-#include "crypt_eal_encode.h"
+#include "crypt_eal_codecs.h"
 #include "crypt_eal_rand.h"
 #include "hitls_x509_local.h"
 #include "hitls_print_local.h"
 #include "bsl_params.h"
 #include "crypt_params_key.h"
 #define MAX_BUFF_SIZE 4096
+#define PATH_MAX_LEN 4096
+#define PWD_MAX_LEN 4096
 
 /* END_HEADER */
 
@@ -148,7 +150,7 @@ void SDV_HITLS_X509_ParseBuffCert_TC001(void)
     ASSERT_EQ(HITLS_X509_CertParseBuff(0, &buff, NULL), HITLS_X509_ERR_INVALID_PARAM);
     buff.dataLen = 1;
     ASSERT_EQ(HITLS_X509_CertParseBuff(0, &buff, NULL), HITLS_X509_ERR_INVALID_PARAM);
-    ASSERT_EQ(HITLS_X509_CertParseBuff(0xff, &buff, &cert), HITLS_X509_ERR_NOT_SUPPORT_FORMAT);
+    ASSERT_EQ(HITLS_X509_CertParseBuff(0xff, &buff, &cert), HITLS_X509_ERR_FORMAT_UNSUPPORT);
 EXIT:
     BSL_GLOBAL_DeInit();
 }
@@ -184,6 +186,8 @@ void SDV_HITLS_X509_CtrlCert_TC001(void)
     ASSERT_EQ(HITLS_X509_CertCtrl(&cert, HITLS_X509_GET_PUBKEY, &cert, 0), CRYPT_NULL_INPUT);
     ASSERT_EQ(HITLS_X509_CertCtrl(&cert, HITLS_X509_GET_SIGNALG, NULL, 0), HITLS_X509_ERR_INVALID_PARAM);
     ASSERT_EQ(HITLS_X509_CertCtrl(&cert, HITLS_X509_GET_SIGNALG, &cert, 0), HITLS_X509_ERR_INVALID_PARAM);
+    ASSERT_EQ(HITLS_X509_CertCtrl(&cert, HITLS_X509_GET_SIGN_MDALG, NULL, 0), HITLS_X509_ERR_INVALID_PARAM);
+    ASSERT_EQ(HITLS_X509_CertCtrl(&cert, HITLS_X509_GET_SIGN_MDALG, &cert, 0), HITLS_X509_ERR_INVALID_PARAM);
     ASSERT_EQ(HITLS_X509_CertCtrl(&cert, HITLS_X509_REF_UP, NULL, 0), HITLS_X509_ERR_INVALID_PARAM);
     ASSERT_EQ(HITLS_X509_CertCtrl(&cert, HITLS_X509_REF_UP, &cert, 0), HITLS_X509_ERR_INVALID_PARAM);
     ASSERT_EQ(HITLS_X509_CertCtrl(&cert, HITLS_X509_EXT_KU_DIGITALSIGN, NULL, 0), HITLS_X509_ERR_INVALID_PARAM);
@@ -254,7 +258,7 @@ void SDV_HITLS_X509_ParseBuffCrl_TC001(void)
     ASSERT_EQ(HITLS_X509_CrlParseBuff(0, &buff, NULL), HITLS_X509_ERR_INVALID_PARAM);
     buff.dataLen = 1;
     ASSERT_EQ(HITLS_X509_CrlParseBuff(0, &buff, NULL), HITLS_X509_ERR_INVALID_PARAM);
-    ASSERT_EQ(HITLS_X509_CrlParseBuff(0xff, &buff, &crl), HITLS_X509_ERR_NOT_SUPPORT_FORMAT);
+    ASSERT_EQ(HITLS_X509_CrlParseBuff(0xff, &buff, &crl), HITLS_X509_ERR_FORMAT_UNSUPPORT);
 EXIT:
     BSL_GLOBAL_DeInit();
 }
@@ -431,7 +435,7 @@ void SDV_X509_EXT_SetBCons_TC001(void)
 
     HITLS_X509_ExtBCons bCons = {true, true, 1};
 
-    ASSERT_EQ(HITLS_X509_ExtCtrl(ext, HITLS_X509_EXT_SET_BCONS, &bCons, 0), HITLS_X509_ERR_EXT_NOT_SUPPORT);
+    ASSERT_EQ(HITLS_X509_ExtCtrl(ext, HITLS_X509_EXT_SET_BCONS, &bCons, 0), HITLS_X509_ERR_EXT_UNSUPPORT);
     ASSERT_EQ(HITLS_X509_CertCtrl(cert, HITLS_X509_EXT_SET_BCONS, &bCons, 0), HITLS_X509_ERR_INVALID_PARAM);
 
     ASSERT_EQ(HITLS_X509_CertCtrl(cert, HITLS_X509_EXT_SET_BCONS, &bCons, sizeof(HITLS_X509_ExtBCons)), 0);
@@ -681,7 +685,7 @@ void SDV_X509_AddDnName_TC001(int unknownCid, int cid, Hex *oid, Hex *value)
     HITLS_X509_DN dnName[1] = {{cid, value->x, value->len}};
     HITLS_X509_DN dnNullName[1] = {{cid, NULL, value->len}};
     HITLS_X509_DN dnZeroLenName[1] = {{cid, value->x, 0}};
-    ASSERT_EQ(HITLS_X509_AddDnName(list, unknownName, 1), HITLS_X509_ERR_SET_DNNAME_UNKKOWN);
+    ASSERT_EQ(HITLS_X509_AddDnName(list, unknownName, 1), HITLS_X509_ERR_SET_DNNAME_UNKNOWN);
 
     ASSERT_EQ(HITLS_X509_AddDnName(list, dnName, 0), HITLS_X509_ERR_INVALID_PARAM);
     ASSERT_EQ(HITLS_X509_AddDnName(list, NULL, 0), HITLS_X509_ERR_INVALID_PARAM);
@@ -1039,7 +1043,7 @@ void SDV_X509_SIGN_Func_TC001(char *keyPath, int keyFormat, int keyType, int mdI
     uint8_t obj = 1;
     if (pad == 0) {
         algParamPtr = NULL;
-    } else if (pad == CRYPT_PKEY_EMSA_PSS) {
+    } else if (pad == CRYPT_EMSA_PSS) {
         algParam.algId = BSL_CID_RSASSAPSS;
         algParam.rsaPss.mdId = hashId;
         algParam.rsaPss.mgfId = mgfId;
@@ -1055,7 +1059,7 @@ void SDV_X509_SIGN_Func_TC001(char *keyPath, int keyFormat, int keyType, int mdI
 
 EXIT:
     CRYPT_EAL_PkeyFreeCtx(prvKey);
-    CRYPT_EAL_RandDeinit();
+    TestRandDeInit();
 }
 /* END_CASE */
 
@@ -1065,7 +1069,7 @@ void SDV_X509_SIGN_Func_TC002(void)
     CRYPT_EAL_PkeyCtx *prvKey = NULL;
     HITLS_X509_SignAlgParam algParam = {0};
     uint8_t obj = 1;
-    CRYPT_RsaPadType pad = CRYPT_PKEY_EMSA_PKCSV15;
+    CRYPT_RsaPadType pad = CRYPT_EMSA_PKCSV15;
     CRYPT_EAL_PkeyPara para = {0};
     uint8_t e[] = {1, 0, 1};
     para.id = CRYPT_PKEY_RSA;
@@ -1085,7 +1089,7 @@ void SDV_X509_SIGN_Func_TC002(void)
     ASSERT_EQ(HITLS_X509_Sign(CRYPT_MD_SHA224, prvKey, NULL, &obj, TestSignCb), 0);
     ASSERT_EQ(HITLS_X509_Sign(CRYPT_MD_SHA224, prvKey, &algParam, &obj, TestSignCb), HITLS_X509_ERR_SIGN_PARAM);
 
-    pad = CRYPT_PKEY_EMSA_PSS;
+    pad = CRYPT_EMSA_PSS;
     ASSERT_EQ(CRYPT_EAL_PkeyCtrl(prvKey, CRYPT_CTRL_SET_RSA_PADDING, &pad, sizeof(CRYPT_RsaPadType)), 0);
     ASSERT_EQ(HITLS_X509_Sign(CRYPT_MD_SHA224, prvKey, NULL, &obj, TestSignCb), 0);
 
@@ -1102,7 +1106,7 @@ void SDV_X509_SIGN_Func_TC002(void)
 
 EXIT:
     CRYPT_EAL_PkeyFreeCtx(prvKey);
-    CRYPT_EAL_RandDeinit();
+    TestRandDeInit();
 }
 /* END_CASE */
 
@@ -1207,5 +1211,109 @@ void SDV_HITLS_X509_PrintDn_TC002(char *certPath, int format, int printFlag, cha
 
 EXIT:
     HITLS_X509_CertFree(cert);
+}
+/* END_CASE */
+
+/* BEGIN_CASE */
+void SDV_CRYPT_EAL_DecodeBuffKey_Ex_TC001(void)
+{
+#ifndef HITLS_CRYPTO_PROVIDER
+    SKIP_TEST();
+#else
+    TestMemInit();
+    BSL_GLOBAL_Init();
+    
+    CRYPT_EAL_PkeyCtx *key = NULL;
+    BSL_Buffer encode = {0};
+    BSL_Buffer pwd = {0};
+    uint8_t data[10] = {0};
+    uint8_t pwdData[10] = {0};
+
+    // Test NULL parameters
+    ASSERT_EQ(CRYPT_EAL_ProviderDecodeBuffKey(NULL, NULL, BSL_CID_UNKNOWN, "ASN1", "PUBKEY_RSA", NULL, NULL, NULL),
+        CRYPT_INVALID_ARG);
+    ASSERT_EQ(CRYPT_EAL_ProviderDecodeBuffKey(NULL, NULL, BSL_CID_UNKNOWN, "ASN1", "PUBKEY_RSA", &encode, NULL, NULL),
+        CRYPT_INVALID_ARG);
+    
+    // Test invalid encode buffer
+    ASSERT_EQ(CRYPT_EAL_ProviderDecodeBuffKey(NULL, NULL, BSL_CID_UNKNOWN, "ASN1", "PUBKEY_RSA", &encode, &pwd, &key),
+        CRYPT_INVALID_ARG);
+    encode.data = data;
+    ASSERT_EQ(CRYPT_EAL_ProviderDecodeBuffKey(NULL, NULL, BSL_CID_UNKNOWN, "ASN1", "PUBKEY_RSA", &encode, &pwd, &key),
+        CRYPT_INVALID_ARG);
+    
+    // Test invalid format
+    encode.dataLen = sizeof(data);
+    ASSERT_EQ(CRYPT_EAL_ProviderDecodeBuffKey(NULL, NULL, BSL_CID_UNKNOWN, "UNKNOWN_FORMAT", "PUBKEY_RSA", &encode, &pwd, &key),
+        CRYPT_DECODE_ERR_NO_USABLE_DECODER);
+
+    // Test invalid type
+    ASSERT_EQ(CRYPT_EAL_ProviderDecodeBuffKey(NULL, NULL, BSL_CID_UNKNOWN, "ASN1", "UNKNOWN_TYPE", &encode, &pwd, &key),
+        CRYPT_DECODE_ERR_NO_USABLE_DECODER);
+
+    // Test invalid password buffer for encrypted private key
+    pwd.data = pwdData;
+    pwd.dataLen = PWD_MAX_LEN + 1;
+    ASSERT_EQ(CRYPT_EAL_ProviderDecodeBuffKey(NULL, NULL, BSL_CID_UNKNOWN, "ASN1", "PRIKEY_PKCS8_ENCRYPT",
+        &encode, &pwd, &key), CRYPT_INVALID_ARG);
+
+    // Test NULL password data with non-zero length
+    pwd.data = NULL;
+    pwd.dataLen = 10;
+    ASSERT_EQ(CRYPT_EAL_ProviderDecodeBuffKey(NULL, NULL, BSL_CID_UNKNOWN, "ASN1", "PRIKEY_PKCS8_ENCRYPT",
+        &encode, &pwd, &key), CRYPT_INVALID_ARG);
+
+EXIT:
+    BSL_GLOBAL_DeInit();
+#endif
+}
+/* END_CASE */
+
+/* BEGIN_CASE */
+void SDV_CRYPT_EAL_DecodeFileKey_Ex_TC001(void)
+{
+#ifndef HITLS_CRYPTO_PROVIDER
+    SKIP_TEST();
+#else
+    TestMemInit();
+    BSL_GLOBAL_Init();
+    
+    CRYPT_EAL_PkeyCtx *key = NULL;
+    BSL_Buffer pwd = {0};
+    uint8_t pwdData[10] = {0};
+
+    // Test NULL parameters
+    ASSERT_EQ(CRYPT_EAL_ProviderDecodeFileKey(NULL, NULL, CRYPT_PKEY_RSA, "ASN1", "PUBKEY_RSA", NULL, NULL, NULL),
+        CRYPT_INVALID_ARG);
+
+    // Test invalid path
+    char longPath[PATH_MAX_LEN + 2] = {0};
+    memset(longPath, 'a', PATH_MAX_LEN + 1);
+    ASSERT_EQ(CRYPT_EAL_ProviderDecodeFileKey(NULL, NULL, CRYPT_PKEY_RSA, "ASN1", "PUBKEY_RSA", longPath, &pwd, &key),
+        CRYPT_INVALID_ARG);
+
+    // Test invalid format
+    ASSERT_EQ(CRYPT_EAL_ProviderDecodeFileKey(NULL, NULL, CRYPT_PKEY_RSA, "UNKNOWN_FORMAT", "PUBKEY_RSA",
+        "../testdata/cert/asn1/rsa2048pub_pkcs1.der", &pwd, &key), CRYPT_DECODE_NO_SUPPORT_FORMAT);
+
+    // Test invalid type
+    ASSERT_EQ(CRYPT_EAL_ProviderDecodeFileKey(NULL, NULL, CRYPT_PKEY_RSA, "ASN1", "UNKNOWN_TYPE",
+        "../testdata/cert/asn1/rsa2048pub_pkcs1.der", &pwd, &key), CRYPT_DECODE_NO_SUPPORT_TYPE);
+
+    // Test invalid password buffer for encrypted private key
+    pwd.data = pwdData;
+    pwd.dataLen = PWD_MAX_LEN + 1;
+    ASSERT_EQ(CRYPT_EAL_ProviderDecodeFileKey(NULL, NULL, CRYPT_PKEY_RSA, "ASN1", "PRIKEY_PKCS8_ENCRYPT",
+        "../testdata/cert/asn1/prime256v1_pkcs8_enc.der", &pwd, &key), CRYPT_INVALID_ARG);
+
+    // Test NULL password data with non-zero length
+    pwd.data = NULL;
+    pwd.dataLen = 10;
+    ASSERT_EQ(CRYPT_EAL_ProviderDecodeFileKey(NULL, NULL, CRYPT_PKEY_ECDSA, "ASN1", "PRIKEY_PKCS8_ENCRYPT",
+        "../testdata/cert/asn1/prime256v1_pkcs8_enc.der", &pwd, &key), CRYPT_INVALID_ARG);
+
+EXIT:
+    BSL_GLOBAL_DeInit();
+#endif
 }
 /* END_CASE */

@@ -42,6 +42,17 @@ CRYPT_SM2_Ctx *CRYPT_SM2_NewCtx(void);
 
 /**
  * @ingroup sm2
+ * @brief sm2 Allocate the context memory space.
+ * 
+ * @param libCtx [IN] Library context
+ *
+ * @retval (CRYPT_SM2_Ctx *) Pointer to the memory space of the allocated context
+ * @retval NULL              Invalid null pointer.
+ */
+CRYPT_SM2_Ctx *CRYPT_SM2_NewCtxEx(void *libCtx);  
+
+/**
+ * @ingroup sm2
  * @brief Copy the sm2 context. After the duplication is complete, invoke the CRYPT_SM2_FreeCtx to release the memory.
  *
  * @param ctx [IN] Source SM2 context
@@ -282,6 +293,24 @@ int32_t CRYPT_SM2_Cmp(const CRYPT_SM2_Ctx *a, const CRYPT_SM2_Ctx *b);
  * @retval security bits
  */
 int32_t CRYPT_SM2_GetSecBits(const CRYPT_SM2_Ctx *ctx);
+
+/**
+ * @ingroup sm2
+ * @brief sm2 import key
+ *
+ * @param ctx [IN/OUT] sm2 context structure
+ * @param params [IN] key parameters
+ */
+int32_t CRYPT_SM2_Import(CRYPT_SM2_Ctx *ctx, const BSL_Param *params);
+
+/**
+ * @ingroup sm2
+ * @brief sm2 export key
+ *
+ * @param ctx [IN] sm2 context structure
+ * @param params [IN/OUT] key parameters
+ */
+int32_t CRYPT_SM2_Export(const CRYPT_SM2_Ctx *ctx, BSL_Param *params);
 
 #ifdef __cplusplus
 }

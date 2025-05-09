@@ -40,6 +40,7 @@ typedef struct {
     uint8_t flag3Iv;                   /* Indicates whether three IVs are used. */
     uint32_t ivIndex;            /* Indicates the sequence number of the IV block to be used. TDES may have three IV. */
 } MODES_CipherCommonCtx;
+
 struct ModesCipherCtx {
     MODES_CipherCommonCtx commonCtx;
     int32_t algId;

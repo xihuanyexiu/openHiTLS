@@ -16,10 +16,12 @@
 #ifndef CRYPT_PROVIDER_H
 #define CRYPT_PROVIDER_H
 
+#include "hitls_build.h"
 #ifdef HITLS_CRYPTO_PROVIDER
 
 #include "crypt_eal_provider.h"
 #include "crypt_eal_implprovider.h"
+#include "bsl_list.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,14 +32,39 @@ extern "C" {
 // Maximum length of provider name
 #define DEFAULT_PROVIDER_NAME_LEN_MAX 255
 
+typedef enum {
+    CRYPT_PROVIDER_GET_USER_CTX = 1,
+    CRYPT_PROVIDER_CTRL_MAX,
+} CRYPT_ProviderCtrlCmd;
+
+struct EAL_LibCtx {
+    BslList *providers; // managing providers
+    BSL_SAL_ThreadLockHandle lock;
+    char *searchProviderPath;
+    void *drbg;
+};
+
+#if defined(HITLS_CRYPTO_ENTROPY) &&                                                        \
+    (defined(HITLS_CRYPTO_ENTROPY_GETENTROPY) || defined(HITLS_CRYPTO_ENTROPY_DEVRANDOM) || \
+    defined(HITLS_CRYPTO_ENTROPY_SYS) || defined(HITLS_CRYPTO_ENTROPY_HARDWARE))
+#define HITLS_CRYPTO_ENTROPY_DEFAULT
+#endif
+
 int32_t CRYPT_EAL_InitPreDefinedProviders(void);
 void CRYPT_EAL_FreePreDefinedProviders(void);
 
 int32_t CRYPT_EAL_DefaultProvInit(CRYPT_EAL_ProvMgrCtx *mgrCtx, BSL_Param *param,
     CRYPT_EAL_Func *capFuncs, CRYPT_EAL_Func **outFuncs, void **provCtx);
 
-int32_t CRYPT_EAL_LoadPreDefinedProvider(CRYPT_EAL_LibCtx *libCtx, const char* providerName);
+int32_t CRYPT_EAL_LoadPreDefinedProvider(CRYPT_EAL_LibCtx *libCtx, const char* providerName,
+    CRYPT_EAL_ProvMgrCtx **ctx);
 
+int32_t CRYPT_EAL_ProviderGetFuncsAndMgrCtx(CRYPT_EAL_LibCtx *libCtx, int32_t operaId, int32_t algId,
+    const char *attribute, const CRYPT_EAL_Func **funcs, CRYPT_EAL_ProvMgrCtx **mgrCtx);
+
+CRYPT_EAL_LibCtx* CRYPT_EAL_GetGlobalLibCtx(void);
+
+int32_t CRYPT_EAL_ProviderQuery(CRYPT_EAL_ProvMgrCtx *ctx, int32_t operaId, CRYPT_EAL_AlgInfo **algInfos);
 #ifdef __cplusplus
 }
 #endif /* __cpluscplus */

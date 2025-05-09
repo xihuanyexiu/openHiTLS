@@ -735,6 +735,7 @@ int32_t DtlsRecordRead(TLS_Ctx *ctx, REC_Type recordType, uint8_t *data, uint32_
     if (decryptBuf.buf == data) {
         /* Update the read length */
         *len = decryptBuf.end;
+
         return HITLS_SUCCESS;
     }
     ret = DtlsProcessBufList(ctx, recordType, bufList, &decryptBuf);

@@ -125,7 +125,7 @@ void SDV_CRYPT_EAL_HMAC_API_TC003(int algId)
     ASSERT_EQ(CRYPT_EAL_MacFinal(ctx, mac, &macLen), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_MacInit(ctx, key, len), CRYPT_SUCCESS);
 
-    ASSERT_EQ(CRYPT_EAL_MacDeinit(ctx), CRYPT_SUCCESS);
+    CRYPT_EAL_MacDeinit(ctx);
     ASSERT_EQ(CRYPT_EAL_MacInit(ctx, key, len), CRYPT_SUCCESS);
 
     ASSERT_EQ(CRYPT_EAL_MacReinit(ctx), CRYPT_SUCCESS);
@@ -256,7 +256,7 @@ void SDV_CRYPT_EAL_HMAC_API_TC006(int algId)
     ASSERT_EQ(CRYPT_EAL_MacFinal(ctx, mac, &macLen), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_GetMacLen(ctx), GetMacLen(algId));
 
-    ASSERT_EQ(CRYPT_EAL_MacDeinit(ctx), CRYPT_SUCCESS);
+    CRYPT_EAL_MacDeinit(ctx);
     ASSERT_EQ(CRYPT_EAL_GetMacLen(ctx), GetMacLen(algId));
 EXIT:
     CRYPT_EAL_MacFreeCtx(ctx);
@@ -303,7 +303,7 @@ void SDV_CRYPT_EAL_HMAC_API_TC007(int algId)
     ASSERT_EQ(CRYPT_EAL_MacFinal(ctx, mac, &macLen), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_MacReinit(ctx), CRYPT_SUCCESS);
 
-    ASSERT_EQ(CRYPT_EAL_MacDeinit(ctx), CRYPT_SUCCESS);
+    CRYPT_EAL_MacDeinit(ctx);
     ASSERT_EQ(CRYPT_EAL_MacReinit(ctx), CRYPT_EAL_ERR_STATE);
 EXIT:
     CRYPT_EAL_MacFreeCtx(ctx);
@@ -377,7 +377,7 @@ void SDV_CRYPT_EAL_HMAC_FUN_TC002(int algId, Hex *key, Hex *data1, Hex *data2, H
     ASSERT_EQ(CRYPT_EAL_MacUpdate(ctx, data3->x, data3->len), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_MacFinal(ctx, mac, &macLen), CRYPT_SUCCESS);
     ASSERT_COMPARE("mac1 result cmp", mac, macLen, vecMac->x, vecMac->len);
-    ASSERT_EQ(CRYPT_EAL_MacDeinit(ctx), CRYPT_SUCCESS);
+    CRYPT_EAL_MacDeinit(ctx);
 EXIT:
     CRYPT_EAL_MacFreeCtx(ctx);
     free(mac);
@@ -431,18 +431,16 @@ EXIT:
 /* BEGIN_CASE */
 void SDV_CRYPT_HMAC_DEFAULT_PROVIDER_FUNC_TC001(int algId, Hex *key, Hex *data, Hex *vecMac)
 {
-#ifndef HITLS_CRYPTO_PROVIDER
-    (void)algId;
-    (void)key;
-    (void)data;
-    (void)vecMac;
-    SKIP_TEST();
-#else
     if (IsHmacAlgDisabled(algId)) {
         SKIP_TEST();
     }
     TestMemInit();
-    CRYPT_EAL_MacCtx *ctx = CRYPT_EAL_ProviderMacNewCtx(NULL, algId, "provider=default");
+    CRYPT_EAL_MacCtx *ctx = NULL;
+#ifdef HITLS_CRYPTO_PROVIDER
+    ctx = CRYPT_EAL_ProviderMacNewCtx(NULL, algId, "provider=default");
+#else
+    ctx = CRYPT_EAL_MacNewCtx(algId);
+#endif
     ASSERT_TRUE(ctx != NULL);
 
     uint32_t macLen = GetMacLen(algId);
@@ -454,12 +452,11 @@ void SDV_CRYPT_HMAC_DEFAULT_PROVIDER_FUNC_TC001(int algId, Hex *key, Hex *data, 
     ASSERT_EQ(CRYPT_EAL_MacUpdate(ctx, data->x, data->len), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_MacFinal(ctx, mac, &macLen), CRYPT_SUCCESS);
     ASSERT_COMPARE("mac1 result cmp", mac, macLen, vecMac->x, vecMac->len);
-    ASSERT_EQ(CRYPT_EAL_MacDeinit(ctx), CRYPT_SUCCESS);
+    CRYPT_EAL_MacDeinit(ctx);
     ASSERT_EQ(CRYPT_EAL_MacInit(ctx, key->x, key->len), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_MacReinit(ctx), CRYPT_SUCCESS);
 EXIT:
     CRYPT_EAL_MacFreeCtx(ctx);
     BSL_SAL_FREE(mac);
-#endif
 }
 /* END_CASE */

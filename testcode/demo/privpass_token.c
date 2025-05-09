@@ -5,8 +5,10 @@
 #include "auth_params.h"
 #include "bsl_sal.h"
 #include "bsl_err.h"
+#include "crypt_eal_init.h"
 #include "crypt_eal_rand.h"
 #include "auth_errno.h"
+#include "crypt_errno.h"
 
 uint8_t pubKey[] = {0x30, 0x82, 0x01, 0x52, 0x30, 0x3d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01,
     0x0a, 0x30, 0x30, 0xa0, 0x0d, 0x30, 0x0b, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04,
@@ -163,8 +165,8 @@ void PrintHex(const uint8_t* data, uint32_t len) {
 
 int main(void) {
     BSL_ERR_Init(); // Initialize error code module
-    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC_CB_FUNC, StdMalloc); // Register memory allocation function
-    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE_CB_FUNC, free); // Register memory free function
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC, StdMalloc); // Register memory allocation function
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE, free); // Register memory free function
 
     int32_t ret = 1;
 
@@ -199,9 +201,16 @@ int main(void) {
             sizeof(originInfo)},
         BSL_PARAM_END
     };
+    ret = CRYPT_EAL_Init(CRYPT_EAL_INIT_CPU | CRYPT_EAL_INIT_PROVIDER);
+    if (ret != CRYPT_SUCCESS) {
+        printf("error code is %x\n", ret);
+        PrintLastError();
+        goto EXIT;
+    }
     // Initialize random number generator. NULL means using default entropy source, 
     // users can choose to use their own entropy source
-    if (CRYPT_EAL_RandInit(BSL_CID_RAND_SHA256, NULL, NULL, NULL, 0) != 0) { 
+    ret = CRYPT_EAL_ProviderRandInitCtx(NULL, CRYPT_RAND_SHA256, "provider=default", NULL, 0, NULL);
+    if (ret != CRYPT_SUCCESS) { 
         printf("error code is %x\n", ret);
         PrintLastError();
         goto EXIT;

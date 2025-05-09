@@ -116,7 +116,7 @@ void BN_Destroy(BN_BigNum *a);
  * @param   data [IN] BN data, the memory is allocated by the user and is not managed by the BN.
  * @param   number [IN] number of BN that need to be initialized.
  *
- * @retval 无
+ * @retval void
  */
 void BN_Init(BN_BigNum *bn, BN_UINT *data, uint32_t room, int32_t number);
 
@@ -813,6 +813,25 @@ int32_t BN_Rand(BN_BigNum *r, uint32_t bits, uint32_t top, uint32_t bottom);
  * @ingroup bn
  * @brief generate random BigNum
  *
+ * @param libCtx [IN] provider libCtx
+ * @param r      [OUT] Generate a random number.
+ * @param bits   [IN] Length of the generated prime number
+ * @param top    [IN] Generating the flag indicating whether to set the most significant bit of a random number
+ * @param bottom [IN] Generate the flag indicating whether to set the least significant bit of the random number.
+ *
+ * @retval CRYPT_SUCCESS                        A random number is generated successfully.
+ * @retval CRYPT_NULL_INPUT                     Invalid null pointer
+ * @retval CRYPT_MEM_ALLOC_FAIL                 Memory allocation failure
+ * @retval CRYPT_BN_ERR_RAND_TOP_BOTTOM         The top or bottom is invalid during random number generation.
+ * @retval CRYPT_BN_RAND_GEN_FAIL               Failed to generate a random number.
+ * @retval CRYPT_BN_ERR_RAND_BITS_NOT_ENOUGH    The bit is too small during random number generation.
+ */
+int32_t BN_RandEx(void *libCtx, BN_BigNum *r, uint32_t bits, uint32_t top, uint32_t bottom);
+
+/**
+ * @ingroup bn
+ * @brief generate random BigNum
+ *
  * @param r [OUT] Generate a random number.
  * @param p [IN] Compare data so that the generated r < p
  *
@@ -825,8 +844,24 @@ int32_t BN_Rand(BN_BigNum *r, uint32_t bits, uint32_t top, uint32_t bottom);
  * @retval CRYPT_BN_ERR_RAND_NEGATE Generate a negative random number.
  */
 int32_t BN_RandRange(BN_BigNum *r, const BN_BigNum *p);
-#endif
 
+/**
+ * @ingroup bn
+ * @brief generate random BigNum
+ * 
+ * @param libCtx [IN] provider libCtx
+ * @param r [OUT] Generate a random number.
+ * @param p [IN] Compare data so that the generated r < p
+ *
+ * @retval CRYPT_SUCCESS            A random number is successfully generated.
+ * @retval CRYPT_NULL_INPUT         Invalid null pointer
+ * @retval CRYPT_MEM_ALLOC_FAIL     Memory allocation failure
+ * @retval CRYPT_BN_RAND_GEN_FAIL   Failed to generate a random number.
+ * @retval CRYPT_BN_ERR_RAND_ZERO   Generate a random number smaller than 0.
+ * @retval CRYPT_BN_ERR_RAND_NEGATE Generate a negative random number.
+ */
+int32_t BN_RandRangeEx(void *libCtx, BN_BigNum *r, const BN_BigNum *p);
+#endif
 /**
  * @ingroup bn
  * @brief Binary to BigNum
@@ -999,6 +1034,17 @@ BN_Optimizer *BN_OptimizerCreate(void);
  * @retval none
  */
 void BN_OptimizerDestroy(BN_Optimizer *opt);
+
+/**
+ * @ingroup bn
+ * @brief set library context
+ *
+ * @param libCtx [IN] Library context
+ * @param opt [OUT] BigNum optimizer
+ *
+ * @retval none
+ */
+void BN_OptimizerSetLibCtx(void *libCtx, BN_Optimizer *opt);
 
 /**
  * @ingroup bn

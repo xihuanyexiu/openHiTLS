@@ -23,8 +23,8 @@
 #include "hitls_pki_errno.h"
 #include "crypt_types.h"
 #include "crypt_errno.h"
-#include "crypt_encode_decode.h"
-#include "crypt_eal_encode.h"
+#include "crypt_encode_decode_key.h"
+#include "crypt_eal_codecs.h"
 #include "crypt_eal_rand.h"
 #include "eal_pkey_local.h"
 #include "bsl_list_internal.h"
@@ -47,14 +47,14 @@ static void *TestMalloc(uint32_t len)
 
 static void TestMemInitErr()
 {
-    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC_CB_FUNC, TestMallocErr);
-    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE_CB_FUNC, free);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC, TestMallocErr);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE, free);
 }
 
 static void TestMemInitCorrect()
 {
-    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC_CB_FUNC, TestMalloc);
-    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE_CB_FUNC, free);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_MALLOC, TestMalloc);
+    BSL_SAL_CallBack_Ctrl(BSL_SAL_MEM_FREE, free);
 }
 
 /* BEGIN_CASE */
@@ -127,7 +127,7 @@ void SDV_X509_CSR_PARSE_API_TC002(void)
     ASSERT_EQ(HITLS_X509_CsrParseBuff(BSL_FORMAT_ASN1, NULL, NULL), HITLS_X509_ERR_INVALID_PARAM);
     ASSERT_EQ(HITLS_X509_CsrParseBuff(BSL_FORMAT_ASN1, &ori, &csr), HITLS_X509_ERR_INVALID_PARAM);
     ASSERT_EQ(HITLS_X509_CsrParseBuff(BSL_FORMAT_ASN1, &ori, &csr), HITLS_X509_ERR_INVALID_PARAM);
-    ASSERT_EQ(HITLS_X509_CsrParseBuff(BSL_FORMAT_UNKNOWN, &buffer, &csr), HITLS_X509_ERR_NOT_SUPPORT_FORMAT);
+    ASSERT_EQ(HITLS_X509_CsrParseBuff(BSL_FORMAT_UNKNOWN, &buffer, &csr), HITLS_X509_ERR_FORMAT_UNSUPPORT);
 EXIT:
     return;
 }
@@ -143,7 +143,7 @@ void SDV_X509_CSR_PARSE_FUNC_TC001(int format, char *path, int expRawDataLen, in
     uint32_t rawDataLen = 0;
     ASSERT_EQ(HITLS_X509_CsrParseFile(format, path, &csr), HITLS_PKI_SUCCESS);
     if (isUseSm2UserId != 0) {
-        ASSERT_EQ(HITLS_X509_CsrCtrl(csr, HITLS_X509_SET_VEY_SM2_USER_ID, g_sm2DefaultUserid,
+        ASSERT_EQ(HITLS_X509_CsrCtrl(csr, HITLS_X509_SET_VFY_SM2_USER_ID, g_sm2DefaultUserid,
             strlen(g_sm2DefaultUserid)), HITLS_PKI_SUCCESS);
     }
     ASSERT_EQ(HITLS_X509_CsrVerify(csr), HITLS_PKI_SUCCESS);
@@ -267,7 +267,7 @@ void SDV_X509_CSR_GEN_API_TC001(void)
     ASSERT_EQ(ret, HITLS_PKI_SUCCESS);
 
     ASSERT_EQ(HITLS_X509_CsrGenFile(BSL_FORMAT_PEM, NULL, writePath), HITLS_X509_ERR_INVALID_PARAM);
-    ASSERT_EQ(HITLS_X509_CsrGenFile(BSL_FORMAT_UNKNOWN, csr, writePath), HITLS_X509_ERR_NOT_SUPPORT_FORMAT);
+    ASSERT_EQ(HITLS_X509_CsrGenFile(BSL_FORMAT_UNKNOWN, csr, writePath), HITLS_X509_ERR_FORMAT_UNSUPPORT);
     ASSERT_EQ(HITLS_X509_CsrGenFile(BSL_FORMAT_PEM, csr, NULL), HITLS_X509_ERR_INVALID_PARAM);
     ASSERT_NE(HITLS_X509_CsrGenFile(BSL_FORMAT_PEM, csr, "/errPath/csr.pem"), HITLS_PKI_SUCCESS);
 EXIT:
@@ -288,7 +288,7 @@ void SDV_X509_CSR_GEN_API_TC002(void)
     uint8_t data[MAX_DATA_LEN] = {};
     BSL_Buffer buffer = {NULL, 0};
     BSL_Buffer buffErr = {data, sizeof(data)};
-    ASSERT_EQ(HITLS_X509_CsrGenBuff(BSL_FORMAT_UNKNOWN, csr, &buffer), HITLS_X509_ERR_NOT_SUPPORT_FORMAT);
+    ASSERT_EQ(HITLS_X509_CsrGenBuff(BSL_FORMAT_UNKNOWN, csr, &buffer), HITLS_X509_ERR_FORMAT_UNSUPPORT);
     ASSERT_EQ(HITLS_X509_CsrGenBuff(BSL_FORMAT_PEM, NULL, &buffer), HITLS_X509_ERR_INVALID_PARAM);
     ASSERT_EQ(HITLS_X509_CsrGenBuff(BSL_FORMAT_PEM, csr, NULL), HITLS_X509_ERR_INVALID_PARAM);
     ASSERT_EQ(HITLS_X509_CsrGenBuff(BSL_FORMAT_PEM, csr, &buffErr), HITLS_X509_ERR_INVALID_PARAM);
@@ -434,7 +434,7 @@ void SDV_X509_CSR_GEN_FUNC_TC002(int csrFormat, char *csrPath, int keyFormat, ch
     uint32_t rawCsrEncodeLen = 0;
     HITLS_X509_SignAlgParam algParam = {0};
     HITLS_X509_SignAlgParam *algParamPtr = NULL;
-    if (pad == CRYPT_PKEY_EMSA_PSS) {
+    if (pad == CRYPT_EMSA_PSS) {
         algParam.algId = BSL_CID_RSASSAPSS;
         algParam.rsaPss.mdId = mdId;
         algParam.rsaPss.mgfId = mgfId;
@@ -465,7 +465,7 @@ void SDV_X509_CSR_GEN_FUNC_TC002(int csrFormat, char *csrPath, int keyFormat, ch
         HITLS_PKI_SUCCESS);
     ASSERT_EQ(HITLS_X509_CsrCtrl(raw, HITLS_X509_GET_ENCODE, &rawCsrEncode, 0), HITLS_PKI_SUCCESS);
 
-    if (pad == CRYPT_PKEY_EMSA_PSS || new->signAlgId.algId == (BslCid)BSL_CID_SM2DSAWITHSM3) {
+    if (pad == CRYPT_EMSA_PSS || new->signAlgId.algId == (BslCid)BSL_CID_SM2DSAWITHSM3) {
         ASSERT_EQ(raw->reqInfo.reqInfoRawDataLen, new->reqInfo.reqInfoRawDataLen);
         ASSERT_EQ(memcmp(raw->reqInfo.reqInfoRawData, new->reqInfo.reqInfoRawData, raw->reqInfo.reqInfoRawDataLen), 0);
     } else {
@@ -491,6 +491,7 @@ void SDV_X509_CSR_GEN_PROCESS_TC001(char *csrPath, int csrFormat, char *privPath
     BSL_Buffer encodeCsr = {NULL, 0};
 
     TestMemInit();
+
     ASSERT_EQ(CRYPT_EAL_PriKeyParseFile(keyFormat, keyType, privPath, NULL, &privKey), 0);
     ASSERT_EQ(HITLS_X509_CsrParseFile(csrFormat, csrPath, &csr), HITLS_PKI_SUCCESS);
 
@@ -665,7 +666,7 @@ EXIT:
     HITLS_X509_CsrFree(csr);
     CRYPT_EAL_PkeyFreeCtx(rsaPkey);
     CRYPT_EAL_PkeyFreeCtx(eccPkey);
-    CRYPT_EAL_RandDeinit();
+    TestRandDeInit();
 }
 /* END_CASE */
 
@@ -717,7 +718,7 @@ EXIT:
     HITLS_X509_CsrFree(csr);
     HITLS_X509_CsrFree(newCsr);
     CRYPT_EAL_PkeyFreeCtx(pkey);
-    CRYPT_EAL_RandDeinit();
+    TestRandDeInit();
 }
 /* END_CASE */
 
@@ -794,8 +795,7 @@ void SDV_X509_CSR_EncodeAttrList_FUNC_TC001(int critical1, int maxPath, int crit
     ASSERT_EQ(HITLS_X509_ExtCtrl(ext, HITLS_X509_EXT_SET_BCONS, &bCons, sizeof(HITLS_X509_ExtBCons)), 0);
 
     // Set ext into attr
-    ASSERT_EQ(HITLS_X509_AttrCtrl(attrs, HITLS_X509_ATTR_SET_REQUESTED_EXTENSIONS, ext, 0),
-              0);
+    ASSERT_EQ(HITLS_X509_AttrCtrl(attrs, HITLS_X509_ATTR_SET_REQUESTED_EXTENSIONS, ext, 0), 0);
 
     // Test: Encode and check
     ASSERT_EQ(HITLS_X509_EncodeAttrList(1, attrs, NULL, &encode), 0);

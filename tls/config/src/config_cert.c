@@ -285,15 +285,11 @@ int32_t HITLS_CFG_LoadCertFile(HITLS_Config *config, const char *file, HITLS_Par
         return HITLS_NULL_INPUT;
     }
     int32_t ret;
-    CERT_MgrCtx *mgrCtx = config->certMgrCtx;
-    if (mgrCtx == NULL) {
-        return HITLS_UNREGISTERED_CALLBACK;
-    }
-
-    HITLS_CERT_X509 *cert = SAL_CERT_X509Parse(config, (const uint8_t *)file, (uint32_t)strlen(file),
+    HITLS_CERT_X509 *cert = SAL_CERT_X509Parse(LIBCTX_FROM_CONFIG(config),
+            ATTRIBUTE_FROM_CONFIG(config), config, (const uint8_t *)file, (uint32_t)strlen(file),
         TLS_PARSE_TYPE_FILE, format);
     if (cert == NULL) {
-        return HITLS_CONFIG_ERR_LOAD_CERT_FILE;
+        return HITLS_CFG_ERR_LOAD_CERT_FILE;
     }
 #ifdef HITLS_TLS_FEATURE_SECURITY
     ret = CheckCertSecuritylevel(config, cert, false);
@@ -316,9 +312,10 @@ int32_t HITLS_CFG_LoadCertBuffer(HITLS_Config *config, const uint8_t *buf, uint3
         return HITLS_NULL_INPUT;
     }
 
-    HITLS_CERT_X509 *newCert = SAL_CERT_X509Parse(config, buf, bufLen, TLS_PARSE_TYPE_BUFF, format);
+    HITLS_CERT_X509 *newCert = SAL_CERT_X509Parse(LIBCTX_FROM_CONFIG(config),
+        ATTRIBUTE_FROM_CONFIG(config),config, buf, bufLen, TLS_PARSE_TYPE_BUFF, format);
     if (newCert == NULL) {
-        return HITLS_CONFIG_ERR_LOAD_CERT_BUFFER;
+        return HITLS_CFG_ERR_LOAD_CERT_BUFFER;
     }
     int ret = HITLS_SUCCESS;
 #ifdef HITLS_TLS_FEATURE_SECURITY
@@ -388,7 +385,26 @@ int32_t HITLS_CFG_SetPrivateKey(HITLS_Config *config, HITLS_CERT_Key *privateKey
 {
     return CFG_SetPrivateKey(config, privateKey, isClone, false);
 }
+
 #ifdef HITLS_TLS_CONFIG_CERT_LOAD_FILE
+int32_t HITLS_CFG_ProviderLoadKeyFile(HITLS_Config *config, const char *file, const char *format, const char *type)
+{
+    if (config == NULL || file == NULL || strlen(file) == 0) {
+        return HITLS_NULL_INPUT;
+    }
+    HITLS_CERT_Key *newKey = SAL_CERT_KeyParse(config, (const uint8_t *)file, (uint32_t)strlen(file),
+        TLS_PARSE_TYPE_FILE, format, type);
+    if (newKey == NULL) {
+        return HITLS_CFG_ERR_LOAD_KEY_FILE;
+    }
+
+    int32_t ret = SAL_CERT_SetCurrentPrivateKey(config, newKey, false);
+    if (ret != HITLS_SUCCESS) {
+        SAL_CERT_KeyFree(config->certMgrCtx, newKey);
+    }
+    return ret;
+}
+
 int32_t HITLS_CFG_LoadKeyFile(HITLS_Config *config, const char *file, HITLS_ParseFormat format)
 {
     if (config == NULL || file == NULL || strlen(file) == 0) {
@@ -396,9 +412,9 @@ int32_t HITLS_CFG_LoadKeyFile(HITLS_Config *config, const char *file, HITLS_Pars
     }
 
     HITLS_CERT_Key *newKey = SAL_CERT_KeyParse(config, (const uint8_t *)file, (uint32_t)strlen(file),
-        TLS_PARSE_TYPE_FILE, format);
+        TLS_PARSE_TYPE_FILE, SAL_CERT_GetParseFormatStr(format), NULL);
     if (newKey == NULL) {
-        return HITLS_CONFIG_ERR_LOAD_KEY_FILE;
+        return HITLS_CFG_ERR_LOAD_KEY_FILE;
     }
 
     int32_t ret = SAL_CERT_SetCurrentPrivateKey(config, newKey, false);
@@ -408,15 +424,35 @@ int32_t HITLS_CFG_LoadKeyFile(HITLS_Config *config, const char *file, HITLS_Pars
     return ret;
 }
 #endif /* HITLS_TLS_CONFIG_CERT_LOAD_FILE */
+
+int32_t HITLS_CFG_ProviderLoadKeyBuffer(HITLS_Config *config, const uint8_t *buf, uint32_t bufLen, const char *format,
+    const char *type)
+{
+    if (config == NULL || buf == NULL || bufLen == 0) {
+        return HITLS_NULL_INPUT;
+    }
+    HITLS_CERT_Key *newKey = SAL_CERT_KeyParse(config, buf, bufLen, TLS_PARSE_TYPE_BUFF, type, format);
+    if (newKey == NULL) {
+        return HITLS_CFG_ERR_LOAD_KEY_BUFFER;
+    }
+
+    int32_t ret = SAL_CERT_SetCurrentPrivateKey(config, newKey, false);
+    if (ret != HITLS_SUCCESS) {
+        SAL_CERT_KeyFree(config->certMgrCtx, newKey);
+    }
+    return ret;
+}
+
 int32_t HITLS_CFG_LoadKeyBuffer(HITLS_Config *config, const uint8_t *buf, uint32_t bufLen, HITLS_ParseFormat format)
 {
     if (config == NULL || buf == NULL || bufLen == 0) {
         return HITLS_NULL_INPUT;
     }
 
-    HITLS_CERT_Key *newKey = SAL_CERT_KeyParse(config, buf, bufLen, TLS_PARSE_TYPE_BUFF, format);
+    HITLS_CERT_Key *newKey = SAL_CERT_KeyParse(config, buf, bufLen, TLS_PARSE_TYPE_BUFF,
+        SAL_CERT_GetParseFormatStr(format), NULL);
     if (newKey == NULL) {
-        return HITLS_CONFIG_ERR_LOAD_KEY_BUFFER;
+        return HITLS_CFG_ERR_LOAD_KEY_BUFFER;
     }
 
     int32_t ret = SAL_CERT_SetCurrentPrivateKey(config, newKey, false);
@@ -536,15 +572,34 @@ HITLS_CERT_X509 *HITLS_CFG_ParseCert(HITLS_Config *config, const uint8_t *buf, u
         return NULL;
     }
 
-    HITLS_CERT_X509 *newCert = SAL_CERT_X509Parse(config, buf, len, type, format);
+    HITLS_CERT_X509 *newCert = SAL_CERT_X509Parse(LIBCTX_FROM_CONFIG(config),
+            ATTRIBUTE_FROM_CONFIG(config), config, buf, len, type, format);
     if (newCert == NULL) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID17158, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "X509Parse fail", 0, 0, 0, 0);
-        BSL_ERR_PUSH_ERROR(HITLS_CONFIG_ERR_LOAD_CERT_BUFFER);
+        BSL_ERR_PUSH_ERROR(HITLS_CFG_ERR_LOAD_CERT_BUFFER);
         return NULL;
     }
 
     return newCert;
+}
+
+HITLS_CERT_Key *HITLS_CFG_ProviderParseKey(HITLS_Config *config, const uint8_t *buf, uint32_t len,
+    HITLS_ParseType type, const char *format, const char *encodeType)
+{
+    if (config == NULL || buf == NULL || len == 0) {
+        return NULL;
+    }
+
+    HITLS_CERT_Key *newKey = SAL_CERT_KeyParse(config, buf, len, type, format, encodeType);
+    if (newKey == NULL) {
+        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID17165, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
+            "Provider KeyParse fail", 0, 0, 0, 0);
+        BSL_ERR_PUSH_ERROR(HITLS_CFG_ERR_LOAD_KEY_BUFFER);
+        return NULL;
+    }
+
+    return newKey;
 }
 
 HITLS_CERT_Key *HITLS_CFG_ParseKey(HITLS_Config *config, const uint8_t *buf, uint32_t len,
@@ -554,11 +609,12 @@ HITLS_CERT_Key *HITLS_CFG_ParseKey(HITLS_Config *config, const uint8_t *buf, uin
         return NULL;
     }
 
-    HITLS_CERT_Key *newKey = SAL_CERT_KeyParse(config, buf, len, type, format);
+    HITLS_CERT_Key *newKey = SAL_CERT_KeyParse(config, buf, len, type,
+        SAL_CERT_GetParseFormatStr(format), NULL);
     if (newKey == NULL) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID17164, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "KeyParse fail", 0, 0, 0, 0);
-        BSL_ERR_PUSH_ERROR(HITLS_CONFIG_ERR_LOAD_KEY_BUFFER);
+        BSL_ERR_PUSH_ERROR(HITLS_CFG_ERR_LOAD_KEY_BUFFER);
         return NULL;
     }
 

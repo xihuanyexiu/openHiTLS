@@ -40,12 +40,14 @@ set(SOURCE_FILES_PATH1_SO
 )
 
 set(SOURCE_FILES_PATH1_LIBSO
+    provider_get_cap_test1.c
     provider_load_test2.c
     provider_load_test_no_fullfunc.c
     provider_load_test_no_init.c
     provider_load_test1.c
     provider_load_test_providerNoInit.c
     provider_load_test_providerNoFree.c
+    provider_self_decoder_test.c
 )
 
 set(SOURCE_FILES_PATH2_SO
@@ -73,7 +75,9 @@ endforeach()
 foreach(SOURCE_FILE ${SOURCE_FILES_PATH1_LIBSO})
     get_filename_component(FILE_NAME ${SOURCE_FILE} NAME_WE)
     if(NOT TARGET lib${FILE_NAME}_path1)
-        add_library(lib${FILE_NAME}_path1 SHARED ${SOURCE_FILE})
+        add_library(lib${FILE_NAME}_path1 SHARED ${SOURCE_FILE} provider_test_utils.c)
+        target_include_directories(lib${FILE_NAME}_path1 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+        target_compile_options(lib${FILE_NAME}_path1 PRIVATE -g -O0)
         set_target_properties(lib${FILE_NAME}_path1 PROPERTIES
             PREFIX ""
             OUTPUT_NAME "lib${FILE_NAME}"
@@ -87,6 +91,7 @@ foreach(SOURCE_FILE ${SOURCE_FILES_PATH2_SO})
     get_filename_component(FILE_NAME ${SOURCE_FILE} NAME_WE)
     if(NOT TARGET ${FILE_NAME}_path2)
         add_library(${FILE_NAME}_path2 SHARED ${SOURCE_FILE})
+        target_compile_options(lib${FILE_NAME}_path2 PRIVATE -g -O0)
         set_target_properties(${FILE_NAME}_path2 PROPERTIES
             PREFIX ""
             OUTPUT_NAME "${FILE_NAME}"

@@ -33,7 +33,6 @@ extern "C" {
 
 typedef struct EAL_MacCtx CRYPT_EAL_MacCtx;
 
-
 /**
  * @ingroup crypt_eal_mac
  * @brief   Check whether the id is Valid MAC algorithm ID.
@@ -158,7 +157,7 @@ int32_t CRYPT_EAL_MacFinal(CRYPT_EAL_MacCtx *ctx, uint8_t *out, uint32_t *len);
  *
  * @param   ctx [IN] MAC context
  */
-int32_t CRYPT_EAL_MacDeinit(CRYPT_EAL_MacCtx *ctx);
+void CRYPT_EAL_MacDeinit(CRYPT_EAL_MacCtx *ctx);
 
 /**
  * @ingroup crypt_eal_mac

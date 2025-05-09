@@ -21,6 +21,11 @@
 #ifndef HITLS_CONFIG_CHECK_H
 #define HITLS_CONFIG_CHECK_H
 
+#ifdef HITLS_TLS
+#if defined(HITLS_TLS_FEATURE_PROVIDER) && !defined(HITLS_CRYPTO_PROVIDER)
+#error "[HiTLS] The tls-provider must work with crypto-provider"
+#endif
+
 #if (defined(HITLS_TLS_FEATURE_PHA) || defined(HITLS_TLS_FEATURE_KEY_UPDATE)) && !defined(HITLS_TLS_PROTO_TLS13)
     #error "[HiTLS] Integrity check must work with TLS13"
 #endif
@@ -584,13 +589,15 @@ chacha20poly1305, chacha20, rsa"
     #error "[HiTLS] tls13 ciphersuite must work with suite_auth_rsa or suite_auth_ecdsa or suite_auth_psk"
     #endif
 #endif
+#endif /* HITLS_TLS */
 
+#ifdef HITLS_CRYPTO
 #if defined(HITLS_CRYPTO_HMAC) && !defined(HITLS_CRYPTO_MD)
-#error "[HiTLS] The hmac must work with hash"
+    #error "[HiTLS] The hmac must work with hash"
 #endif
 
 #if defined(HITLS_CRYPTO_DRBG_HASH) && !defined(HITLS_CRYPTO_MD)
-#error "[HiTLS] The drbg_hash must work with hash"
+    #error "[HiTLS] The drbg_hash must work with hash"
 #endif
 
 #if defined(HITLS_CRYPTO_DRBG_CTR) && !defined(HITLS_CRYPTO_AES) && !defined(HITLS_CRYPTO_SM4)
@@ -610,8 +617,8 @@ chacha20poly1305, chacha20, rsa"
 #endif
 
 #if defined(HITLS_CRYPTO_ENTROPY) && defined(HITLS_CRYPTO_DRBG_CTR) && !defined(HITLS_CRYPTO_DRBG_GM)
-    #if !defined(HITLS_CRYPTO_HMAC) || !defined(HITLS_CRYPTO_SHA256)
-        #error "[HiTLS] Configure the conditioning function. Currently, CRYPT_MAC_HMAC_SHA256 is supported. \
+    #if !defined(HITLS_CRYPTO_CMAC_AES)
+        #error "[HiTLS] Configure the conditioning function. Currently, CRYPT_MAC_CMAC_AES is supported. \
             others may be supported in the future."
     #endif
 #endif
@@ -669,7 +676,7 @@ chacha20poly1305, chacha20, rsa"
     #error "[HiTLS] The rsa_blinding must work with rsa_sign or rsa_decrypt"
 #endif
 
-#if defined(HTILS_CRYPTO_RSA_ENCRYPT) && (defined(HITLS_CRYPTO_RSAES_OAEP) || defined(HITLS_CRYPTO_RSAES_PKCSV15))
+#if defined(HITLS_CRYPTO_RSA_ENCRYPT) && (defined(HITLS_CRYPTO_RSAES_OAEP) || defined(HITLS_CRYPTO_RSAES_PKCSV15))
     #ifndef HITLS_CRYPTO_DRBG
     #error "[HiTLS] The rsa_encrypt+rsaes_oaep/rsa_pkcsv15 must work with a drbg algorithm."
     #endif
@@ -717,6 +724,26 @@ chacha20poly1305, chacha20, rsa"
     #endif
 #endif
 
+#if defined(HITLS_CRYPTO_HMAC) && !defined(HITLS_CRYPTO_MD)
+#error "[HiTLS] The hmac must work with hash."
+#endif
+
+#if defined(HITLS_CRYPTO_DRBG_HASH) && !defined(HITLS_CRYPTO_MD)
+#error "[HiTLS] The drbg_hash must work with hash."
+#endif
+
+#if defined(HITLS_CRYPTO_ENTROPY) && !defined(HITLS_CRYPTO_DRBG)
+#error "[HiTLS] The entropy must work with at leaset one drbg algorithm."
+#endif
+
+#if defined(HITLS_CRYPTO_PKEY) && !defined(HITLS_CRYPTO_MD)
+#error "[HiTLS] The pkey must work with hash."
+#endif
+
+#if defined(HITLS_CRYPTO_BN) && !(defined(HITLS_THIRTY_TWO_BITS) || defined(HITLS_SIXTY_FOUR_BITS))
+#error "[HiTLS] To use bn, the number of system bits must be specified first."
+#endif
+
 #ifdef HITLS_CRYPTO_KEY_EPKI
     #if !defined(HITLS_CRYPTO_KEY_ENCODE) && !defined(HITLS_CRYPTO_KEY_DECODE)
         #error "[HiTLS] The key encrypt must work with key gen or key parse."
@@ -729,10 +756,20 @@ chacha20poly1305, chacha20, rsa"
     #endif
 #endif
 
-#if defined(HITLS_CRYPTO_ENCODE_DECODE) && (!defined(HITLS_CRYPTO_ECDSA) && !defined(HITLS_CRYPTO_SM2_SIGN) && \
+#if defined(HITLS_CRYPTO_CODECSKEY) && (!defined(HITLS_CRYPTO_ECDSA) && !defined(HITLS_CRYPTO_SM2_SIGN) && \
     !defined(HITLS_CRYPTO_SM2_CRYPT) && !defined(HITLS_CRYPTO_ED25519) && !defined(HITLS_CRYPTO_RSA_SIGN)) && \
     !defined(HITLS_CRYPTO_RSA_VERIFY)
     #error "[HiTLS] The encode must work with ecdsa or sm2_sign or sm2_crypt or ed25519 or rsa_sign or rsa_verify."
 #endif
+
+#endif /* HITLS_CRYPTO */
+
+#ifdef HITLS_PKI
+
+#if defined(HITLS_PKI_INFO) && !defined(HITLS_PKI_X509_CRT)
+#error "[HiTLS] The info must work with x509_crt_gen or x509_crt_parse."
+#endif
+
+#endif /* HITLS_PKI */
 
 #endif /* HITLS_CONFIG_CHECK_H */

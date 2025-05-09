@@ -53,6 +53,17 @@ CRYPT_RSA_Ctx *CRYPT_RSA_NewCtx(void); // create key structure
 
 /**
  * @ingroup rsa
+ * @brief Allocate rsa context memory space.
+ * 
+ * @param libCtx [IN] Library context
+ *
+ * @retval (CRYPT_RSA_Ctx *) Pointer to the memory space of the allocated context
+ * @retval NULL              Invalid null pointer.
+ */
+CRYPT_RSA_Ctx *CRYPT_RSA_NewCtxEx(void *libCtx); 
+
+/**
+ * @ingroup rsa
  * @brief Copy the RSA context. After the duplication is complete, call the CRYPT_RSA_FreeCtx to release the memory.
  *
  * @param ctx [IN] RSA context
@@ -110,8 +121,8 @@ int32_t CRYPT_RSA_SetPara(CRYPT_RSA_Ctx *ctx, const BSL_Param *para);
  *
  * @param ctx [IN] Structure from which the key length is expected to be obtained
  *
- * @retval 0        The input is incorrect or the corresponding key structure does not have a valid key length.
- * @retval uint32_t Valid key length
+ * @retval 0: The input is incorrect or the corresponding key structure does not have a valid key length.
+ * @retval uint32_t: Valid key length
  */
 uint32_t CRYPT_RSA_GetBits(const CRYPT_RSA_Ctx *ctx);
 
@@ -516,8 +527,7 @@ int32_t CRYPT_RSA_Cmp(const CRYPT_RSA_Ctx *a, const CRYPT_RSA_Ctx *b);
  * @retval CRYPT_MEM_ALLOC_FAIL             Memory allocation failure
  * @retval CRYPT_RSA_BUFF_LEN_NOT_ENOUGH    Outbuf Insufficient
  * */
-int32_t CRYPT_RSA_SetPkcs1Oaep(const EAL_MdMethod *hashMethod, const EAL_MdMethod *mgfMethod, const uint8_t *in,
-    uint32_t inLen, const uint8_t *param, uint32_t paramLen, uint8_t *pad, uint32_t padLen);
+int32_t CRYPT_RSA_SetPkcs1Oaep(CRYPT_RSA_Ctx *ctx, const uint8_t *in, uint32_t inLen, uint8_t *pad, uint32_t padLen);
 #endif // HITLS_CRYPTO_RSA_ENCRYPT
 
 #ifdef HITLS_CRYPTO_RSA_DECRYPT
@@ -547,7 +557,8 @@ int32_t CRYPT_RSA_VerifyPkcs1Oaep(const EAL_MdMethod *hashMethod, const EAL_MdMe
 
 #if defined(HITLS_CRYPTO_RSA_ENCRYPT) && \
     (defined(HITLS_CRYPTO_RSAES_PKCSV15_TLS) || defined(HITLS_CRYPTO_RSAES_PKCSV15))
-int32_t CRYPT_RSA_SetPkcsV15Type2(const uint8_t *in, uint32_t inLen, uint8_t *out, uint32_t outLen);
+int32_t CRYPT_RSA_SetPkcsV15Type2(void *libCtx, const uint8_t *in, uint32_t inLen,
+    uint8_t *out, uint32_t outLen);
 #endif
 
 #ifdef HITLS_CRYPTO_RSA_DECRYPT
@@ -570,10 +581,30 @@ int32_t CRYPT_RSA_VerifyPkcsV15Type2TLS(const uint8_t *in, uint32_t inLen, uint8
  */
 int32_t CRYPT_RSA_GetSecBits(const CRYPT_RSA_Ctx *ctx);
 
+#ifdef HITLS_CRYPTO_PROVIDER
+/**
+ * @ingroup RSA
+ * @brief RSA import key
+ *
+ * @param ctx [IN/OUT] RSA context structure
+ * @param params [IN] parameters
+ */
+int32_t CRYPT_RSA_Import(CRYPT_RSA_Ctx *ctx, const BSL_Param *params);
+
+/**
+ * @ingroup RSA
+ * @brief RSA export key
+ *
+ * @param ctx [IN] RSA context structure
+ * @param params [IN/OUT] key parameters
+ */
+int32_t CRYPT_RSA_Export(const CRYPT_RSA_Ctx *ctx, BSL_Param *params);
+#endif // HITLS_CRYPTO_PROVIDER
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* HITLS_CRYPTO_RSA */
+#endif // HITLS_CRYPTO_RSA
 
-#endif
+#endif // CRYPT_RSA_H

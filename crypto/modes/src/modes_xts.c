@@ -109,7 +109,7 @@ void GF128Mul(uint8_t *a, uint32_t len)
 }
 #else
 // AES XTS IEEE P1619/D16 5.2
-// Multiplication by a primitive element ж┴
+// Multiplication by a primitive element |ив
 void GF128Mul(uint8_t *a, uint32_t len)
 {
     (void)len;
