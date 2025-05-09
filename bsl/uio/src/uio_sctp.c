@@ -455,6 +455,8 @@ int32_t SctpCtrl(BSL_UIO *uio, int32_t cmd, int32_t larg, void *parg)
             return BslSctpDelAuthKey(uio, &parameters->prevShareKeyId, sizeof(parameters->shareKeyId));
         case BSL_UIO_SCTP_SND_BUFF_IS_EMPTY:
             return BslSctpIsSndBuffEmpty(uio, parg, larg);
+        case BSL_UIO_FLUSH:
+            return BSL_SUCCESS;
         default:
             BSL_ERR_PUSH_ERROR(BSL_UIO_FAIL);
             return BSL_UIO_FAIL;
