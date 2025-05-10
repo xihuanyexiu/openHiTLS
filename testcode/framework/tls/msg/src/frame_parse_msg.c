@@ -809,6 +809,7 @@ static int32_t ParseClientKxMsg(FRAME_Type *frameType, const uint8_t *buffer, ui
             ParseFieldArray8(&buffer[offset], bufLen - offset, &clientKx->pubKey, clientKx->pubKeySize.data, &offset);
             break;
         case HITLS_KEY_EXCH_DHE:
+        case HITLS_KEY_EXCH_RSA:
             ParseFieldInteger16(&buffer[offset], bufLen - offset, &clientKx->pubKeySize, &offset);
             ParseFieldArray8(&buffer[offset], bufLen - offset, &clientKx->pubKey, clientKx->pubKeySize.data, &offset);
             break;

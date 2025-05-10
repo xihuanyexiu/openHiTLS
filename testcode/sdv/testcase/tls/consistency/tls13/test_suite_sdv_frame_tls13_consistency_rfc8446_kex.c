@@ -3062,7 +3062,7 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_SERVER_EXTENSION_FUNC_TC001()
     ALERT_GetInfo(client->ssl, &info);
     ASSERT_EQ(info.flag, ALERT_FLAG_SEND);
     ASSERT_EQ(info.level, ALERT_LEVEL_FATAL);
-    ASSERT_EQ(info.description, ALERT_ILLEGAL_PARAMETER);
+    ASSERT_EQ(info.description, ALERT_UNSUPPORTED_EXTENSION);
 EXIT:
     HITLS_CFG_FreeConfig(tlsConfig);
     FRAME_FreeLink(client);

@@ -263,7 +263,7 @@ static int32_t ProcessPeerCertificate(TLS_Ctx *ctx, const CertificateMsg *certs)
     if (ctx->config.tlsConfig.needCheckKeyUsage == true && !CheckCertKeyUsage(ctx, peerCert)) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID17043, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "CheckCertKeyUsage fail", 0, 0, 0, 0);
-        ctx->method.sendAlert(ctx, ALERT_LEVEL_FATAL, ALERT_BAD_CERTIFICATE);
+        ctx->method.sendAlert(ctx, ALERT_LEVEL_FATAL, ALERT_UNSUPPORTED_CERTIFICATE);
         SAL_CERT_PairFree(ctx->config.tlsConfig.certMgrCtx, peerCert);
         return HITLS_CERT_ERR_KEYUSAGE;
     }
@@ -346,7 +346,7 @@ int32_t RecvCertificateProcess(TLS_Ctx *ctx, const HS_Msg *msg)
         BSL_ERR_PUSH_ERROR(HITLS_MSG_HANDLE_NO_PEER_CERTIFIACATE);
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15724, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "peer certificate is needed!", 0, 0, 0, 0);
-        ctx->method.sendAlert(ctx, ALERT_LEVEL_FATAL, ALERT_HANDSHAKE_FAILURE);
+        ctx->method.sendAlert(ctx, ALERT_LEVEL_FATAL, ctx->isClient ? ALERT_DECODE_ERROR : ALERT_HANDSHAKE_FAILURE);
         return HITLS_MSG_HANDLE_NO_PEER_CERTIFIACATE;
     }
 

@@ -622,8 +622,10 @@ int32_t CommonEventInRenegotiationState(HITLS_Ctx *ctx)
 
         int32_t alertRet = AlertEventProcess(ctx);
         if (alertRet != HITLS_SUCCESS) {
-            BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16466, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
-                "AlertEventProcess fail", 0, 0, 0, 0);
+            if (alertRet != HITLS_CM_LINK_CLOSED) {
+                BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16466, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
+                    "AlertEventProcess fail", 0, 0, 0, 0);
+            }
             /* If the alert fails to be sent, the system sends a message to the user for processing */
             return alertRet;
         }

@@ -622,7 +622,7 @@ static int32_t ProcessClientHelloExt(TLS_Ctx *ctx, const ClientHelloMsg *clientH
     }
 #endif /* HITLS_TLS_FEATURE_SNI */
 #ifdef HITLS_TLS_FEATURE_ALPN
-    if (clientHello->extension.flag.haveAlpn && !isNeedSendHrr) {
+    if (clientHello->extension.flag.haveAlpn && !isNeedSendHrr && ctx->state == CM_STATE_HANDSHAKING) {
         ret = ServerSelectAlpnProtocol(ctx, clientHello);
         if (ret != HITLS_SUCCESS) {
             BSL_LOG_BINLOG_FIXLEN(BINLOG_ID17049, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
@@ -681,7 +681,7 @@ static void CheckRenegotiate(TLS_Ctx *ctx)
 #ifdef HITLS_TLS_FEATURE_ALPN
 static int32_t DealResumeAlpnEx(TLS_Ctx *ctx, const ClientHelloMsg *clientHello)
 {
-    if (clientHello->extension.flag.haveAlpn) {
+    if (clientHello->extension.flag.haveAlpn && ctx->state == CM_STATE_HANDSHAKING) {
         return ServerSelectAlpnProtocol(ctx, clientHello);
     }
     return HITLS_SUCCESS;

@@ -143,11 +143,13 @@ static int32_t PackClientCipherSuites(const TLS_Ctx *ctx, uint8_t *buf, uint32_t
         }
     }
 #endif /* HITLS_TLS_PROTO_TLS13 */
-    ret = PackCipherSuites(ctx, buf, bufLen, &offset, 0);
-    if (ret != HITLS_SUCCESS) {
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16926, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
-            "PackCipherSuites fail", 0, 0, 0, 0);
-        return ret;
+    if (ctx->config.tlsConfig.minVersion != HITLS_VERSION_TLS13) {
+        ret = PackCipherSuites(ctx, buf, bufLen, &offset, 0);
+        if (ret != HITLS_SUCCESS) {
+            BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16926, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
+                "PackCipherSuites fail", 0, 0, 0, 0);
+            return ret;
+        }
     }
 
     if (offset == SINGLE_CIPHER_SUITE_SIZE) {

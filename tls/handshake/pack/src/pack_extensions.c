@@ -865,7 +865,8 @@ static int32_t PackClientExtensions(const TLS_Ctx *ctx, uint8_t *buf, uint32_t b
 #endif /* HITLS_TLS_PROTO_TLS13 */
         { EXTENSION_MSG(HS_EX_TYPE_EXTENDED_MASTER_SECRET, IsNeedEms(ctx), NULL) },
 #ifdef HITLS_TLS_FEATURE_ALPN
-        { EXTENSION_MSG(HS_EX_TYPE_APP_LAYER_PROTOCOLS, (tlsConfig->alpnList != NULL), PackClientAlpnList) },
+        { EXTENSION_MSG(HS_EX_TYPE_APP_LAYER_PROTOCOLS, (tlsConfig->alpnList != NULL && 
+            ctx->state == CM_STATE_HANDSHAKING), PackClientAlpnList) },
 #endif /* HITLS_TLS_FEATURE_ALPN */
 #ifdef HITLS_TLS_PROTO_TLS13
         { EXTENSION_MSG(HS_EX_TYPE_PSK_KEY_EXCHANGE_MODES, isTls13, PackClientPskKeyExModes) },

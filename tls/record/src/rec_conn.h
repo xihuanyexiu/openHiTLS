@@ -67,6 +67,7 @@ typedef struct {
 typedef struct {
     RecConnSuitInfo *suiteInfo;             /* Cipher suite information */
     uint64_t seq;                           /* tls: 8 byte sequence number or dtls: 6 byte seq */
+    bool isWrapped;                         /* tls: Check whether the sequence number is wrapped */
 
     uint16_t epoch;                         /* dtls: 2 byte epoch */
 #if defined(HITLS_BSL_UIO_UDP)

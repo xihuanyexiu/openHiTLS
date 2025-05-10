@@ -772,9 +772,10 @@ int32_t CheckCertSignature(HITLS_Ctx *ctx, HITLS_CERT_X509 *cert)
 {
     HITLS_Config *config = &ctx->config.tlsConfig;
     if (ctx->negotiatedInfo.version == HITLS_VERSION_TLS13) {
-        int32_t signAlg = 0;
+        HITLS_SignHashAlgo signAlg = CERT_SIG_SCHEME_UNKNOWN;
+        const uint32_t md5Mask = 0x0100;
         (void)SAL_CERT_X509Ctrl(config, cert, CERT_CTRL_GET_SIGN_ALGO, NULL, (void *)&signAlg);
-        if (signAlg == CERT_SIG_SCHEME_UNKNOWN) {
+        if ((signAlg == CERT_SIG_SCHEME_UNKNOWN) || (((uint32_t)signAlg & 0xff00) == md5Mask)) {
             return RETURN_ERROR_NUMBER_PROCESS(HITLS_CERT_CTRL_ERR_GET_SIGN_ALGO, BINLOG_ID16325, "signAlg unknow");
         }
     }
@@ -795,6 +796,7 @@ int32_t ParseChain(HITLS_Ctx *ctx, CERT_Item *item, HITLS_CERT_Chain **chain, HI
         BSL_ERR_PUSH_ERROR(HITLS_NULL_INPUT);
         return RETURN_ERROR_NUMBER_PROCESS(HITLS_NULL_INPUT, BINLOG_ID16326, "input null");
     }
+    HITLS_CERT_X509 *encCertLocal = NULL;
     HITLS_Config *config = &ctx->config.tlsConfig;
     HITLS_CERT_Chain *newChain = SAL_CERT_ChainNew();
     if (newChain == NULL) {
@@ -807,30 +809,33 @@ int32_t ParseChain(HITLS_Ctx *ctx, CERT_Item *item, HITLS_CERT_Chain **chain, HI
             ATTRIBUTE_FROM_CONFIG(config), config, listNode->data, listNode->dataSize,
             TLS_PARSE_TYPE_BUFF, TLS_PARSE_FORMAT_ASN1);
         if (cert == NULL) {
-            DestoryParseChain(*encCert, NULL, newChain);
+            DestoryParseChain(encCertLocal, NULL, newChain);
             return RETURN_ERROR_NUMBER_PROCESS(HITLS_CERT_ERR_PARSE_MSG, BINLOG_ID15050, "parse cert chain err");
         }
 #ifdef HITLS_TLS_PROTO_TLS13
         if (CheckCertSignature(ctx, cert) != HITLS_SUCCESS) {
-            DestoryParseChain(*encCert, cert, newChain);
+            DestoryParseChain(encCertLocal, cert, newChain);
             return HITLS_CERT_CTRL_ERR_GET_SIGN_ALGO;
         }
 #endif
 
 #ifdef HITLS_TLS_PROTO_TLCP11
-        if (SAL_CERT_CheckCertKeyUsage(ctx, cert, CERT_KEY_CTRL_IS_KEYENC_USAGE) == true) {
-            SAL_CERT_X509Free(*encCert);
-            *encCert = cert;
+        if ((encCert != NULL) && (SAL_CERT_CheckCertKeyUsage(ctx, cert, CERT_KEY_CTRL_IS_KEYENC_USAGE) == true)) {
+            SAL_CERT_X509Free(encCertLocal);
+            encCertLocal = cert;
             listNode = listNode->next;
             continue;
         }
 #endif
         /* Add a certificate to the certificate chain. */
         if (SAL_CERT_ChainAppend(newChain, cert) != HITLS_SUCCESS) {
-            DestoryParseChain(*encCert, cert, newChain);
+            DestoryParseChain(encCertLocal, cert, newChain);
             return RETURN_ERROR_NUMBER_PROCESS(HITLS_MEMALLOC_FAIL, BINLOG_ID15051, "ChainAppend fail");
         }
         listNode = listNode->next;
+    }
+    if (encCert != NULL) {
+        *encCert = encCertLocal;
     }
     *chain = newChain;
     return HITLS_SUCCESS;
@@ -867,7 +872,8 @@ int32_t SAL_CERT_ParseCertChain(HITLS_Ctx *ctx, CERT_Item *item, CERT_Pair **cer
 
     /* Parse other certificates in the certificate chain. */
     HITLS_CERT_Chain *chain = NULL;
-    ret = ParseChain(ctx, item->next, &chain, &encCert);
+    HITLS_CERT_X509 **inParseEnc = ctx->negotiatedInfo.version == HITLS_VERSION_TLCP_DTLCP11 ? &encCert : NULL;
+    ret = ParseChain(ctx, item->next, &chain, inParseEnc);
     if (ret != HITLS_SUCCESS) {
         SAL_CERT_X509Free(cert);
         return RETURN_ERROR_NUMBER_PROCESS(ret, BINLOG_ID16330, "ParseChain fail");

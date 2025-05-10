@@ -301,7 +301,7 @@ void SESSMGR_InsertSession(TLS_SessionMgr *mgr, HITLS_Session *sess, bool isClie
 HITLS_Session *SESSMGR_Find(TLS_SessionMgr *mgr, uint8_t *sessionId, uint8_t sessionIdSize)
 {
     if (mgr == NULL || sessionId == NULL || sessionIdSize == 0) {
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16706, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "input null", 0, 0, 0, 0);
+        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16706, BSL_LOG_LEVEL_WARN, BSL_LOG_BINLOG_TYPE_RUN, "input null", 0, 0, 0, 0);
         return NULL;
     }
     BSL_SAL_ThreadReadLock(mgr->lock);

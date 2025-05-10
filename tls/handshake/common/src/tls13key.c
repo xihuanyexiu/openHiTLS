@@ -175,7 +175,9 @@ int32_t HS_TLS13DeriveNextStageSecret(HITLS_Lib_Ctx *libCtx, const char *attrNam
     extractInput.saltLen = hashLen;
     extractInput.inputKeyMaterial = givenSecret;
     extractInput.inputKeyMaterialLen = givenLen;
-    return TLS13HkdfExtract(libCtx, attrName, &extractInput, outSecret, outLen);
+    ret = TLS13HkdfExtract(libCtx, attrName, &extractInput, outSecret, outLen);
+    BSL_SAL_CleanseData(tmpSecret, MAX_DIGEST_SIZE);
+    return ret;
 }
 
 int32_t TLS13DeriveDheSecret(TLS_Ctx *ctx, uint8_t *preMasterSecret, uint32_t *preMasterSecretLen, uint32_t hashLen)
@@ -253,7 +255,7 @@ int32_t TLS13DeriveHandshakeSecret(TLS_Ctx *ctx)
     ret = HS_TLS13DeriveNextStageSecret(LIBCTX_FROM_CTX(ctx), ATTRIBUTE_FROM_CTX(ctx),
         hashAlg, ctx->hsCtx->earlySecret, hashLen,
         preMasterSecret, preMasterSecretLen, ctx->hsCtx->handshakeSecret, &handshakeSecretLen);
-    BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16895, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
+    BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16895, BSL_LOG_LEVEL_INFO, BSL_LOG_BINLOG_TYPE_RUN,
         "DeriveNextStageSecret finish", 0, 0, 0, 0);
     BSL_SAL_CleanseData(preMasterSecret, MAX_PRE_MASTER_SECRET_SIZE);
     return ret;
@@ -596,12 +598,14 @@ int32_t HS_TLS13UpdateTrafficSecret(TLS_Ctx *ctx, bool isOut)
     deriveInfo.seedLen = 0;
     int32_t ret = SAL_CRYPT_HkdfExpandLabel(&deriveInfo, trafficSecretPointer, trafficSecretLen);
     if (ret != HITLS_SUCCESS) {
+        BSL_SAL_CleanseData(trafficSecret, MAX_DIGEST_SIZE);
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16914, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "HkdfExpandLabel fail", 0, 0, 0, 0);
         return ret;
     }
-
-    if (memcpy_s(baseKey, baseKeyLen, trafficSecret, trafficSecretLen) != EOK) {
+    ret = memcpy_s(baseKey, baseKeyLen, trafficSecret, trafficSecretLen);
+    BSL_SAL_CleanseData(trafficSecret, MAX_DIGEST_SIZE);
+    if (ret != EOK) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16915, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "memcpy fail", 0, 0, 0, 0);
         return HITLS_MEMCPY_FAIL;
     }

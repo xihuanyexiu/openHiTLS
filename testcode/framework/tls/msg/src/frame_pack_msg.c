@@ -1072,7 +1072,7 @@ static int32_t PackClientKeyExchangeMsg(FRAME_Type *type, const FRAME_ClientKeyE
     // Currently, ECDHE and DHE key exchange packets can be assembled.
     if (type->keyExType == HITLS_KEY_EXCH_ECDHE) {
         return PackClientEcdheMsg(type, clientKeyExchange, buf, bufLen, usedLen);
-    } else if (type->keyExType == HITLS_KEY_EXCH_DHE) {
+    } else if (type->keyExType == HITLS_KEY_EXCH_DHE || type->keyExType == HITLS_KEY_EXCH_RSA) {
         return PackClientDheMsg(clientKeyExchange, buf, bufLen, usedLen);
     }
 
