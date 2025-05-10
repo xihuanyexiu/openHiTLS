@@ -529,3 +529,66 @@ EXIT:
     FRAME_FreeLink(server);
 }
 /* END_CASE */
+
+/** @
+* @test UT_TLS_TLS12_RFC5246_RSA_REMASTER_TC001
+* @title After the premasterkey to be received by the server is modified, the connection fails to be established.
+* @precon nan
+* @brief    1. Configure the RSA cipher suite. When the server receives the premasterkey, change the value of the
+            premasterkey and construct a decryption failure scenario. It is expected that CCS messages are sent normally
+            and the link fails to be established. Expected result 1 is obtained.
+* @expect   1. The link fails to be set up.
+@ */
+/* BEGIN_CASE */
+void UT_TLS_TLS12_RFC5246_RSA_REMASTER_TC001(int rsaEncryptLen)
+{
+    FRAME_Init();
+    HITLS_Config *config = HITLS_CFG_NewTLS12Config();
+    ASSERT_TRUE(config != NULL);
+    HITLS_CFG_SetClientVerifySupport(config, false);
+    // 1.Configure the RSA cipher suite. Change the value of the premasterkey when the server receives the premasterkey.
+    // Construct a decryption failure scenario. The CCS message is expected to be sent normally.
+    uint16_t cipherSuits[] = {HITLS_RSA_WITH_AES_128_GCM_SHA256};
+    HITLS_CFG_SetCipherSuites(config, cipherSuits, sizeof(cipherSuits) / sizeof(uint16_t));
+
+    FRAME_LinkObj *client = FRAME_CreateLink(config, BSL_UIO_TCP);
+    ASSERT_TRUE(client != NULL);
+    FRAME_LinkObj *server = FRAME_CreateLink(config, BSL_UIO_TCP);
+    ASSERT_TRUE(server != NULL);
+    ASSERT_EQ(FRAME_CreateConnection(client, server, false, TRY_RECV_CLIENT_KEY_EXCHANGE), HITLS_SUCCESS);
+
+    FrameUioUserData *ioUserData = BSL_UIO_GetUserData(server->io);
+    uint8_t *recvBuf = ioUserData->recMsg.msg;
+    uint32_t recvLen = ioUserData->recMsg.len;
+    ASSERT_TRUE(recvLen != 0);
+    uint32_t parseLen = 0;
+    FRAME_Msg frameMsg = {0};
+    FRAME_Type frameType = {0};
+    frameType.versionType = HITLS_VERSION_TLS12;
+    frameType.recordType = REC_TYPE_HANDSHAKE;
+    frameType.handshakeType = CLIENT_KEY_EXCHANGE;
+    frameType.keyExType = HITLS_KEY_EXCH_RSA;
+    ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
+
+    frameMsg.body.hsMsg.body.clientKeyExchange.pubKeySize.data = rsaEncryptLen;
+    BSL_SAL_FREE(frameMsg.body.hsMsg.body.clientKeyExchange.pubKey.data);
+    frameMsg.body.hsMsg.body.clientKeyExchange.pubKey.data = BSL_SAL_Calloc(1,rsaEncryptLen);
+    frameMsg.body.hsMsg.body.clientKeyExchange.pubKey.size = rsaEncryptLen;
+
+    uint32_t sendLen = MAX_RECORD_LENTH;
+    ASSERT_TRUE(FRAME_PackMsg(&frameType, &frameMsg, recvBuf, sendLen, &sendLen) == HITLS_SUCCESS);
+    ioUserData->recMsg.len = sendLen;
+    HITLS_Accept(server->ssl);
+    ASSERT_EQ(FRAME_CreateConnection(client, server, false, HS_STATE_BUTT), HITLS_REC_BAD_RECORD_MAC);
+    ALERT_Info alertInfo = { 0 };
+    ALERT_GetInfo(server->ssl, &alertInfo);
+    ASSERT_EQ(alertInfo.level, ALERT_LEVEL_FATAL);
+    ASSERT_EQ(alertInfo.description, ALERT_BAD_RECORD_MAC);
+
+EXIT:
+    FRAME_CleanMsg(&frameType, &frameMsg);
+    HITLS_CFG_FreeConfig(config);
+    FRAME_FreeLink(client);
+    FRAME_FreeLink(server);
+}
+/* END_CASE */

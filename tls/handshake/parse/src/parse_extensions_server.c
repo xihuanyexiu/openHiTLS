@@ -858,10 +858,14 @@ int32_t ParseClientExtension(TLS_Ctx *ctx, const uint8_t *buf, uint32_t bufLen, 
         }
         bufOffset += HS_EX_HEADER_LEN;
 
-        uint32_t hsExTypeId = HS_GetExtensionTypeId(extMsgType);
-        if (hsExTypeId != HS_EX_TYPE_ID_UNRECOGNIZED ||
+        uint32_t extensionId = HS_GetExtensionTypeId(extMsgType);
+        ret = CheckForDuplicateExtension(msg->extensionTypeMask, extensionId, ctx);
+        if (ret != HITLS_SUCCESS) {
+            return ret;
+        }
+        if (extensionId != HS_EX_TYPE_ID_UNRECOGNIZED ||
                 !IsParseNeedCustomExtensions(CUSTOM_EXT_FROM_CTX(ctx), extMsgType, HITLS_EX_TYPE_CLIENT_HELLO)) {
-            msg->extensionTypeMask |= 1ULL << hsExTypeId;
+            msg->extensionTypeMask |= 1ULL << extensionId;
         }
 
         ret = ParseClientExBody(ctx, extMsgType, &buf[bufOffset], extMsgLen, msg);

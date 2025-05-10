@@ -521,7 +521,7 @@ int32_t RecordBufferUnprocessedMsg(RecCtx *recordCtx, RecHdr *hdr, uint8_t *reco
             return ret;
         }
     }
-    BSL_LOG_BINLOG_FIXLEN(BINLOG_ID17263, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
+    BSL_LOG_BINLOG_FIXLEN(BINLOG_ID17263, BSL_LOG_LEVEL_INFO, BSL_LOG_BINLOG_TYPE_RUN,
         "recv normal disorder message", 0, 0, 0, 0);
     return HITLS_REC_NORMAL_RECV_DISORDER_MSG;
 }
@@ -946,15 +946,19 @@ int32_t TryReadOneTlsRecord(TLS_Ctx *ctx, uint8_t **recordBody, RecHdr *recHeade
     return HITLS_SUCCESS;
 }
 
-int32_t RecordDecryptPrepare(TLS_Ctx *ctx, uint16_t version, uint64_t seq, REC_Type recordType, REC_TextInput *cryptMsg)
+int32_t RecordDecryptPrepare(TLS_Ctx *ctx, uint16_t version, REC_Type recordType, REC_TextInput *cryptMsg)
 {
     (void)recordType;
     (void)version;
-    if (seq >= REC_TLS_SN_MAX_VALUE) {
+    RecConnState *state = GetReadConnState(ctx);
+    if (state->isWrapped == true) {
         BSL_ERR_PUSH_ERROR(HITLS_REC_ERR_SN_WRAPPING);
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15454, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "Record read: sequence number wrap.", 0, 0, 0, 0);
         return HITLS_REC_ERR_SN_WRAPPING;
+    }
+    if (state->seq == REC_TLS_SN_MAX_VALUE) {
+        state->isWrapped = true;
     }
 
     if (ctx->peekFlag != 0 && recordType != REC_TYPE_APP) {
@@ -991,7 +995,7 @@ int32_t RecordDecryptPrepare(TLS_Ctx *ctx, uint16_t version, uint64_t seq, REC_T
     cryptMsg->version = recordHeader.version;
     cryptMsg->text = recordBody;
     cryptMsg->textLen = recordBodyLen;
-    BSL_Uint64ToByte(seq, cryptMsg->seq);
+    BSL_Uint64ToByte(state->seq, cryptMsg->seq);
     return HITLS_SUCCESS;
 }
 
@@ -1017,10 +1021,8 @@ int32_t TlsRecordRead(TLS_Ctx *ctx, REC_Type recordType, uint8_t *data, uint32_t
     if (!RecBufListEmpty(bufList)) {
         return RecBufListGetBuffer(bufList, data, num, readLen, (ctx->peekFlag != 0 && (recordType == REC_TYPE_APP)));
     }
-    RecConnState *state = GetReadConnState(ctx);
     REC_TextInput encryptedMsg = { 0 };
-    int32_t ret = RecordDecryptPrepare(ctx, ctx->negotiatedInfo.version,
-        RecConnGetSeqNum(state), recordType, &encryptedMsg);
+    int32_t ret = RecordDecryptPrepare(ctx, ctx->negotiatedInfo.version, recordType, &encryptedMsg);
     if (ret != HITLS_SUCCESS) {
         return ret;
     }

@@ -146,10 +146,22 @@ int32_t ParseEncryptedEx(TLS_Ctx *ctx, EncryptedExtensions *msg, const uint8_t *
         }
         bufOffset += HS_EX_HEADER_LEN;
 
-        uint32_t hsExTypeId = HS_GetExtensionTypeId(extMsgType);
-        if (hsExTypeId != HS_EX_TYPE_ID_UNRECOGNIZED ||
+        uint32_t extensionId = HS_GetExtensionTypeId(extMsgType);
+        ret = CheckForDuplicateExtension(msg->extensionTypeMask, extensionId, ctx);
+        if (ret != HITLS_SUCCESS) {
+            return ret;
+        }
+        if (extensionId != HS_EX_TYPE_ID_UNRECOGNIZED ||
                 !IsParseNeedCustomExtensions(CUSTOM_EXT_FROM_CTX(ctx), extMsgType, HITLS_EX_TYPE_ENCRYPTED_EXTENSIONS)) {
-            msg->extensionTypeMask |= 1ULL << hsExTypeId;
+            msg->extensionTypeMask |= 1ULL << extensionId;
+            /* check whether the extension that is not sent is received. */
+            if (!GetExtensionFlagValue(ctx, extensionId)) {
+                BSL_ERR_PUSH_ERROR(HITLS_MSG_HANDLE_UNSUPPORT_EXTENSION_TYPE);
+                BSL_LOG_BINLOG_FIXLEN(BINLOG_ID17329, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
+                    "client did not send but get extension type %u.", extensionId, 0, 0, 0);
+                ctx->method.sendAlert(ctx, ALERT_LEVEL_FATAL, ALERT_UNSUPPORTED_EXTENSION);
+                return HITLS_MSG_HANDLE_UNSUPPORT_EXTENSION_TYPE;
+            }
         }
 
         ret = ParseEncryptedExBody(ctx, extMsgType, &buf[bufOffset], extMsgLen, msg);

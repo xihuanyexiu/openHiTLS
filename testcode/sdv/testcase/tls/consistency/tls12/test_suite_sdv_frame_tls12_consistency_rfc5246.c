@@ -5481,7 +5481,7 @@ void UT_TLS_TLS1_2_RFC5246_READ_AFTER_CLOSE_TC002()
     ALERT_Info alertInfo = { 0 };
     ALERT_GetInfo(client->ssl, &alertInfo);
     ASSERT_EQ(alertInfo.level, ALERT_LEVEL_FATAL);
-    ASSERT_EQ(alertInfo.description, ALERT_BAD_CERTIFICATE);
+    ASSERT_EQ(alertInfo.description, ALERT_UNSUPPORTED_CERTIFICATE);
     ASSERT_TRUE(HITLS_Close(clientTlsCtx) == HITLS_SUCCESS);
 
     FrameUioUserData *ioUserData = BSL_UIO_GetUserData(client->io);
