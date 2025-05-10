@@ -344,10 +344,10 @@ static int32_t ParseServerExBody(TLS_Ctx *ctx, uint16_t extMsgType, const uint8_
             break;
     }
 
-    if (IsParseNeedCustomExtensions(ctx->customExts, extMsgType,
+    if (IsParseNeedCustomExtensions(CUSTOM_EXT_FROM_CTX(ctx), extMsgType,
         HITLS_EX_TYPE_TLS1_2_SERVER_HELLO | HITLS_EX_TYPE_TLS1_3_SERVER_HELLO | HITLS_EX_TYPE_HELLO_RETRY_REQUEST)) {
         return ParseCustomExtensions(pkt.ctx, pkt.buf + *pkt.bufOffset, extMsgType, extMsgLen,
-            HITLS_EX_TYPE_TLS1_2_SERVER_HELLO | HITLS_EX_TYPE_TLS1_3_SERVER_HELLO | HITLS_EX_TYPE_HELLO_RETRY_REQUEST);
+            HITLS_EX_TYPE_TLS1_2_SERVER_HELLO | HITLS_EX_TYPE_TLS1_3_SERVER_HELLO | HITLS_EX_TYPE_HELLO_RETRY_REQUEST, NULL, 0);
     }
 
     // You need to send an alert when an unknown extended field is encountered
@@ -373,7 +373,7 @@ int32_t ParseServerExtension(TLS_Ctx *ctx, const uint8_t *buf, uint32_t bufLen, 
         bufOffset += HS_EX_HEADER_LEN;
 
         uint32_t hsExTypeId = HS_GetExtensionTypeId(extMsgType);
-        if (hsExTypeId != HS_EX_TYPE_ID_UNRECOGNIZED || !IsParseNeedCustomExtensions(ctx->customExts, extMsgType,
+        if (hsExTypeId != HS_EX_TYPE_ID_UNRECOGNIZED || !IsParseNeedCustomExtensions(CUSTOM_EXT_FROM_CTX(ctx), extMsgType,
             HITLS_EX_TYPE_TLS1_2_SERVER_HELLO | HITLS_EX_TYPE_TLS1_3_SERVER_HELLO |
             HITLS_EX_TYPE_HELLO_RETRY_REQUEST)) {
             msg->extensionTypeMask |= 1ULL << hsExTypeId;

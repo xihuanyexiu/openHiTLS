@@ -66,20 +66,23 @@ extern "C" {
  * @ingroup hitls_custom_extensions
  * @brief   Extension is used in Certificate messages.
  */
-#define HITLS_EX_TYPE_CERTIFICATE                     0x00020
+#define HITLS_EX_TYPE_TLS1_3_CERTIFICATE                     0x00020
 
 /**
  * @ingroup hitls_custom_extensions
  * @brief   Extension is used in CertificateRequest messages.
  */
-#define HITLS_EX_TYPE_CERTIFICATE_REQUEST             0x00040
+#define HITLS_EX_TYPE_TLS1_3_CERTIFICATE_REQUEST         0x00040
 
 /**
  * @ingroup hitls_custom_extensions
  * @brief   Extension is used in NewSessionTicket messages (TLS 1.3).
  */
-#define HITLS_EX_TYPE_NEW_SESSION_TICKET              0x00080
+#define HITLS_EX_TYPE_TLS1_3_NEW_SESSION_TICKET        0x00080
 
+
+#define HITLS_ADD_CUSTOM_EXTENSION_RET_PACK            1
+#define HITLS_ADD_CUSTOM_EXTENSION_RET_PASS            HITLS_SUCCESS
 
 /**
  * @ingroup hitls_custom_extensions
@@ -94,13 +97,15 @@ extern "C" {
  * @param   out     [OUT] Pointer to the extension data to be sent
  * @param   outLen  [OUT] Length of the extension data
  * @param   cert    [IN]  Pointer to the HITLS_X509_Cert structure representing certificate information
- * @param   certId  [IN]  Certificate ID indicating its position in the certificate chain
+ * @param   certIndex  [IN]  Certificate index indicating its position in the certificate chain
  * @param   alert   [OUT] Alert value provided by the user when requesting to add the custom extension
  * @param   addArg  [IN]  Additional argument provided when registering the callback
- * @retval  HITLS_SUCCESS if successful, otherwise an error code
+ * @retval  HITLS_ADD_CUSTOM_EXTENSION_RET_PACK if the extension needs to be packed,
+ *          HITLS_ADD_CUSTOM_EXTENSION_RET_PASS if it does not need to be packed,
+ *          otherwise, any other return value is considered a failure and will trigger a fatal alert based on the alert value.
  */
 typedef int (*HITLS_AddCustomExtCallback) (const HITLS_Ctx *ctx, uint16_t extType, uint32_t context, uint8_t **out,
-    uint32_t *outLen, HITLS_X509_Cert *cert, uint32_t certId, uint32_t *alert, void *addArg);
+    uint32_t *outLen, HITLS_X509_Cert *cert, uint32_t certIndex, uint32_t *alert, void *addArg);
 
 
 /**
@@ -131,13 +136,13 @@ typedef void (*HITLS_FreeCustomExtCallback) (const HITLS_Ctx *ctx, uint16_t extT
  * @param   in       [IN]  Pointer to the received extension data
  * @param   inlen    [IN]  Length of the extension data
  * @param   cert     [IN]  Pointer to the HITLS_X509_Cert structure representing certificate information
- * @param   certId   [IN]  Certificate ID indicating its position in the certificate chain
+ * @param   certIndex   [IN]  Certificate index indicating its position in the certificate chain
  * @param   alert    [OUT] Alert value provided by the user when requesting to add the custom extension
  * @param   parseArg [IN]  Additional argument provided when registering the callback
  * @retval  HITLS_SUCCESS if successful, otherwise an error code
  */
 typedef int (*HITLS_ParseCustomExtCallback) (const HITLS_Ctx *ctx, uint16_t extType, uint32_t context,
-    const uint8_t **in, uint32_t *inLen, HITLS_X509_Cert *cert, uint32_t certId, uint32_t *alert, void *parseArg);
+    const uint8_t **in, uint32_t *inLen, HITLS_X509_Cert *cert, uint32_t certIndex, uint32_t *alert, void *parseArg);
 
 
 /**
@@ -167,6 +172,20 @@ typedef struct {
  *          For other error codes, see hitls_error.h
  */
 uint32_t HITLS_AddCustomExtension(HITLS_Ctx *ctx, const HITLS_CustomExtParams *params);
+
+/**
+ * @ingroup hitls_custom_extensions
+ * @brief   Add a custom extension to the HITLS configuration using a parameter structure.
+ *
+ * This function adds a custom extension to the specified HITLS configuration using the provided
+ * parameters encapsulated in the HITLS_CustomExtParams structure.
+ *
+ * @param   config  [IN] Pointer to the HITLS configuration
+ * @param   params  [IN] Pointer to the structure containing custom extension parameters
+ * @retval  HITLS_SUCCESS if successful
+ *          For other error codes, see hitls_error.h
+ */
+uint32_t HITLS_CFG_AddCustomExtension(HITLS_Config *config, const HITLS_CustomExtParams *params);
 
 #ifdef __cplusplus
 }

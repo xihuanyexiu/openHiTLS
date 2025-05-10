@@ -492,7 +492,7 @@ int32_t SAL_CERT_SelectCertByInfo(HITLS_Ctx *ctx, CERT_ExpectInfo *info)
     return HITLS_CERT_ERR_SELECT_CERTIFICATE;
 }
 
-int32_t EncodeCertificate(HITLS_Ctx *ctx, HITLS_CERT_X509 *cert, uint8_t *buf, uint32_t bufLen, uint32_t *usedLen)
+int32_t EncodeCertificate(HITLS_Ctx *ctx, HITLS_CERT_X509 *cert, uint8_t *buf, uint32_t bufLen, uint32_t *usedLen, uint32_t certIndex)
 {
     if (ctx == NULL || buf == NULL || cert == NULL || usedLen == NULL) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16314, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "input null", 0, 0, 0, 0);
@@ -534,10 +534,20 @@ int32_t EncodeCertificate(HITLS_Ctx *ctx, HITLS_CERT_X509 *cert, uint8_t *buf, u
             BSL_ERR_PUSH_ERROR(HITLS_CERT_ERR_ENCODE_CERT);
             return RETURN_ERROR_NUMBER_PROCESS(HITLS_CERT_ERR_ENCODE_CERT, BINLOG_ID16316, "bufLen err");
         }
+
+        uint32_t exLen = 0;
+        if (IsPackNeedCustomExtensions(CUSTOM_EXT_FROM_CTX(ctx), HITLS_EX_TYPE_TLS1_3_CERTIFICATE)) {
+            ret = PackCustomExtensions(ctx, &buf[offset + sizeof(uint16_t)], bufLen - offset - sizeof(uint16_t), &exLen,
+                HITLS_EX_TYPE_TLS1_3_CERTIFICATE, cert, certIndex);
+            if (ret != HITLS_SUCCESS) {
+                return ret;
+            }
+        }
+
         /* Valid extensions for server certificates at present include the OCSP Status extension [RFC6066]
         and the SignedCertificateTimestamp extension [RFC6962] */
-        BSL_Uint16ToByte(0, &buf[offset]);
-        offset += sizeof(uint16_t);
+        BSL_Uint16ToByte(exLen, &buf[offset]);
+        offset += sizeof(uint16_t) + exLen;
     }
 #endif
 
@@ -578,7 +588,7 @@ static int32_t EncodeEECert(HITLS_Ctx *ctx, uint8_t *buf, uint32_t bufLen, uint3
 #endif
 
     /* Write the first device certificate. */
-    ret = EncodeCertificate(ctx, tmpCert, buf, bufLen, usedLen);
+    ret = EncodeCertificate(ctx, tmpCert, buf, bufLen, usedLen, 0);
     if (ret != HITLS_SUCCESS) {
         return RETURN_ERROR_NUMBER_PROCESS(ret, BINLOG_ID16153, "encode fail");
     }
@@ -595,7 +605,7 @@ static int32_t EncodeEECert(HITLS_Ctx *ctx, uint8_t *buf, uint32_t bufLen, uint3
             return ret;
         }
 #endif
-        ret = EncodeCertificate(ctx, certEnc, &buf[offset], bufLen - offset, usedLen);
+        ret = EncodeCertificate(ctx, certEnc, &buf[offset], bufLen - offset, usedLen, 1);
         if (ret != HITLS_SUCCESS) {
             BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16154, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
                 "TLCP encode device certificate error.", 0, 0, 0, 0);
@@ -660,12 +670,14 @@ static int32_t EncodeCertificateChain(HITLS_Ctx *ctx, uint8_t *buf, uint32_t buf
     }
     tempCert = (HITLS_CERT_X509 *)BSL_LIST_GET_FIRST(currentCertPair->chain);
     uint32_t tempOffset = offset;
+    uint32_t certIndex = 1;
     while (tempCert != NULL) {
-        ret = EncodeCertificate(ctx, tempCert, &buf[tempOffset], bufLen - tempOffset, usedLen);
+        ret = EncodeCertificate(ctx, tempCert, &buf[tempOffset], bufLen - tempOffset, usedLen, certIndex);
         if (ret != HITLS_SUCCESS) {
             return RETURN_ERROR_NUMBER_PROCESS(ret, BINLOG_ID15048, "encode cert chain err");
         }
         tempOffset += *usedLen;
+        certIndex++;
         tempCert = BSL_LIST_GET_NEXT(currentCertPair->chain);
     }
     *usedLen = tempOffset;
@@ -693,7 +705,7 @@ static int32_t EncodeCertStore(HITLS_Ctx *ctx, uint8_t *buf, uint32_t bufLen, ui
                 return ret;
             }
 #endif
-            ret = EncodeCertificate(ctx, certList[i], &buf[offset], bufLen - offset, usedLen);
+            ret = EncodeCertificate(ctx, certList[i], &buf[offset], bufLen - offset, usedLen, i);
             if (ret != HITLS_SUCCESS) {
                 BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16155, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
                     "encode cert chain error in No.%u.", i, 0, 0, 0);

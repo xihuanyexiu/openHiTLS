@@ -298,13 +298,12 @@ struct TlsCtx {
     bool isDtlsListen;
     bool plainAlertForbid;                  /* tls1.3 forbid to receive plain alert message */
     bool allowAppOut;                       /* whether user used HITLS_read to start renegotiation */
-    
-    /* Custom extensions */
-    CustomExt_Methods *customExts;  /* Pointer to the custom extension */
 };
 
 #define LIBCTX_FROM_CTX(ctx) ((ctx == NULL) ? NULL : (ctx)->config.tlsConfig.libCtx)
 #define ATTRIBUTE_FROM_CTX(ctx) ((ctx == NULL) ? NULL : (ctx)->config.tlsConfig.attrName)
+
+#define CUSTOM_EXT_FROM_CTX(ctx) ((ctx == NULL) ? NULL : (ctx)->config.tlsConfig.customExts)
 
 #ifdef __cplusplus
 }

@@ -101,9 +101,9 @@ int32_t Tls13PackNewSessionTicket(const TLS_Ctx *ctx, uint8_t *buf, uint32_t buf
     if (bufLen < (offset + sizeof(uint16_t))) {
         return PackBufLenError(BINLOG_ID16049, BINGLOG_STR("NewSessionTicket"));
     }
-    if (IsPackNeedCustomExtensions(ctx->customExts, HITLS_EX_TYPE_NEW_SESSION_TICKET)) {
+    if (IsPackNeedCustomExtensions(CUSTOM_EXT_FROM_CTX(ctx), HITLS_EX_TYPE_TLS1_3_NEW_SESSION_TICKET)) {
         ret = PackCustomExtensions(ctx, &buf[offset + sizeof(uint16_t)], bufLen - offset - sizeof(uint16_t), &exLen,
-            HITLS_EX_TYPE_NEW_SESSION_TICKET);
+            HITLS_EX_TYPE_TLS1_3_NEW_SESSION_TICKET, NULL, 0);
         if (ret != HITLS_SUCCESS) {
             return ret;
         }
