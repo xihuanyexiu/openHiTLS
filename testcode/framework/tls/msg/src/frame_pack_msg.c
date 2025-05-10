@@ -712,6 +712,7 @@ static int32_t PackClientHelloMsg(const FRAME_ClientHelloMsg *clientHello, uint8
         PackHsExtKeyShare(&clientHello->keyshares, &buf[offset], bufLen - offset, &offset);
         PackHsExtArray8(&clientHello->secRenego, &buf[offset], bufLen - offset, &offset);
         PackHsExtArrayForTicket(&clientHello->sessionTicket, &buf[offset], bufLen - offset, &offset);
+        PackHsExtArray8(&clientHello->encryptThenMac, &buf[offset], bufLen - offset, &offset);
         PackHsExtOfferedPsks(&clientHello->psks, &buf[offset], bufLen - offset, &offset);
 
         if (clientHello->extensionLen.state == INITIAL_FIELD) {
@@ -833,8 +834,9 @@ static int32_t PackServerHelloMsg(const FRAME_ServerHelloMsg *serverHello, uint8
     // hello retry request key share
     PackHsExtArray8(&serverHello->secRenego, &buf[offset], bufLen - offset, &offset);
     PackHsExtArray8(&serverHello->pointFormats, &buf[offset], bufLen - offset, &offset);
-    // encrypt then mac
     PackHsExtUint16(&serverHello->pskSelectedIdentity, &buf[offset], bufLen - offset, &offset);
+    // encrypt then mac
+    PackHsExtArray8(&serverHello->encryptThenMac, &buf[offset], bufLen - offset, &offset);
 
 	if (serverHello->extensionLen.state == INITIAL_FIELD) {
         uint32_t extensionLen = offset - sizeof(uint16_t) - bufOffset;
@@ -884,7 +886,7 @@ static int32_t PackServerEcdheMsg(FRAME_Type *type, const FRAME_ServerKeyExchang
 {
     uint32_t offset = 0;
 
-    // Fill in the following values in sequence: curve type, curve ID, pubkeylen, pubkey value, signature algorithm, 
+    // Fill in the following values in sequence: curve type, curve ID, pubkeylen, pubkey value, signature algorithm,
     // signature len, and signature value.
     PackInteger8(&serverKeyExchange->keyEx.ecdh.curveType, &buf[offset], bufLen, &offset);
     PackInteger16(&serverKeyExchange->keyEx.ecdh.namedcurve, &buf[offset], bufLen - offset, &offset);
@@ -908,7 +910,7 @@ static int32_t PackServerDheMsg(FRAME_Type *type, const FRAME_ServerKeyExchangeM
 {
     uint32_t offset = 0;
 
-    // Fill in the following values in sequence: plen, p value, glen, g value, pubkeylen, pubkey value, 
+    // Fill in the following values in sequence: plen, p value, glen, g value, pubkeylen, pubkey value,
     // signature algorithm, signature len, and signature value.
     PackInteger16(&serverKeyExchange->keyEx.dh.plen, &buf[offset], bufLen, &offset);
     PackArray8(&serverKeyExchange->keyEx.dh.p, &buf[offset], bufLen - offset, &offset);

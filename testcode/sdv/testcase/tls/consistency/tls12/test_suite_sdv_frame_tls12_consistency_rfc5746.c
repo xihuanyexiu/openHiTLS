@@ -566,7 +566,7 @@ void UT_TLS_TLS12_RFC5746_CONSISTENCY_EXTENDED_RENEGOTIATION_FUNC_TC005(void)
     ASSERT_TRUE(HITLS_Renegotiate(serverTlsCtx) == HITLS_SUCCESS);
     ASSERT_TRUE(HITLS_Renegotiate(clientTlsCtx) == HITLS_SUCCESS);
 
-    ASSERT_TRUE(FRAME_CreateConnection(client, server, false, HS_STATE_BUTT) == HITLS_SUCCESS);
+    ASSERT_TRUE(FRAME_CreateRenegotiationState(client, server, false, HS_STATE_BUTT) == HITLS_SUCCESS);
 
 EXIT:
     ClearWrapper();
@@ -879,7 +879,7 @@ void UT_TLS_TLS12_RFC5746_CONSISTENCY_EXTENDED_RENEGOTIATION_FUNC_TC007(void)
     RecWrapper wrapper = {
         TRY_SEND_SERVER_HELLO, REC_TYPE_HANDSHAKE, false, NULL, Test_ModifyServerHello_Secrenegotiation1};
     RegisterWrapper(wrapper);
-    ASSERT_EQ(FRAME_CreateConnection(client, server, false, HS_STATE_BUTT), HITLS_MSG_HANDLE_RENEGOTIATION_FAIL);
+    ASSERT_EQ(FRAME_CreateRenegotiationState(client, server, false, HS_STATE_BUTT), HITLS_MSG_HANDLE_RENEGOTIATION_FAIL);
 
 EXIT:
     ClearWrapper();
@@ -930,7 +930,7 @@ void UT_TLS_TLS12_RFC5746_CONSISTENCY_EXTENDED_RENEGOTIATION_FUNC_TC008(void)
     RecWrapper wrapper = {
         TRY_SEND_SERVER_HELLO, REC_TYPE_HANDSHAKE, false, NULL, Test_ModifyServerHello_Secrenegotiation2};
     RegisterWrapper(wrapper);
-    ASSERT_EQ(FRAME_CreateConnection(client, server, false, HS_STATE_BUTT), HITLS_MSG_HANDLE_RENEGOTIATION_FAIL);
+    ASSERT_EQ(FRAME_CreateRenegotiationState(client, server, false, HS_STATE_BUTT), HITLS_MSG_HANDLE_RENEGOTIATION_FAIL);
 
 EXIT:
     ClearWrapper();
@@ -1004,7 +1004,7 @@ void UT_TLS_TLS12_RFC5746_CONSISTENCY_EXTENDED_RENEGOTIATION_FUNC_TC006(void)
     RecWrapper wrapper = {
         TRY_SEND_SERVER_HELLO, REC_TYPE_HANDSHAKE, false, NULL, Test_ModifyServerHello_Secrenegotiation3};
     RegisterWrapper(wrapper);
-    ASSERT_EQ(FRAME_CreateConnection(client, server, false, HS_STATE_BUTT), HITLS_MSG_HANDLE_RENEGOTIATION_FAIL);
+    ASSERT_EQ(FRAME_CreateRenegotiationState(client, server, false, HS_STATE_BUTT), HITLS_MSG_HANDLE_RENEGOTIATION_FAIL);
     ALERT_Info info = {0};
     ALERT_GetInfo(client->ssl, &info);
     ASSERT_EQ(info.flag, ALERT_FLAG_SEND);
@@ -1173,7 +1173,7 @@ void UT_TLS_TLS12_RFC5746_CONSISTENCY_EXTENDED_RENEGOTIATION_FUNC_TC0015(void)
     RecWrapper wrapper = {
         TRY_SEND_SERVER_HELLO, REC_TYPE_HANDSHAKE, false, NULL, Test_ModifyServerHello_No_client_verify_data};
     RegisterWrapper(wrapper);
-    ASSERT_EQ(FRAME_CreateConnection(client, server, false, HS_STATE_BUTT), HITLS_MSG_HANDLE_RENEGOTIATION_FAIL);
+    ASSERT_EQ(FRAME_CreateRenegotiationState(client, server, false, HS_STATE_BUTT), HITLS_MSG_HANDLE_RENEGOTIATION_FAIL);
     ALERT_Info info = {0};
     ALERT_GetInfo(client->ssl, &info);
     ASSERT_EQ(info.flag, ALERT_FLAG_SEND);

@@ -338,10 +338,9 @@ static int32_t Tls13ServerNegotiateCipher(TLS_Ctx *ctx, const ClientHelloMsg *cl
     return HITLS_SUCCESS;
 }
 #endif /* HITLS_TLS_PROTO_TLS13 */
-static int32_t CheckCipherSuite(TLS_Ctx *ctx, const ClientHelloMsg *clientHello, uint16_t version, uint16_t cipherSuite)
+static int32_t CheckCipherSuite(TLS_Ctx *ctx, const ClientHelloMsg *clientHello, uint16_t cipherSuite)
 {
-    if ((CFG_CheckCipherSuiteSupported(cipherSuite) != true) ||
-        (CFG_CheckCipherSuiteVersion(cipherSuite, version, version) != true)) {
+    if (!IsCipherSuiteAllowed(ctx, cipherSuite)) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID17046, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "No proper cipher suite", 0, 0, 0, 0);
         return HITLS_CONFIG_UNSUPPORT_CIPHER_SUITE;
@@ -384,10 +383,9 @@ static int32_t CheckCipherSuite(TLS_Ctx *ctx, const ClientHelloMsg *clientHello,
 int32_t ServerSelectCipherSuite(TLS_Ctx *ctx, const ClientHelloMsg *clientHello)
 {
     /* Obtain server information */
-    uint16_t version = ctx->negotiatedInfo.version;
     uint16_t *cfgCipherSuites = ctx->config.tlsConfig.cipherSuites;
     uint32_t cfgCipherSuitesSize = ctx->config.tlsConfig.cipherSuitesSize;
-    if (version == HITLS_VERSION_TLS13) {
+    if (ctx->negotiatedInfo.version == HITLS_VERSION_TLS13) {
         cfgCipherSuites = ctx->config.tlsConfig.tls13CipherSuites;
         cfgCipherSuitesSize = ctx->config.tlsConfig.tls13cipherSuitesSize;
     }
@@ -410,7 +408,7 @@ int32_t ServerSelectCipherSuite(TLS_Ctx *ctx, const ClientHelloMsg *clientHello)
             if (normalCipherSuites[j] != preferenceCipherSuites[i]) {
                 continue;
             }
-            if (CheckCipherSuite(ctx, clientHello, version, normalCipherSuites[j]) != HITLS_SUCCESS) {
+            if (CheckCipherSuite(ctx, clientHello, normalCipherSuites[j]) != HITLS_SUCCESS) {
                 break;
             }
             return HITLS_SUCCESS;

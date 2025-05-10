@@ -1047,7 +1047,7 @@ void UT_TLS_CFG_SET_GET_RENEGOTIATIONSUPPORT_FUNC_TC001()
     ASSERT_TRUE(serverRes->ssl->state == CM_STATE_TRANSPORTING);
     ASSERT_TRUE(HITLS_Renegotiate(serverRes->ssl) == HITLS_SUCCESS);
     ASSERT_TRUE(HITLS_Renegotiate(clientRes->ssl) == HITLS_SUCCESS);
-    ASSERT_TRUE(FRAME_CreateConnection(clientRes, serverRes, true, HS_STATE_BUTT) == HITLS_SUCCESS);
+    ASSERT_TRUE(FRAME_CreateRenegotiationState(clientRes, serverRes, true, HS_STATE_BUTT) == HITLS_SUCCESS);
 EXIT:
     HITLS_CFG_FreeConfig(config);
     FRAME_FreeLink(clientRes);

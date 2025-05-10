@@ -150,6 +150,7 @@ typedef struct {
     FRAME_HsExtArray8 pointFormats;
     FRAME_HsExtArray16 supportedGroups;
     FRAME_HsExtArray16 signatureAlgorithms;
+    FRAME_HsExtArray8 encryptThenMac;
     FRAME_HsExtArray8 extendedMasterSecret;
     FRAME_HsExtArray8 secRenego;            /* security renegotiation */
     FRAME_HsExtArray8 sessionTicket;
@@ -194,6 +195,7 @@ typedef struct {
     FRAME_HsExtServerKeyShare keyShare;     /* tls1.3 key share */
     FRAME_HsExtUint16 pskSelectedIdentity;  /* tls1.3 psk extension */
     FRAME_HsExtArray8 tls13Cookie;          /* tls1.3 cookie */
+    FRAME_HsExtArray8 encryptThenMac;
 } FRAME_ServerHelloMsg;
 
 typedef struct {

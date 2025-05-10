@@ -52,13 +52,11 @@ static int32_t CheckHelloVerifyRequestType(TLS_Ctx *ctx, const HS_MsgType msgTyp
 
 static int32_t CheckServerHelloType(TLS_Ctx *ctx, const HS_MsgType msgType)
 {
-    /* In DTLS, When client try to receive ServerHello message, it doesn't know if server enables 
+    /* In DTLS, When client try to receive ServerHello message, it doesn't know if server enables
      * isSupportDtlsCookieExchange. If client receives HelloVerifyRequest message, also valid */
-    if (BSL_UIO_GetTransportType(ctx->rUio) == BSL_UIO_UDP) {
-        if (msgType == HELLO_VERIFY_REQUEST) {
-            (void)HS_ChangeState(ctx, TRY_RECV_HELLO_VERIFY_REQUEST);
-            return HITLS_SUCCESS;
-        }
+    if (IS_SUPPORT_DATAGRAM(ctx->config.tlsConfig.originVersionMask) && msgType == HELLO_VERIFY_REQUEST) {
+        (void)HS_ChangeState(ctx, TRY_RECV_HELLO_VERIFY_REQUEST);
+        return HITLS_SUCCESS;
     }
     BSL_LOG_BINLOG_FIXLEN(BINLOG_ID17331, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
         "CheckServerHelloType fail", 0, 0, 0, 0);

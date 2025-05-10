@@ -1790,7 +1790,7 @@ void UT_TLS_TLS12_RFC5246_CONSISTENCY_RENEGOTIATION_MASTEKEY_TC001()
 
     /* The server sends a Hello Request message. */
     ASSERT_TRUE(HITLS_Renegotiate(testInfo.server->ssl) == HITLS_SUCCESS);
-    ASSERT_TRUE(HITLS_Accept(testInfo.server->ssl) == HITLS_REC_NORMAL_RECV_BUF_EMPTY);
+    ASSERT_TRUE(HITLS_Accept(testInfo.server->ssl) == HITLS_SUCCESS);
     ASSERT_TRUE(FRAME_TrasferMsgBetweenLink(testInfo.server, testInfo.client) == HITLS_SUCCESS);
 
     /* Reconnect the client and retransmit data on the server. */
@@ -1799,7 +1799,7 @@ void UT_TLS_TLS12_RFC5246_CONSISTENCY_RENEGOTIATION_MASTEKEY_TC001()
     uint32_t readLen = 0;
     ASSERT_EQ(HITLS_Read(testInfo.client->ssl, readBuf, READ_BUF_SIZE, &readLen), HITLS_REC_NORMAL_RECV_BUF_EMPTY);
     ASSERT_TRUE(testInfo.client->ssl->state == CM_STATE_RENEGOTIATION);
-    ASSERT_EQ(FRAME_CreateConnection(testInfo.client, testInfo.server, true, HS_STATE_BUTT), HITLS_SUCCESS);
+    ASSERT_EQ(FRAME_CreateRenegotiationState(testInfo.client, testInfo.server, true, HS_STATE_BUTT), HITLS_SUCCESS);
     ASSERT_EQ(testInfo.client->ssl->state, CM_STATE_TRANSPORTING);
 
     /* Obtain the new masterKey based on the client session ID and compare it with the old masterKey. */
@@ -5459,7 +5459,7 @@ void UT_TLS_TLS1_2_RFC5246_READ_AFTER_CLOSE_TC002()
     FRAME_Init();
     HITLS_Config *tlsConfig = HITLS_CFG_NewTLS12Config();
     ASSERT_TRUE(tlsConfig != NULL);
-    uint16_t cipherSuits[] = {HITLS_RSA_PSK_WITH_AES_128_CBC_SHA};
+    uint16_t cipherSuits[] = {HITLS_RSA_WITH_AES_128_CBC_SHA256};
     HITLS_CFG_SetCipherSuites(tlsConfig, cipherSuits, sizeof(cipherSuits) / sizeof(uint16_t));
 
     FRAME_CertInfo certInfo = {
@@ -5476,7 +5476,7 @@ void UT_TLS_TLS1_2_RFC5246_READ_AFTER_CLOSE_TC002()
     ASSERT_TRUE(server != NULL);
     HITLS_Ctx *clientTlsCtx = FRAME_GetTlsCtx(client);
     clientTlsCtx->config.tlsConfig.needCheckKeyUsage = true;
-    ASSERT_TRUE(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT) == HITLS_CERT_ERR_KEYUSAGE);
+    ASSERT_EQ(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT), HITLS_CERT_ERR_KEYUSAGE);
 
     ALERT_Info alertInfo = { 0 };
     ALERT_GetInfo(client->ssl, &alertInfo);
@@ -5576,5 +5576,147 @@ EXIT:
     FRAME_FreeLink(client);
     FRAME_FreeLink(server);
     HITLS_CFG_FreeConfig(tlsConfig);
+}
+/* END_CASE */
+
+/* @
+* @test  UT_TLS_TLS1_2_RFC5246_CLIENT_HELLO_ENCRYPT_THEN_MAC_TC001
+* @spec  -
+* @title  Check the encrypt then mac extension carried in the clientHello message.
+* @precon  nan
+* @brief  1. Use configuration items to configure the client and server. Expected result 1 is obtained.
+*         2. Obtain and parse the client Hello message. Expected result 2 is obtained.
+* @expect 1. The initialization is successful.
+*         2. The  encrypt then mac extension carried in the client Hello message.
+* @prior  Level 1
+* @auto  TRUE
+@ */
+
+/* BEGIN_CASE */
+void UT_TLS_TLS1_2_RFC5246_CLIENT_HELLO_ENCRYPT_THEN_MAC_TC001(void)
+{
+    HandshakeTestInfo testInfo = { 0 };
+    FRAME_Msg frameMsg = { 0 };
+    FRAME_Type frameType = { 0 };
+    testInfo.state = TRY_RECV_CLIENT_HELLO;
+
+    FRAME_Init();
+
+    /* Use configuration items to configure the client and server. */
+    testInfo.config = HITLS_CFG_NewTLS12Config();
+    ASSERT_TRUE(testInfo.config != NULL);
+
+    testInfo.client = FRAME_CreateLink(testInfo.config, BSL_UIO_TCP);
+    ASSERT_TRUE(testInfo.client != NULL);
+    ASSERT_EQ(testInfo.client->ssl->config.tlsConfig.isEncryptThenMac, 1);
+
+    testInfo.server = FRAME_CreateLink(testInfo.config, BSL_UIO_TCP);
+    ASSERT_TRUE(testInfo.server != NULL);
+    ASSERT_EQ(testInfo.server->ssl->config.tlsConfig.isEncryptThenMac, 1);
+
+    ASSERT_TRUE(FRAME_CreateConnection(testInfo.client, testInfo.server, testInfo.isClient, testInfo.state) ==
+        HITLS_SUCCESS);
+    /* Obtain and parse the client Hello message. */
+    FrameUioUserData *ioUserData = BSL_UIO_GetUserData(testInfo.server->io);
+    uint8_t *recvBuf = ioUserData->recMsg.msg;
+    uint32_t recvLen = ioUserData->recMsg.len;
+    uint32_t parseLen = 0;
+
+    frameType.versionType = HITLS_VERSION_TLS12;
+    frameType.recordType = REC_TYPE_HANDSHAKE;
+    frameType.handshakeType = CLIENT_HELLO;
+    frameType.keyExType = HITLS_KEY_EXCH_ECDHE;
+    ASSERT_TRUE(FRAME_ParseMsg(&frameType, recvBuf, recvLen, &frameMsg, &parseLen) == HITLS_SUCCESS);
+
+    FRAME_ClientHelloMsg *clientMsg = &frameMsg.body.hsMsg.body.clientHello;
+    ASSERT_EQ(clientMsg->encryptThenMac.exType.data, HS_EX_TYPE_ENCRYPT_THEN_MAC);
+
+EXIT:
+    FRAME_CleanMsg(&frameType, &frameMsg);
+    HITLS_CFG_FreeConfig(testInfo.config);
+    FRAME_FreeLink(testInfo.client);
+    FRAME_FreeLink(testInfo.server);
+}
+/* END_CASE */
+
+/* @
+* @test  UT_TLS_TLS1_2_RFC5246_CLIENT_PSK_FUNC_TC001
+* @spec  -
+* @title  Client configured with PSK ciphersuite, without PSK callback, clienthello failed to be sent.
+* @precon  nan
+* @brief  1. Use the default configuration items to configure the client and server. Expected result 1 is obtained.
+*         2. Set PSK ciphersuite, expected result 2
+*         3. Call HITLS_Connect to start handshake, expected result 3
+* @expect 1. The initialization is successful.
+*         2. Return success.
+*         3. Clienthello send failed, return HITLS_PACK_CLIENT_CIPHER_SUITE_ERR
+* @prior  Level 1
+* @auto  TRUE
+@ */
+/* BEGIN_CASE */
+void UT_TLS_TLS1_2_RFC5246_CLIENT_PSK_FUNC_TC001()
+{
+    FRAME_Init();
+
+    HITLS_Config *config = HITLS_CFG_NewTLS12Config();
+    ASSERT_TRUE(config != NULL);
+
+    uint16_t cipherSuits[] = {HITLS_RSA_PSK_WITH_AES_128_CBC_SHA};
+    HITLS_CFG_SetCipherSuites(config, cipherSuits, sizeof(cipherSuits) / sizeof(uint16_t));
+
+    FRAME_LinkObj *client = FRAME_CreateLink(config, BSL_UIO_TCP);
+    ASSERT_TRUE(client != NULL);
+    FRAME_LinkObj *server = FRAME_CreateLink(config, BSL_UIO_TCP);
+    ASSERT_TRUE(server != NULL);
+
+    ASSERT_EQ(HITLS_Connect(client->ssl), HITLS_PACK_CLIENT_CIPHER_SUITE_ERR);
+    ASSERT_TRUE(client->ssl->hsCtx->state == TRY_SEND_CLIENT_HELLO);
+EXIT:
+    HITLS_CFG_FreeConfig(config);
+    FRAME_FreeLink(client);
+    FRAME_FreeLink(server);
+}
+/* END_CASE */
+
+/* @
+* @test  UT_TLS_TLS1_2_RFC5246_CLIENT_PSK_FUNC_TC002
+* @spec  -
+* @title  Client configured with PSK ciphersuite, with PSK callback, server use default config and with PSK callback
+* configured. Handshake will success.
+* @precon  nan
+* @brief  1. Use the default configuration items to configure the client and server. Expected result 1
+*         2. Set PSK ciphersuite to client and set psk callback to both client and server, expected result 2
+*         3. Start handshake, expected result 3
+* @expect 1. The initialization is successful.
+*         2. Return success.
+*         3. Handshake success.
+* @prior  Level 1
+* @auto  TRUE
+@ */
+/* BEGIN_CASE */
+void UT_TLS_TLS1_2_RFC5246_CLIENT_PSK_FUNC_TC002()
+{
+    FRAME_Init();
+
+    HITLS_Config *c_config = HITLS_CFG_NewTLS12Config();
+    ASSERT_TRUE(c_config != NULL);
+    HITLS_Config *s_config = HITLS_CFG_NewTLS12Config();
+    ASSERT_TRUE(s_config != NULL);
+    ASSERT_TRUE(HITLS_CFG_SetPskClientCallback(c_config, ExampleClientCb) == 0);
+    ASSERT_TRUE(HITLS_CFG_SetPskServerCallback(s_config, ExampleServerCb) == 0);
+    uint16_t cipherSuits[] = {HITLS_RSA_PSK_WITH_AES_128_CBC_SHA};
+    HITLS_CFG_SetCipherSuites(c_config, cipherSuits, sizeof(cipherSuits) / sizeof(uint16_t));
+
+    FRAME_LinkObj *client = FRAME_CreateLink(c_config, BSL_UIO_TCP);
+    ASSERT_TRUE(client != NULL);
+    FRAME_LinkObj *server = FRAME_CreateLink(s_config, BSL_UIO_TCP);
+    ASSERT_TRUE(server != NULL);
+
+    ASSERT_EQ(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT), HITLS_SUCCESS);
+EXIT:
+    HITLS_CFG_FreeConfig(c_config);
+    HITLS_CFG_FreeConfig(s_config);
+    FRAME_FreeLink(client);
+    FRAME_FreeLink(server);
 }
 /* END_CASE */

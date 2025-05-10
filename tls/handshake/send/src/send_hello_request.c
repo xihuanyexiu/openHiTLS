@@ -65,6 +65,6 @@ int32_t ServerSendHelloRequestProcess(TLS_Ctx *ctx)
     BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15907, BSL_LOG_LEVEL_INFO, BSL_LOG_BINLOG_TYPE_RUN,
         "server send hello request msg success.", 0, 0, 0, 0);
 
-    return HS_ChangeState(ctx, TRY_RECV_CLIENT_HELLO);
+    return HS_ChangeState(ctx, TLS_CONNECTED);
 }
 #endif /* HITLS_TLS_FEATURE_RENEGOTIATION */

@@ -31,25 +31,58 @@
 #include "crypt_eal_pkey.h"
 #endif
 
-static uint32_t GetSignSchemeVersionBits(const void *array, uint32_t index)
-{
-    const TLS_SigSchemeInfo *schemes = (const TLS_SigSchemeInfo *)array;
-    return schemes[index].chainVersionBits;
-}
+static const uint16_t DEFAULT_SIGSCHEME_ID[] = {
+    CERT_SIG_SCHEME_ECDSA_SECP256R1_SHA256,
+    CERT_SIG_SCHEME_ECDSA_SECP384R1_SHA384,
+    CERT_SIG_SCHEME_ECDSA_SECP521R1_SHA512,
+    CERT_SIG_SCHEME_ED25519,
+    CERT_SIG_SCHEME_SM2_SM3,
+    CERT_SIG_SCHEME_RSA_PSS_PSS_SHA256,
+    CERT_SIG_SCHEME_RSA_PSS_PSS_SHA384,
+    CERT_SIG_SCHEME_RSA_PSS_PSS_SHA512,
+    CERT_SIG_SCHEME_RSA_PSS_RSAE_SHA256,
+    CERT_SIG_SCHEME_RSA_PSS_RSAE_SHA384,
+    CERT_SIG_SCHEME_RSA_PSS_RSAE_SHA512,
+    CERT_SIG_SCHEME_RSA_PKCS1_SHA256,
+    CERT_SIG_SCHEME_RSA_PKCS1_SHA384,
+    CERT_SIG_SCHEME_RSA_PKCS1_SHA512,
+    CERT_SIG_SCHEME_ECDSA_SHA224,
+    CERT_SIG_SCHEME_ECDSA_SHA1,
+    CERT_SIG_SCHEME_RSA_PKCS1_SHA224,
+    CERT_SIG_SCHEME_RSA_PKCS1_SHA1,
+    CERT_SIG_SCHEME_DSA_SHA224,
+    CERT_SIG_SCHEME_DSA_SHA256,
+    CERT_SIG_SCHEME_DSA_SHA384,
+    CERT_SIG_SCHEME_DSA_SHA512,
+    CERT_SIG_SCHEME_DSA_SHA1,
+};
 
-static uint16_t GetSignSchemeId(const void *array, uint32_t index)
-{
-    const TLS_SigSchemeInfo *schemes = (const TLS_SigSchemeInfo *)array;
-    return schemes[index].signatureScheme;
-}
-
-static int32_t UpdateSignAlgorithmsArray(TLS_Config *config, const TLS_SigSchemeInfo *sigSchemes, uint32_t sigSchemeLen)
+static int32_t UpdateSignAlgorithmsArray(TLS_Config *config)
 {
     if (config == NULL) {
         return HITLS_INVALID_INPUT;
     }
-    return ConfigUpdateTlsConfigArray(&config->signAlgorithms, &config->signAlgorithmsSize, sigSchemes, sigSchemeLen,
-        config->version, GetSignSchemeVersionBits, GetSignSchemeId);
+    uint16_t *tempItems = BSL_SAL_Calloc(sizeof(DEFAULT_SIGSCHEME_ID), sizeof(uint8_t));
+    if (tempItems == NULL) {
+        return HITLS_MEMALLOC_FAIL;
+    }
+    uint32_t size = 0;
+    for (uint32_t i = 0; i < sizeof(DEFAULT_SIGSCHEME_ID) / sizeof(DEFAULT_SIGSCHEME_ID[0]); i++) {
+        const TLS_SigSchemeInfo *info = ConfigGetSignatureSchemeInfo(config, DEFAULT_SIGSCHEME_ID[i]);
+        if (info == NULL || (config->version & info->chainVersionBits) == 0) {
+            continue;
+        }
+        tempItems[size] = DEFAULT_SIGSCHEME_ID[i];
+        size++;
+    }
+    if (size == 0) {
+        BSL_SAL_Free(tempItems);
+        return HITLS_INVALID_INPUT;
+    }
+    BSL_SAL_FREE(config->signAlgorithms);
+    config->signAlgorithms = tempItems;
+    config->signAlgorithmsSize = size;
+    return HITLS_SUCCESS;
 }
 
 #ifndef HITLS_TLS_FEATURE_PROVIDER
@@ -334,7 +367,7 @@ static const TLS_SigSchemeInfo SIGNATURE_SCHEME_INFO[] = {
 
 int32_t ConfigLoadSignatureSchemeInfo(HITLS_Config *config)
 {
-    return UpdateSignAlgorithmsArray(config, SIGNATURE_SCHEME_INFO, sizeof(SIGNATURE_SCHEME_INFO) / sizeof(TLS_SigSchemeInfo));
+    return UpdateSignAlgorithmsArray(config);
 }
 
 const TLS_SigSchemeInfo *ConfigGetSignatureSchemeInfo(const HITLS_Config *config, uint16_t signatureScheme)
@@ -505,7 +538,7 @@ int32_t ConfigLoadSignatureSchemeInfo(HITLS_Config *config)
     if (ret != HITLS_SUCCESS) {
         return ret;
     }
-    return UpdateSignAlgorithmsArray(config, config->sigSchemeInfo, config->sigSchemeInfolen);
+    return UpdateSignAlgorithmsArray(config);
 }
 
 const TLS_SigSchemeInfo *ConfigGetSignatureSchemeInfo(const HITLS_Config *config, uint16_t signScheme)

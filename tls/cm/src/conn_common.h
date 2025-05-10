@@ -74,6 +74,16 @@ void ChangeConnState(HITLS_Ctx *ctx, CM_State state);
  * @retval  For other error codes, see hitls_error.h
  */
 int32_t CommonEventInRenegotiationState(HITLS_Ctx *ctx);
+
+/**
+ * @ingroup hitls
+ * @brief   In the renegotiation state, process no_renegotiation alert.
+ *          Send a handshake_failure alert if no_renegotiation alert is received.
+ *
+ * @param   ctx  [IN] TLS connection handle
+ *
+ */
+void InnerRenegotiationProcess(HITLS_Ctx *ctx);
 #endif
 
 #ifdef __cplusplus
