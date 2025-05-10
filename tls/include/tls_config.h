@@ -105,6 +105,8 @@ typedef struct {
 #define TLS_CAPABILITY_LIST_MALLOC_SIZE 10
 #endif
 
+typedef struct CustomExt_Methods HITLS_CustomExts;
+
 /**
  * @brief   TLS Global Configuration
  */
@@ -239,6 +241,8 @@ typedef struct TlsConfig {
     HITLS_NewSessionCb newSessionCb;    /* negotiates to generate a session */
     HITLS_KeyLogCb keyLogCb;            /* the key log callback */
     bool isKeepPeerCert;                /* whether to save the peer certificate */
+
+    HITLS_CustomExts *customExts;
 } TLS_Config;
 
 #define LIBCTX_FROM_CONFIG(config) ((config == NULL) ? NULL : (config)->libCtx)

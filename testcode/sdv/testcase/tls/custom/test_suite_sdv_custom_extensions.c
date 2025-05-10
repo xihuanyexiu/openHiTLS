@@ -34,10 +34,14 @@
 #include "tls_config.h"
 #include "hitls_type.h"
 #include "hitls_func.h"
+#include "hitls.h"
 #include "pack.h"
 #include "bsl_err.h"
 #include "bsl_bytes.h"
 #include "custom_extensions.h"
+#include "frame_tls.h"
+#include "alert.h"
+#include "frame_link.h"
 
 #define CUSTOM_EXTENTIONS_TYPE_1                      0x00001
 #define CUSTOM_EXTENTIONS_TYPE_2                      0x00002
@@ -55,13 +59,13 @@ int SimpleAddCb(const struct TlsCtx *ctx, uint16_t extType, uint32_t context, ui
     (void)addArg;
     *out = malloc(sizeof(uint16_t));
     if (*out == NULL) {
-        return 1;
+        return -1;
     }
     uint32_t bufOffset = 0;
     (*out)[bufOffset] = 0xAA;
     bufOffset++;
     *outLen = bufOffset;
-    return 0;
+    return HITLS_ADD_CUSTOM_EXTENSION_RET_PACK;
 }
 
 // Simple free_cb function, frees the allocated data
@@ -123,7 +127,10 @@ void SDV_TLS_PACK_CUSTOM_EXTENSIONS_API_TC001(void)
 {
     FRAME_Init();  // Initialize the test framework
 
-    TLS_Ctx ctx = {0};
+    HITLS_Config *tlsConfig = HITLS_CFG_NewTLS13Config();
+    ASSERT_NE(tlsConfig, NULL);
+    HITLS_Ctx *ctx = HITLS_New(tlsConfig);
+    ASSERT_NE(ctx, NULL);
     uint8_t buf[1024] = {0};
     uint32_t bufLen = sizeof(buf);
     uint32_t len = 0;
@@ -139,14 +146,17 @@ void SDV_TLS_PACK_CUSTOM_EXTENSIONS_API_TC001(void)
     meth.freeCb = NULL;  // No callback
     exts.meths = &meth;
     exts.methsCount = 1;
-    ctx.customExts = &exts;
+    ctx->config.tlsConfig.customExts = &exts;
 
     // Call the interface under test
     // Verify the return value is success
-    ASSERT_EQ(PackCustomExtensions(&ctx, buf, bufLen, &len, context), HITLS_SUCCESS);
+    ASSERT_EQ(PackCustomExtensions(ctx, buf, bufLen, &len, context, NULL, 0), HITLS_SUCCESS);
+    ctx->config.tlsConfig.customExts = NULL;
     ASSERT_EQ(len, 0);  // No data packed without add_cb
 
 EXIT:
+    HITLS_Free(ctx);
+    HITLS_CFG_FreeConfig(tlsConfig);
     return;
 }
 /* END_CASE */
@@ -167,7 +177,10 @@ void SDV_TLS_PARSE_CUSTOM_EXTENSIONS_API_TC001(void)
 {
     FRAME_Init();  // Initialize the test framework
 
-    TLS_Ctx ctx = {0};
+    HITLS_Config *tlsConfig = HITLS_CFG_NewTLS13Config();
+    ASSERT_NE(tlsConfig, NULL);
+    HITLS_Ctx *ctx = HITLS_New(tlsConfig);
+    ASSERT_NE(ctx, NULL);
     uint8_t buf[1024] = {0xAA};  // ext_type=1, len=0
     uint32_t bufOffset = 0;
     uint16_t extType = CUSTOM_EXTENTIONS_TYPE_1;
@@ -181,14 +194,17 @@ void SDV_TLS_PARSE_CUSTOM_EXTENSIONS_API_TC001(void)
     meth.parseCb = NULL;  // No callback
     exts.meths = &meth;
     exts.methsCount = 1;
-    ctx.customExts = &exts;
+    ctx->config.tlsConfig.customExts = &exts;
 
     // Call the interface under test
-    int32_t ret = ParseCustomExtensions(&ctx, buf + bufOffset, extType, extLen, context);
+    int32_t ret = ParseCustomExtensions(ctx, buf + bufOffset, extType, extLen, context, NULL, 0);
+    ctx->config.tlsConfig.customExts = NULL;
     ASSERT_EQ(ret, HITLS_SUCCESS);  // Verify the return value is success
     // Note: Current implementation doesn't update bufOffset without parse_cb, adjust expectation if needed
 
 EXIT:
+    HITLS_Free(ctx);
+    HITLS_CFG_FreeConfig(tlsConfig);
     return;
 }
 /* END_CASE */
@@ -209,7 +225,10 @@ void SDV_TLS_PACK_CUSTOM_EXTENSIONS_MULTIPLE_API_TC001(void)
 {
     FRAME_Init();  // Initialize the test framework
 
-    TLS_Ctx ctx = {0};
+    HITLS_Config *tlsConfig = HITLS_CFG_NewTLS13Config();
+    ASSERT_NE(tlsConfig, NULL);
+    HITLS_Ctx *ctx = HITLS_New(tlsConfig);
+    ASSERT_NE(ctx, NULL);
     uint8_t buf[1024] = {0};
     uint32_t bufLen = sizeof(buf);
     uint32_t len = 0;
@@ -229,14 +248,17 @@ void SDV_TLS_PACK_CUSTOM_EXTENSIONS_MULTIPLE_API_TC001(void)
     meths[1].freeCb = NULL;
     exts.meths = meths;
     exts.methsCount = methsCount;
-    ctx.customExts = &exts;
+    ctx->config.tlsConfig.customExts = &exts;
 
     // Call the interface under test
-    int32_t ret = PackCustomExtensions(&ctx, buf, bufLen, &len, context);
+    int32_t ret = PackCustomExtensions(ctx, buf, bufLen, &len, context, NULL, 0);
+    ctx->config.tlsConfig.customExts = NULL;
     ASSERT_EQ(ret, HITLS_SUCCESS);  // Verify the return value is success
     ASSERT_EQ(len, 0);             // No data packed without add_cb
 
 EXIT:
+    HITLS_Free(ctx);
+    HITLS_CFG_FreeConfig(tlsConfig);
     return;
 }
 /* END_CASE */
@@ -257,20 +279,25 @@ void SDV_TLS_PACK_CUSTOM_EXTENSIONS_EMPTY_API_TC001(void)
 {
     FRAME_Init();  // Initialize the test framework
 
-    TLS_Ctx ctx = {0};
+    HITLS_Config *tlsConfig = HITLS_CFG_NewTLS13Config();
+    ASSERT_NE(tlsConfig, NULL);
+    HITLS_Ctx *ctx = HITLS_New(tlsConfig);
+    ASSERT_NE(ctx, NULL);
     uint8_t buf[1024] = {0};
     uint32_t bufLen = sizeof(buf);
     uint32_t len = 0;
     uint32_t context = 1;
 
-    ctx.customExts = NULL;  // No extensions
+    ctx->config.tlsConfig.customExts = NULL;  // No extensions
 
     // Call the interface under test
-    int32_t ret = PackCustomExtensions(&ctx, buf, bufLen, &len, context);
+    int32_t ret = PackCustomExtensions(ctx, buf, bufLen, &len, context, NULL, 0);
     ASSERT_EQ(ret, HITLS_SUCCESS);  // Verify the return value is success
     ASSERT_EQ(len, 0);             // Verify the packing length is 0
 
 EXIT:
+    HITLS_CFG_FreeConfig(tlsConfig);
+    HITLS_Free(ctx);
     return;
 }
 /* END_CASE */
@@ -291,7 +318,9 @@ void SDV_TLS_PACK_CUSTOM_EXTENSIONS_CALLBACK_API_TC001(void)
 {
     FRAME_Init();  // Initialize the test framework
 
-    TLS_Ctx ctx = {0};
+    HITLS_Config *tlsConfig = HITLS_CFG_NewTLS13Config();
+    HITLS_Ctx *ctx = HITLS_New(tlsConfig);
+    ASSERT_NE(ctx, NULL);
     uint8_t buf[1024] = {0};
     uint32_t bufLen = sizeof(buf);
     uint32_t len = 0;
@@ -308,10 +337,11 @@ void SDV_TLS_PACK_CUSTOM_EXTENSIONS_CALLBACK_API_TC001(void)
     meth.freeCb = SimpleFreeCb;
     exts.meths = &meth;
     exts.methsCount = 1;
-    ctx.customExts = &exts;
+    ctx->config.tlsConfig.customExts = &exts;
 
     // Call the interface under test
-    int32_t ret = PackCustomExtensions(&ctx, buf, bufLen, &len, context);
+    int32_t ret = PackCustomExtensions(ctx, buf, bufLen, &len, context, NULL, 0);
+    ctx->config.tlsConfig.customExts = NULL;
     ASSERT_EQ(ret, HITLS_SUCCESS);  // Verify the return value is success
     ASSERT_EQ(len, sizeof(uint16_t) + sizeof(uint16_t) + dataLen);  // ext_type (2 byte) + len (2 byte) + data (1 byte)
     // Verify the extension type
@@ -322,6 +352,8 @@ void SDV_TLS_PACK_CUSTOM_EXTENSIONS_CALLBACK_API_TC001(void)
     ASSERT_EQ(buf[len - 1], 0xAA);  // Verify the data
 
 EXIT:
+    HITLS_CFG_FreeConfig(tlsConfig);
+    HITLS_Free(ctx);
     return;
 }
 /* END_CASE */
@@ -342,13 +374,15 @@ void SDV_TLS_PARSE_CUSTOM_EXTENSIONS_CALLBACK_API_TC001(void)
 {
     FRAME_Init();  // Initialize the test framework
 
-    TLS_Ctx ctx = {0};
+    HITLS_Config *tlsConfig = HITLS_CFG_NewTLS13Config();
+    ASSERT_NE(tlsConfig, NULL);
+    HITLS_Ctx *ctx = HITLS_New(tlsConfig);
+    ASSERT_NE(ctx, NULL);
     uint8_t buf[1024] = {0xAA};  // ext_type=1 (big-endian), len=1, data=0xAA
     uint32_t bufOffset = 0;
     uint16_t extType = CUSTOM_EXTENTIONS_TYPE_1;
     uint32_t context = 1;
     uint32_t extLen = 1;
-
     // Configure a single custom extension with parse callback
     CustomExt_Methods exts = {0};
     CustomExt_Method meth = {0};
@@ -357,13 +391,16 @@ void SDV_TLS_PARSE_CUSTOM_EXTENSIONS_CALLBACK_API_TC001(void)
     meth.parseCb = SimpleParseCb;
     exts.meths = &meth;
     exts.methsCount = 1;
-    ctx.customExts = &exts;
+    ctx->config.tlsConfig.customExts = &exts;
 
     // Call the interface under test
-    int32_t ret = ParseCustomExtensions(&ctx, buf + bufOffset, extType, extLen, context);
+    int32_t ret = ParseCustomExtensions(ctx, buf + bufOffset, extType, extLen, context, NULL, 0);
+    ctx->config.tlsConfig.customExts = NULL;
     ASSERT_EQ(ret, HITLS_SUCCESS);  // Verify the return value is success
 
 EXIT:
+    HITLS_CFG_FreeConfig(tlsConfig);
+    HITLS_Free(ctx);
     return;
 }
 /* END_CASE */
@@ -388,9 +425,9 @@ EXIT:
 void SDV_HITLS_ADD_CUSTOM_EXTENSION_API_TC001(void)
 {
     FRAME_Init();  // Initialize the test framework
+    HITLS_Config *tlsConfig = HITLS_CFG_NewTLS13Config();
+    ASSERT_NE(tlsConfig, NULL);
 
-    // Initialize the TLS context
-    TLS_Ctx ctx = {0};
     uint16_t extType = CUSTOM_EXTENTIONS_TYPE_1;
     uint16_t invalidExtType = CUSTOM_EXTENTIONS_TYPE_2;
     uint32_t context = 1;
@@ -410,10 +447,10 @@ void SDV_HITLS_ADD_CUSTOM_EXTENSION_API_TC001(void)
         .parseCb = parseCb,
         .parseArg = parseArg
     };
-    uint32_t ret = HITLS_AddCustomExtension(&ctx, &params);
+    uint32_t ret = HITLS_CFG_AddCustomExtension(tlsConfig, &params);
     ASSERT_EQ(ret, HITLS_SUCCESS);  // Verify the return value is success
-    ASSERT_EQ(ctx.customExts->methsCount, 1);  // Verify the number of extensions is 1
-    CustomExt_Method *meth = &ctx.customExts->meths[0];
+    ASSERT_EQ(tlsConfig->customExts->methsCount, 1);  // Verify the number of extensions is 1
+    CustomExt_Method *meth = &tlsConfig->customExts->meths[0];
     ASSERT_EQ(meth->extType, extType);  // Verify the extension type
     ASSERT_EQ(meth->context, context);    // Verify the context
     ASSERT_EQ(meth->addCb, addCb);      // Verify add_cb
@@ -432,9 +469,9 @@ void SDV_HITLS_ADD_CUSTOM_EXTENSION_API_TC001(void)
         .parseCb = parseCb,
         .parseArg = parseArg
     };
-    ret = HITLS_AddCustomExtension(&ctx, &duplicateParams);
+    ret = HITLS_CFG_AddCustomExtension(tlsConfig, &duplicateParams);
     ASSERT_EQ(ret, HITLS_CONFIG_DUP_CUSTOM_EXT);  // Verify the return value is failure
-    ASSERT_EQ(ctx.customExts->methsCount, 1);  // Verify the number of extensions does not increase
+    ASSERT_EQ(tlsConfig->customExts->methsCount, 1);  // Verify the number of extensions does not increase
 
     // Test invalid parameters: add_cb is NULL, free_cb is not NULL
     HITLS_CustomExtParams invalidParams = {
@@ -446,16 +483,332 @@ void SDV_HITLS_ADD_CUSTOM_EXTENSION_API_TC001(void)
         .parseCb = parseCb,
         .parseArg = parseArg
     };
-    ret = HITLS_AddCustomExtension(&ctx, &invalidParams);
+    ret = HITLS_CFG_AddCustomExtension(tlsConfig, &invalidParams);
     ASSERT_EQ(ret, HITLS_INVALID_INPUT);  // Verify the return value is failure
-    ASSERT_EQ(ctx.customExts->methsCount, 1);  // Verify the number of extensions does not increase
+    ASSERT_EQ(tlsConfig->customExts->methsCount, 1);  // Verify the number of extensions does not increase
 
 EXIT:
-    // Clean up memory to prevent leaks
-    if (ctx.customExts != NULL) {
-        BSL_SAL_Free(ctx.customExts->meths);
-        BSL_SAL_Free(ctx.customExts);
-    }
+    HITLS_CFG_FreeConfig(tlsConfig);
     return;
+}
+/* END_CASE */
+
+typedef struct {
+    uint32_t parsedContext[10];
+    uint32_t parsedContextCount;
+    uint32_t addedContext[10];
+    uint32_t addedContextCount;
+    uint32_t alertContext;
+    uint32_t alert;
+    bool addEmptyExt;
+    bool parseEmptyExt;
+    bool passExt;
+} CustomExtensionArg;
+
+int CustomExtensionAddCb(const struct TlsCtx *ctx, uint16_t extType, uint32_t context, uint8_t **out, uint32_t *outLen,
+    HITLS_X509_Cert *cert, uint32_t certId, uint32_t *alert, void *addArg)
+{
+    (void)ctx;
+    (void)extType;
+    (void)cert;
+    (void)certId;
+    (void)alert;
+
+    CustomExtensionArg *arg = (CustomExtensionArg *)addArg;
+    arg->addedContext[arg->addedContextCount++] = context;
+
+    if ((arg->alertContext & context) != 0) {
+        *alert = arg->alert;
+        return -1;
+    }
+
+    if (arg->passExt) {
+        *out = NULL;
+        *outLen = 0;
+        return HITLS_ADD_CUSTOM_EXTENSION_RET_PASS;
+    }
+
+    if (arg->addEmptyExt) {
+        *out = NULL;
+        *outLen = 0;
+        return HITLS_ADD_CUSTOM_EXTENSION_RET_PACK;
+    }
+
+    *out = malloc(1);
+    if (*out == NULL) {
+        return -1;
+    }
+    *outLen = 1;
+    (*out)[0] = 0xAA;
+
+    return HITLS_ADD_CUSTOM_EXTENSION_RET_PACK;
+}
+
+// Simple free_cb function, frees the allocated data
+void CustomExtensionFreeCb(const struct TlsCtx *ctx, uint16_t extType, uint32_t context, uint8_t *out, void *addArg)
+{
+    (void)ctx;
+    (void)extType;
+    (void)context;
+    (void)addArg;
+    BSL_SAL_Free(out);
+}
+
+// Simple parse_cb function, reads the length and data, checks the data
+int CustomExtensionParseCb(const struct TlsCtx *ctx, uint16_t extType, uint32_t context, const uint8_t **in, uint32_t *inLen,
+    HITLS_X509_Cert *cert, uint32_t certId, uint32_t *alert, void *parseArg)
+{
+    (void)ctx;
+    (void)extType;
+    (void)context;
+    (void)cert;
+    (void)certId;
+    (void)alert;
+    CustomExtensionArg *arg = (CustomExtensionArg *)parseArg;
+    arg->parsedContext[arg->parsedContextCount++] = context;
+    if ((arg->alertContext & context) != 0) {
+        *alert = arg->alert;
+        return -1;
+    }
+
+    if (arg->parseEmptyExt) {
+        if (*inLen > 0) {
+            return -1;
+        }
+        return 0;
+    }
+
+    if (arg->passExt) {
+        return -1;
+    }
+
+    if (*inLen != 1 || (*in)[0] != 0xAA) {
+        return -1;
+    }
+
+    return 0;
+}
+
+
+
+/**
+ * @test  SDV_HITLS_CUSTOM_EXTENSION_FUNCTION_TC001
+ * @title Basic Functionality Test for Custom Extensions
+ */
+/* BEGIN_CASE */
+void SDV_HITLS_CUSTOM_EXTENSION_FUNCTION_TC001(void)
+{
+    FRAME_Init();  // Initialize the test framework
+
+    HITLS_Config *clientConfig = HITLS_CFG_NewTLS13Config();
+    HITLS_Config *serverConfig = HITLS_CFG_NewTLS13Config();
+    HITLS_CFG_SetClientVerifySupport(serverConfig, true);
+    CustomExtensionArg serverArg = {0};
+    CustomExtensionArg clientArg = {0};
+    HITLS_CustomExtParams params = {
+        .extType = CUSTOM_EXTENTIONS_TYPE_2,
+        .context = HITLS_EX_TYPE_CLIENT_HELLO | HITLS_EX_TYPE_TLS1_3_SERVER_HELLO | HITLS_EX_TYPE_ENCRYPTED_EXTENSIONS | HITLS_EX_TYPE_TLS1_3_CERTIFICATE | HITLS_EX_TYPE_TLS1_3_CERTIFICATE_REQUEST | HITLS_EX_TYPE_TLS1_3_NEW_SESSION_TICKET,
+        .addCb = CustomExtensionAddCb,
+        .freeCb = CustomExtensionFreeCb,
+        .addArg = &clientArg,
+        .parseCb = CustomExtensionParseCb,
+        .parseArg = &clientArg
+    };
+    HITLS_CFG_AddCustomExtension(clientConfig, &params);
+    params.addArg = &serverArg;
+    params.parseArg = &serverArg;
+    HITLS_CFG_AddCustomExtension(serverConfig, &params);
+
+    FRAME_LinkObj *client = FRAME_CreateLink(clientConfig, BSL_UIO_TCP);
+    FRAME_LinkObj *server = FRAME_CreateLink(serverConfig, BSL_UIO_TCP);
+
+    ASSERT_EQ(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT), HITLS_SUCCESS);
+    ASSERT_EQ(clientArg.addedContextCount, 3);
+    ASSERT_EQ(clientArg.parsedContextCount, 7);
+    ASSERT_EQ(clientArg.addedContext[0], HITLS_EX_TYPE_CLIENT_HELLO);
+    ASSERT_EQ(clientArg.addedContext[1], HITLS_EX_TYPE_TLS1_3_CERTIFICATE);
+    ASSERT_EQ(clientArg.addedContext[2], HITLS_EX_TYPE_TLS1_3_CERTIFICATE);
+    ASSERT_EQ(clientArg.parsedContext[0], HITLS_EX_TYPE_TLS1_2_SERVER_HELLO | HITLS_EX_TYPE_TLS1_3_SERVER_HELLO | HITLS_EX_TYPE_HELLO_RETRY_REQUEST);
+    ASSERT_EQ(clientArg.parsedContext[1], HITLS_EX_TYPE_ENCRYPTED_EXTENSIONS);
+    ASSERT_EQ(clientArg.parsedContext[2], HITLS_EX_TYPE_TLS1_3_CERTIFICATE_REQUEST);
+    ASSERT_EQ(clientArg.parsedContext[3], HITLS_EX_TYPE_TLS1_3_CERTIFICATE);
+    ASSERT_EQ(clientArg.parsedContext[4], HITLS_EX_TYPE_TLS1_3_CERTIFICATE);
+    ASSERT_EQ(clientArg.parsedContext[5], HITLS_EX_TYPE_TLS1_3_NEW_SESSION_TICKET);
+    ASSERT_EQ(clientArg.parsedContext[6], HITLS_EX_TYPE_TLS1_3_NEW_SESSION_TICKET);
+
+    ASSERT_EQ(serverArg.addedContextCount, 7);
+    ASSERT_EQ(serverArg.parsedContextCount, 3);
+    ASSERT_EQ(serverArg.parsedContext[0], HITLS_EX_TYPE_CLIENT_HELLO);
+    ASSERT_EQ(serverArg.parsedContext[1], HITLS_EX_TYPE_TLS1_3_CERTIFICATE);
+    ASSERT_EQ(serverArg.parsedContext[2], HITLS_EX_TYPE_TLS1_3_CERTIFICATE);
+
+    ASSERT_EQ(serverArg.addedContext[0], HITLS_EX_TYPE_TLS1_3_SERVER_HELLO);
+    ASSERT_EQ(serverArg.addedContext[1], HITLS_EX_TYPE_ENCRYPTED_EXTENSIONS);
+    ASSERT_EQ(serverArg.addedContext[2], HITLS_EX_TYPE_TLS1_3_CERTIFICATE_REQUEST);
+    ASSERT_EQ(serverArg.addedContext[3], HITLS_EX_TYPE_TLS1_3_CERTIFICATE);
+    ASSERT_EQ(serverArg.addedContext[4], HITLS_EX_TYPE_TLS1_3_CERTIFICATE);
+    ASSERT_EQ(serverArg.addedContext[5], HITLS_EX_TYPE_TLS1_3_NEW_SESSION_TICKET);
+    ASSERT_EQ(serverArg.addedContext[5], HITLS_EX_TYPE_TLS1_3_NEW_SESSION_TICKET);
+
+EXIT:
+    HITLS_CFG_FreeConfig(clientConfig);
+    HITLS_CFG_FreeConfig(serverConfig);
+    FRAME_FreeLink(client);
+    FRAME_FreeLink(server);
+}
+/* END_CASE */
+
+/**
+ * @test  SDV_HITLS_CUSTOM_EXTENSION_FUNCTION_TC002
+ * @title Alert Scenario Test for Custom Extensions
+ */
+/* BEGIN_CASE */
+void SDV_HITLS_CUSTOM_EXTENSION_FUNCTION_TC002()    
+{
+    FRAME_Init();  // Initialize the test framework
+
+    HITLS_Config *clientConfig = HITLS_CFG_NewTLS13Config();
+    HITLS_Config *serverConfig = HITLS_CFG_NewTLS13Config();
+    CustomExtensionArg serverArg = {0};
+    CustomExtensionArg clientArg = {0};
+    clientArg.alert = ALERT_ILLEGAL_PARAMETER;
+    clientArg.alertContext = HITLS_EX_TYPE_TLS1_3_SERVER_HELLO;
+
+    HITLS_CustomExtParams params = {
+        .extType = CUSTOM_EXTENTIONS_TYPE_2,
+        .context = HITLS_EX_TYPE_CLIENT_HELLO | HITLS_EX_TYPE_TLS1_3_SERVER_HELLO,
+        .addCb = CustomExtensionAddCb,
+        .freeCb = CustomExtensionFreeCb,
+        .addArg = &clientArg,
+        .parseCb = CustomExtensionParseCb,
+        .parseArg = &clientArg
+    };
+    HITLS_CFG_AddCustomExtension(clientConfig, &params);
+    params.addArg = &serverArg;
+    params.parseArg = &serverArg;
+    HITLS_CFG_AddCustomExtension(serverConfig, &params);
+
+    FRAME_LinkObj *client = FRAME_CreateLink(clientConfig, BSL_UIO_TCP);    
+    FRAME_LinkObj *server = FRAME_CreateLink(serverConfig, BSL_UIO_TCP);
+
+    ASSERT_EQ(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT), -1);
+    ALERT_Info info = {0};
+    ALERT_GetInfo(client->ssl, &info);
+    ASSERT_EQ(info.flag, ALERT_FLAG_SEND);
+    ASSERT_EQ(info.level, ALERT_LEVEL_FATAL);
+    ASSERT_EQ(info.description, ALERT_ILLEGAL_PARAMETER);
+
+EXIT:
+    HITLS_CFG_FreeConfig(clientConfig);
+    HITLS_CFG_FreeConfig(serverConfig);
+    FRAME_FreeLink(client);
+    FRAME_FreeLink(server);
+}
+/* END_CASE */
+
+/**
+ * @test  SDV_HITLS_CUSTOM_EXTENSION_FUNCTION_TC003
+ * @title Empty Extension Capability Test
+ */
+/* BEGIN_CASE */
+void SDV_HITLS_CUSTOM_EXTENSION_FUNCTION_TC003()    
+{
+    FRAME_Init();  // Initialize the test framework
+
+    HITLS_Config *clientConfig = HITLS_CFG_NewTLS13Config();
+    HITLS_Config *serverConfig = HITLS_CFG_NewTLS13Config();
+    CustomExtensionArg serverArg = {0};
+    CustomExtensionArg clientArg = {0};
+    clientArg.addEmptyExt = true;
+    clientArg.parseEmptyExt = false;
+
+    serverArg.addEmptyExt = false;
+    serverArg.parseEmptyExt = true;
+
+    HITLS_CustomExtParams params = {
+        .extType = CUSTOM_EXTENTIONS_TYPE_2,
+        .context = HITLS_EX_TYPE_CLIENT_HELLO | HITLS_EX_TYPE_TLS1_3_SERVER_HELLO,
+        .addCb = CustomExtensionAddCb,
+        .freeCb = CustomExtensionFreeCb,
+        .addArg = &clientArg,
+        .parseCb = CustomExtensionParseCb,
+        .parseArg = &clientArg
+    };
+    HITLS_CFG_AddCustomExtension(clientConfig, &params);
+    params.addArg = &serverArg;
+    params.parseArg = &serverArg;
+    HITLS_CFG_AddCustomExtension(serverConfig, &params);
+
+    FRAME_LinkObj *client = FRAME_CreateLink(clientConfig, BSL_UIO_TCP);    
+    FRAME_LinkObj *server = FRAME_CreateLink(serverConfig, BSL_UIO_TCP);
+
+    ASSERT_EQ(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT), 0);
+
+    ASSERT_EQ(clientArg.addedContextCount, 1);
+    ASSERT_EQ(clientArg.parsedContextCount, 1);
+    ASSERT_EQ(clientArg.addedContext[0], HITLS_EX_TYPE_CLIENT_HELLO);
+    ASSERT_EQ(clientArg.parsedContext[0], HITLS_EX_TYPE_TLS1_2_SERVER_HELLO | HITLS_EX_TYPE_TLS1_3_SERVER_HELLO | HITLS_EX_TYPE_HELLO_RETRY_REQUEST);
+
+    ASSERT_EQ(serverArg.addedContextCount, 1);
+    ASSERT_EQ(serverArg.parsedContextCount, 1);
+    ASSERT_EQ(serverArg.addedContext[0], HITLS_EX_TYPE_TLS1_3_SERVER_HELLO);
+    ASSERT_EQ(serverArg.parsedContext[0], HITLS_EX_TYPE_CLIENT_HELLO);
+
+EXIT:
+    HITLS_CFG_FreeConfig(clientConfig);
+    HITLS_CFG_FreeConfig(serverConfig);
+    FRAME_FreeLink(client);
+    FRAME_FreeLink(server);
+}
+/* END_CASE */
+
+/**
+ * @test  SDV_HITLS_CUSTOM_EXTENSION_FUNCTION_TC004
+ * @title Pass Extension Capability Test
+ */
+/* BEGIN_CASE */
+void SDV_HITLS_CUSTOM_EXTENSION_FUNCTION_TC004()    
+{
+    FRAME_Init();  // Initialize the test framework
+
+    HITLS_Config *clientConfig = HITLS_CFG_NewTLS13Config();
+    HITLS_Config *serverConfig = HITLS_CFG_NewTLS13Config();
+    CustomExtensionArg serverArg = {0};
+    CustomExtensionArg clientArg = {0};
+    clientArg.passExt = true;
+
+    serverArg.passExt = true;
+
+    HITLS_CustomExtParams params = {
+        .extType = CUSTOM_EXTENTIONS_TYPE_2,
+        .context = HITLS_EX_TYPE_CLIENT_HELLO | HITLS_EX_TYPE_TLS1_3_SERVER_HELLO,
+        .addCb = CustomExtensionAddCb,
+        .freeCb = CustomExtensionFreeCb,
+        .addArg = &clientArg,
+        .parseCb = CustomExtensionParseCb,
+        .parseArg = &clientArg
+    };
+    HITLS_CFG_AddCustomExtension(clientConfig, &params);
+    params.addArg = &serverArg;
+    params.parseArg = &serverArg;
+    HITLS_CFG_AddCustomExtension(serverConfig, &params);
+
+    FRAME_LinkObj *client = FRAME_CreateLink(clientConfig, BSL_UIO_TCP);    
+    FRAME_LinkObj *server = FRAME_CreateLink(serverConfig, BSL_UIO_TCP);
+
+    ASSERT_EQ(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT), 0);
+
+    ASSERT_EQ(clientArg.addedContextCount, 1);
+    ASSERT_EQ(clientArg.parsedContextCount, 0);
+
+    ASSERT_EQ(serverArg.addedContextCount, 1);
+    ASSERT_EQ(serverArg.parsedContextCount, 0);
+
+
+EXIT:
+    HITLS_CFG_FreeConfig(clientConfig);
+    HITLS_CFG_FreeConfig(serverConfig);
+    FRAME_FreeLink(client);
+    FRAME_FreeLink(server);
 }
 /* END_CASE */

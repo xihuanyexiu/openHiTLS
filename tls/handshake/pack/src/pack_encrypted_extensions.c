@@ -106,8 +106,8 @@ static int32_t PackEncryptedExs(const TLS_Ctx *ctx, uint8_t *buf, uint32_t bufLe
     };
 
     exLen = 0u;
-    if (IsPackNeedCustomExtensions(ctx->customExts, HITLS_EX_TYPE_ENCRYPTED_EXTENSIONS)) {
-        ret = PackCustomExtensions(ctx, &buf[offset], bufLen - offset, &exLen, HITLS_EX_TYPE_ENCRYPTED_EXTENSIONS);
+    if (IsPackNeedCustomExtensions(CUSTOM_EXT_FROM_CTX(ctx), HITLS_EX_TYPE_ENCRYPTED_EXTENSIONS)) {
+        ret = PackCustomExtensions(ctx, &buf[offset], bufLen - offset, &exLen, HITLS_EX_TYPE_ENCRYPTED_EXTENSIONS, NULL, 0);
         if (ret != HITLS_SUCCESS) {
             return ret;
         }

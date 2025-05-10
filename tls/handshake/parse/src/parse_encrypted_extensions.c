@@ -122,9 +122,9 @@ static int32_t ParseEncryptedExBody(TLS_Ctx *ctx, uint16_t extMsgType, const uin
             break;
     }
 
-    if (IsParseNeedCustomExtensions(ctx->customExts, extMsgType, HITLS_EX_TYPE_ENCRYPTED_EXTENSIONS)) {
+    if (IsParseNeedCustomExtensions(CUSTOM_EXT_FROM_CTX(ctx), extMsgType, HITLS_EX_TYPE_ENCRYPTED_EXTENSIONS)) {
         return ParseCustomExtensions(pkt.ctx, pkt.buf + *pkt.bufOffset, extMsgType, extMsgLen,
-            HITLS_EX_TYPE_ENCRYPTED_EXTENSIONS);
+            HITLS_EX_TYPE_ENCRYPTED_EXTENSIONS, NULL, 0);
     }
 
     return ParseErrorProcess(ctx, HITLS_PARSE_UNSUPPORTED_EXTENSION, BINLOG_ID16982,
@@ -148,7 +148,7 @@ int32_t ParseEncryptedEx(TLS_Ctx *ctx, EncryptedExtensions *msg, const uint8_t *
 
         uint32_t hsExTypeId = HS_GetExtensionTypeId(extMsgType);
         if (hsExTypeId != HS_EX_TYPE_ID_UNRECOGNIZED ||
-                !IsParseNeedCustomExtensions(ctx->customExts, extMsgType, HITLS_EX_TYPE_ENCRYPTED_EXTENSIONS)) {
+                !IsParseNeedCustomExtensions(CUSTOM_EXT_FROM_CTX(ctx), extMsgType, HITLS_EX_TYPE_ENCRYPTED_EXTENSIONS)) {
             msg->extensionTypeMask |= 1ULL << hsExTypeId;
         }
 

@@ -118,6 +118,8 @@ void CFG_CleanConfig(HITLS_Config *config)
 #endif
     SAL_CERT_MgrCtxFree(config->certMgrCtx);
     config->certMgrCtx = NULL;
+    FreeCustomExtensions(config->customExts);
+    config->customExts = NULL;
     BSL_SAL_ReferencesFree(&(config->references));
     return;
 }
@@ -495,8 +497,17 @@ static int32_t BasicConfigDeepCopy(HITLS_Config *destConfig, const HITLS_Config 
 #endif
 #ifdef HITLS_TLS_CONFIG_MANUAL_DH
     ret = CryptKeyDeepCopy(destConfig, srcConfig);
+    if (ret != HITLS_SUCCESS) {
+        return ret;
+    }
 #endif /* HITLS_TLS_CONFIG_MANUAL_DH */
-    return ret;
+
+    destConfig->customExts = DupCustomExtensions(srcConfig->customExts);
+    if (srcConfig->customExts != NULL && destConfig->customExts == NULL) {
+        return HITLS_MEMALLOC_FAIL;
+    }
+
+    return HITLS_SUCCESS;
 }
 
 int32_t DumpConfig(HITLS_Ctx *ctx, const HITLS_Config *srcConfig)

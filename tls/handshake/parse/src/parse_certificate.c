@@ -77,7 +77,7 @@ int32_t ParseSingleCert(ParsePacket *pkt, CERT_Item **certItem)
     return HITLS_SUCCESS;
 }
 
-static int32_t ParseCertExtension(ParsePacket *pkt, CertificateMsg *msg)
+static int32_t ParseCertExtension(ParsePacket *pkt, CertificateMsg *msg, CERT_Item *item, uint32_t certIndex)
 {
     if (pkt->ctx->negotiatedInfo.version != HITLS_VERSION_TLS13) {
         return HITLS_SUCCESS;
@@ -104,7 +104,19 @@ static int32_t ParseCertExtension(ParsePacket *pkt, CertificateMsg *msg)
         }
         *pkt->bufOffset += HS_EX_HEADER_LEN;
         offset += HS_EX_HEADER_LEN;
-        msg->extensionTypeMask |= 1ULL << HS_GetExtensionTypeId(extMsgType);
+        if (IsParseNeedCustomExtensions(CUSTOM_EXT_FROM_CTX(pkt->ctx), extMsgType, HITLS_EX_TYPE_TLS1_3_CERTIFICATE)) {
+            HITLS_CERT_X509 *cert = SAL_CERT_X509Parse(LIBCTX_FROM_CTX(pkt->ctx),
+                ATTRIBUTE_FROM_CTX(pkt->ctx), &pkt->ctx->config.tlsConfig, item->data, item->dataSize,
+                TLS_PARSE_TYPE_BUFF, TLS_PARSE_FORMAT_ASN1);
+            ret = ParseCustomExtensions(pkt->ctx, &pkt->buf[*pkt->bufOffset], extMsgType, extMsgLen,
+                HITLS_EX_TYPE_TLS1_3_CERTIFICATE, cert, certIndex);
+            SAL_CERT_X509Free(cert);
+            if (ret != HITLS_SUCCESS) {
+                return ret;
+            }
+        } else {
+            msg->extensionTypeMask |= 1ULL << HS_GetExtensionTypeId(extMsgType);
+        }
         *pkt->bufOffset += extMsgLen;
         offset += extMsgLen;
     }
@@ -141,7 +153,7 @@ int32_t ParseCerts(ParsePacket *pkt, HS_Msg *hsMsg)
         }
         cur = item;
 
-        ret = ParseCertExtension(pkt, msg);
+        ret = ParseCertExtension(pkt, msg, item, msg->certCount);
         if (ret != HITLS_SUCCESS) {
             BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15592, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
                 "parse certificate extension fail.", 0, 0, 0, 0);

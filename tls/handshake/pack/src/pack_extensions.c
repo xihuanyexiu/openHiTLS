@@ -887,8 +887,8 @@ static int32_t PackClientExtensions(const TLS_Ctx *ctx, uint8_t *buf, uint32_t b
 
     uint32_t exLen = 0;
     uint32_t offset = 0;
-    if (IsPackNeedCustomExtensions(ctx->customExts, HITLS_EX_TYPE_CLIENT_HELLO)) {
-        ret = PackCustomExtensions(ctx, &buf[offset], bufLen - offset, &exLen, HITLS_EX_TYPE_CLIENT_HELLO);
+    if (IsPackNeedCustomExtensions(CUSTOM_EXT_FROM_CTX(ctx), HITLS_EX_TYPE_CLIENT_HELLO)) {
+        ret = PackCustomExtensions(ctx, &buf[offset], bufLen - offset, &exLen, HITLS_EX_TYPE_CLIENT_HELLO, NULL, 0);
         if (ret != HITLS_SUCCESS) {
             return ret;
         }
@@ -1275,8 +1275,8 @@ static int32_t PackServerExtensions(const TLS_Ctx *ctx, uint8_t *buf, uint32_t b
     }
 
     exLen = 0u;
-    if (IsPackNeedCustomExtensions(ctx->customExts, context)) {
-        ret = PackCustomExtensions(ctx, &buf[offset], bufLen - offset, &exLen, context);
+    if (IsPackNeedCustomExtensions(CUSTOM_EXT_FROM_CTX(ctx), context)) {
+        ret = PackCustomExtensions(ctx, &buf[offset], bufLen - offset, &exLen, context, NULL, 0);
         if (ret != HITLS_SUCCESS) {
             return ret;
         }
