@@ -405,6 +405,9 @@ static int32_t ParseClientHelloMsg(FRAME_Type *frameType, const uint8_t *buffer,
             case HS_EX_TYPE_COOKIE:
                 ParseHsExtArrayForList(&buffer[offset], bufLen - offset, &clientHello->tls13Cookie, &offset);
                 break;
+            case HS_EX_TYPE_ENCRYPT_THEN_MAC:
+                ParseHsExtArray8(&buffer[offset], bufLen - offset, &clientHello->encryptThenMac, &offset);
+                break;
             default: /* Unrecognized extension. Skip parsing the extension. */
                 ParseFieldInteger16(&buffer[tmpOffset], bufLen - tmpOffset, &tmpField, &tmpOffset);
                 tmpOffset += tmpField.data;
@@ -532,6 +535,9 @@ static int32_t ParseServerHelloMsg(const uint8_t *buffer, uint32_t bufLen, FRAME
                 break;
             case HS_EX_TYPE_COOKIE:
                 ParseHsExtArray8(&buffer[offset], bufLen - offset, &serverHello->tls13Cookie, &offset);
+                break;
+            case HS_EX_TYPE_ENCRYPT_THEN_MAC:
+                ParseHsExtArray8(&buffer[offset], bufLen - offset, &serverHello->encryptThenMac, &offset);
                 break;
             default: /* Unrecognized extension, return error */
                 *parseLen += offset;
@@ -877,7 +883,7 @@ static int32_t ParseNewSessionTicket(FRAME_Type *frameType, const uint8_t *buffe
             uint32_t tmpOffset = offset;
             ParseFieldInteger16(&buffer[tmpOffset], bufLen - tmpOffset, &tmpField, &tmpOffset);
             switch (tmpField.data) {
-                default: 
+                default:
                     /* The extensions in the tls 1.3 new session ticket cannot be parsed currently. Skip this step. */
                     ParseFieldInteger16(&buffer[tmpOffset], bufLen - tmpOffset, &tmpField, &tmpOffset);
                     tmpOffset += tmpField.data;
@@ -960,7 +966,7 @@ static int32_t ParseCcsMsg(const uint8_t *buffer, uint32_t bufLen, FRAME_CcsMsg 
 
 static void CleanCcsMsg(FRAME_CcsMsg *ccsMsg)
 {
-    /* This field is used to construct abnormal packets. Data is not written during parsing. However, 
+    /* This field is used to construct abnormal packets. Data is not written during parsing. However,
      * users may apply for memory. Therefore, this field needs to be released. */
     BSL_SAL_FREE(ccsMsg->extra.data);
     return;
@@ -982,7 +988,7 @@ static int32_t ParseAlertMsg(const uint8_t *buffer, uint32_t bufLen, FRAME_Alert
 
 static void CleanAlertMsg(FRAME_AlertMsg *alertMsg)
 {
-    /* This field is used to construct abnormal packets. Data is not written during parsing. 
+    /* This field is used to construct abnormal packets. Data is not written during parsing.
      * However, users may apply for memory. Therefore, this field needs to be released. */
     BSL_SAL_FREE(alertMsg->extra.data);
     return;
@@ -1082,7 +1088,7 @@ int32_t FRAME_ParseMsgBody(
         return HITLS_INTERNAL_EXCEPTION;
     }
 
-    /* To ensure that the memory can be normally released after users modify msg->recType.data, 
+    /* To ensure that the memory can be normally released after users modify msg->recType.data,
      * assign a value to frameType. */
     frameType->recordType = msg->recType.data;
     switch (msg->recType.data) {

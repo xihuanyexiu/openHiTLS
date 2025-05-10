@@ -1546,7 +1546,7 @@ void UT_TLS_CM_IS_HANDSHAKING_FUNC_TC001(int version)
         ASSERT_TRUE(HITLS_IsHandShaking(clientTlsCtx, &isHandShaking) == HITLS_SUCCESS);
         ASSERT_TRUE(isHandShaking == 1);
 
-        ASSERT_TRUE(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT) == HITLS_SUCCESS);
+        ASSERT_TRUE(FRAME_CreateRenegotiationState(client, server, true, HS_STATE_BUTT) == HITLS_SUCCESS);
         ASSERT_TRUE(clientTlsCtx->state == CM_STATE_TRANSPORTING);
         ASSERT_TRUE(serverTlsCtx->state == CM_STATE_TRANSPORTING);
         ASSERT_TRUE(HITLS_IsHandShaking(clientTlsCtx, &isHandShaking) == HITLS_SUCCESS);
@@ -2259,7 +2259,7 @@ void UT_TLS_CM_HITLS_GetPeerFinishVerifyData_FUNC_TC001(int version)
 
     ASSERT_TRUE(HITLS_Renegotiate(serverTlsCtx) == HITLS_SUCCESS);
     ASSERT_TRUE(HITLS_Renegotiate(clientTlsCtx) == HITLS_SUCCESS);
-    ASSERT_TRUE(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT) == HITLS_SUCCESS);
+    ASSERT_TRUE(FRAME_CreateRenegotiationState(client, server, true, HS_STATE_BUTT) == HITLS_SUCCESS);
     ASSERT_TRUE(clientTlsCtx->state == CM_STATE_TRANSPORTING);
     ASSERT_TRUE(serverTlsCtx->state == CM_STATE_TRANSPORTING);
 
@@ -2429,7 +2429,7 @@ void UT_TLS_CM_HITLS_GetFinishVerifyData_FUNC_TC003(int version)
     HITLS_Ctx *serverTlsCtx = FRAME_GetTlsCtx(server);
     ASSERT_TRUE(HITLS_Renegotiate(serverTlsCtx) == HITLS_SUCCESS);
     ASSERT_TRUE(HITLS_Renegotiate(clientTlsCtx) == HITLS_SUCCESS);
-    ASSERT_TRUE(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT) == HITLS_SUCCESS);
+    ASSERT_TRUE(FRAME_CreateRenegotiationState(client, server, true, HS_STATE_BUTT) == HITLS_SUCCESS);
     ASSERT_TRUE(clientTlsCtx->state == CM_STATE_TRANSPORTING);
     ASSERT_TRUE(serverTlsCtx->state == CM_STATE_TRANSPORTING);
 
@@ -2517,11 +2517,11 @@ void UT_TLS_CM_HITLS_GetRenegotiationState_FUNC_TC001(void)
     ASSERT_TRUE(HITLS_GetRenegotiationState(server->ssl, &isRenegotiation) == HITLS_SUCCESS);
     ASSERT_TRUE(isRenegotiation == true);
 
-    ASSERT_EQ(FRAME_CreateConnection(client, server, false, TRY_SEND_SERVER_HELLO), HITLS_SUCCESS);
+    ASSERT_EQ(FRAME_CreateRenegotiationState(client, server, false, TRY_SEND_SERVER_HELLO), HITLS_SUCCESS);
     ASSERT_TRUE(HITLS_GetRenegotiationState(server->ssl, &isRenegotiation) == HITLS_SUCCESS);
     ASSERT_TRUE(isRenegotiation == true);
 
-    ASSERT_EQ(FRAME_CreateConnection(client, server, false, HS_STATE_BUTT), HITLS_SUCCESS);
+    ASSERT_EQ(FRAME_CreateRenegotiationState(client, server, false, HS_STATE_BUTT), HITLS_SUCCESS);
     ASSERT_TRUE(HITLS_GetRenegotiationState(server->ssl, &isRenegotiation) == HITLS_SUCCESS);
     ASSERT_TRUE(isRenegotiation == false);
 
@@ -2899,7 +2899,7 @@ void UT_HITLS_CM_HITLS_ClearRenegotiationNum_FUNC_TC001(int version)
 
     ASSERT_TRUE(HITLS_Renegotiate(serverTlsCtx) == HITLS_SUCCESS);
     ASSERT_TRUE(HITLS_Renegotiate(clientTlsCtx) == HITLS_SUCCESS);
-    ASSERT_TRUE(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT) == HITLS_SUCCESS);
+    ASSERT_TRUE(FRAME_CreateRenegotiationState(client, server, true, HS_STATE_BUTT) == HITLS_SUCCESS);
     ASSERT_TRUE(clientTlsCtx->state == CM_STATE_TRANSPORTING);
     ASSERT_TRUE(serverTlsCtx->state == CM_STATE_TRANSPORTING);
 
@@ -2918,7 +2918,7 @@ void UT_HITLS_CM_HITLS_ClearRenegotiationNum_FUNC_TC001(int version)
     for (int i = 0; i < 5; ++i) {
         ASSERT_TRUE(HITLS_Renegotiate(serverTlsCtx) == HITLS_SUCCESS);
         ASSERT_TRUE(HITLS_Renegotiate(clientTlsCtx) == HITLS_SUCCESS);
-        ASSERT_TRUE(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT) == HITLS_SUCCESS);
+        ASSERT_TRUE(FRAME_CreateRenegotiationState(client, server, true, HS_STATE_BUTT) == HITLS_SUCCESS);
         ASSERT_TRUE(clientTlsCtx->state == CM_STATE_TRANSPORTING);
         ASSERT_TRUE(serverTlsCtx->state == CM_STATE_TRANSPORTING);
         ASSERT_TRUE(HITLS_GetFinishVerifyData(serverTlsCtx, verifyDataNew, sizeof(verifyDataNew), &verifyDataNewSize) ==

@@ -772,4 +772,8 @@ chacha20poly1305, chacha20, rsa"
 
 #endif /* HITLS_PKI */
 
+#if defined(HITLS_TLS_FEATURE_ETM) && !defined(HITLS_TLS_SUITE_CIPHER_CBC)
+#error "[HiTLS] The etm must work with cbc"
+#endif
+
 #endif /* HITLS_CONFIG_CHECK_H */
