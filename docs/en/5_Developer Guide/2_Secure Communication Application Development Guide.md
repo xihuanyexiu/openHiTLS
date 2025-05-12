@@ -126,129 +126,29 @@ do {
 
 ### Dependencies
 
-The dependency on certain algorithm implementations and certificate parsing varies depending on product requirements. As such, openHiTLS offers registration interfaces for products to register interfaces that meet their specific requirements. For details about the interfaces that openHiTLS depends on, see the following headers file of the API manual:
-
-- [hitls_cert_reg.h](https://apidoc.openhitls.net/d4/d9a/a00246.html)
-- [hitls_crypt_reg.h](https://apidoc.openhitls.net/d0/da7/a00250.html)
-
-Registering algorithm-related callback functions:
+The openHiTLS algorithm and certificate are decoupled from the protocol layer. Currently, it provides a self-implemented callback registration capability. The registration-related functions are as follows:
 
 ```c
 /**
- * @brief   Callback functions that must be registered
+ * @brief   Register the default certificate callback function
  */
-typedef struct {
-    CRYPT_RandBytesCallback randBytes;                  /**<; Obtain a random number. */
-    CRYPT_HmacSizeCallback hmacSize;                    /**<; HMAC: Obtain the HMAC length based on the hash algorithm. */
-    CRYPT_HmacInitCallback hmacInit;                    /**<; HMAC: Initialize the context. */
-    CRYPT_HmacFreeCallback hmacFree;                    /**<; HMAC: Release the context. */
-    CRYPT_HmacUpdateCallback hmacUpdate;                /**<; HMAC: Add input data. */
-    CRYPT_HmacFinalCallback hmacFinal;                  /**<; HMAC: Output results. */
-    CRYPT_HmacCallback hmac;                            /**<; HMAC: Use the complete HMAC function. */
-    CRYPT_DigestSizeCallback digestSize;                /**<; HASH: Obtain the hash length. */
-    CRYPT_DigestInitCallback digestInit;                /**<; HASH: Initialize the context. */
-    CRYPT_DigestCopyCallback digestCopy;                /**<; HASH: Copy the hash context. */
-    CRYPT_DigestFreeCallback digestFree;                /**<; HASH: Release the context. */
-    CRYPT_DigestUpdateCallback digestUpdate;            /**<; HASH: Add input data. */
-    CRYPT_DigestFinalCallback digestFinal;              /**<; HASH: Output hash results. */
-    CRYPT_DigestCallback digest;                        /**<; HASH: Use the complete hash function. */
-    CRYPT_EncryptCallback encrypt;                      /**<; TLS encryption: Provide the encryption capability for the record layer. */
-    CRYPT_DecryptCallback decrypt;                      /**<; TLS decryption: Provide the decryption capability for the record layer. */
-} HITLS_CRYPT_BaseMethod;
+int32_t HITLS_CertMethodInit(void);
 
 /**
- * @brief   Callback functions that need to be registered for ECDH
+ * @brief   Register the default algorithm callback function
  */
-typedef struct {
-    CRYPT_GenerateEcdhKeyPairCallback generateEcdhKeyPair;      /**&lt;; ECDH: Generate a key pair based on the elliptic curve parameters. */
-    CRYPT_FreeEcdhKeyCallback freeEcdhKey;                      /**&lt;; ECDH: Release the elliptic curve key. */
-    CRYPT_GetEcdhEncodedPubKeyCallback getEcdhPubKey;           /**&lt;; ECDH: Extract public key data. */
-    CRYPT_CalcEcdhSharedSecretCallback calcEcdhSharedSecret;    /**&lt;; ECDH: Calculate the shared key based on the local key and peer public key data. */
-} HITLS_CRYPT_EcdhMethod;
+void HITLS_CryptMethodInit(void);
 
 /**
- * @brief   Callback functions that need to be registered for DH
+ * @brief   Registering memory management callback functions
  */
-typedef struct {
-    CRYPT_GenerateDhKeyBySecbitsCallback generateDhKeyBySecbits;    /**&lt;; DH: Generate a key pair based on `secbits`. */
-    CRYPT_GenerateDhKeyByParamsCallback generateDhKeyByParams;      /**&lt;; DH: Generate a key pair based on DH parameters. */
-    CRYPT_FreeDhKeyCallback freeDhKey;                              /**&lt;; DH: Release the key. */
-    CRYPT_DHGetParametersCallback getDhParameters;                  /**&lt;; DH: Leverage the key handle to obtain `p`, `g`, `plen`, and `glen`. */
-    CRYPT_GetDhEncodedPubKeyCallback getDhPubKey;                   /**&lt;; DH: Extract public key data. */
-    CRYPT_CalcDhSharedSecretCallback calcDhSharedSecret;            /**&lt;; DH: Calculate the shared key based on the local key and peer public key data. */
-} HITLS_CRYPT_DhMethod;
+int32_t BSL_SAL_CallBack_Ctrl(BSL_SAL_CB_FUNC_TYPE funcType, void *funcCb);
 
 /**
-    * @brief   Callback functions that need to be registered for KDF
+ * @brief   Initialize global random number
  */
-typedef struct {
-       CRYPT_HkdfExtractCallback hkdfExtract;
-       CRYPT_HkdfExpandCallback hkdfExpand;
-} HITLS_CRYPT_KdfMethod;
-
-/**
- * @brief   Register fundamental callback functions
- */
-int32_t HITLS_CRYPT_RegisterBaseMethod(HITLS_CRYPT_BaseMethod *userCryptCallBack);
-
-/**
- * @brief   Register ECDH callback functions
- */
-int32_t HITLS_CRYPT_RegisterEcdhMethod(HITLS_CRYPT_EcdhMethod *userCryptCallBack);
-
-/**
- * @brief   Register DH callback functions
- */
-int32_t HITLS_CRYPT_RegisterDhMethod(const HITLS_CRYPT_DhMethod *userCryptCallBack);
-
-/**
- * @brief   Register HKDF callback functions
- */
-int32_t HITLS_CRYPT_RegisterHkdfMethod(HITLS_CRYPT_KdfMethod *userCryptCallBack);
-```
-
-Registering certificate-related callback functions:
-
-```c
-/**
- * @brief   Callback functions that must be registered
- */
-typedef struct {
-    CERT_StoreNewCallBack certStoreNew;             /**< Create a certificate store. */
-    CERT_StoreDupCallBack certStoreDup;             /**< Copy the certificate store. */
-    CERT_StoreFreeCallBack certStoreFree;           /**< Release the certificate store. */
-    CERT_StoreCtrlCallBack certStoreCtrl;           /**< Control the certificate store. */
-    CERT_BuildCertChainCallBack buildCertChain;     /**< Build a certificate chain. */
-    CERT_VerifyCertChainCallBack verifyCertChain;   /**< Verify the certificate chain. */
-
-    CERT_CertEncodeCallBack certEncode;             /**&lt; Encode certificates. */
-    CERT_CertParseCallBack certParse;               /**&lt; Decode certificates. */
-    CERT_CertDupCallBack certDup;                   /**&lt; Deep-copy certificates. */
-    CERT_CertRefCallBack certRef;                   /**&lt; Increase certificate references by 1. */
-    CERT_CertFreeCallBack certFree;                 /**&lt; Release certificates. */
-    CERT_CertCtrlCallBack certCtrl;                 /**&lt; Control certificates. */
-
-    CERT_KeyParseCallBack keyParse;                 /**&lt; Parse keys. */
-    CERT_KeyDupCallBack keyDup;                     /**&lt; Deep-copy keys. */
-    CERT_KeyFreeCallBack keyFree;                   /**&lt; Release keys. */
-    CERT_KeyCtrlCallBack keyCtrl;                   /**&lt; Control keys. */
-    CERT_CreateSignCallBack createSign;             /**&lt; Create a signature. */
-    CERT_VerifySignCallBack verifySign;             /**&lt; Verify the signature. */
-    CERT_EncryptCallBack encrypt;                   /**&lt; Encrypt key exchange. */
-    CERT_DecryptCallBack decrypt;                   /**&lt; Decrypt key exchange. */
-
-    CERT_CheckPrivateKeyCallBack checkPrivateKey;   /**&lt; Check whether the certificates and keys match. */
-} HITLS_CERT_MgrMethod;
-
-/**
- * @brief   Register certificate-related callback functions
- */
-int32_t HITLS_CERT_RegisterMgrMethod(HITLS_CERT_MgrMethod *method);
-
-/**
- * @brief   Deregister certificate-related callback functions
- */
-void HITLS_CERT_DeinitMgrMethod(void);
+int32_t CRYPT_EAL_RandInit(CRYPT_RAND_AlgId id, CRYPT_RandSeedMethod *seedMeth, void *seedCtx,
+    const uint8_t *pers, uint32_t persLen);
 ```
 
 ## Time Sequence Interaction of Secure Communication Applications

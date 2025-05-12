@@ -1322,7 +1322,7 @@ static int32_t ParsePKCS7EncryptedContentInfo(CRYPT_EAL_LibCtx *libCtx, const ch
     BSL_Buffer enData = {asn1[HITLS_P7_ENC_CONTINFO_ENCONTENT_IDX].buff, asn1[HITLS_P7_ENC_CONTINFO_ENCONTENT_IDX].len};
     EncryptPara encPara = {.derivekeyData = &derivekeyData, .ivData = &ivData, .enData = &enData};
     BSL_Buffer pwdBuffer = {(uint8_t *)(uintptr_t)pwd, pwdlen};
-    ret = CRYPT_DECODE_ParseEncDataAsn1(libCtx, attrName, symId, &encPara, &pwdBuffer, NULL,output);
+    ret = CRYPT_DECODE_ParseEncDataAsn1(libCtx, attrName, symId, &encPara, &pwdBuffer, NULL, output);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
     }
