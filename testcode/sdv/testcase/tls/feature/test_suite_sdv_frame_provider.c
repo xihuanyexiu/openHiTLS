@@ -115,17 +115,17 @@ void UT_TLS13_LOADPROVIDER_SIGNSCHEME_TC001(char *path, char *get_cap_test1, int
     uint16_t signScheme = 23333;
     HITLS_CFG_SetSignature(config, &signScheme, 1);
 
-    ret = HiTLS_X509_LoadCertAndKey(config, "new_signAlg/ca.der",
+    FRAME_CertInfo certInfo = {
+        "new_signAlg/ca.der",
         "new_signAlg/inter.der",
         "new_signAlg/client.der",
         NULL,
         "new_signAlg/client.key.der",
-        NULL);
-    ASSERT_EQ(ret, HITLS_SUCCESS);
-
-    client = FRAME_CreateLinkEx(config, BSL_UIO_TCP);
+        NULL
+    };
+    client = FRAME_CreateLinkWithCert(config, BSL_UIO_TCP, &certInfo);
     ASSERT_TRUE(client != NULL);
-    server = FRAME_CreateLinkEx(config, BSL_UIO_TCP);
+    server = FRAME_CreateLinkWithCert(config, BSL_UIO_TCP, &certInfo);
     ASSERT_TRUE(server != NULL);
 
     ASSERT_EQ(FRAME_CreateConnection(client, server, false, HS_STATE_BUTT), HITLS_SUCCESS);

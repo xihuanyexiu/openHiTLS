@@ -221,6 +221,7 @@ static const HitlsConfig g_signatureList[] = {
     {"CERT_SIG_SCHEME_RSA_PSS_PSS_SHA512", CERT_SIG_SCHEME_RSA_PSS_PSS_SHA512},
     {"HITLS_INVALID_SIG_TC01", 0xFFFF},
     {"HITLS_INVALID_SIG_TC02", 0xFFFE},
+    {"test_new_sign_alg_name", 23333},
 };
 
 static const HitlsConfig g_eccFormatList[] = {

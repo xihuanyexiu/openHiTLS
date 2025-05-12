@@ -387,7 +387,7 @@ int32_t ParseSubPubkeyAsn1(BSL_ASN1_Buffer *encode, CRYPT_EAL_PkeyCtx **ealPubKe
     uint8_t *algoBuff = encode->buff; // AlgorithmIdentifier Tag and Len, 2 bytes.
     uint32_t algoBuffLen = encode->len;
     BSL_ASN1_Buffer algoId[BSL_ASN1_TAG_ALGOID_ANY_IDX + 1] = {0};
-    int32_t ret = CRYPT_DECODE_AlgoIdAsn1Buff(algoBuff, algoBuffLen, algoId, BSL_ASN1_TAG_ALGOID_ANY_IDX + 1);
+    int32_t ret = CRYPT_DECODE_AlgoIdAsn1Buff(algoBuff, algoBuffLen, NULL, algoId, BSL_ASN1_TAG_ALGOID_ANY_IDX + 1);
     if (ret != CRYPT_SUCCESS) {
         return ret;
     }
@@ -430,7 +430,7 @@ int32_t ParsePk8PriKeyBuff(BSL_Buffer *buff, CRYPT_EAL_PkeyCtx **ealPriKey)
     uint32_t tmpBuffLen = buff->dataLen;
 
     CRYPT_ENCODE_DECODE_Pk8PrikeyInfo pk8PrikeyInfo = {0};
-    int32_t ret = CRYPT_DECODE_Pkcs8Info(tmpBuff, tmpBuffLen, &pk8PrikeyInfo);
+    int32_t ret = CRYPT_DECODE_Pkcs8Info(tmpBuff, tmpBuffLen, NULL, &pk8PrikeyInfo);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -442,7 +442,7 @@ int32_t ParsePk8PriKeyBuff(BSL_Buffer *buff, CRYPT_EAL_PkeyCtx **ealPriKey)
 int32_t ParsePk8EncPriKeyBuff(BSL_Buffer *buff, const BSL_Buffer *pwd, CRYPT_EAL_PkeyCtx **ealPriKey)
 {
     BSL_Buffer decode = {0};
-    int32_t ret = CRYPT_DECODE_Pkcs8PrvDecrypt(NULL, NULL, buff, pwd, &decode);
+    int32_t ret = CRYPT_DECODE_Pkcs8PrvDecrypt(NULL, NULL, buff, pwd, NULL, &decode);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -1322,7 +1322,7 @@ static int32_t ParsePKCS7EncryptedContentInfo(CRYPT_EAL_LibCtx *libCtx, const ch
     BSL_Buffer enData = {asn1[HITLS_P7_ENC_CONTINFO_ENCONTENT_IDX].buff, asn1[HITLS_P7_ENC_CONTINFO_ENCONTENT_IDX].len};
     EncryptPara encPara = {.derivekeyData = &derivekeyData, .ivData = &ivData, .enData = &enData};
     BSL_Buffer pwdBuffer = {(uint8_t *)(uintptr_t)pwd, pwdlen};
-    ret = CRYPT_DECODE_ParseEncDataAsn1(libCtx, attrName, symId, &encPara, &pwdBuffer, output);
+    ret = CRYPT_DECODE_ParseEncDataAsn1(libCtx, attrName, symId, &encPara, &pwdBuffer, NULL,output);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
     }

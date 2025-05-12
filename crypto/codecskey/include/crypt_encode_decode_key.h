@@ -35,8 +35,8 @@ typedef struct {
     BSL_ASN1_BitString pubKey;
 } CRYPT_DECODE_SubPubkeyInfo;
 
-int32_t CRYPT_DECODE_SubPubkey(uint8_t *buff, uint32_t buffLen, CRYPT_DECODE_SubPubkeyInfo *subPubkeyInfo,
-    bool isComplete);
+int32_t CRYPT_DECODE_SubPubkey(uint8_t *buff, uint32_t buffLen, BSL_ASN1_DecTemplCallBack keyInfoCb,
+    CRYPT_DECODE_SubPubkeyInfo *subPubkeyInfo, bool isComplete);
 typedef struct {
     int32_t version;
     BslCid keyType;
@@ -46,7 +46,8 @@ typedef struct {
     void *attrs; // HITLS_X509_Attrs *
 } CRYPT_ENCODE_DECODE_Pk8PrikeyInfo;
 
-int32_t CRYPT_DECODE_Pkcs8Info(uint8_t *buff, uint32_t buffLen, CRYPT_ENCODE_DECODE_Pk8PrikeyInfo *pk8PrikeyInfo);
+int32_t CRYPT_DECODE_Pkcs8Info(uint8_t *buff, uint32_t buffLen, BSL_ASN1_DecTemplCallBack keyInfoCb,
+    CRYPT_ENCODE_DECODE_Pk8PrikeyInfo *pk8PrikeyInfo);
 
 int32_t CRYPT_EAL_ParseRsaPssAlgParam(BSL_ASN1_Buffer *param, CRYPT_RSA_PssPara *para);
 

@@ -43,8 +43,6 @@ typedef struct {
     int32_t max;
 } BslAsn1DnInfo;
 
-BslCid BSL_OBJ_GetCIDFromOid(BslOidString *oid);
-
 BslCid BSL_OBJ_GetHashIdFromSignId(BslCid signAlg);
 
 BslCid BSL_OBJ_GetAsymIdFromSignId(BslCid signAlg);

@@ -289,7 +289,7 @@ static void ECP_Sm2ScalarMulG(SM2_point *r, const BN_UINT *k)
         ECP_Sm2PointDoubleMont(r, r);
         ECP_Sm2PointDoubleMont(r, r);
 #endif
-        if (index) {
+        if (index != 0) {
 #ifdef HITLS_SM2_PRECOMPUTE_512K_TBL
             index = index + i * SM2_BITS;
 #endif

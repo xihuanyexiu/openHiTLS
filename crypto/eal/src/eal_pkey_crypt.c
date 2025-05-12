@@ -127,7 +127,7 @@ static int32_t CryptSetSignParams(CRYPT_EAL_PkeyCtx *pubKey, CRYPT_EAL_PkeyCtx *
             return CryptSm2PairSet(pubKey, privKey);
 #endif
         default:
-            return CRYPT_NOT_SUPPORT;
+            return CRYPT_SUCCESS;
     }
 }
 
