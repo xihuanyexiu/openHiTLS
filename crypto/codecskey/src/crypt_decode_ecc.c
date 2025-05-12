@@ -132,12 +132,15 @@ int32_t CRYPT_ECC_ParseSubPubkeyAsn1Buff(uint8_t *buff, uint32_t buffLen, void *
     }
     CRYPT_DECODE_SubPubkeyInfo subPubkeyInfo = {0};
     void *pctx = NULL;
-    int32_t ret = CRYPT_DECODE_SubPubkey(buff, buffLen, &subPubkeyInfo, isComplete);
+    int32_t ret = CRYPT_DECODE_SubPubkey(buff, buffLen, NULL, &subPubkeyInfo, isComplete);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
-
+    if (subPubkeyInfo.keyType != BSL_CID_EC_PUBLICKEY) {
+        BSL_ERR_PUSH_ERROR(CRYPT_DECODE_ERR_KEY_TYPE_NOT_MATCH);
+        return CRYPT_DECODE_ERR_KEY_TYPE_NOT_MATCH;
+    }
     ret = EccKeyNew(&subPubkeyInfo.keyParam, &pctx);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
@@ -207,7 +210,7 @@ ERR:
 int32_t CRYPT_ECC_ParsePkcs8Key(uint8_t *buff, uint32_t buffLen, void **ecdsaPriKey)
 {
     CRYPT_ENCODE_DECODE_Pk8PrikeyInfo pk8PrikeyInfo = {0};
-    int32_t ret = CRYPT_DECODE_Pkcs8Info(buff, buffLen, &pk8PrikeyInfo);
+    int32_t ret = CRYPT_DECODE_Pkcs8Info(buff, buffLen, NULL, &pk8PrikeyInfo);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -249,12 +252,15 @@ int32_t CRYPT_SM2_ParseSubPubkeyAsn1Buff(uint8_t *buff, uint32_t buffLen, CRYPT_
     }
     CRYPT_DECODE_SubPubkeyInfo subPubkeyInfo = {0};
     CRYPT_SM2_Ctx *pctx = NULL;
-    int32_t ret = CRYPT_DECODE_SubPubkey(buff, buffLen, &subPubkeyInfo, isComplete);
+    int32_t ret = CRYPT_DECODE_SubPubkey(buff, buffLen, NULL, &subPubkeyInfo, isComplete);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
-
+    if (subPubkeyInfo.keyType != BSL_CID_EC_PUBLICKEY) {
+        BSL_ERR_PUSH_ERROR(CRYPT_DECODE_ERR_KEY_TYPE_NOT_MATCH);
+        return CRYPT_DECODE_ERR_KEY_TYPE_NOT_MATCH;
+    }
     ret = Sm2KeyNew(&subPubkeyInfo.keyParam, &pctx);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
@@ -319,7 +325,7 @@ ERR:
 int32_t CRYPT_SM2_ParsePkcs8Key(uint8_t *buff, uint32_t buffLen, CRYPT_SM2_Ctx **sm2PriKey)
 {
     CRYPT_ENCODE_DECODE_Pk8PrikeyInfo pk8PrikeyInfo = {0};
-    int32_t ret = CRYPT_DECODE_Pkcs8Info(buff, buffLen, &pk8PrikeyInfo);
+    int32_t ret = CRYPT_DECODE_Pkcs8Info(buff, buffLen, NULL, &pk8PrikeyInfo);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -371,7 +377,7 @@ static int32_t ParseEd25519PrikeyAsn1Buff(uint8_t *buffer, uint32_t bufferLen, C
 int32_t CRYPT_ED25519_ParsePkcs8Key(uint8_t *buffer, uint32_t bufferLen, CRYPT_CURVE25519_Ctx **ed25519PriKey)
 {
     CRYPT_ENCODE_DECODE_Pk8PrikeyInfo pk8PrikeyInfo = {0};
-    int32_t ret = CRYPT_DECODE_Pkcs8Info(buffer, bufferLen, &pk8PrikeyInfo);
+    int32_t ret = CRYPT_DECODE_Pkcs8Info(buffer, bufferLen, NULL, &pk8PrikeyInfo);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -391,7 +397,7 @@ int32_t CRYPT_ED25519_ParseSubPubkeyAsn1Buff(uint8_t *buffer, uint32_t bufferLen
         return CRYPT_NULL_INPUT;
     }
     CRYPT_DECODE_SubPubkeyInfo subPubkeyInfo = {0};
-    int32_t ret = CRYPT_DECODE_SubPubkey(buffer, bufferLen, &subPubkeyInfo, isComplete);
+    int32_t ret = CRYPT_DECODE_SubPubkey(buffer, bufferLen, NULL, &subPubkeyInfo, isComplete);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;

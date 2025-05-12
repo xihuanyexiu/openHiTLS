@@ -817,7 +817,7 @@ HITLS_X509_Cert *HITLS_X509_CertDup(HITLS_X509_Cert *src)
     }
     HITLS_X509_Cert *tempCert = NULL;
     BSL_Buffer encode = {src->rawData, src->rawDataLen};
-    int32_t ret = HITLS_X509_CertParseBuff(BSL_FORMAT_ASN1, &encode, &tempCert);
+    int32_t ret = HITLS_X509_ProviderCertParseBuff(src->libCtx, src->attrName, "ASN1", &encode, &tempCert);
     if (ret != HITLS_PKI_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return NULL;

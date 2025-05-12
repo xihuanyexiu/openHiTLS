@@ -188,7 +188,7 @@ int32_t CRYPT_RSA_ParseSubPubkeyAsn1Buff( uint8_t *buff, uint32_t buffLen, CRYPT
     }
     CRYPT_DECODE_SubPubkeyInfo subPubkeyInfo = {0};
     CRYPT_RSA_Ctx *pctx = NULL;
-    int32_t ret = CRYPT_DECODE_SubPubkey(buff, buffLen, &subPubkeyInfo, isComplete);
+    int32_t ret = CRYPT_DECODE_SubPubkey(buff, buffLen, NULL, &subPubkeyInfo, isComplete);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -212,7 +212,7 @@ int32_t CRYPT_RSA_ParseSubPubkeyAsn1Buff( uint8_t *buff, uint32_t buffLen, CRYPT
 int32_t CRYPT_RSA_ParsePkcs8Key(uint8_t *buff, uint32_t buffLen, CRYPT_RSA_Ctx **rsaPriKey)
 {
     CRYPT_ENCODE_DECODE_Pk8PrikeyInfo pk8PrikeyInfo = {0};
-    int32_t ret = CRYPT_DECODE_Pkcs8Info(buff, buffLen, &pk8PrikeyInfo);
+    int32_t ret = CRYPT_DECODE_Pkcs8Info(buff, buffLen, NULL, &pk8PrikeyInfo);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;

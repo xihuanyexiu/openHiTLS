@@ -103,7 +103,7 @@ int32_t DECODER_EPki2Pki_Decode(void *ctx, const BSL_Param *inParam, BSL_Param *
     BSL_Buffer pwdBuff = {(uint8_t *)(uintptr_t)passParam->value, passParam->valueLen};
     BSL_Buffer decode = {NULL, 0};
     int32_t ret = CRYPT_DECODE_Pkcs8PrvDecrypt(decoderCtx->libCtx, decoderCtx->attrName, &input,
-        &pwdBuff, &decode);
+        &pwdBuff, NULL, &decode);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;

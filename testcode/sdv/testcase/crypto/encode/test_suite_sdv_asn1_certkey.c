@@ -822,12 +822,13 @@ void SDV_BSL_ASN1_PARSE_BUFF_PROVIDER_TC001(char *formatStr, char *typeStr, char
         &pass, &pkeyCtx), CRYPT_PROVIDER_INVALID_LIB_CTX);
     encode.data = data;
     encode.dataLen = dataLen;
-    ASSERT_NE(CRYPT_EAL_ProviderDecodeBuffKey(NULL, NULL, BSL_CID_UNKNOWN, formatStr, typeStr, &encode, &pass, &pkeyCtx), 0);
+    ASSERT_NE(CRYPT_EAL_ProviderDecodeBuffKey(NULL, NULL, BSL_CID_UNKNOWN, formatStr, typeStr, &encode, &pass,
+        &pkeyCtx), 0);
     CRYPT_EAL_Init(9);  // 9 denotes to deinit CRYPT_EAL_INIT_CPU and CRYPT_EAL_INIT_PROVIDER
     encode.data = data;
     encode.dataLen = dataLen;
-    ASSERT_EQ(CRYPT_EAL_ProviderDecodeBuffKey(NULL, NULL, BSL_CID_UNKNOWN, formatStr, typeStr, &encode, &pass, &pkeyCtx),
-        CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_ProviderDecodeBuffKey(NULL, NULL, BSL_CID_UNKNOWN, formatStr, typeStr, &encode, &pass,
+        &pkeyCtx), CRYPT_SUCCESS);
 #endif
 EXIT:
     CRYPT_EAL_PkeyFreeCtx(pkeyCtx);

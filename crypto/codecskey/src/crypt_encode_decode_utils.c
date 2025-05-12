@@ -487,17 +487,18 @@ int32_t CRYPT_DECODE_ParseSubKeyInfo(uint8_t *buff, uint32_t buffLen, BSL_ASN1_B
     return ret;
 }
 
-int32_t CRYPT_DECODE_AlgoIdAsn1Buff(uint8_t *buff, uint32_t buffLen, BSL_ASN1_Buffer *algoId, uint32_t algoIdNum)
+int32_t CRYPT_DECODE_AlgoIdAsn1Buff(uint8_t *buff, uint32_t buffLen, BSL_ASN1_DecTemplCallBack keyInfoCb,
+    BSL_ASN1_Buffer *algoId, uint32_t algoIdNum)
 {
     uint8_t *tmpBuff = buff;
     uint32_t tmpBuffLen = buffLen;
-
+    BSL_ASN1_DecTemplCallBack cb = keyInfoCb == NULL ? DecSubKeyInfoCb : keyInfoCb;
     BSL_ASN1_Template templ = {g_algoIdTempl, sizeof(g_algoIdTempl) / sizeof(g_algoIdTempl[0])};
-    return BSL_ASN1_DecodeTemplate(&templ, DecSubKeyInfoCb, &tmpBuff, &tmpBuffLen, algoId, algoIdNum);
+    return BSL_ASN1_DecodeTemplate(&templ, cb, &tmpBuff, &tmpBuffLen, algoId, algoIdNum);
 }
 
-int32_t CRYPT_DECODE_SubPubkey(uint8_t *buff, uint32_t buffLen, CRYPT_DECODE_SubPubkeyInfo *subPubkeyInfo,
-    bool isComplete)
+int32_t CRYPT_DECODE_SubPubkey(uint8_t *buff, uint32_t buffLen, BSL_ASN1_DecTemplCallBack keyInfoCb,
+    CRYPT_DECODE_SubPubkeyInfo *subPubkeyInfo, bool isComplete)
 {
     if (buff == NULL || subPubkeyInfo == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
@@ -511,7 +512,7 @@ int32_t CRYPT_DECODE_SubPubkey(uint8_t *buff, uint32_t buffLen, CRYPT_DECODE_Sub
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
-    ret = CRYPT_DECODE_AlgoIdAsn1Buff(pubAsn1->buff, pubAsn1->len, algoId, BSL_ASN1_TAG_ALGOID_ANY_IDX + 1);
+    ret = CRYPT_DECODE_AlgoIdAsn1Buff(pubAsn1->buff, pubAsn1->len, keyInfoCb, algoId, BSL_ASN1_TAG_ALGOID_ANY_IDX + 1);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -535,11 +536,12 @@ int32_t CRYPT_DECODE_SubPubkey(uint8_t *buff, uint32_t buffLen, CRYPT_DECODE_Sub
     return CRYPT_SUCCESS;
 }
 
-static int32_t ParsePk8PriParamAsn1(BSL_ASN1_Buffer *encode, BslCid *keyType, BSL_ASN1_Buffer *keyParam)
+static int32_t ParsePk8PriParamAsn1(BSL_ASN1_Buffer *encode, BSL_ASN1_DecTemplCallBack keyInfoCb, BslCid *keyType,
+    BSL_ASN1_Buffer *keyParam)
 {
     BSL_ASN1_Buffer *algo = &encode[CRYPT_PK8_PRIKEY_ALGID_IDX]; // AlgorithmIdentifier
     BSL_ASN1_Buffer algoId[BSL_ASN1_TAG_ALGOID_ANY_IDX + 1] = {0};
-    int32_t ret = CRYPT_DECODE_AlgoIdAsn1Buff(algo->buff, algo->len, algoId, BSL_ASN1_TAG_ALGOID_ANY_IDX + 1);
+    int32_t ret = CRYPT_DECODE_AlgoIdAsn1Buff(algo->buff, algo->len, keyInfoCb, algoId, BSL_ASN1_TAG_ALGOID_ANY_IDX + 1);
     if (ret != CRYPT_SUCCESS) {
         return ret;
     }
@@ -556,7 +558,8 @@ static int32_t ParsePk8PriParamAsn1(BSL_ASN1_Buffer *encode, BslCid *keyType, BS
     return CRYPT_SUCCESS;
 }
 
-int32_t CRYPT_DECODE_Pkcs8Info(uint8_t *buff, uint32_t buffLen, CRYPT_ENCODE_DECODE_Pk8PrikeyInfo *pk8PrikeyInfo)
+int32_t CRYPT_DECODE_Pkcs8Info(uint8_t *buff, uint32_t buffLen, BSL_ASN1_DecTemplCallBack keyInfoCb,
+    CRYPT_ENCODE_DECODE_Pk8PrikeyInfo *pk8PrikeyInfo)
 {
     if (buff == NULL || buffLen == 0 || pk8PrikeyInfo == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
@@ -580,7 +583,7 @@ int32_t CRYPT_DECODE_Pkcs8Info(uint8_t *buff, uint32_t buffLen, CRYPT_ENCODE_DEC
         return ret;
     }
     BSL_ASN1_Buffer octPriKey = asn1[CRYPT_PK8_PRIKEY_PRIKEY_IDX];
-    ret = ParsePk8PriParamAsn1(asn1, &keyType, &keyParam);
+    ret = ParsePk8PriParamAsn1(asn1, keyInfoCb, &keyType, &keyParam);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -596,11 +599,11 @@ int32_t CRYPT_DECODE_Pkcs8Info(uint8_t *buff, uint32_t buffLen, CRYPT_ENCODE_DEC
 }
 
 #ifdef HITLS_CRYPTO_KEY_EPKI
-static int32_t ParseDeriveKeyPrfAlgId(BSL_ASN1_Buffer *asn, int32_t *prfId)
+static int32_t ParseDeriveKeyPrfAlgId(BSL_ASN1_Buffer *asn, int32_t *prfId, BSL_ASN1_DecTemplCallBack keyInfoCb)
 {
     if (asn->len != 0) {
         BSL_ASN1_Buffer algoId[2] = {0};
-        int32_t ret = CRYPT_DECODE_AlgoIdAsn1Buff(asn->buff, asn->len, algoId, 2);
+        int32_t ret = CRYPT_DECODE_AlgoIdAsn1Buff(asn->buff, asn->len, keyInfoCb, algoId, 2);
         if (ret != CRYPT_SUCCESS) {
             BSL_ERR_PUSH_ERROR(ret);
             return ret;
@@ -619,7 +622,7 @@ static int32_t ParseDeriveKeyPrfAlgId(BSL_ASN1_Buffer *asn, int32_t *prfId)
 }
 
 static int32_t ParseDeriveKeyParam(BSL_Buffer *derivekeyData, uint32_t *iter, uint32_t *keyLen, BSL_Buffer *salt,
-    int32_t *prfId)
+    int32_t *prfId, BSL_ASN1_DecTemplCallBack keyInfoCb)
 {
     uint8_t *tmpBuff = derivekeyData->data;
     uint32_t tmpBuffLen = derivekeyData->dataLen;
@@ -652,18 +655,18 @@ static int32_t ParseDeriveKeyParam(BSL_Buffer *derivekeyData, uint32_t *iter, ui
     }
     salt->data = derParam[CRYPT_PKCS_ENC_DERSALT_IDX].buff;
     salt->dataLen = derParam[CRYPT_PKCS_ENC_DERSALT_IDX].len;
-    return ParseDeriveKeyPrfAlgId(&derParam[CRYPT_PKCS_ENC_DERPRF_IDX], prfId);
+    return ParseDeriveKeyPrfAlgId(&derParam[CRYPT_PKCS_ENC_DERPRF_IDX], prfId, keyInfoCb);
 }
 
 int32_t CRYPT_DECODE_ParseEncDataAsn1(CRYPT_EAL_LibCtx *libctx, const char *attrName, BslCid symAlg,
-    EncryptPara *encPara, const BSL_Buffer *pwd, BSL_Buffer *decode)
+    EncryptPara *encPara, const BSL_Buffer *pwd, BSL_ASN1_DecTemplCallBack keyInfoCb, BSL_Buffer *decode)
 {
     uint32_t iter;
     int32_t prfId;
     uint32_t keylen = 0;
     uint8_t key[512] = {0}; // The maximum length of the symmetry algorithm
     BSL_Buffer salt = {0};
-    int32_t ret = ParseDeriveKeyParam(encPara->derivekeyData, &iter, &keylen, &salt, &prfId);
+    int32_t ret = ParseDeriveKeyParam(encPara->derivekeyData, &iter, &keylen, &salt, &prfId, keyInfoCb);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -707,7 +710,7 @@ int32_t CRYPT_DECODE_ParseEncDataAsn1(CRYPT_EAL_LibCtx *libctx, const char *attr
 }
 
 int32_t CRYPT_DECODE_Pkcs8PrvDecrypt(CRYPT_EAL_LibCtx *libctx, const char *attrName, BSL_Buffer *buff,
-    const BSL_Buffer *pwd, BSL_Buffer *decode)
+    const BSL_Buffer *pwd, BSL_ASN1_DecTemplCallBack keyInfoCb, BSL_Buffer *decode)
 {
     if (buff == NULL || buff->dataLen == 0 || pwd == NULL || decode == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
@@ -753,7 +756,7 @@ int32_t CRYPT_DECODE_Pkcs8PrvDecrypt(CRYPT_EAL_LibCtx *libctx, const char *attrN
         .ivData = &ivData,
         .enData = &enData,
     };
-    ret = CRYPT_DECODE_ParseEncDataAsn1(libctx, attrName, symId, &encPara, pwd, decode);
+    ret = CRYPT_DECODE_ParseEncDataAsn1(libctx, attrName, symId, &encPara, pwd, keyInfoCb, decode);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
     }

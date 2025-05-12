@@ -465,7 +465,7 @@ static int32_t ProviderAddSignatureSchemeInfo(const BSL_Param *params, void *arg
     if (ret != HITLS_SUCCESS) {
         return ret;
     }
-
+    ret = HITLS_CONFIG_ERR_LOAD_SIGN_SCHEME_INFO;
     PROCESS_STRING_PARAM(param, scheme, params, CRYPT_PARAM_CAP_TLS_SIGNALG_IANA_SIGN_NAME, name);
     PROCESS_PARAM_UINT16(param, scheme, params, CRYPT_PARAM_CAP_TLS_SIGNALG_IANA_SIGN_ID, signatureScheme);
     PROCESS_PARAM_INT32(param, scheme, params, CRYPT_PARAM_CAP_TLS_SIGNALG_KEY_TYPE, keyType);

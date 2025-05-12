@@ -37,13 +37,21 @@
 #define PORT 10087
 
 /* BEGIN_CASE */
-void SDV_TLS13_PROVIDER_NEW_GROUP_SIGNALG_TC001(char *path, char *providerName, int providerLibFmt, char *group)
+void SDV_TLS13_PROVIDER_NEW_GROUP_SIGNALG_TC001(char *path, char *providerName, int providerLibFmt, char *group,
+    char *signAlg, char *rootCa, char *interCa, char *serverCert, char *serverKey, char *clientCert, char *clientKey)
 {
 #ifndef HITLS_TLS_FEATURE_PROVIDER
     (void)path;
     (void)providerName;
     (void)providerLibFmt;
     (void)group;
+    (void)signAlg;
+    (void)rootCa;
+    (void)interCa;
+    (void)serverCert;
+    (void)serverKey;
+    (void)clientCert;
+    (void)clientKey;
     SKIP_TEST();
 #else
     HLT_Tls_Res *serverRes = NULL;
@@ -69,13 +77,14 @@ void SDV_TLS13_PROVIDER_NEW_GROUP_SIGNALG_TC001(char *path, char *providerName, 
     HLT_AddProviderInfo(clientCtxConfig, providerName, providerLibFmt);
     HLT_AddProviderInfo(clientCtxConfig, "default", BSL_SAL_LIB_FMT_OFF);
     /* Set Cert */
-    HLT_SetCertPath(serverCtxConfig, "new_signAlg/ca.der", "new_signAlg/inter.der", "new_signAlg/server.der",
-        "new_signAlg/server.key.der", "NULL", "NULL");
-    HLT_SetCertPath(clientCtxConfig, "new_signAlg/ca.der", "new_signAlg/inter.der", "new_signAlg/client.der",
-        "new_signAlg/client.key.der", "NULL", "NULL");
+    HLT_SetCertPath(serverCtxConfig, rootCa, interCa, serverCert, serverKey, "NULL", "NULL");
+    HLT_SetCertPath(clientCtxConfig, rootCa, interCa, clientCert, clientKey, "NULL", "NULL");
 
     HLT_SetGroups(serverCtxConfig, group); // For kex or kem group
     HLT_SetGroups(clientCtxConfig, group); // For kex or kem group
+
+    HLT_SetSignature(serverCtxConfig, signAlg);
+    HLT_SetSignature(clientCtxConfig, signAlg);
     HLT_SetCipherSuites(serverCtxConfig, "HITLS_AES_128_GCM_SHA256");
     HLT_SetCipherSuites(clientCtxConfig, "HITLS_AES_128_GCM_SHA256");
 
