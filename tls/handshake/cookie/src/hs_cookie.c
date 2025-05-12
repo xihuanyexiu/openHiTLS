@@ -195,6 +195,12 @@ int32_t HS_CalcCookie(TLS_Ctx *ctx, const ClientHelloMsg *clientHello, uint8_t *
                 "appGenCookieCb return error 0x%x.", returnVal, 0, 0, 0);
             return HITLS_MSG_HANDLE_COOKIE_ERR;
         }
+        if (*cookieLen > TLS_HS_MAX_COOKIE_SIZE) {
+            BSL_ERR_PUSH_ERROR(HITLS_MSG_HANDLE_COOKIE_ERR);
+            BSL_LOG_BINLOG_FIXLEN(BINLOG_ID17353, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
+                "cookie len is too long.", 0, 0, 0, 0);
+            return HITLS_MSG_HANDLE_COOKIE_ERR;
+        }
         return HITLS_SUCCESS;
     }
 
