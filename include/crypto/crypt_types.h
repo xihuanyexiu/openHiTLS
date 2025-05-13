@@ -424,7 +424,7 @@ typedef CRYPT_Data CRYPT_MlDsaPub;
 typedef struct {   /**< This parameter cannot be NULL and is determined by the underlying structure. */
     uint8_t *e;    /**< Para Parameter e */
     uint32_t eLen; /**< Length of para e*/
-    uint32_t bits; /**< Bits of para */
+    uint32_t bits; /**< Bits of para, FIPS 186-5 dose not support generation and use of keys with odd bits. */
 } CRYPT_RsaPara;
 
 /**
