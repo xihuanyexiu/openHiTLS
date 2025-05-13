@@ -915,7 +915,7 @@ typedef int32_t (*HITLS_ClientHelloCb)(HITLS_Ctx *ctx, int32_t *alert, void *arg
 
 /**
  * @ingroup hitls_config
- * @brief   Set the cookie verification callback on the server.
+ * @brief   Set the ClientHello callback on the server.
  *
  * @param   config [OUT] Config context
  * @param   callback [IN] ClientHello callback
