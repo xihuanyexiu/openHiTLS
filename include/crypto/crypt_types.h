@@ -677,7 +677,7 @@ typedef enum {
 typedef enum {
     CRYPT_CTRL_SET_CBC_MAC_PADDING = 0, /**< set cbc-mac padding type */
     CRYPT_CTRL_GET_MACLEN,              /* Mac get maxlen . */
-    CRYPT_CTRL_CBC_MAC_MAX
+    CRYPT_CTRL_MAC_MAX
 } CRYPT_MacCtrl;
 
 /**

@@ -239,7 +239,6 @@ static int32_t DecodeEncryptData(const uint8_t *data, uint32_t datalen, uint8_t 
     }
     // Add uncompressed point identifier
     (*decode)[0] = 0x04;
-
     CRYPT_SM2_EncryptData encData = {
         .x = *decode + 1,                        // Reserve one byte for '04'
         .xLen = SM2_POINT_SINGLE_COORDINATE_LEN,

@@ -23,8 +23,6 @@
 #include "crypt_encode_internal.h"
 #include "bsl_asn1.h"
 
-#if defined(HITLS_CRYPTO_SM2_SIGN) || defined(HITLS_CRYPTO_DSA) || defined(HITLS_CRYPTO_ECDSA) || \
-    defined(HITLS_CRYPTO_SM2_CRYPT)
 /**
  * Common function to encode ASN.1 template and copy result
  */
@@ -82,7 +80,7 @@ static int32_t DecodeAsn1Template(const uint8_t *encode, uint32_t encodeLen, BSL
 
     return CRYPT_SUCCESS;
 }
-#endif
+
 #if defined(HITLS_CRYPTO_SM2_SIGN) || defined(HITLS_CRYPTO_DSA) || defined(HITLS_CRYPTO_ECDSA)
 int32_t CRYPT_EAL_GetSignEncodeLen(uint32_t rLen, uint32_t sLen, uint32_t *maxLen)
 {
@@ -387,13 +385,11 @@ int32_t CRYPT_EAL_DecodeSm2EncryptData(const uint8_t *encode, uint32_t encodeLen
         BSL_ERR_PUSH_ERROR(CRYPT_DECODE_BUFF_NOT_ENOUGH);
         return CRYPT_DECODE_BUFF_NOT_ENOUGH;
     }
-
-    (void)memcpy_s(data->x, data->xLen, asnArr[0].buff, asnArr[0].len);
-    (void)memcpy_s(data->y, data->yLen, asnArr[1].buff, asnArr[1].len);
+    // 1: point xy
+    (void)memcpy_s(data->x + (data->xLen - asnArr[0].len), asnArr[0].len, asnArr[0].buff, asnArr[0].len);
+    (void)memcpy_s(data->y + (data->yLen - asnArr[1].len), asnArr[1].len, asnArr[1].buff, asnArr[1].len);
     (void)memcpy_s(data->hash, data->hashLen, asnArr[2].buff, asnArr[2].len);     // 2: hash
     (void)memcpy_s(data->cipher, data->cipherLen, asnArr[3].buff, asnArr[3].len); // 3: cipher
-    data->xLen = asnArr[0].len;
-    data->yLen = asnArr[1].len;
     data->hashLen = asnArr[2].len;   // 2: hash
     data->cipherLen = asnArr[3].len; // 3: cipher
 
