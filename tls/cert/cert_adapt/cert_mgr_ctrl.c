@@ -235,9 +235,7 @@ int32_t SAL_CERT_SetCurrentPrivateKey(HITLS_Config *config, HITLS_CERT_Key *key,
         if (ret != HITLS_SUCCESS) {
             BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16107, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
                 "set private key error: cert and key mismatch, key type = %u.", keyType, 0, 0, 0);
-            /* If the certificate does not match the private key, release the certificate. */
-            SAL_CERT_X509Free(*cert);
-            *cert = NULL;
+            /* The certificate does not match the private key. */
             return ret;
         }
     }
