@@ -257,7 +257,7 @@ int32_t DefaultConfig(HITLS_Lib_Ctx *libCtx, const char *attrName, uint16_t vers
 
     int32_t ret = DefaultCipherSuitesByVersion(version, config);
     if (ret != HITLS_SUCCESS) {
-        return ret;
+        goto ERR;
     }
 #ifdef HITLS_TLS_PROTO_TLS13
     /* Configure the TLS1.3 cipher suite for all TLS versions */
