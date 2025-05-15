@@ -782,6 +782,7 @@ static int32_t GenPrimeWithAuxiliaryPrime(uint32_t auxBits, uint32_t proBits, BN
     // Step 1: check 2r1, r2 are coprime.
     GOTO_ERR_IF(BN_Gcd(primeCheck, r1Double, r2, opt), ret);
     if (!BN_IsOne(primeCheck)) {
+        ret = CRYPT_RSA_NOR_KEYGEN_FAIL;
         BSL_ERR_PUSH_ERROR(CRYPT_RSA_NOR_KEYGEN_FAIL);
         goto ERR;
     }
