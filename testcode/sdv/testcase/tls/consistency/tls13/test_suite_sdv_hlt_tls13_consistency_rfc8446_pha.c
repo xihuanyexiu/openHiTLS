@@ -216,7 +216,7 @@ static void Test_Finish_Error(HITLS_Ctx *ctx, uint8_t *data, uint32_t *len, uint
     ASSERT_EQ(frameMsg.body.hsMsg.type.data, FINISHED);
 
     frameMsg.body.hsMsg.body.finished.verifyData.state = ASSIGNED_FIELD;
-    *(frameMsg.body.hsMsg.body.finished.verifyData.data) = 123;
+    *(frameMsg.body.hsMsg.body.finished.verifyData.data) += 1;
 
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
 EXIT:
