@@ -249,7 +249,9 @@ class FeatureConfigParser:
             "default": ["static", "shared", "object"]
         },
         "asmType":{"require": True, "type": str, "choices": [], "default": "no_asm"},
-        "libs":{"require": True, "type": dict, "choices": [], "default": {}}
+        "libs":{"require": True, "type": dict, "choices": [], "default": {}},
+        "bundleLibs":{"require": False, "type": bool, "choices": [True, False], "default": False},
+        "securecLib":{"require": False, "type": str, "choices": ["boundscheck", "securec", ""], "default": {"boundscheck"}}
     }
 
     def __init__(self, features: FeatureParser, file_path):
@@ -280,6 +282,18 @@ class FeatureConfigParser:
     @property
     def asm_type(self):
         return self._cfg['asmType']
+
+    @property
+    def bundle_libs(self):
+        if 'bundleLibs' in self._cfg:
+            return self._cfg['bundleLibs']
+        return self.key_value['bundleLibs']['default']
+
+    @property
+    def securec_lib(self):
+        if 'securecLib' in self._cfg:
+            return self._cfg['securecLib']
+        return self.key_value['securecLib']['default']
 
     @staticmethod
     def _get_fea_and_inc(asm_fea):
@@ -335,6 +349,9 @@ class FeatureConfigParser:
                 asm_feas.append(fea)
 
     def set_param(self, key, value, set_default=True):
+        if key == 'bundleLibs':
+            self._cfg[key] = value
+            return
         if value:
             self._cfg[key] = value
             return
