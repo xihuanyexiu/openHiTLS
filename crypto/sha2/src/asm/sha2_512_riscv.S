@@ -69,6 +69,7 @@
  *  Output register：
  *      w_i： Latest W[i] value, W[i] = M(i)
  *  Function/Macro Call：None
+ *
  */  
     .macro MSGSCHEDULE_W_16 INDEX, w_i
     ld \w_i, (8*\INDEX)(a1)  # Load the message block M(i) into w_i
@@ -76,6 +77,17 @@
     sd \w_i, (8*\INDEX)(sp) # Store the latest W[i] value
     .endm
 
+
+/*
+ *  Macro description: Prepares the message schedule w for i = 16 to 79.
+ *  Input register：
+ *      INDEX: Int, current round index
+ *  Modify the register: t1, t2, t3, t4, t5, t6
+ *  Output register：
+ *      W[INDEX & 0x0f]: Latest W[i] value, W[i] = sigma1(W[i-2]) + W[i-7] + sigma0(W[i-15]) + W[i-16]
+ *  Function/Macro Call: None
+ *
+ */
     .macro MSGSCHEDULE_W_80 INDEX
     ld t1, (((\INDEX-2)&0x0f)*8)(sp)  # Load W[i-2]
     ld t2, (((\INDEX-15)&0x0f)*8)(sp) # Load W[i-15]
@@ -101,49 +113,74 @@
     sd t1, (8*(\INDEX&0x0f))(sp)
     .endm
 
-
+/*
+ *  Macro description: Calculate SHA-512 T1 value and update t1 register.
+ *  Input register：
+ *      INDEX: Int, current round index
+ *      e, f, g, h: SHA-512 registers for T1 calculation
+ *      K: Base address register for the constant table (e.g., t0, storing .K512 address)
+ *  Modify the register: t1, t2, t3, t4, h
+ *  Output register：
+ *      h: Updated value after adding W[i], K[i], and sigma1(e)
+ *      t1: T1 result (intermediate value for SHA-512 round function)
+ *  Function/Macro Call: None
+ *
+ */
     .macro SHA512_T1 INDEX, e, f, g, h, K
     ld t4, 8*\INDEX(\K)
     add \h, \h, t1    # h += W[i]
     add \h, \h, t4    # h += K[i]
 
-    rori t2, \e, 14  # t2 = e ror 6
-    rori t3, \e, 18 # t3 = e ror 11
-    rori t4, \e, 41 # t4 = e ror 25
+    rori t2, \e, 14  # t2 = e ror 14
+    rori t3, \e, 18  # t3 = e ror 18
+    rori t4, \e, 41  # t4 = e ror 41
 
-    xor t2, t2, t3   # t2 = t2 ^ t3
+    xor t2, t2, t3   # t2 = (e ror 14) ^ (e ror 18)
     xor t1, \f, \g   # t1 = f ^ g
-    xor t2, t2, t4   # t2 = t2 ^ t4
+    xor t2, t2, t4   # t2 = (e ror 14) ^ (e ror 18) ^ (e ror 41)
     and t1, t1, \e   # t1 = (f ^ g) & e
-    add \h, \h, t2  # h += (e ror 6) ^ (e ror 11) ^ (e ror 25)
+    add \h, \h, t2   # h += (e ror 14) ^ (e ror 18) ^ (e ror 41)
     xor t1, t1, \g   # t1 = (f ^ g) & e ^ g
-    add t1, t1, \h  # t1 = (f ^ g) & e ^ g + h
-    .endm
-
-    .macro SHA512_T2 INDEX, a, b, c
-    rori t2, \a, 28  # t2 = a ror 34
-    rori t3, \a, 34  # t3 = a ror 30
-    rori t4, \a, 39  # t4 = a ror 25
-
-    xor t2, t2, t3   # t2 = a ror 34 ^ a ror 30
-    xor t5, \b, \c   # t5 = b ^ c
-    and t3, \b, \c   # t3 = b & c
-    and t5, t5, \a   # t5 = (b ^ c) & a
-    xor t2, t2, t4   # t2 = a ror 34 ^ a ror 30 ^ a ror 25
-    xor t3, t3, t5   # t3 = (b ^ c) & a ^ (b & c)
-    add t2, t2, t3   # t2 = a ror 34 ^ a ror 30 ^ a ror 25 + (b ^ c) & a ^ (b & c)
+    add t1, t1, \h   # t1 = (f ^ g) & e ^ g + h
     .endm
 
 /*
- *  Macro description: prepares the message schedule w for i = 0 to 15.
+ *  Macro description: Calculate SHA-512 T2 value and update t2 register.
  *  Input register：
- *      INDEX： Int
-        w_i: W[INDEX] 
- *  Modify the register： w_i
+ *      INDEX: Int, current round index
+ *      a, b, c: SHA-512 working registers
+ *  Modify the register: t2, t3, t4, t5
  *  Output register：
- *      w_i： Latest W[i] value, W[i] = M(i)
- *  Function/Macro Call：None
- */  
+ *      t2: T2 result (intermediate value for SHA-512 round function)
+ *  Function/Macro Call: None
+ *
+ */
+    .macro SHA512_T2 INDEX, a, b, c
+    rori t2, \a, 28  # t2 = a ror 28
+    rori t3, \a, 34  # t3 = a ror 34
+    rori t4, \a, 39  # t4 = a ror 39
+
+    xor t2, t2, t3   # t2 = (a ror 28) ^ (a ror 34)
+    xor t5, \b, \c   # t5 = b ^ c
+    and t3, \b, \c   # t3 = b & c
+    and t5, t5, \a   # t5 = (b ^ c) & a
+    xor t2, t2, t4   # t2 = (a ror 28) ^ (a ror 34) ^ (a ror 39)
+    xor t3, t3, t5   # t3 = (b & c) ^ ((b ^ c) & a)
+    add t2, t2, t3   # t2 = (a ror 28) ^ (a ror 34) ^ (a ror 39) + ((b & c) ^ ((b ^ c) & a))
+    .endm
+
+/*
+ *  Macro description: Perform one SHA-512 round calculation.
+ *  Input register：
+ *      INDEX: Int, current round index
+ *      a, b, c, d, e, f, g, h: SHA-512 working registers
+ *  Modify the register: t1, t2, t3, t4, d, h
+ *  Output register：
+ *      d: Updated value after adding T1
+ *      h: Updated value after adding T1 and T2
+ *  Function/Macro Call: SHA512_T1, SHA512_T2
+ *
+ */
     .macro ROUND INDEX, a, b, c, d, e, f, g, h
     SHA512_T1 \INDEX, \e, \f, \g, \h, t0
     SHA512_T2 \INDEX, \a, \b, \c
@@ -151,28 +188,53 @@
     add \h, t2, t1  # h = t1 + t2
     .endm
 
-
+/*
+ *  Macro description: Perform one SHA-512 round for i = 0 to 15 (message schedule from input block).
+ *  Input register：
+ *      INDEX: Int, current round index
+ *      a, b, c, d, e, f, g, h: SHA-512 working registers
+ *      w_i: Temporary register for W[INDEX]
+ *  Modify the register: t1, t2, t3, t4, w_i, d, h
+ *  Output register：
+ *      d: Updated value after adding T1
+ *      h: Updated value after adding T1 and T2
+ *  Function/Macro Call: MSGSCHEDULE_W_16, ROUND
+ *
+ */
     .macro ROUND_16 INDEX, a, b, c, d, e, f, g, h, w_i
     MSGSCHEDULE_W_16 \INDEX, \w_i  
     ROUND \INDEX, \a, \b, \c, \d, \e, \f, \g, \h
     .endm
 
+/*
+ *  Macro description: Perform one SHA-512 round for i = 16 to 79 (message schedule from previous W).
+ *  Input register：
+ *      INDEX: Int, current round index
+ *      a, b, c, d, e, f, g, h: SHA-512 working registers
+ *  Modify the register: t1, t2, t3, t4, t5, t6, d, h
+ *  Output register：
+ *      d: Updated value after adding T1
+ *      h: Updated value after adding T1 and T2
+ *  Function/Macro Call: MSGSCHEDULE_W_80, ROUND
+ *
+ */
     .macro ROUND_80 INDEX, a, b, c, d, e, f, g, h
     MSGSCHEDULE_W_80 \INDEX
     ROUND \INDEX, \a, \b, \c, \d, \e, \f, \g, \h
     .endm
 
 /*
- *  Function Description：Performs 64 rounds of compression calculation based on the input plaintext data
+ *  Function Description: Performs 80 rounds of compression calculation based on the input plaintext data
  *                        and updates the hash value.
- *  Function prototype：void SHA512CompressMultiBlocks(uint32_t hash[8], const uint8_t *in, uint32_t num);
+ *  Function prototype:   void SHA512CompressMultiBlocks(uint64_t hash[8], const uint8_t *in, uint64_t num);
  *  Input register：
- *         x0： Storage address of the hash value
- *         x1： Pointer to the input data address
- *         x2： Number of 64 rounds of cycles
- *  Modify the register： x0-x17
- *  Output register： None
- *  Function/Macro Call： None
+ *      a0: Storage address of the hash value (hash[8])
+ *      a1: Pointer to the input data address
+ *      a2: Number of 80-round cycles (number of message blocks)
+ *  Modify the register: 
+ *      t0-t6, s0-s11, a0-a2, sp, ra
+ *  Output register: None
+ *  Function/Macro Call: ROUND_16, ROUND_80, MSGSCHEDULE_W_16, MSGSCHEDULE_W_80, SHA512_T1, SHA512_T2
  *
  */
     .text
