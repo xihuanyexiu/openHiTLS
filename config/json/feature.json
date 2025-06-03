@@ -134,6 +134,9 @@
                     "modes": null,
                     "sm4": null,
                     "ecc": null
+                },
+                "riscv": {
+                    "sha2": null
                 }
             }
         },
@@ -579,7 +582,8 @@
                     "x8664":{
                         "x8664":["crypto/sha2/src/asm_*.c", "crypto/sha2/src/asm/*_x86_64.S"],
                         "avx512":["crypto/sha2/src/asm_*.c", "crypto/sha2/src/asm/*_x86_64.S"]
-                    }
+                    },
+                    "riscv": ["crypto/sha2/src/asm_*.c", "crypto/sha2/src/asm/*_riscv.S"]
                 },
                 ".deps": ["platform::Secure_C", "bsl::sal"]
             },
