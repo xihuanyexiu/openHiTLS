@@ -59,7 +59,6 @@
     .dword 0x3c9ebe0a15c9bebc, 0x431d67c49c100d4c
     .dword 0x4cc5d4becb3e42b6, 0x597f299cfc657e2a
     .dword 0x5fcb6fab3ad6faec, 0x6c44198c4a475817
-.size K512,.-K512
 
 /*
  *  Macro description: prepares the message schedule w for i = 0 to 15.
@@ -74,7 +73,7 @@
     .macro MSGSCHEDULE_W_16 INDEX, w_i
     ld \w_i, (8*\INDEX)(a1)  # Load the message block M(i) into w_i
     rev8 \w_i, \w_i  # Reverse the byte order of w_i
-    sw \w_i, (8*\INDEX)(sp) # Store the latest W[i] value
+    sd \w_i, (8*\INDEX)(sp) # Store the latest W[i] value
     .endm
 
     .macro MSGSCHEDULE_W_80 INDEX
@@ -122,17 +121,17 @@
     .endm
 
     .macro SHA512_T2 INDEX, a, b, c
-    rori t2, \a, 28  # t2 = a ror 2
-    rori t3, \a, 34 # t3 = a ror 13
-    rori t4, \a, 39 # t4 = a ror 22
+    rori t2, \a, 28  # t2 = a ror 34
+    rori t3, \a, 34  # t3 = a ror 30
+    rori t4, \a, 39  # t4 = a ror 25
 
-    xor t2, t2, t3   # t2 = t2 ^ t3
-    xor t5, \b, \c
+    xor t2, t2, t3   # t2 = a ror 34 ^ a ror 30
+    xor t5, \b, \c   # t5 = b ^ c
     and t3, \b, \c   # t3 = b & c
-    and t5, t5, \a   # t4 = (b ^ c) & a
-    xor t2, t2, t4   # t4 = (b ^ c) & a ^ (b & c)
-    xor t3, t3, t5
-    add t2, t2, t3  # t2 = (b ^ c) & a ^ (b & c) + (a ror 2) ^ (a ror 13) ^ (a ror 22)
+    and t5, t5, \a   # t5 = (b ^ c) & a
+    xor t2, t2, t4   # t2 = a ror 34 ^ a ror 30 ^ a ror 25
+    xor t3, t3, t5   # t3 = (b ^ c) & a ^ (b & c)
+    add t2, t2, t3   # t2 = a ror 34 ^ a ror 30 ^ a ror 25 + (b ^ c) & a ^ (b & c)
     .endm
 
 /*
@@ -199,14 +198,14 @@ SHA512CompressMultiBlocks:
 
     la t0, .K512          # Load the address of the K constants
 
-    lw s2, 0(a0)    #A load hash[0]
-    lw s3, 8(a0)    #B load hash[1]
-    lw s4, 16(a0)    #C load hash[2]
-    lw s5, 24(a0)   #D load hash[3]
-    lw s6, 32(a0)   #E load hash[4]
-    lw s7, 40(a0)   #F load hash[5]
-    lw s8, 48(a0)   #G load hash[6]
-    lw s9, 56(a0)   #H load hash[7] 
+    ld s2, 0(a0)    #A load hash[0]
+    ld s3, 8(a0)    #B load hash[1]
+    ld s4, 16(a0)   #C load hash[2]
+    ld s5, 24(a0)   #D load hash[3]
+    ld s6, 32(a0)   #E load hash[4]
+    ld s7, 40(a0)   #F load hash[5]
+    ld s8, 48(a0)   #G load hash[6]
+    ld s9, 56(a0)   #H load hash[7] 
 
 Lloop_compress_80:
 
@@ -314,7 +313,7 @@ Lloop_compress_80:
 
     ld t1, 0(a0)    # Load hash[0]
     ld t2, 8(a0)    # Load hash[1]
-    ld t3, 16(a0)    # Load hash[2]
+    ld t3, 16(a0)   # Load hash[2]
     ld t4, 24(a0)   # Load hash[3]
 
     add s2, s2, t1  # Update hash[0]
