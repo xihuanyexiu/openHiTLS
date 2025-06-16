@@ -178,6 +178,12 @@
     #ifndef HITLS_TLS_FEATURE_KEM
         #define HITLS_TLS_FEATURE_KEM
     #endif
+    #ifndef HITLS_TLS_FEATURE_CLIENT_HELLO_CB
+        #define HITLS_TLS_FEATURE_CLIENT_HELLO_CB
+    #endif
+    #ifndef HITLS_TLS_FEATURE_CERT_CB
+        #define HITLS_TLS_FEATURE_CERT_CB
+    #endif
 #endif /* HITLS_TLS_FEATURE */
 
 #ifdef HITLS_TLS_FEATURE_SESSION

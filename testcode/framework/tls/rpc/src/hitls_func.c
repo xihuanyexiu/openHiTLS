@@ -651,6 +651,20 @@ int HitlsSetCtx(HITLS_Config *outCfg, HLT_Ctx_Config *inCtxCfg)
         ret = HITLS_CFG_SetMsgCbArg(outCfg, inCtxCfg->msgArg);
         ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetMsgCbArg Fail");
     }
+#ifdef HITLS_TLS_FEATURE_CERT_CB
+    if (inCtxCfg->certCb != NULL && inCtxCfg->certArg != NULL) {
+        LOG_DEBUG("HiTLS Set cert callback");
+        ret = HITLS_CFG_SetCertCb(outCfg, inCtxCfg->certCb, inCtxCfg->certArg);
+        ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetCertCb Fail");
+    }
+#endif
+#ifdef HITLS_TLS_FEATURE_CLIENT_HELLO_CB
+    if (inCtxCfg->clientHelloCb != NULL && inCtxCfg->clientHelloArg != NULL) {
+        LOG_DEBUG("HiTLS Set clientHello callback");
+        ret = HITLS_CFG_SetClientHelloCb(outCfg, inCtxCfg->clientHelloCb, inCtxCfg->clientHelloArg);
+        ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetClientHelloCb Fail");
+    }
+#endif
 #endif
 #ifdef HITLS_TLS_FEATURE_FLIGHT
     // Sets whether to enable the function of sending handshake messages by flight.
@@ -786,24 +800,24 @@ int HitlsSetSsl(void *ssl, HLT_Ssl_Config *sslConfig)
     return SUCCESS;
 }
 
-int HitlsAccept(void *ssl)
+void *HitlsAccept(void *ssl)
 {
-    int ret, tryNum;
-    tryNum = 0;
+    static int ret;
+    int tryNum = 0;
     LOG_DEBUG("HiTLS Tls Accept Ing...");
     do {
         ret = HITLS_Accept(ssl);
         usleep(1000); // stay 1000us
         tryNum++;
-    } while ((ret == HITLS_REC_NORMAL_RECV_BUF_EMPTY ||
-            ret == HITLS_REC_NORMAL_IO_BUSY) &&
+    } while ((ret == HITLS_REC_NORMAL_RECV_BUF_EMPTY || ret == HITLS_REC_NORMAL_IO_BUSY ||
+            ret == HITLS_CALLBACK_CLIENT_HELLO_RETRY || ret == HITLS_CALLBACK_CERT_RETRY) &&
             (tryNum < FUNC_TIME_OUT_SEC * 1000)); // usleep(1000) after each attemp.
     if (ret != SUCCESS) {
         LOG_ERROR("HITLS_Accept Error is %d", ret);
     } else {
         LOG_DEBUG("HiTLS Tls Accept Success");
     }
-    return ret;
+    return &ret;
 }
 
 int HitlsConnect(void *ssl)
@@ -815,8 +829,8 @@ int HitlsConnect(void *ssl)
         ret = HITLS_Connect(ssl);
         usleep(1000); // stay 1000us
         tryNum++;
-    } while ((ret == HITLS_REC_NORMAL_RECV_BUF_EMPTY ||
-            ret == HITLS_REC_NORMAL_IO_BUSY) &&
+    } while ((ret == HITLS_REC_NORMAL_RECV_BUF_EMPTY || ret == HITLS_REC_NORMAL_IO_BUSY ||
+            ret == HITLS_CALLBACK_CERT_RETRY) &&
             (tryNum < FUNC_TIME_OUT_SEC * 1000)); // usleep(1000) after each attemp.
     if (ret != SUCCESS) {
         LOG_ERROR("HITLS_Connect Error is %d", ret);
@@ -852,8 +866,8 @@ int HitlsRead(void *ssl, uint8_t *data, uint32_t bufSize, uint32_t *readLen)
         ret = HITLS_Read(ssl, data, bufSize, readLen);
         tryNum++;
         usleep(1000); // stay 1000us
-    } while ((ret == HITLS_REC_NORMAL_RECV_BUF_EMPTY ||
-            ret == HITLS_REC_NORMAL_IO_BUSY) &&
+    } while ((ret == HITLS_REC_NORMAL_RECV_BUF_EMPTY || ret == HITLS_REC_NORMAL_IO_BUSY ||
+            ret == HITLS_CALLBACK_CERT_RETRY) &&
             (tryNum < 8000)); // A maximum of 4000 calls
     LOG_DEBUG("HiTLS Read Result is %d", ret);
     return ret;

@@ -498,3 +498,15 @@ HITLS_VerifyCb SAL_CERT_GetVerifyCb(CERT_MgrCtx *mgrCtx)
     }
     return mgrCtx->verifyCb;
 }
+#ifdef HITLS_TLS_FEATURE_CERT_CB
+int32_t SAL_CERT_SetCertCb(CERT_MgrCtx *mgrCtx, HITLS_CertCb certCb, void *arg)
+{
+    if (mgrCtx == NULL) {
+        BSL_ERR_PUSH_ERROR(HITLS_NULL_INPUT);
+        return HITLS_NULL_INPUT;
+    }
+    mgrCtx->certCb = certCb;
+    mgrCtx->certCbArg = arg;
+    return HITLS_SUCCESS;
+}
+#endif /* HITLS_TLS_FEATURE_CERT_CB */

@@ -203,7 +203,7 @@ int HLT_TlsAcceptBlock(void *ssl)
     process = GetProcess();
     switch (process->tlsType) {
         case HITLS:
-            return HitlsAccept(ssl);
+            return *(int *)HitlsAccept(ssl);
         default:
             return ERROR;
     }
@@ -217,7 +217,7 @@ int HLT_GetTlsAcceptResultFromId(unsigned long int threadId)
 
 int HLT_GetTlsAcceptResult(HLT_Tls_Res* tlsRes)
 {
-    int ret;
+    static int ret;
     if (tlsRes->acceptId <= 0) {
         LOG_ERROR("This Res Has Not acceptId");
         return ERROR;
@@ -227,9 +227,14 @@ int HLT_GetTlsAcceptResult(HLT_Tls_Res* tlsRes)
         ret = HLT_RpcGetTlsAcceptResult(tlsRes->acceptId);
     } else {
         // Indicates that the local process accepts the request.
-        pthread_join(tlsRes->acceptId, NULL);
+        int *tmp = NULL;
+        pthread_join(tlsRes->acceptId, (void**)&tmp);
+        if (tmp == NULL) {
+            return ERROR;
+        }
+        ret = *tmp;
         tlsRes->acceptId = 0;
-        return SUCCESS;
+        return ret;
     }
     tlsRes->acceptId = 0;
     return ret;
@@ -1370,6 +1375,21 @@ int HLT_SetAlpnProtosSelectCb(HLT_Ctx_Config *ctxConfig, char *callback, char *u
         LOG_ERROR("HLT_SetAlpnDataCb failed.");
         return ERROR;
     }
+    return SUCCESS;
+}
+
+
+int HLT_SetClientHelloCb(HLT_Ctx_Config *ctxConfig, HITLS_ClientHelloCb callback, void *arg)
+{
+    ctxConfig->clientHelloCb = callback;
+    ctxConfig->clientHelloArg = arg;
+    return SUCCESS;
+}
+
+int HLT_SetCertCb(HLT_Ctx_Config *ctxConfig, HITLS_CertCb certCb, void *arg)
+{
+    ctxConfig->certCb = certCb;
+    ctxConfig->certArg = arg;
     return SUCCESS;
 }
 
