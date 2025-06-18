@@ -152,6 +152,7 @@ target_include_directories(TEST_INTF
         ${openHiTLS_SRC}/crypto/encode/include
         ${openHiTLS_SRC}/crypto/codecskey/include
         ${openHiTLS_SRC}/crypto/codecskey/src
+        ${openHiTLS_SRC}/crypto/cmvp/src
         ${openHiTLS_SRC}/bsl/err/include
         ${openHiTLS_SRC}/bsl/err/src
         ${openHiTLS_SRC}/include/tls
