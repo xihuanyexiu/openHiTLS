@@ -158,3 +158,78 @@ EXIT:
     HLT_FreeAllProcess();
 }
 /* END_CASE */
+
+static void Test_CertificateParse001(HITLS_Ctx *ctx, uint8_t *data, uint32_t *len, uint32_t bufSize, void *user)
+{
+    (void)ctx;
+    (void)bufSize;
+    (void)user;
+    FRAME_Type frameType = { 0 };
+    frameType.versionType = HITLS_VERSION_DTLS12;
+    FRAME_Msg frameMsg = { 0 };
+    frameMsg.recType.data = REC_TYPE_HANDSHAKE;
+    frameMsg.length.data = *len;
+    frameMsg.recVersion.data = HITLS_VERSION_DTLS12;
+    uint32_t parseLen = 0;
+    FRAME_ParseMsgBody(&frameType, data, *len, &frameMsg, &parseLen);
+    ASSERT_EQ(frameMsg.body.hsMsg.type.data, SERVER_HELLO_DONE);
+    int *t = (int*)user;
+    if (*t == 0) {
+        // Change the sequence number to 20
+        data[5] = 20;
+    }
+    (*t)++;
+
+EXIT:
+    FRAME_CleanMsg(&frameType, &frameMsg);
+    return;
+}
+
+/* @
+* @test  SDV_TLS_DTLS_CONSISTENCY_RFC6347_MTU_TC001
+* @title  Multiple timeout retransmissions result in a decrease in MTU
+* @precon  nan
+* @brief  1. Establish a link using UDP with dtls12 and construct timeout retransmission three times.
+          Expected result 1 is obtained.
+* @expect 1. MTU reduced from 1472 to 548
+@ */
+/* BEGIN_CASE */
+void SDV_TLS_DTLS_CONSISTENCY_RFC6347_MTU_TC001()
+{
+    int32_t port = 18888;
+    HLT_Process *localProcess = HLT_InitLocalProcess(HITLS);
+    HLT_Process *remoteProcess = HLT_LinkRemoteProcess(HITLS, UDP, port, true);
+    ASSERT_TRUE(localProcess != NULL);
+    ASSERT_TRUE(remoteProcess != NULL);
+
+    HLT_Ctx_Config *serverCtxConfig = NULL;
+    HLT_Ctx_Config *clientCtxConfig = NULL;
+    serverCtxConfig = HLT_NewCtxConfig(NULL, "SERVER");
+    clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
+    ASSERT_TRUE(serverCtxConfig != NULL);
+    ASSERT_TRUE(clientCtxConfig != NULL);
+
+    int32_t user = 0;
+    RecWrapper wrapper = {
+        TRY_SEND_SERVER_HELLO_DONE,
+        REC_TYPE_HANDSHAKE,
+        false,
+        &user,
+        Test_CertificateParse001
+    };
+    RegisterWrapper(wrapper);
+
+    HLT_Tls_Res *serverRes = HLT_ProcessTlsAccept(localProcess, DTLS1_2, serverCtxConfig, NULL);
+    ASSERT_TRUE(serverRes != NULL);
+    HITLS_Ctx *ctx = serverRes->ssl;
+    HITLS_SetNoQueryMtu(ctx, false);
+    ASSERT_EQ(ctx->config.pmtu, 1472);
+
+    HLT_Tls_Res *clientRes = HLT_ProcessTlsConnect(remoteProcess, DTLS1_2, clientCtxConfig, NULL);
+    ASSERT_TRUE(clientRes == NULL);
+    ASSERT_EQ(ctx->config.pmtu, 548);
+EXIT:
+    ClearWrapper();
+    HLT_FreeAllProcess();
+}
+/* END_CASE */

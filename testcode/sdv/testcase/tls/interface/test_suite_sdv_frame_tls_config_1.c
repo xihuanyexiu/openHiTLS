@@ -1688,3 +1688,60 @@ EXIT:
     HITLS_CFG_FreeConfig(config);
 }
 /* END_CASE */
+
+int g_recordPaddingCbArg = 1;
+uint64_t RecordPaddingCb(HITLS_Ctx *ctx, int32_t type, uint64_t length, void *arg)
+{
+    (void)ctx;
+    (void)type;
+    (void)length;
+    ASSERT_TRUE(g_recordPaddingCbArg == (*(int *)arg));
+    ASSERT_TRUE(&g_recordPaddingCbArg == arg);
+EXIT:
+    return 0;
+}
+
+/** @
+* @test  UT_TLS_CFG_SET_RECORDPADDINGARG_API_TC002
+* @title  HITLS_CFG_SetRecordPaddingCbArg Connection
+* @precon  nan
+* @brief    1. Create tls13 config, expected result 1.
+            2. Set RecordPaddingCb and RecordPaddingCbArg to 1 for the client, Expected result 2.
+            3. Establish a connection, Verify that the arg passed in RecordPaddingCb matches the set arg.
+            Expected result 3.
+* @expect
+* 1. The creating is successful.
+* 2. The setting is successful.
+* 3. The arg value is the same，TLS1.3 connection are established.
+@ */
+/* BEGIN_CASE */
+void UT_TLS_CFG_SET_RECORDPADDINGARG_API_TC002()
+{
+    HitlsInit();
+    HITLS_Config *config_c = NULL;
+    HITLS_Config *config_s = NULL;
+    FRAME_LinkObj *client = NULL;
+    FRAME_LinkObj *server = NULL;
+
+    config_c = HITLS_CFG_NewTLS13Config();
+    config_s = HITLS_CFG_NewTLS13Config();
+    ASSERT_TRUE(config_c != NULL);
+    ASSERT_TRUE(config_s != NULL);
+
+    ASSERT_TRUE(HITLS_CFG_SetRecordPaddingCb(config_c, RecordPaddingCb) ==  HITLS_SUCCESS);
+    ASSERT_TRUE(HITLS_CFG_SetRecordPaddingCbArg(config_c, &g_recordPaddingCbArg) ==  HITLS_SUCCESS);
+
+    client = FRAME_CreateLink(config_c, BSL_UIO_TCP);
+    ASSERT_TRUE(client != NULL);
+    server = FRAME_CreateLink(config_s, BSL_UIO_TCP);
+    ASSERT_TRUE(server != NULL);
+
+    ASSERT_EQ(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT), HITLS_SUCCESS);
+
+EXIT:
+    HITLS_CFG_FreeConfig(config_c);
+    HITLS_CFG_FreeConfig(config_s);
+    FRAME_FreeLink(client);
+    FRAME_FreeLink(server);
+}
+/* END_CASE */
