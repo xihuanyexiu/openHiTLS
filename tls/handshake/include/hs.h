@@ -144,6 +144,9 @@ int32_t HS_DtlsSendFragmentHsMsg(TLS_Ctx *ctx, uint32_t maxRecPayloadLen, const 
 
 int32_t HS_CheckPostHandshakeAuth(TLS_Ctx *ctx);
 
+#define TLS_IS_FIRST_HANDSHAKE(ctx) ((ctx)->negotiatedInfo.clientVerifyDataSize == 0 \
+                                    || (ctx)->negotiatedInfo.serverVerifyDataSize == 0)
+
 #ifdef __cplusplus
 }
 #endif
