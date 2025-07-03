@@ -352,6 +352,9 @@
     #ifndef HITLS_TLS_CONFIG_CERT_CALLBACK
         #define HITLS_TLS_CONFIG_CERT_CALLBACK
     #endif
+    #ifndef HITLS_TLS_CONFIG_CERT_BUILD_CHAIN
+        #define HITLS_TLS_CONFIG_CERT_BUILD_CHAIN
+    #endif
 #endif
 
 #if defined(HITLS_TLS_PROTO_DTLS12) || defined(HITLS_TLS_PROTO_TLS13)
