@@ -985,19 +985,50 @@ EXIT:
 /* END_CASE */
 
 /* BEGIN_CASE */
-void SDV_CRYPTO_DSA_KEY_PAIR_GEN_BY_PARAM_FUNC_TC001(int flag)
+void SDV_CRYPTO_DSA_GEN_G_FUNC_TC004(int algId, int index, Hex *seed, char *pHex, char *qHex, char *gHex)
+{
+#ifndef HITLS_CRYPTO_DSA_GEN_PARA
+    (void)algId;
+    (void)index;
+    (void)seed;
+    (void)pHex;
+    (void)qHex;
+    (void)gHex;
+    SKIP_TEST();
+#else
+    BN_BigNum *p = NULL;
+    BN_BigNum *q = NULL;
+    BN_BigNum *gReq = NULL;
+    ASSERT_EQ(BN_Hex2Bn(&p, pHex), CRYPT_SUCCESS);
+    ASSERT_EQ(BN_Hex2Bn(&q, qHex), CRYPT_SUCCESS);
+    ASSERT_EQ(BN_Hex2Bn(&gReq, gHex), CRYPT_SUCCESS);
+    DSA_FIPS186_4_Para fipsPara = {algId, index, 0, 0};
+    BSL_Buffer seedTmp = {seed->x, seed->len};
+    CRYPT_DSA_Para dsaPara = {p, q, NULL};
+    ASSERT_EQ(CryptDsaFips1864GenVerifiableG(&fipsPara, &seedTmp, &dsaPara), CRYPT_SUCCESS);
+    ASSERT_EQ(CryptDsaFips1864ValidateG(&fipsPara, &seedTmp, &dsaPara), CRYPT_SUCCESS);
+    ASSERT_EQ(BN_Cmp(dsaPara.g, gReq), 0);
+EXIT:
+    BN_Destroy(p);
+    BN_Destroy(q);
+    BN_Destroy(gReq);
+    BN_Destroy(dsaPara.g);
+#endif
+}
+/* END_CASE */
+
+/* BEGIN_CASE */
+void SDV_CRYPTO_DSA_KEY_PAIR_GEN_BY_PARAM_FUNC_TC001(int flag, int gIndex)
 {
 #ifndef HITLS_CRYPTO_DSA_GEN_PARA
     SKIP_TEST();
 #else
-    uint32_t type = CRYPT_DSA_FFC_PARAM;
     int32_t algId = CRYPT_MD_SHA256;
     uint32_t L = 2048;
     uint32_t N = 256;
     uint32_t seedLen = 256;
-    int32_t index = 0;
-    BSL_Param params[7] = {
-        {CRYPT_PARAM_DSA_TYPE, BSL_PARAM_TYPE_UINT32, &type, sizeof(uint32_t), 0},
+    int32_t index = gIndex;
+    BSL_Param params[6] = {
         {CRYPT_PARAM_DSA_ALGID, BSL_PARAM_TYPE_INT32, &algId, sizeof(int32_t), 0},
         {CRYPT_PARAM_DSA_PBITS, BSL_PARAM_TYPE_UINT32, &L, sizeof(uint32_t), 0},
         {CRYPT_PARAM_DSA_QBITS, BSL_PARAM_TYPE_UINT32, &N, sizeof(uint32_t), 0},
@@ -1017,7 +1048,7 @@ void SDV_CRYPTO_DSA_KEY_PAIR_GEN_BY_PARAM_FUNC_TC001(int flag)
 
     ASSERT_EQ(CRYPT_EAL_PkeyGen(pkey), CRYPT_DSA_ERR_KEY_PARA);
     ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_GEN_PARA, params, 0), CRYPT_SUCCESS);
-    uint8_t genFlag = (uint8_t)flag;
+    uint32_t genFlag = (uint8_t)flag;
     ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_GEN_FLAG, &genFlag, sizeof(genFlag)), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeyGen(pkey), CRYPT_SUCCESS);
 

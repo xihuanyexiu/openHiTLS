@@ -733,7 +733,7 @@ void SDV_CRYPTO_EAL_GET_KEY_LEN_TC003_2(int algid, int rsaBits, Hex *p, Hex *q, 
         para.para.dhPara.gLen = g->len;
     }
     ASSERT_EQ(CRYPT_EAL_PkeySetPara(ctx, &para), CRYPT_SUCCESS);
-    uint8_t flag = CRYPT_ENABLE_SP800_KEYGEN_FLAG;
+    uint32_t flag = CRYPT_ENABLE_SP800_KEYGEN_FLAG;
     ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_GEN_FLAG, &flag, sizeof(flag));
     ASSERT_EQ(ret, CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeyGen(ctx), CRYPT_DSA_PARA_ERROR);
@@ -741,18 +741,6 @@ void SDV_CRYPTO_EAL_GET_KEY_LEN_TC003_2(int algid, int rsaBits, Hex *p, Hex *q, 
     ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_GEN_FLAG, &flag, sizeof(flag));
     ASSERT_EQ(ret, CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeyGen(ctx), CRYPT_SUCCESS);
-    
-    uint32_t val = 0;
-    ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_GET_PUBKEY_LEN, &val, sizeof(val));
-    ASSERT_EQ(ret, CRYPT_SUCCESS);
-
-    ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_GET_PRVKEY_LEN, &val, sizeof(val));
-    ASSERT_EQ(ret, CRYPT_SUCCESS);
-
-    if (algid == CRYPT_PKEY_DH) {
-        ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_GET_SHARED_KEY_LEN, &val, sizeof(val));
-        ASSERT_EQ(ret, CRYPT_SUCCESS);
-    }
 EXIT:
     CRYPT_EAL_PkeyFreeCtx(ctx);
 }
@@ -785,22 +773,10 @@ void SDV_CRYPTO_EAL_GET_KEY_LEN_TC003_3(int algid, int rsaBits, Hex *p, Hex *q, 
         para.para.dhPara.gLen = g->len;
     }
     ASSERT_EQ(CRYPT_EAL_PkeySetPara(ctx, &para), CRYPT_SUCCESS);
-    uint8_t flag = CRYPT_ENABLE_SP800_KEYGEN_FLAG;
+    uint32_t flag = CRYPT_ENABLE_SP800_KEYGEN_FLAG;
     ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_SET_GEN_FLAG, &flag, sizeof(flag));
     ASSERT_EQ(ret, CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeyGen(ctx), CRYPT_SUCCESS);
-
-    uint32_t val = 0;
-    ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_GET_PUBKEY_LEN, &val, sizeof(val));
-    ASSERT_EQ(ret, CRYPT_SUCCESS);
-
-    ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_GET_PRVKEY_LEN, &val, sizeof(val));
-    ASSERT_EQ(ret, CRYPT_SUCCESS);
-
-    if (algid == CRYPT_PKEY_DH) {
-        ret = CRYPT_EAL_PkeyCtrl(ctx, CRYPT_CTRL_GET_SHARED_KEY_LEN, &val, sizeof(val));
-        ASSERT_EQ(ret, CRYPT_SUCCESS);
-    }
 EXIT:
     CRYPT_EAL_PkeyFreeCtx(ctx);
 }

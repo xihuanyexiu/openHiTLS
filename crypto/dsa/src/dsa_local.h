@@ -51,8 +51,8 @@ struct DSA_Ctx {
 typedef struct {
     int32_t algId; // hash algid
     int32_t index; // gen g need index
-    uint32_t L; // pbits
-    uint32_t N; // qbits
+    uint32_t l; // pbits
+    uint32_t n; // qbits
 } DSA_FIPS186_4_Para;
 
 #ifdef __cplusplus
