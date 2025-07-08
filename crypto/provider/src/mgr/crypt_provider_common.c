@@ -279,9 +279,7 @@ int32_t CRYPT_EAL_LoadPreDefinedProvider(CRYPT_EAL_LibCtx *libCtx, const char* p
         }
     }
     if (ret != BSL_SUCCESS) {
-        BSL_SAL_Free(name);
-        BSL_SAL_ReferencesFree(&mgrCtx->ref);
-        BSL_SAL_Free(mgrCtx);
+        CRYPT_EAL_ProviderMgrCtxFree(mgrCtx);
     }
     return ret;
 }
@@ -325,6 +323,7 @@ void CRYPT_EAL_FreePreDefinedProviders(void)
     // Free thread lock
     if (libCtx->lock != NULL) {
         BSL_SAL_ThreadLockFree(libCtx->lock);
+        libCtx->lock = NULL;
     }
 
     // Free the libctx structure itself

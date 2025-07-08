@@ -73,6 +73,21 @@ extern "C" {
  */
 #define HITLS_ERR_SYSCALL  6
 
+#define HITLS_WANT_BACKUP  7
+
+/**
+ * @ingroup hitls_errno
+ * @brief   The operation did not complete because an application callback set by
+ * HITLS_CFG_SetClientHelloCb() has asked to be called again.
+ */
+#define HITLS_WANT_CLIENT_HELLO_CB 8
+
+/**
+ * @ingroup hitls_errno
+ * @brief   The operation did not complete because an application callback set by
+ * HITLS_CFG_SetCertCb() has asked to be called again.
+ */
+#define HITLS_WANT_X509_LOOKUP 9
 /**
  * @ingroup hitls_errno
  *
@@ -171,6 +186,11 @@ typedef enum {
     HITLS_MSG_HANDLE_INVALID_COMPRESSION_METHOD,    /**< Receives an incorrect compression algorithm. */
     HITLS_MSG_HANDLE_INVALID_EXTENDED_MASTER_SECRET, /**< The peer Unsupported the extended master key. */
     HITLS_MSG_HANDLE_ERR_CLIENT_HELLO_FRAGMENT,
+    HITLS_MSG_HANDLE_ERR_INAPPROPRIATE_FALLBACK,    /**< The downgrade negotiation failed, and the client supports
+                                                        a higher version. */
+    HITLS_MSG_HANDLE_DTLS_RETRANSMIT_NOT_TIMEOUT,
+    HITLS_MSG_HANDLE_ERR_WITHOUT_TIMEOUT_ACTION,
+    HITLS_MSG_HANDLE_ERR_TIMEOUT_REWIND,
 
     HITLS_PACK_FAIL_START = 0x02050001,             /**< Start bit of the pack error code. */
     HITLS_PACK_UNSUPPORT_VERSION,                   /**< Unsupported version. */
@@ -256,6 +276,7 @@ typedef enum {
     HITLS_UIO_SCTP_ADD_AUTH_KEY_FAIL,              /**< Failed to add the auth key for the sctp UIO object. */
     HITLS_UIO_SCTP_ACTIVE_AUTH_KEY_FAIL,           /**< Failed to activate the auth key for the sctp UIO object. */
     HITLS_UIO_SCTP_DEL_AUTH_KEY_FAIL,              /**< Failed to delete the auth key for the sctp UIO object. */
+    HITLS_UIO_IO_TYPE_ERROR,                       /**< The type of UIO is wrong. */
 
     HITLS_CERT_FAIL_START = 0x020C0001,            /**< Certificate module error code start bit. */
     HITLS_CERT_STORE_CTRL_ERR_SET_VERIFY_DEPTH,
@@ -304,6 +325,10 @@ typedef enum {
     HITLS_CERT_ERR_INVALID_STORE_TYPE,              /**< Invalid store type */
     HITLS_CERT_ERR_X509_REF,                        /**< Certificate reference counting error. */
     HITLS_CERT_ERR_INSERT_CERTPAIR,                 /**< Certificate insert certPair error. */
+    HITLS_CERT_ERR_NO_KEYUSAGE,                     /**< No keyusage. */
+    HITLS_CERT_KEY_CTRL_ERR_IS_DATA_ENC_USAGE,      /**< Determine whether the certificate fails to be data enc. */
+    HITLS_CERT_KEY_CTRL_ERR_IS_NON_REPUDIATION_USAGE, /**< Determine whether the certificate fails to be
+                                                           non-repudiation. */
 
     HITLS_CRYPT_FAIL_START = 0x020D0001,           /**< Crypt adaptation module error code start bit. */
     HITLS_CRYPT_ERR_GENERATE_RANDOM,               /**< Failed to generate a random number. */
@@ -318,13 +343,12 @@ typedef enum {
     HITLS_CRYPT_ERR_HKDF_EXPAND,                   /**< HKDF-Expand calculation error. */
     HITLS_CRYPT_ERR_KEM_ENCAPSULATE,               /**< KEM-Encapsulate calculation error. */
     HITLS_CRYPT_ERR_KEM_DECAPSULATE,               /**< KEM-Decapsulate calculation error. */
+    HITLS_CRYPT_ERR_DH,                            /**< DH failure. */
 
     HITLS_APP_FAIL_START = 0x020E0001,             /**< APP module error code start bit. */
     HITLS_APP_ERR_TOO_LONG_TO_WRITE,               /**< APP Data written is too long. */
     HITLS_APP_ERR_ZERO_READ_BUF_LEN,               /**< The buffer size read by the APP cannot be 0. */
     HITLS_APP_ERR_WRITE_BAD_RETRY,                 /**< The addresses of the buffers sent twice are inconsistent. */
-
-    HITLS_CLIENT_HELLO_CHECK_ERROR,                /**< ClientHello callback detection failure. */
 
     HITLS_SESS_FAIL_START = 0x02100001,            /**< Session feature error code start bit. */
     HITLS_SESS_ERR_SESSION_ID_GENRATE,             /**< Session id output error. */
@@ -413,6 +437,13 @@ typedef enum {
     HITLS_CERT_SELF_ADAPT_INVALID_TIME,
     HITLS_CERT_SELF_ADAPT_UNSUPPORT_FORMAT,
     HITLS_CERT_SELF_ADAPT_BUILD_CERT_CHAIN_ERR,
+
+    HITLS_CALLBACK_CERT_RETRY = 0x02140001,            /**< Certificate callback retry. */
+    HITLS_CALLBACK_CERT_ERROR,                         /**< Certificate callback failure. */
+    HITLS_CALLBACK_CLIENT_HELLO_ERROR,                 /**< ClientHello callback failure. */
+    HITLS_CALLBACK_CLIENT_HELLO_RETRY,                 /**< ClientHello callback retry. */
+    HITLS_CALLBACK_CLIENT_HELLO_INVALID_CALL,          /**< Invalid use of HITLS_ClientHelloGet* function. */
+    HITLS_CALLBACK_CLIENT_HELLO_EXTENSION_NOT_FOUND,   /**< Extension not found. */
 } HITLS_ERROR;
 
 /**

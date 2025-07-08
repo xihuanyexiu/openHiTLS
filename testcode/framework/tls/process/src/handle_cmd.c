@@ -80,12 +80,16 @@ int ExpectResult(CmdData *expectCmdData)
 int WaitResultFromPeer(CmdData *expectCmdData)
 {
     int ret;
-    int tryNum = 0;
+    int timeout = TIME_OUT_SEC;
+    if (getenv("SSL_TIMEOUT") != NULL) {
+        timeout = atoi(getenv("SSL_TIMEOUT"));
+    }
+    timeout *= 2;
+    time_t start = time(NULL);
     do {
         ret = ExpectResult(expectCmdData);
         usleep(1000); // Waiting for 1000 subtleties
-        tryNum++;
-    } while ((ret != SUCCESS) && (tryNum < 150000));
+    } while ((ret != SUCCESS) && (time(NULL) - start < timeout));
     ASSERT_RETURN(ret == SUCCESS, "ExpectResult Error");
     return SUCCESS;
 }
@@ -396,6 +400,10 @@ int ParseCtxConfigFromString(char (*string)[CONTROL_CHANNEL_MAX_MSG_LEN], HLT_Ct
     // Indicates whether encrypt then mac are supported.
     ctxConfig->isEncryptThenMac = (((int)strtol(string[index++], NULL, 10)) > 0) ? true : false;
     LOG_DEBUG("Remote Process Set Ctx isEncryptThenMac is %d", ctxConfig->isEncryptThenMac);
+
+    // set the features supported by modesupport, The value is a decimal number.
+    ctxConfig->modeSupport = (int)strtol(string[index++], NULL, 10);
+    LOG_DEBUG("Remote Process Set Ctx modeSupport is %d", ctxConfig->modeSupport);
 
     // Setting the info cb
     ctxConfig->infoCb = NULL; // The pointer cannot be transferred. Set this parameter to null.

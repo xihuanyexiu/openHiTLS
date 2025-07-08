@@ -832,9 +832,9 @@ static int32_t ParseClientExBody(TLS_Ctx *ctx, uint16_t extMsgType, const uint8_
         }
     }
 
-    if (IsParseNeedCustomExtensions(ctx->customExts, extMsgType, HITLS_EX_TYPE_CLIENT_HELLO)) {
+    if (IsParseNeedCustomExtensions(CUSTOM_EXT_FROM_CTX(ctx), extMsgType, HITLS_EX_TYPE_CLIENT_HELLO)) {
         return ParseCustomExtensions(pkt.ctx, pkt.buf + *pkt.bufOffset, extMsgType, extMsgLen,
-            HITLS_EX_TYPE_CLIENT_HELLO);
+            HITLS_EX_TYPE_CLIENT_HELLO, NULL, 0);
     }
 
     // Ignore unknown extensions
@@ -847,6 +847,7 @@ int32_t ParseClientExtension(TLS_Ctx *ctx, const uint8_t *buf, uint32_t bufLen, 
 {
     uint32_t bufOffset = 0u;
     int32_t ret = HITLS_SUCCESS;
+    uint8_t extensionCount = 0;
 
     /* Parse the extended message from client */
     while (bufOffset < bufLen) {
@@ -858,10 +859,14 @@ int32_t ParseClientExtension(TLS_Ctx *ctx, const uint8_t *buf, uint32_t bufLen, 
         }
         bufOffset += HS_EX_HEADER_LEN;
 
-        uint32_t hsExTypeId = HS_GetExtensionTypeId(extMsgType);
-        if (hsExTypeId != HS_EX_TYPE_ID_UNRECOGNIZED ||
-                !IsParseNeedCustomExtensions(ctx->customExts, extMsgType, HITLS_EX_TYPE_CLIENT_HELLO)) {
-            msg->extensionTypeMask |= 1ULL << hsExTypeId;
+        uint32_t extensionId = HS_GetExtensionTypeId(extMsgType);
+        ret = CheckForDuplicateExtension(msg->extensionTypeMask, extensionId, ctx);
+        if (ret != HITLS_SUCCESS) {
+            return ret;
+        }
+        if (extensionId != HS_EX_TYPE_ID_UNRECOGNIZED ||
+                !IsParseNeedCustomExtensions(CUSTOM_EXT_FROM_CTX(ctx), extMsgType, HITLS_EX_TYPE_CLIENT_HELLO)) {
+            msg->extensionTypeMask |= 1ULL << extensionId;
         }
 
         ret = ParseClientExBody(ctx, extMsgType, &buf[bufOffset], extMsgLen, msg);
@@ -877,6 +882,7 @@ int32_t ParseClientExtension(TLS_Ctx *ctx, const uint8_t *buf, uint32_t bufLen, 
             return ParseErrorProcess(ctx, HITLS_PARSE_PRE_SHARED_KEY_FAILED, BINLOG_ID16136,
                 BINGLOG_STR("psk is not the last extension."), ALERT_ILLEGAL_PARAMETER);
         }
+        extensionCount++;
     }
 
     /* The extended content is the last field of the clientHello packet and no other data is allowed. If the parsed
@@ -884,9 +890,23 @@ int32_t ParseClientExtension(TLS_Ctx *ctx, const uint8_t *buf, uint32_t bufLen, 
     if (bufOffset != bufLen) {
         return ParseErrorExtLengthProcess(ctx, BINLOG_ID15192, BINGLOG_STR("client hello"));
     }
-
+#ifdef HITLS_TLS_FEATURE_CLIENT_HELLO_CB
+    if (ctx->globalConfig != NULL && ctx->globalConfig->clientHelloCb != NULL) {
+        msg->extensionBuff = BSL_SAL_Dump(buf, bufLen);
+        if (msg->extensionBuff == NULL) {
+            BSL_ERR_PUSH_ERROR(HITLS_MEMALLOC_FAIL);
+            return ParseErrorProcess(ctx, HITLS_MEMALLOC_FAIL, BINLOG_ID17356,
+                BINGLOG_STR("extensionBuff dump fail."), ALERT_INTERNAL_ERROR);
+        }
+        msg->extensionBuffLen = bufLen;
+        msg->extensionCount = extensionCount;
+    }
+#else
+    (void)extensionCount;
+#endif /* HITLS_TLS_FEATURE_CLIENT_HELLO_CB */
     return HITLS_SUCCESS;
 }
+
 #ifdef HITLS_TLS_PROTO_TLS13
 void CleanPreShareKey(PreSharedKey *preSharedKey)
 {

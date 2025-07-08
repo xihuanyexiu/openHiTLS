@@ -23,8 +23,8 @@
 #include "bsl_sal.h"
 #include "bsl_bytes.h"
 #include "bsl_errno.h"
+#include "sal_net.h"
 #include "uio_base.h"
-#include "uio_local.h"
 #include "hitls.h"
 #include "hitls_error.h"
 #include "hitls_cookie.h"
@@ -38,9 +38,8 @@
 
 static int32_t UpdateMacKey(TLS_Ctx *ctx, CookieInfo *cookieInfo)
 {
-    int32_t ret = HITLS_SUCCESS;
     (void)memcpy_s(cookieInfo->preMacKey, MAC_KEY_LEN, cookieInfo->macKey, MAC_KEY_LEN); /* Save the old key */
-    ret = SAL_CRYPT_Rand(LIBCTX_FROM_CTX(ctx), cookieInfo->macKey, MAC_KEY_LEN); /* Create a new key */
+    int32_t ret = SAL_CRYPT_Rand(LIBCTX_FROM_CTX(ctx), cookieInfo->macKey, MAC_KEY_LEN); /* Create a new key */
     if (ret != HITLS_SUCCESS) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15691, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "generate macKey fail when calc cookie.", 0, 0, 0, 0);
@@ -76,33 +75,34 @@ static void FillCipherSuite(const ClientHelloMsg *clientHello, uint8_t *material
 static int32_t GenerateCookieCalcMaterial(const TLS_Ctx *ctx, const ClientHelloMsg *clientHello,
     uint8_t *material, uint32_t materialSize, uint32_t *usedLen)
 {
-    int32_t ret = 0;
     uint8_t ipAddr[MAX_IP_ADDR_SIZE] = {0};
     BSL_UIO_CtrlGetPeerIpAddrParam param = {ipAddr, sizeof(ipAddr)};
     uint32_t offset = 0;
-    BSL_UIO_Addr *peerAddr = BSL_UIO_AddrNew();
-    if (peerAddr == NULL) {
+    BSL_SAL_SockAddr peerAddr = NULL;
+    int32_t ret = SAL_SockAddrNew(&peerAddr);
+    if (ret != BSL_SUCCESS) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16916, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "addr New fail", 0, 0, 0, 0);
         return HITLS_MEMCPY_FAIL;
     }
+    int32_t peerAddrLen = SAL_SockAddrSize(peerAddr);
     /* Add the peer IP address */
-    ret = BSL_UIO_Ctrl(ctx->uio, BSL_UIO_GET_PEER_IP_ADDR, sizeof(BSL_UIO_Addr), peerAddr);
+    ret = BSL_UIO_Ctrl(ctx->uio, BSL_UIO_GET_PEER_IP_ADDR, peerAddrLen, peerAddr);
     if (ret == BSL_SUCCESS) {
-        if (memcpy_s(ipAddr, MAX_IP_ADDR_SIZE, peerAddr, BSL_UIO_SockAddrSize(peerAddr)) != EOK) {
-            BSL_UIO_AddrFree(peerAddr);
+        if (memcpy_s(ipAddr, MAX_IP_ADDR_SIZE, peerAddr, SAL_SockAddrSize(peerAddr)) != EOK) {
+            SAL_SockAddrFree(peerAddr);
             return BSL_MEMCPY_FAIL;
         }
-        param.size = BSL_UIO_SockAddrSize(peerAddr);
+        param.size = SAL_SockAddrSize(peerAddr);
         if (memcpy_s(material, materialSize, ipAddr, param.size) != EOK) {
             BSL_ERR_PUSH_ERROR(HITLS_MEMCPY_FAIL);
             BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15692, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
                 "copy ipAddr fail when calc cookie.", 0, 0, 0, 0);
-            BSL_UIO_AddrFree(peerAddr);
+            SAL_SockAddrFree(peerAddr);
             return HITLS_MEMCPY_FAIL;
         }
         offset += param.size;
     }
-    BSL_UIO_AddrFree(peerAddr);
+    SAL_SockAddrFree(peerAddr);
     /* fill the version */
     BSL_Uint16ToByte(clientHello->version, &material[offset]);
     offset += sizeof(uint16_t);
@@ -195,6 +195,12 @@ int32_t HS_CalcCookie(TLS_Ctx *ctx, const ClientHelloMsg *clientHello, uint8_t *
                 "appGenCookieCb return error 0x%x.", returnVal, 0, 0, 0);
             return HITLS_MSG_HANDLE_COOKIE_ERR;
         }
+        if (*cookieLen > TLS_HS_MAX_COOKIE_SIZE) {
+            BSL_ERR_PUSH_ERROR(HITLS_MSG_HANDLE_COOKIE_ERR);
+            BSL_LOG_BINLOG_FIXLEN(BINLOG_ID17353, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
+                "cookie len is too long.", 0, 0, 0, 0);
+            return HITLS_MSG_HANDLE_COOKIE_ERR;
+        }
         return HITLS_SUCCESS;
     }
 
@@ -224,7 +230,6 @@ int32_t HS_CalcCookie(TLS_Ctx *ctx, const ClientHelloMsg *clientHello, uint8_t *
 
 static int32_t CheckCookie(TLS_Ctx *ctx, const ClientHelloMsg *clientHello, bool *isCookieValid)
 {
-    int32_t ret = HITLS_SUCCESS;
     uint8_t cookie[TLS_HS_MAX_COOKIE_SIZE] = {0};
     uint32_t cookieLen = sizeof(cookie);
 
@@ -233,7 +238,7 @@ static int32_t CheckCookie(TLS_Ctx *ctx, const ClientHelloMsg *clientHello, bool
     /* Calculating cookies will reduce the number of times the algorithm is used. In order to prevent algorithm
      * switching after calculation, it is increased by itself and then calculated */
     ctx->negotiatedInfo.cookieInfo.algRemainTime++;
-    ret = HS_CalcCookie(ctx, clientHello, cookie, &cookieLen);
+    int32_t ret = HS_CalcCookie(ctx, clientHello, cookie, &cookieLen);
     if (ret != HITLS_SUCCESS) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16917, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "CalcCookie fail", 0, 0, 0, 0);
@@ -250,7 +255,6 @@ static int32_t CheckCookie(TLS_Ctx *ctx, const ClientHelloMsg *clientHello, bool
 
 static int32_t CheckCookieWithPreMacKey(TLS_Ctx *ctx, const ClientHelloMsg *clientHello, bool *isCookieValid)
 {
-    int32_t ret = HITLS_SUCCESS;
     uint8_t macKeyStore[MAC_KEY_LEN] = {0};
     CookieInfo *cookieInfo = &ctx->negotiatedInfo.cookieInfo;
 
@@ -264,7 +268,7 @@ static int32_t CheckCookieWithPreMacKey(TLS_Ctx *ctx, const ClientHelloMsg *clie
     /* Use the previous mackey */
     (void)memcpy_s(cookieInfo->macKey, MAC_KEY_LEN, cookieInfo->preMacKey, MAC_KEY_LEN);
 
-    ret = CheckCookie(ctx, clientHello, isCookieValid);
+    int32_t ret = CheckCookie(ctx, clientHello, isCookieValid);
     if (ret != HITLS_SUCCESS) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16918, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "CheckCookie fail", 0, 0, 0, 0);

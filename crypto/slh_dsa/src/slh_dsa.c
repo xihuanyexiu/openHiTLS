@@ -63,7 +63,7 @@ static uint32_t g_slhDsaSigBytes[CRYPT_SLH_DSA_ALG_ID_MAX] = {7856,  7856,  1708
                                                               35664, 35664, 29792, 29792, 49856, 49856};
 static uint8_t g_secCategory[] = {1, 1, 1, 1, 3, 3, 3, 3, 5, 5, 5, 5};
 
-// “UC” means uncompressed
+// "UC" means uncompressed
 static void UCAdrsSetLayerAddr(SlhDsaAdrs *adrs, uint32_t layer)
 {
     PUT_UINT32_BE(layer, adrs->uc.layerAddr, 0);
@@ -71,7 +71,8 @@ static void UCAdrsSetLayerAddr(SlhDsaAdrs *adrs, uint32_t layer)
 
 static void UCAdrsSetTreeAddr(SlhDsaAdrs *adrs, uint64_t tree)
 {
-    PUT_UINT64_BE(tree, adrs->uc.treeAddr, 4); // tree address is 8 bytes, start from 4-th byte
+    // Write 8-byte tree address starting from offset 4 in 12-byte treeAddr field
+    PUT_UINT64_BE(tree, adrs->uc.treeAddr, 4);
 }
 
 static void UCAdrsSetType(SlhDsaAdrs *adrs, AdrsType type)
@@ -121,12 +122,12 @@ static void UCAdrsCopyKeyPairAddr(SlhDsaAdrs *adrs, const SlhDsaAdrs *adrs2)
                    4); // key pair address is 4 bytes, start from 4-th byte
 }
 
-static uint32_t UCAdrsGetAdrsLen()
+static uint32_t UCAdrsGetAdrsLen(void)
 {
     return SLH_DSA_ADRS_LEN;
 }
 
-// “C” means compressed
+// "C" means compressed
 static void CAdrsSetLayerAddr(SlhDsaAdrs *adrs, uint32_t layer)
 {
     adrs->c.layerAddr = layer;
@@ -134,6 +135,7 @@ static void CAdrsSetLayerAddr(SlhDsaAdrs *adrs, uint32_t layer)
 
 static void CAdrsSetTreeAddr(SlhDsaAdrs *adrs, uint64_t tree)
 {
+    // Write 8-byte tree address starting from offset 0 in 8-byte treeAddr field
     PUT_UINT64_BE(tree, adrs->c.treeAddr, 0);
 }
 
@@ -184,39 +186,39 @@ static void CAdrsCopyKeyPairAddr(SlhDsaAdrs *adrs, const SlhDsaAdrs *adrs2)
                    4); // key pair address is 4 bytes, start from 4-th byte
 }
 
-static uint32_t CAdrsGetAdrsLen()
+static uint32_t CAdrsGetAdrsLen(void)
 {
     return SLH_DSA_ADRS_COMPRESSED_LEN;
 }
 
 static AdrsOps g_adrsOps[2] = {{
-                                   .setLayerAddr = UCAdrsSetLayerAddr,
-                                   .setTreeAddr = UCAdrsSetTreeAddr,
-                                   .setType = UCAdrsSetType,
-                                   .setKeyPairAddr = UCAdrsSetKeyPairAddr,
-                                   .setChainAddr = UCAdrsSetChainAddr,
-                                   .setTreeHeight = UCAdrsSetTreeHeight,
-                                   .setHashAddr = UCAdrsSetHashAddr,
-                                   .setTreeIndex = UCAdrsSetTreeIndex,
-                                   .getTreeHeight = UCAdrsGetTreeHeight,
-                                   .getTreeIndex = UCAdrsGetTreeIndex,
-                                   .copyKeyPairAddr = UCAdrsCopyKeyPairAddr,
-                                   .getAdrsLen = UCAdrsGetAdrsLen,
-                               },
-                               {
-                                   .setLayerAddr = CAdrsSetLayerAddr,
-                                   .setTreeAddr = CAdrsSetTreeAddr,
-                                   .setType = CAdrsSetType,
-                                   .setKeyPairAddr = CAdrsSetKeyPairAddr,
-                                   .setChainAddr = CAdrsSetChainAddr,
-                                   .setTreeHeight = CAdrsSetTreeHeight,
-                                   .setHashAddr = CAdrsSetHashAddr,
-                                   .setTreeIndex = CAdrsSetTreeIndex,
-                                   .getTreeHeight = CAdrsGetTreeHeight,
-                                   .getTreeIndex = CAdrsGetTreeIndex,
-                                   .copyKeyPairAddr = CAdrsCopyKeyPairAddr,
-                                   .getAdrsLen = CAdrsGetAdrsLen,
-                               }};
+    .setLayerAddr = UCAdrsSetLayerAddr,
+    .setTreeAddr = UCAdrsSetTreeAddr,
+    .setType = UCAdrsSetType,
+    .setKeyPairAddr = UCAdrsSetKeyPairAddr,
+    .setChainAddr = UCAdrsSetChainAddr,
+    .setTreeHeight = UCAdrsSetTreeHeight,
+    .setHashAddr = UCAdrsSetHashAddr,
+    .setTreeIndex = UCAdrsSetTreeIndex,
+    .getTreeHeight = UCAdrsGetTreeHeight,
+    .getTreeIndex = UCAdrsGetTreeIndex,
+    .copyKeyPairAddr = UCAdrsCopyKeyPairAddr,
+    .getAdrsLen = UCAdrsGetAdrsLen,
+},
+{
+    .setLayerAddr = CAdrsSetLayerAddr,
+    .setTreeAddr = CAdrsSetTreeAddr,
+    .setType = CAdrsSetType,
+    .setKeyPairAddr = CAdrsSetKeyPairAddr,
+    .setChainAddr = CAdrsSetChainAddr,
+    .setTreeHeight = CAdrsSetTreeHeight,
+    .setHashAddr = CAdrsSetHashAddr,
+    .setTreeIndex = CAdrsSetTreeIndex,
+    .getTreeHeight = CAdrsGetTreeHeight,
+    .getTreeIndex = CAdrsGetTreeIndex,
+    .copyKeyPairAddr = CAdrsCopyKeyPairAddr,
+    .getAdrsLen = CAdrsGetAdrsLen,
+}};
 
 void BaseB(const uint8_t *x, uint32_t xLen, uint32_t b, uint32_t *out, uint32_t outLen)
 {
@@ -313,8 +315,7 @@ int32_t CRYPT_SLH_DSA_Gen(CryptSlhDsaCtx *ctx)
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
-    SlhDsaAdrs adrs;
-    (void)memset_s(&adrs, sizeof(SlhDsaAdrs), 0, sizeof(SlhDsaAdrs));
+    SlhDsaAdrs adrs = {0};
     ctx->adrsOps.setLayerAddr(&adrs, d - 1);
     uint8_t node[SLH_DSA_MAX_N] = {0};
     ret = XmssNode(node, 0, hp, &adrs, ctx);
@@ -387,8 +388,7 @@ static int32_t CRYPT_SLH_DSA_SignInternal(CryptSlhDsaCtx *ctx, const uint8_t *ms
         BSL_ERR_PUSH_ERROR(CRYPT_SLHDSA_ERR_INVALID_SIG_LEN);
         return CRYPT_SLHDSA_ERR_INVALID_SIG_LEN;
     }
-    SlhDsaAdrs adrs;
-    (void)memset_s(&adrs, sizeof(SlhDsaAdrs), 0, sizeof(SlhDsaAdrs));
+    SlhDsaAdrs adrs = {0};
     uint32_t offset = 0;
     uint32_t left = *sigLen;
 
@@ -453,8 +453,7 @@ static int32_t CRYPT_SLH_DSA_VerifyInternal(const CryptSlhDsaCtx *ctx, const uin
         return CRYPT_SLHDSA_ERR_INVALID_SIG_LEN;
     }
 
-    SlhDsaAdrs adrs;
-    (void)memset_s(&adrs, sizeof(SlhDsaAdrs), 0, sizeof(SlhDsaAdrs));
+    SlhDsaAdrs adrs = {0};
     uint32_t offset = 0;
 
     uint8_t digest[SLH_DSA_MAX_M] = {0};
@@ -494,7 +493,8 @@ static uint32_t GetMdSize(const EAL_MdMethod *hashMethod, int32_t hashId)
     return hashMethod->mdSize;
 }
 
-static int32_t MsgEncode(const CryptSlhDsaCtx *ctx, int32_t algId, const uint8_t *data, uint32_t dataLen, uint8_t **mpOut, uint32_t *mpLenOut)
+static int32_t MsgEncode(const CryptSlhDsaCtx *ctx, int32_t algId, const uint8_t *data, uint32_t dataLen,
+    uint8_t **mpOut, uint32_t *mpLenOut)
 {
     int32_t ret;
     BslOidString *oid = NULL;
@@ -504,7 +504,7 @@ static int32_t MsgEncode(const CryptSlhDsaCtx *ctx, int32_t algId, const uint8_t
 
     uint32_t mpLen = SLH_DSA_PREFIX_LEN + ctx->contextLen;
     if (ctx->isPrehash) {
-        oid = BSL_OBJ_GetOidFromCID((BslCid)algId);
+        oid = BSL_OBJ_GetOID((BslCid)algId);
         if (oid == NULL) {
             BSL_ERR_PUSH_ERROR(CRYPT_SLHDSA_ERR_PREHASH_ID_NOT_SUPPORTED);
             return CRYPT_SLHDSA_ERR_PREHASH_ID_NOT_SUPPORTED;
@@ -512,7 +512,7 @@ static int32_t MsgEncode(const CryptSlhDsaCtx *ctx, int32_t algId, const uint8_t
         mpLen += 2 + oid->octetLen; // asn1 header length is 2
         prehashLen = GetMdSize(EAL_MdFindMethod(algId), algId);
         const CRYPT_ConstData constData = {data, dataLen};
-        ret = CalcHash(EAL_MdFindMethod(algId), &constData, 1, prehash, &prehashLen);
+        ret = CRYPT_CalcHash(EAL_MdFindMethod(algId), &constData, 1, prehash, &prehashLen);
         if (ret != CRYPT_SUCCESS) {
             BSL_ERR_PUSH_ERROR(ret);
             return ret;

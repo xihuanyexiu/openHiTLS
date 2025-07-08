@@ -51,6 +51,12 @@
 /* Define the upper limit of the group type */
 #define MAX_GROUP_TYPE_NUM 128u
 #endif
+
+#ifdef HITLS_TLS_FEATURE_MAX_SEND_FRAGMENT
+#define MAX_PLAINTEXT_LEN 16384u
+#define MIN_MAX_SEND_FRAGMENT 512u
+#endif
+
 #ifdef HITLS_TLS_EXTENSION_CERT_AUTH
 static void HitlsTrustedCANodeFree(void *caNode)
 {
@@ -118,6 +124,8 @@ void CFG_CleanConfig(HITLS_Config *config)
 #endif
     SAL_CERT_MgrCtxFree(config->certMgrCtx);
     config->certMgrCtx = NULL;
+    FreeCustomExtensions(config->customExts);
+    config->customExts = NULL;
     BSL_SAL_ReferencesFree(&(config->references));
     return;
 }
@@ -143,6 +151,9 @@ static void ShallowCopy(HITLS_Ctx *ctx, const HITLS_Config *srcConfig)
     destConfig->isKeepPeerCert = srcConfig->isKeepPeerCert;
     destConfig->version = srcConfig->version;
     destConfig->originVersionMask = srcConfig->originVersionMask;
+#ifdef HITLS_TLS_FEATURE_MAX_SEND_FRAGMENT
+    destConfig->maxSendFragment = srcConfig->maxSendFragment;
+#endif
 #ifdef HITLS_TLS_FEATURE_RENEGOTIATION
     destConfig->isSupportRenegotiation = srcConfig->isSupportRenegotiation;
     destConfig->allowClientRenegotiate = srcConfig->allowClientRenegotiate;
@@ -158,8 +169,12 @@ static void ShallowCopy(HITLS_Ctx *ctx, const HITLS_Config *srcConfig)
 #endif
     destConfig->userData = srcConfig->userData;
     destConfig->userDataFreeCb = srcConfig->userDataFreeCb;
+#ifdef HITLS_TLS_FEATURE_MODE
+    destConfig->modeSupport = srcConfig->modeSupport;
+#endif
     destConfig->readAhead = srcConfig->readAhead;
     destConfig->recordPaddingCb = srcConfig->recordPaddingCb;
+    destConfig->recordPaddingArg = srcConfig->recordPaddingArg;
 #ifdef HITLS_TLS_CONFIG_MANUAL_DH
     destConfig->isSupportDhAuto = srcConfig->isSupportDhAuto;
     destConfig->dhTmpCb = srcConfig->dhTmpCb;
@@ -495,8 +510,17 @@ static int32_t BasicConfigDeepCopy(HITLS_Config *destConfig, const HITLS_Config 
 #endif
 #ifdef HITLS_TLS_CONFIG_MANUAL_DH
     ret = CryptKeyDeepCopy(destConfig, srcConfig);
+    if (ret != HITLS_SUCCESS) {
+        return ret;
+    }
 #endif /* HITLS_TLS_CONFIG_MANUAL_DH */
-    return ret;
+
+    destConfig->customExts = DupCustomExtensions(srcConfig->customExts);
+    if (srcConfig->customExts != NULL && destConfig->customExts == NULL) {
+        return HITLS_MEMALLOC_FAIL;
+    }
+
+    return HITLS_SUCCESS;
 }
 
 int32_t DumpConfig(HITLS_Ctx *ctx, const HITLS_Config *srcConfig)
@@ -737,7 +761,6 @@ int32_t HITLS_CFG_UpRef(HITLS_Config *config)
     return HITLS_SUCCESS;
 }
 
-#ifdef HITLS_TLS_PROTO_ALL
 uint32_t MapVersion2VersionBit(bool isDatagram, uint16_t version)
 {
     (void)isDatagram;
@@ -765,6 +788,7 @@ uint32_t MapVersion2VersionBit(bool isDatagram, uint16_t version)
     return ret;
 }
 
+#ifdef HITLS_TLS_PROTO_ALL
 static int ChangeVersionMask(HITLS_Config *config, uint16_t minVersion, uint16_t maxVersion)
 {
     uint32_t originVersionMask = config->originVersionMask;
@@ -1100,7 +1124,7 @@ int32_t HITLS_CFG_SetDtlsTimerCb(HITLS_Config *config, HITLS_DtlsTimerCb callbac
 }
 #endif
 
-#ifdef HITLS_TLS_FEATURE_SNI
+#ifdef HITLS_TLS_FEATURE_CLIENT_HELLO_CB
 int32_t HITLS_CFG_SetClientHelloCb(HITLS_Config *config, HITLS_ClientHelloCb callback, void *arg)
 {
     if (config == NULL || callback == NULL) {
@@ -1153,6 +1177,38 @@ int32_t HITLS_CFG_SetNeedCheckPmsVersion(HITLS_Config *config, bool needCheck)
         return HITLS_NULL_INPUT;
     }
     config->needCheckPmsVersion = needCheck;
+    return HITLS_SUCCESS;
+}
+#endif
+
+#ifdef HITLS_TLS_FEATURE_MODE
+int32_t HITLS_CFG_SetModeSupport(HITLS_Config *config, uint32_t mode)
+{
+    if (config == NULL) {
+        return HITLS_NULL_INPUT;
+    }
+
+    config->modeSupport |= mode;
+    return HITLS_SUCCESS;
+}
+
+int32_t HITLS_CFG_ClearModeSupport(HITLS_Config *config, uint32_t mode)
+{
+    if (config == NULL) {
+        return HITLS_NULL_INPUT;
+    }
+
+    config->modeSupport &= (~mode);
+    return HITLS_SUCCESS;
+}
+
+int32_t HITLS_CFG_GetModeSupport(HITLS_Config *config, uint32_t *mode)
+{
+    if (config == NULL || mode == NULL) {
+        return HITLS_NULL_INPUT;
+    }
+
+    *mode = config->modeSupport;
     return HITLS_SUCCESS;
 }
 #endif
@@ -2036,3 +2092,30 @@ int32_t HITLS_CFG_GetEmptyRecordsNum(const HITLS_Config *config, uint32_t *empty
 
     return HITLS_SUCCESS;
 }
+
+#ifdef HITLS_TLS_FEATURE_MAX_SEND_FRAGMENT
+int32_t HITLS_CFG_SetMaxSendFragment(HITLS_Config *config, uint16_t maxSendFragment)
+{
+    if (config == NULL) {
+        return HITLS_NULL_INPUT;
+    }
+
+    if (maxSendFragment > MAX_PLAINTEXT_LEN || maxSendFragment < MIN_MAX_SEND_FRAGMENT) {
+        BSL_ERR_PUSH_ERROR(HITLS_CONFIG_INVALID_LENGTH);
+        return HITLS_CONFIG_INVALID_LENGTH;
+    }
+
+    config->maxSendFragment = maxSendFragment;
+    return HITLS_SUCCESS;
+}
+
+int32_t HITLS_CFG_GetMaxSendFragment(const HITLS_Config *config, uint16_t *maxSendFragment)
+{
+    if (config == NULL || maxSendFragment == NULL) {
+        return HITLS_NULL_INPUT;
+    }
+    *maxSendFragment = config->maxSendFragment;
+
+    return HITLS_SUCCESS;
+}
+#endif

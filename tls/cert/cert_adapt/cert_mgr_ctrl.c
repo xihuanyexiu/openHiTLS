@@ -235,9 +235,7 @@ int32_t SAL_CERT_SetCurrentPrivateKey(HITLS_Config *config, HITLS_CERT_Key *key,
         if (ret != HITLS_SUCCESS) {
             BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16107, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
                 "set private key error: cert and key mismatch, key type = %u.", keyType, 0, 0, 0);
-            /* If the certificate does not match the private key, release the certificate. */
-            SAL_CERT_X509Free(*cert);
-            *cert = NULL;
+            /* The certificate does not match the private key. */
             return ret;
         }
     }
@@ -258,7 +256,7 @@ HITLS_CERT_Key *SAL_CERT_GetCurrentPrivateKey(CERT_MgrCtx *mgrCtx, bool isTlcpEn
     CERT_Pair *certPair = NULL;
     int32_t ret = BSL_HASH_At(mgrCtx->certPairs, (uintptr_t)keyType, (uintptr_t *)&certPair);
     if (ret != HITLS_SUCCESS || certPair == NULL) {
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16292, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "certPair nll", 0, 0, 0, 0);
+        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16292, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "certPair null", 0, 0, 0, 0);
         return NULL;
     }
 #ifdef HITLS_TLS_PROTO_TLCP11
@@ -500,3 +498,15 @@ HITLS_VerifyCb SAL_CERT_GetVerifyCb(CERT_MgrCtx *mgrCtx)
     }
     return mgrCtx->verifyCb;
 }
+#ifdef HITLS_TLS_FEATURE_CERT_CB
+int32_t SAL_CERT_SetCertCb(CERT_MgrCtx *mgrCtx, HITLS_CertCb certCb, void *arg)
+{
+    if (mgrCtx == NULL) {
+        BSL_ERR_PUSH_ERROR(HITLS_NULL_INPUT);
+        return HITLS_NULL_INPUT;
+    }
+    mgrCtx->certCb = certCb;
+    mgrCtx->certCbArg = arg;
+    return HITLS_SUCCESS;
+}
+#endif /* HITLS_TLS_FEATURE_CERT_CB */

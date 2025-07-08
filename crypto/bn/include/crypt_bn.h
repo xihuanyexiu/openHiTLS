@@ -848,7 +848,7 @@ int32_t BN_RandRange(BN_BigNum *r, const BN_BigNum *p);
 /**
  * @ingroup bn
  * @brief generate random BigNum
- * 
+ *
  * @param libCtx [IN] provider libCtx
  * @param r [OUT] Generate a random number.
  * @param p [IN] Compare data so that the generated r < p
@@ -1045,6 +1045,16 @@ void BN_OptimizerDestroy(BN_Optimizer *opt);
  * @retval none
  */
 void BN_OptimizerSetLibCtx(void *libCtx, BN_Optimizer *opt);
+
+/**
+ * @ingroup bn
+ * @brief get library context
+ *
+ * @param opt [In] BigNum optimizer
+ *
+ * @retval library context
+ */
+void *BN_OptimizerGetLibCtx(BN_Optimizer *opt);
 
 /**
  * @ingroup bn

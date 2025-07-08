@@ -52,10 +52,7 @@ static int32_t PackCertificateTypes(const TLS_Ctx *ctx, uint8_t *buf, uint32_t b
     PackCertTypesInfo certTypeLists[] = {
         {CERT_TYPE_RSA_SIGN, false},
         {CERT_TYPE_ECDSA_SIGN, false},
-        {CERT_TYPE_DSS_SIGN, false},
-#ifdef HITLS_TLS_PROTO_TLCP11
-        {CERT_TYPE_SM2_SIGN, false},
-#endif
+        {CERT_TYPE_DSS_SIGN, false}
     };
 
     uint8_t certTypeListsSize = (uint8_t)(sizeof(certTypeLists) / sizeof(certTypeLists[0]));
@@ -230,6 +227,13 @@ static int32_t PackCertReqExtensions(const TLS_Ctx *ctx, uint8_t *buf, uint32_t 
     };
 
     listSize = sizeof(extMsgList) / sizeof(extMsgList[0]);
+    if (IsPackNeedCustomExtensions(CUSTOM_EXT_FROM_CTX(ctx), HITLS_EX_TYPE_TLS1_3_CERTIFICATE_REQUEST)) {
+        ret = PackCustomExtensions(ctx, &buf[offset], bufLen - offset, &exLen, HITLS_EX_TYPE_TLS1_3_CERTIFICATE_REQUEST, NULL, 0);
+        if (ret != HITLS_SUCCESS) {
+            return ret;
+        }
+        offset += exLen;
+    }
 
     for (uint32_t index = 0; index < listSize; index++) {
         if (extMsgList[index].packFunc == NULL) {

@@ -203,7 +203,7 @@ int HLT_TlsAcceptBlock(void *ssl)
     process = GetProcess();
     switch (process->tlsType) {
         case HITLS:
-            return HitlsAccept(ssl);
+            return *(int *)HitlsAccept(ssl);
         default:
             return ERROR;
     }
@@ -217,7 +217,7 @@ int HLT_GetTlsAcceptResultFromId(unsigned long int threadId)
 
 int HLT_GetTlsAcceptResult(HLT_Tls_Res* tlsRes)
 {
-    int ret;
+    static int ret;
     if (tlsRes->acceptId <= 0) {
         LOG_ERROR("This Res Has Not acceptId");
         return ERROR;
@@ -227,9 +227,14 @@ int HLT_GetTlsAcceptResult(HLT_Tls_Res* tlsRes)
         ret = HLT_RpcGetTlsAcceptResult(tlsRes->acceptId);
     } else {
         // Indicates that the local process accepts the request.
-        pthread_join(tlsRes->acceptId, NULL);
+        int *tmp = NULL;
+        pthread_join(tlsRes->acceptId, (void**)&tmp);
+        if (tmp == NULL) {
+            return ERROR;
+        }
+        ret = *tmp;
         tlsRes->acceptId = 0;
-        return SUCCESS;
+        return ret;
     }
     tlsRes->acceptId = 0;
     return ret;
@@ -290,6 +295,7 @@ int HLT_TlsRenegotiate(void *ssl)
 
 int HLT_TlsVerifyClientPostHandshake(void *ssl)
 {
+#ifdef HITLS_TLS_FEATURE_PHA
     Process *process;
     process = GetProcess();
     switch (process->tlsType) {
@@ -297,6 +303,10 @@ int HLT_TlsVerifyClientPostHandshake(void *ssl)
         default:
             return ERROR;
     }
+#else
+    (void)ssl;
+#endif
+    return ERROR;
 }
 
 int HLT_TlsClose(void *ssl)
@@ -400,9 +410,12 @@ int RunDataChannelBind(void *param)
     LOG_DEBUG("RunDataChannelBind Ing...\n");
     DataChannelParam *channelParam = (DataChannelParam*)param;
     switch (channelParam->type) {
-        case SCTP: sockFd = SctpBind(channelParam->port); break;
+#ifdef HITLS_BSL_UIO_TCP
         case TCP: sockFd = TcpBind(channelParam->port); break;
+#endif
+#ifdef HITLS_BSL_UIO_UDP
         case UDP: sockFd = UdpBind(channelParam->port); break;
+#endif
         default:
             return ERROR;
     }
@@ -421,14 +434,15 @@ int RunDataChannelAccept(void *param)
     LOG_DEBUG("RunDataChannelAccept Ing...\n");
     DataChannelParam *channelParam = (DataChannelParam *)param;
     switch (channelParam->type) {
-        case SCTP:
-            sockFd = SctpAccept(channelParam->ip, channelParam->bindFd, channelParam->isBlock);
-            break;
+#ifdef HITLS_BSL_UIO_TCP
         case TCP:
             sockFd = TcpAccept(channelParam->ip, channelParam->bindFd, channelParam->isBlock, true);
             break;
+#endif
+#ifdef HITLS_BSL_UIO_UDP
         case UDP:
             sockFd = UdpAccept(channelParam->ip, channelParam->bindFd, channelParam->isBlock, false);
+#endif
             break;
         default:
             return ERROR;
@@ -456,9 +470,12 @@ int HLT_DataChannelBind(DataChannelParam *channelParam)
 int HLT_DataChannelConnect(DataChannelParam *dstChannelParam)
 {
     switch (dstChannelParam->type) {
-        case SCTP: return SctpConnect(dstChannelParam->ip, dstChannelParam->port, dstChannelParam->isBlock);
+#ifdef HITLS_BSL_UIO_TCP
         case TCP: return TcpConnect(dstChannelParam->ip, dstChannelParam->port);
+#endif
+#ifdef HITLS_BSL_UIO_UDP
         case UDP: return UdpConnect(dstChannelParam->ip, dstChannelParam->port);
+#endif
         default:
             return ERROR;
     }
@@ -528,9 +545,12 @@ HLT_FD HLT_CreateDataChannel(HLT_Process *process1, HLT_Process *process2, DataC
 void HLT_CloseFd(int fd, int linkType)
 {
     switch (linkType) {
+#ifdef HITLS_BSL_UIO_TCP
         case TCP: TcpClose(fd); break;
-        case SCTP: SctpClose(fd); break;
+#endif
+#ifdef HITLS_BSL_UIO_UDP
         case UDP: UdpClose(fd); break;
+#endif
         default:
             /* Unknown fd type */
             break;
@@ -552,8 +572,6 @@ HLT_Ctx_Config* HLT_NewCtxConfigTLCP(char *setFile, const char *key, bool isClie
     ctxConfig->isSupportClientVerify = false;
     ctxConfig->isSupportNoClientCert = false;
     ctxConfig->isSupportExtendMasterSecret = false;
-    ctxConfig->minVersion = HITLS_VERSION_TLCP_DTLCP11;
-    ctxConfig->maxVersion = HITLS_VERSION_TLCP_DTLCP11;
     ctxConfig->isClient = isClient;
     ctxConfig->setSessionCache = 2;
     HLT_SetGroups(ctxConfig, "NULL");
@@ -1096,6 +1114,12 @@ int HLT_SetExtenedMasterSecretSupport(HLT_Ctx_Config *ctxConfig, bool support)
     return SUCCESS;
 }
 
+int HLT_SetModeSupport(HLT_Ctx_Config *ctxConfig, uint32_t mode)
+{
+    ctxConfig->modeSupport = mode;
+    return SUCCESS;
+}
+
 int HLT_SetCipherSuites(HLT_Ctx_Config *ctxConfig, const char *cipherSuites)
 {
     int ret;
@@ -1352,6 +1376,21 @@ int HLT_SetAlpnProtosSelectCb(HLT_Ctx_Config *ctxConfig, char *callback, char *u
     return SUCCESS;
 }
 
+
+int HLT_SetClientHelloCb(HLT_Ctx_Config *ctxConfig, HITLS_ClientHelloCb callback, void *arg)
+{
+    ctxConfig->clientHelloCb = callback;
+    ctxConfig->clientHelloArg = arg;
+    return SUCCESS;
+}
+
+int HLT_SetCertCb(HLT_Ctx_Config *ctxConfig, HITLS_CertCb certCb, void *arg)
+{
+    ctxConfig->certCb = certCb;
+    ctxConfig->certArg = arg;
+    return SUCCESS;
+}
+
 int HLT_SetFrameHandle(HLT_FrameHandle *frameHandle)
 {
     return SetFrameHandle(frameHandle);
@@ -1362,22 +1401,17 @@ void HLT_CleanFrameHandle(void)
     CleanFrameHandle();
 }
 
-#define SCTP_AUTH_FILE_PATH "/proc/sys/net/sctp/auth_enable"
-#define SCTP_AUTH_ENABLE "echo 1 > /proc/sys/net/sctp/auth_enable"
-#define SCTP_FLAG_BUFF 10
-
 bool IsEnableSctpAuth(void)
 {
-    system(SCTP_AUTH_ENABLE);
-    char buf[SCTP_FLAG_BUFF] = { 0 };
-    FILE* file = fopen(SCTP_AUTH_FILE_PATH, "r+");
-    if (file == NULL) {
-        return false;
-    }
-    (void)fgets(buf, SCTP_FLAG_BUFF, file);
-    fclose(file);
-    if (strcmp(buf, "1\n") == 0) {
-        return true;
-    }
     return false;
+}
+
+void HLT_ConfigTimeOut(const char* timeout)
+{
+    setenv("SSL_TIMEOUT", timeout, 1);
+}
+
+void HLT_UnsetTimeOut()
+{
+    unsetenv("SSL_TIMEOUT");
 }

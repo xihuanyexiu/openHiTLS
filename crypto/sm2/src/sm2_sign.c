@@ -133,6 +133,9 @@ void CRYPT_SM2_FreeCtx(CRYPT_SM2_Ctx *ctx)
     BSL_SAL_FREE(ctx->userId);
     BN_Destroy(ctx->r);
     ECC_FreePoint(ctx->pointR);
+#ifdef HITLS_CRYPTO_ACVP_TESTS
+    BN_Destroy(ctx->paraEx.k);
+#endif
     BSL_SAL_FREE(ctx);
     return;
 }
@@ -161,7 +164,7 @@ int32_t Sm2ComputeZDigest(const CRYPT_SM2_Ctx *ctx, uint8_t *out, uint32_t *outL
         BSL_ERR_PUSH_ERROR(ret);
         goto ERR;
     }
-    BSL_Param tmpPara[2] = {{CRYPT_PARAM_EC_POINT_UNCOMPRESSED, BSL_PARAM_TYPE_OCTETS, maxPubData,
+    BSL_Param tmpPara[2] = {{CRYPT_PARAM_EC_PUBKEY, BSL_PARAM_TYPE_OCTETS, maxPubData,
         SM2_MAX_PUBKEY_DATA_LENGTH, 0}, BSL_PARAM_END};
     GOTO_ERR_IF(CRYPT_SM2_GetPubKey(ctx, tmpPara), ret);
     pub.len = tmpPara[0].useLen;
@@ -286,7 +289,7 @@ int32_t CRYPT_SM2_Import(CRYPT_SM2_Ctx *ctx, const BSL_Param *params)
     }
     int32_t ret;
     const BSL_Param *prv = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_EC_PRVKEY);
-    const BSL_Param *pub = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_EC_POINT_UNCOMPRESSED);
+    const BSL_Param *pub = BSL_PARAM_FindConstParam(params, CRYPT_PARAM_EC_PUBKEY);
     if (prv != NULL) {
         ret = CRYPT_SM2_SetPrvKey(ctx, prv);
         if (ret != CRYPT_SUCCESS) {
@@ -338,7 +341,7 @@ int32_t CRYPT_SM2_Export(const CRYPT_SM2_Ctx *ctx, BSL_Param *params)
         index++;
     }
     if (ctx->pkey->pubkey != NULL) {
-        (void)BSL_PARAM_InitValue(&sm2Params[index], CRYPT_PARAM_EC_POINT_UNCOMPRESSED, BSL_PARAM_TYPE_OCTETS,
+        (void)BSL_PARAM_InitValue(&sm2Params[index], CRYPT_PARAM_EC_PUBKEY, BSL_PARAM_TYPE_OCTETS,
             buffer, keyBytes);
         ret = CRYPT_SM2_GetPubKey(ctx, sm2Params);
         if (ret != CRYPT_SUCCESS) {
@@ -905,6 +908,11 @@ int32_t CRYPT_SM2_Ctrl(CRYPT_SM2_Ctx *ctx, int32_t opt, void *val, uint32_t len)
         case CRYPT_CTRL_SET_SM2_R:
             ret = Sm2SetR(ctx, val, len);
             break;
+#ifdef HITLS_CRYPTO_ACVP_TESTS
+        case CRYPT_CTRL_SET_SM2_K:
+            ret = CRYPT_SM2_SetK(ctx, val, len);
+            break;
+#endif
         case CRYPT_CTRL_SET_SM2_RANDOM:
             ret = Sm2SetRandom(ctx, val, len);
             break;

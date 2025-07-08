@@ -23,6 +23,8 @@
 extern "C" {
 #endif
 
+void HLT_ConfigTimeOut(const char* timeout);
+void HLT_UnsetTimeOut();
 
 // Create a process
 HLT_Process* InitSrcProcess(TLS_TYPE tlsType, char* srcDomainPath);
@@ -54,6 +56,7 @@ int HLT_SetNoClientCertSupport(HLT_Ctx_Config* ctxConfig, bool support);
 int HLT_SetPostHandshakeAuth(HLT_Ctx_Config *ctxConfig, bool support);
 int HLT_SetExtenedMasterSecretSupport(HLT_Ctx_Config* ctxConfig, bool support);
 int HLT_SetEncryptThenMac(HLT_Ctx_Config *ctxConfig, int support);
+int HLT_SetModeSupport(HLT_Ctx_Config *ctxConfig, uint32_t mode);
 int HLT_SetCipherSuites(HLT_Ctx_Config* ctxConfig, const char* cipherSuites);
 int HLT_SetProviderPath(HLT_Ctx_Config *ctxConfig, char *providerPath);
 int HLT_SetProviderAttrName(HLT_Ctx_Config *ctxConfig, char *attrName);
@@ -85,7 +88,8 @@ int HLT_SetAlpnProtosSelectCb(HLT_Ctx_Config *ctxConfig, char *callback, char *u
 int HLT_SetFrameHandle(HLT_FrameHandle *frameHandle);
 void HLT_CleanFrameHandle(void);
 int HLT_FreeResFromSsl(const void *ssl);
-
+int HLT_SetClientHelloCb(HLT_Ctx_Config *ctxConfig, HITLS_ClientHelloCb callback, void *arg);
+int HLT_SetCertCb(HLT_Ctx_Config *ctxConfig, HITLS_CertCb certCb, void *arg);
 // General initialization interface
 int HLT_LibraryInit(TLS_TYPE tlsType);
 

@@ -45,7 +45,7 @@ enum CRYPT_ERROR {
     CRYPT_ERR_ALGID,                    /**< Incorrect algorithm ID. */
     CRYPT_INVALID_ARG,                  /**< Invalid input parameter. */
     CRYPT_NOT_SUPPORT,                  /**< unsupported operation. */
-    CRYPT_INCONSISTENT_OPERATION,       /**< Inconsistent  operation. */
+    CRYPT_INCONSISTENT_OPERATION,       /**< Inconsistent operation. */
 
     CRYPT_BN_BUFF_LEN_NOT_ENOUGH = 0x01020001, /**< Insufficient buffer length. */
     CRYPT_BN_SPACE_NOT_ENOUGH,          /**< Insufficient big number space. */
@@ -251,6 +251,9 @@ enum CRYPT_ERROR {
                                                       of the DH algorithm. */
     CRYPT_DH_PUBKEY_NOT_EQUAL,                   /**< Public keys are not equal. */
     CRYPT_DH_PARA_NOT_EQUAL,                     /**< DH key parameters are not equal. */
+    CRYPT_DH_SET_FLAG_LEN_ERROR,                 /**< The length of the input data is incorrect and return failure when
+                                                      setting the flag. */
+    CRYPT_DH_FLAG_NOT_SUPPORT_ERROR,             /**< Unsupported flag. */
 
     CRYPT_CHACHA20_KEYLEN_ERROR = 0x010E0001,        /**< The key length input is incorrect during key setting. */
     CRYPT_CHACHA20_NONCELEN_ERROR,                   /**< The length of the input nounce is incorrect when you
@@ -405,6 +408,7 @@ enum CRYPT_ERROR {
     CRYPT_SM2_DECODE_FAIL,                            /**< Data decoding fails, the data does not meet
                                                             the decoding requirements. */
     CRYPT_SM2_ID_TOO_LARGE,                           /**< User id to large. */
+    CRYPT_SM2_K_REPEAT_SET_ERROR,                     /**< the random k is set repeatedly*/
 
     CRYPT_KDFTLS12_NOT_SUPPORTED = 0x01210001,        /**< Unsupport the KDFTLS12 algorithm. */
     CRYPT_KDFTLS12_PARAM_ERROR,

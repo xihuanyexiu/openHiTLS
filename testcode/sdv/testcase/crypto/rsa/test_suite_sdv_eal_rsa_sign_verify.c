@@ -588,6 +588,7 @@ void SDV_CRYPTO_RSA_GEN_SIGN_VERIFY_PSS_FUNC_TC001(int bits, int isProvider)
         CRYPT_EAL_PKEY_KEYMGMT_OPERATE + CRYPT_EAL_PKEY_SIGN_OPERATE, "provider=default", isProvider);
     ASSERT_TRUE(cpyCtx != NULL);
     ASSERT_EQ(CRYPT_EAL_PkeyCopyCtx(cpyCtx, pkey), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeyCtrl(cpyCtx, CRYPT_CTRL_SET_RSA_SALT, (uint8_t *)salt, 32), CRYPT_SUCCESS);
 
     ASSERT_EQ(CRYPT_EAL_PkeySignData(cpyCtx, hash, hashLen, sign, &signLen), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_PkeyVerifyData(cpyCtx, hash, hashLen, sign, signLen), CRYPT_SUCCESS);

@@ -154,7 +154,7 @@ int32_t ECC_PkeySetPubKey(ECC_Pkey *ctx, const BSL_Param *para)
         return CRYPT_NULL_INPUT;
     }
     // assume that the two scenarios will not coexist.
-    const BSL_Param *pub = BSL_PARAM_FindConstParam(para, CRYPT_PARAM_EC_POINT_UNCOMPRESSED);
+    const BSL_Param *pub = BSL_PARAM_FindConstParam(para, CRYPT_PARAM_EC_PUBKEY);
     if (pub == NULL) {
         pub = BSL_PARAM_FindConstParam(para, CRYPT_PARAM_PKEY_ENCODE_PUBKEY);
     }
@@ -210,7 +210,7 @@ int32_t ECC_PkeyGetPubKey(const ECC_Pkey *ctx, BSL_Param *para)
         return CRYPT_NULL_INPUT;
     }
     // assume that the two scenarios will not coexist.
-    BSL_Param *pub = BSL_PARAM_FindParam(para, CRYPT_PARAM_EC_POINT_UNCOMPRESSED);
+    BSL_Param *pub = BSL_PARAM_FindParam(para, CRYPT_PARAM_EC_PUBKEY);
     if (pub == NULL) {
         pub = BSL_PARAM_FindParam(para, CRYPT_PARAM_PKEY_ENCODE_PUBKEY);
     }
@@ -437,11 +437,11 @@ static int32_t GetEccName(ECC_Pkey *ctx, void *val, uint32_t len)
 
 static int32_t SetEccPointFormat(ECC_Pkey *ctx, void *val, uint32_t len)
 {
-    uint32_t pointFormat = *(uint32_t *)val;
     if (len != sizeof(uint32_t)) {
         BSL_ERR_PUSH_ERROR(CRYPT_ECC_PKEY_ERR_CTRL_LEN);
         return CRYPT_ECC_PKEY_ERR_CTRL_LEN;
     }
+    uint32_t pointFormat = *(uint32_t *)val;
     if (pointFormat >= CRYPT_POINT_MAX) {
         BSL_ERR_PUSH_ERROR(CRYPT_ECC_PKEY_ERR_INVALID_POINT_FORMAT);
         return CRYPT_ECC_PKEY_ERR_INVALID_POINT_FORMAT;

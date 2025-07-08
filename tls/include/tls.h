@@ -175,6 +175,11 @@ typedef enum {
     HS_STATE_BUTT = 255             /* enumerated Maximum Value */
 } HITLS_HandshakeState;
 
+typedef enum {
+    TLS_PROCESS_STATE_A,
+    TLS_PROCESS_STATE_B
+} HitlsProcessState;
+
 typedef void (*SendAlertCallback)(const TLS_Ctx *ctx, ALERT_Level level, ALERT_Description description);
 
 typedef bool (*GetAlertFlagCallback)(const TLS_Ctx *ctx);
@@ -185,6 +190,8 @@ typedef int32_t (*UnexpectMsgHandleCallback)(TLS_Ctx *ctx, uint32_t msgType, con
 /** Connection management configure */
 typedef struct TLSCtxConfig {
     void *userData;                         /* user data */
+    uint16_t linkMtu;                       /* Maximum transport unit of a path (bytes),
+                                               including IP header and udp/tcp header */
     uint16_t pmtu;                          /* Maximum transport unit of a path (bytes) */
 
     bool isSupportPto;                      /* is support process based TLS offload */
@@ -242,6 +249,8 @@ typedef struct {
     uint16_t *cipherSuites;             /* all cipher suites sent by the peer end */
     uint16_t cipherSuitesSize;          /* size of a cipher suites */
     HITLS_SignHashAlgo peerSignHashAlg; /* peer signature algorithm */
+    uint16_t *signatureAlgorithms;
+    uint16_t signatureAlgorithmsSize;
     HITLS_ERROR verifyResult;           /* record the certificate verification result of the peer end */
     HITLS_TrustedCAList *caList;        /* peer trusted ca list */
 } PeerInfo;
@@ -298,13 +307,15 @@ struct TlsCtx {
     bool isDtlsListen;
     bool plainAlertForbid;                  /* tls1.3 forbid to receive plain alert message */
     bool allowAppOut;                       /* whether user used HITLS_read to start renegotiation */
-    
-    /* Custom extensions */
-    CustomExt_Methods *customExts;  /* Pointer to the custom extension */
+    bool noQueryMtu;                        /* Don't query the mtu from bio */
+    bool needQueryMtu;                      /* whether need query mtu from bio */
+    bool mtuModified;                       /* whether mtu has been modified */
 };
 
 #define LIBCTX_FROM_CTX(ctx) ((ctx == NULL) ? NULL : (ctx)->config.tlsConfig.libCtx)
 #define ATTRIBUTE_FROM_CTX(ctx) ((ctx == NULL) ? NULL : (ctx)->config.tlsConfig.attrName)
+
+#define CUSTOM_EXT_FROM_CTX(ctx) ((ctx == NULL) ? NULL : (ctx)->config.tlsConfig.customExts)
 
 #ifdef __cplusplus
 }

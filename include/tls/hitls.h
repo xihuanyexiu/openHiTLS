@@ -701,14 +701,49 @@ int32_t HITLS_IsBeforeHandShake(const HITLS_Ctx *ctx, uint8_t *isBefore);
 
 /**
  * @ingroup hitls
+ * @brief   Set the MTU of Data Link layer.
+ *
+ * @param   ctx  [IN] TLS connection handle
+ * @param   linkMtu  [IN] MTU of Data Link layer.
+ * @retval  HITLS_SUCCESS, set the mtu succeeded.
+ * @retval  HITLS_CONFIG_INVALID_LENGTH, the mtu is invalid
+ *          For details about other error codes, see hitls_error.h.
+ */
+int32_t HITLS_SetLinkMtu(HITLS_Ctx *ctx, uint16_t linkMtu);
+
+/**
+ * @ingroup hitls
  * @brief   Set the MTU of a path.
  *
  * @param   ctx  [IN] TLS connection handle
  * @param   mtu  [IN] Set the MTU.
- * @retval  HITLS_SUCCESS, obtaining the status succeeded.
+ * @retval  HITLS_SUCCESS, set the mtu succeeded.
+ * @retval  HITLS_CONFIG_INVALID_LENGTH, the mtu is invalid
  *          For details about other error codes, see hitls_error.h.
  */
-int32_t HITLS_SetMtu(HITLS_Ctx *ctx, long mtu);
+int32_t HITLS_SetMtu(HITLS_Ctx *ctx, uint16_t mtu);
+
+/**
+ * @ingroup hitls
+ * @brief   Set the option that don't query mtu from the bio.
+ *
+ * @param   ctx  [IN] TLS connection handle
+ * @param   noQueryMtu  [IN] whether not to query the mtu from the bio.
+ * @retval  HITLS_SUCCESS, set the option succeeded.
+ *          For details about other error codes, see hitls_error.h.
+ */
+int32_t HITLS_SetNoQueryMtu(HITLS_Ctx *ctx, bool noQueryMtu);
+
+/**
+ * @ingroup hitls
+ * @brief   Querying whether the EMSGSIZE error occur and mtu need be modified
+ *
+ * @param   ctx [IN] TLS connection handle.
+ * @param   needQueryMtu [IN] Indicates whether the EMSGSIZE error occur and mtu need be modified
+ * @retval  HITLS_NULL_INPUT, the input parameter pointer is NULL.
+ * @retval  HITLS_SUCCESS, if successful.
+ */
+int32_t HITLS_GetNeedQueryMtu(HITLS_Ctx *ctx, bool *needQueryMtu);
 
 /**
  * @ingroup hitls
@@ -1168,6 +1203,28 @@ int32_t HITLS_GetNegotiateGroup(const HITLS_Ctx *ctx, uint16_t *group);
 
 /**
  * @ingroup hitls
+ * @brief   Set the function to support the specified feature.
+ *
+ * @param   ctx [OUT] TLS Connection Handle
+ * @param   mode [IN] Mode features to enabled.
+ * @retval  HITLS_NULL_INPUT, the input parameter pointer is null.
+ * @retval  HITLS_SUCCESS, if successful.
+ */
+int32_t HITLS_SetModeSupport(HITLS_Ctx *ctx, uint32_t mode);
+
+/**
+ * @ingroup hitls
+ * @brief   Obtain the mode of the function feature in the config file.
+ *
+ * @param   ctx [OUT] TLS Connection Handle
+ * @param   mode [OUT] Mode obtain the output parameters of the mode.
+ * @retval  HITLS_NULL_INPUT, the input parameter pointer is null.
+ * @retval  HITLS_SUCCESS, if successful.
+ */
+int32_t HITLS_GetModeSupport(HITLS_Ctx *ctx, uint32_t *mode);
+
+/**
+ * @ingroup hitls
  * @brief   Setting the Encrypt-Then-Mac mode.
  *
  * @param   ctx [IN] TLS connection handle.
@@ -1343,6 +1400,30 @@ int32_t HITLS_SetEmptyRecordsNum(HITLS_Ctx *ctx, uint32_t emptyNum);
  */
 int32_t HITLS_GetEmptyRecordsNum(const HITLS_Ctx *ctx, uint32_t *emptyNum);
 
+
+/**
+ * @ingroup hitls
+ * @brief   set the max send fragment to restrict the amount of plaintext bytes in any record
+ *
+ * @param   ctx [IN/OUT] TLS connection handle.
+ * @param   maxSendFragment [IN] Indicates the max send fragment
+ * @retval  HITLS_NULL_INPUT, the input parameter pointer is NULL.
+ * @retval  HITLS_CONFIG_INVALID_LENGTH, the maxSendFragment is less than 64 or greater than 16384.
+ * @retval  HITLS_SUCCESS, if successful.
+ */
+int32_t HITLS_SetMaxSendFragment(HITLS_Ctx *ctx, uint16_t maxSendFragment);
+
+/**
+ * @ingroup hitls
+ * @brief   Obtain the max send fragment to restrict the amount of plaintext bytes in any record
+ *
+ * @param   ctx [IN] TLS connection handle.
+ * @param   maxSendFragment [OUT] Indicates the max send fragment
+ * @retval  HITLS_NULL_INPUT, the input parameter pointer is NULL.
+ * @retval  HITLS_SUCCESS, if successful.
+ */
+int32_t HITLS_GetMaxSendFragment(const HITLS_Ctx *ctx, uint16_t *maxSendFragment);
+
 /**
  * @ingroup hitls
  * @brief   Sets the maximum size of the certificate chain that can be sent from the peer end.
@@ -1376,6 +1457,108 @@ int32_t HITLS_GetMaxCertList(const HITLS_Ctx *ctx, uint32_t *maxSize);
  * @retval  For details about other error codes, see hitls_error.h.
  */
 int32_t HITLS_VerifyClientPostHandshake(HITLS_Ctx *ctx);
+
+/**
+ * @ingroup hitls
+ * @brief   Obtain the legacy version from client hello.
+ * @attention This interface is valid only in client hello callback.
+ * @param   ctx [IN] TLS connection handle.
+ * @param   out [OUT] Pointer to the output buffer for legacy version.
+ * @retval  HITLS_SUCCESS, if successful.
+ *          For details about other error codes, see hitls_error.h.
+ */
+int32_t HITLS_ClientHelloGetLegacyVersion(HITLS_Ctx *ctx, uint16_t *version);
+
+/**
+ * @ingroup hitls
+ * @brief   Obtain the random value from client hello.
+ *
+ * @attention This interface is valid only in client hello callback.
+ * @param   ctx [IN] TLS connection handle.
+ * @param   out [OUT] Pointer to the output buffer for random value.
+ * @param   outlen [IN] Length of the output buffer.
+ * @retval  HITLS_SUCCESS, if successful.
+ *          For details about other error codes, see hitls_error.h.
+ */
+int32_t HITLS_ClientHelloGetRandom(HITLS_Ctx *ctx, uint8_t **out, uint8_t *outlen);
+
+/**
+ * @ingroup hitls
+ * @brief   Obtain the session ID from client hello.
+ *
+ * @attention This interface is valid only in client hello callback.
+ * @param   ctx [IN] TLS connection handle.
+ * @param   out [OUT] Pointer to the output buffer for session ID.
+ * @param   outlen [OUT] Length of the output buffer.
+ * @retval  HITLS_SUCCESS, if successful.
+ *          For details about other error codes, see hitls_error.h.
+ */
+int32_t HITLS_ClientHelloGetSessionID(HITLS_Ctx *ctx, uint8_t **out, uint8_t *outlen);
+
+/**
+ * @ingroup hitls
+ * @brief   Obtain the cipher suites from client hello.
+ *
+ * @attention This interface is valid only in client hello callback.
+ * @param   ctx [IN] TLS connection handle.
+ * @param   out [OUT] Pointer to the output buffer for cipher suites.
+ * @param   outlen [OUT] Length of the output buffer.
+ * @retval  HITLS_SUCCESS, if successful.
+ *          For details about other error codes, see hitls_error.h.
+ */
+int32_t HITLS_ClientHelloGetCiphers(HITLS_Ctx *ctx, uint16_t **out, uint16_t *outlen);
+
+/**
+* @ingroup hitls
+* @brief   Obtain the all extension types from client hello.
+*
+* @attention This interface is valid only in client hello callback.
+* @attention the caller must release the storage allocated for *out using BSL_SAL_FREE().
+* @param   ctx [IN] TLS connection handle.
+* @param   out [OUT] Pointer to the output buffer for all extensions.
+* @param   outlen [OUT] Length of the output buffer.
+* @retval  HITLS_SUCCESS, if successful.
+*          For details about other error codes, see hitls_error.h.
+    */
+int32_t HITLS_ClientHelloGetExtensionsPresent(HITLS_Ctx *ctx, uint16_t **out, uint8_t *outlen);
+
+/**
+ * @ingroup hitls
+ * @brief   Obtain a specific extension from client hello.
+ *
+ * @attention This interface is valid only in client hello callback.
+ * @param   ctx [IN] TLS connection handle.
+ * @param   type [IN] Type of the extension to be obtained.
+ * @param   out [OUT] Pointer to the output buffer for the extension.
+ * @param   outlen [OUT] Length of the output buffer.
+ * @retval  HITLS_SUCCESS, if successful.
+ *          For details about other error codes, see hitls_error.h.
+ */
+int32_t HITLS_ClientHelloGetExtension(HITLS_Ctx *ctx, uint16_t type, uint8_t **out, uint32_t *outlen);
+
+/**
+ * @ingroup hitls
+ * @brief   Handle the timeout of sending and receiving DTLS messages.
+ *
+ * @param   ctx [IN] TLS Connection Handle
+ * @retval  HITLS_SUCCESS, if retransmit the message successful.
+ * @retval  HITLS_MSG_HANDLE_DTLS_RETRANSMIT_NOT_TIMEOUT, It hasn't timed out yet.
+ * @retval  For details about other error codes, see hitls_error.h.
+ */
+int32_t HITLS_DtlsProcessTimeout(HITLS_Ctx *ctx);
+
+/**
+ * @ingroup hitls
+ * @brief   Get the remaining timeout time for timeout retransmission.
+ *
+ * @param   ctx [IN] TLS Connection Handle
+ * @param   remainTimeOut [OUT] remaining timeout time for timeout retransmission, unit: us
+ * @retval  HITLS_SUCCESS, if successful.
+ * @retval  HITLS_MSG_HANDLE_ERR_WITHOUT_TIMEOUT_ACTION, Indicates non UDP links or absence of timeout behavior.
+ * @retval  For details about other error codes, see hitls_error.h.
+ */
+int32_t HITLS_DtlsGetTimeout(HITLS_Ctx *ctx, uint64_t *remainTimeOut);
+
 #ifdef __cplusplus
 }
 #endif

@@ -71,7 +71,7 @@ typedef enum {
     // When the padding type is PSS, the salt data is obtained by the DRBG.
     // and the length is padLen - mdMethod->GetDigestSize - 2
     CRYPT_RSA_SALTLEN_TYPE_MAXLEN = -2,
-// get salt length from signature, only used verify.
+    // get salt length from signature, only used verify.
     CRYPT_RSA_SALTLEN_TYPE_AUTOLEN = -3
 } CRYPT_RSA_SaltLenType;
 
@@ -91,6 +91,12 @@ typedef enum {
     CRYPT_RSA_BSSA = 0x00000002, /**< The signature process is rsa blind signature. */
     CRYPT_RSA_MAXFLAG
 } CRYPT_RSA_Flag;
+
+typedef enum {
+    CRYPT_DH_NO_PADZERO = 0x00000001, /**< Follow the standard RFC 5246, remove the prefix-0 when cal the
+                                           shared key. It takes effect only after local settings are made. */
+    CRYPT_DH_MAXFLAG
+} CRYPT_DH_Flag;
 
 /**
  * @ingroup crypt_types
@@ -424,7 +430,7 @@ typedef CRYPT_Data CRYPT_MlDsaPub;
 typedef struct {   /**< This parameter cannot be NULL and is determined by the underlying structure. */
     uint8_t *e;    /**< Para Parameter e */
     uint32_t eLen; /**< Length of para e*/
-    uint32_t bits; /**< Bits of para */
+    uint32_t bits; /**< Bits of para, FIPS 186-5 dose not support generation and use of keys with odd bits. */
 } CRYPT_RsaPara;
 
 /**
@@ -596,6 +602,11 @@ typedef enum {
     CRYPT_CTRL_SET_DETERMINISTIC_FLAG,   /**< Whether to use deterministic signatures */
     CRYPT_CTRL_SET_CTX_INFO,             /**< Set the context string. */
     CRYPT_CTRL_SET_PREHASH_FLAG,         /**< Change the SLH-DSA or ML-DSA mode to prehash version or pure version. */
+    CRYPT_CTRL_GEN_PARA,                 /**< Asymmetric cipher generate para. */
+    CRYPT_CTRL_SET_GEN_FLAG,             /**< Set SP800-56Ar3 generate private key flag. */
+
+    // dh
+    CRYPT_CTRL_SET_DH_FLAG = 150,          /**< Set the dh flag.*/
 
     // rsa
     CRYPT_CTRL_SET_RSA_EMSA_PKCSV15 = 200, /**< RSA set the signature padding mode to EMSA_PKCSV15. */
@@ -628,6 +639,7 @@ typedef enum {
     CRYPT_CTRL_SET_SM2_R,               /* SM2 set the R value. */
     CRYPT_CTRL_SET_SM2_RANDOM,          /* SM2 set the r value. */
     CRYPT_CTRL_SET_SM2_PKG,             /* SM2 uses the PKG process. */
+    CRYPT_CTRL_SET_SM2_K,               /* SM2 set the K value. */
 
     CRYPT_CTRL_SET_ECC_POINT_FORMAT,      /**< ECC PKEY set the point format. For the point format,
                                              see CRYPT_PKEY_PointFormat. */
@@ -655,13 +667,6 @@ typedef enum {
 } CRYPT_PkeyCtrl;
 
 
-#define CRYPT_KEYMGMT_SELECT_PRIVATE_KEY 0x01
-#define CRYPT_KEYMGMT_SELECT_PUBLIC_KEY  0x02
-#define CRYPT_KEYMGMT_SELECT_PARAMETER   0x04
-#define CRYPT_KEYMGMT_SELECT_UNKNOWN     0x08
-#define CRYPT_KEYMGMT_SELECT_KEY_PAIR    (CRYPT_KEYMGMT_SELECT_PRIVATE_KEY | CRYPT_KEYMGMT_SELECT_PUBLIC_KEY)
-#define CRYPT_KEYMGMT_SELECT_ALL         (CRYPT_KEYMGMT_SELECT_PRIVATE_KEY | CRYPT_KEYMGMT_SELECT_PUBLIC_KEY | \
-                                          CRYPT_KEYMGMT_SELECT_PARAMETER)
 typedef enum {
     CRYPT_CTRL_SET_GM_LEVEL,    /**<  Set the authentication level of gm drbg */
     CRYPT_CTRL_SET_RESEED_INTERVAL,
@@ -677,7 +682,7 @@ typedef enum {
 typedef enum {
     CRYPT_CTRL_SET_CBC_MAC_PADDING = 0, /**< set cbc-mac padding type */
     CRYPT_CTRL_GET_MACLEN,              /* Mac get maxlen . */
-    CRYPT_CTRL_CBC_MAC_MAX
+    CRYPT_CTRL_MAC_MAX
 } CRYPT_MacCtrl;
 
 /**

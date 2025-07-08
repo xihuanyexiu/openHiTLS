@@ -101,7 +101,7 @@ HITLS_Ctx *HITLS_New(HITLS_Config *config)
     ChangeConnState(newCtx, CM_STATE_IDLE);
     return newCtx;
 }
-#ifdef HITLS_TLS_CONNECTION_INFO_NEGOTIATION
+
 static void CaListNodeDestroy(void *data)
 {
     HITLS_TrustedCANode *tmpData = (HITLS_TrustedCANode *)data;
@@ -115,8 +115,8 @@ static void CleanPeerInfo(PeerInfo *peerInfo)
     BSL_SAL_FREE(peerInfo->groups);
     BSL_SAL_FREE(peerInfo->cipherSuites);
     BSL_LIST_FREE(peerInfo->caList, CaListNodeDestroy);
+    BSL_SAL_FREE(peerInfo->signatureAlgorithms);
 }
-#endif
 
 #if defined(HITLS_TLS_EXTENSION_COOKIE) || defined(HITLS_TLS_FEATURE_ALPN)
 static void CleanNegotiatedInfo(TLS_NegotiatedInfo *negotiatedInfo)
@@ -158,9 +158,7 @@ void HITLS_Free(HITLS_Ctx *ctx)
 #endif
     CFG_CleanConfig(&ctx->config.tlsConfig);
     HITLS_CFG_FreeConfig(ctx->globalConfig);
-#ifdef HITLS_TLS_CONNECTION_INFO_NEGOTIATION
     CleanPeerInfo(&(ctx->peerInfo));
-#endif
 #if defined(HITLS_TLS_EXTENSION_COOKIE) || defined(HITLS_TLS_FEATURE_ALPN)
     CleanNegotiatedInfo(&ctx->negotiatedInfo);
 #endif
@@ -210,7 +208,13 @@ static void ConfigPmtu(HITLS_Ctx *ctx, BSL_UIO *uio)
 #ifdef HITLS_TLS_PROTO_DTLS12
     /* The PMTU needs to be set for DTLS. If the PMTU is not set, use the default value */
     if ((ctx->config.pmtu == 0) && IS_SUPPORT_DATAGRAM(ctx->config.tlsConfig.originVersionMask)) {
-        ctx->config.pmtu = DTLS_SCTP_PMTU;
+        if (BSL_UIO_GetUioChainTransportType(uio, BSL_UIO_UDP)) {
+            uint8_t overhead = 0;
+            (void)BSL_UIO_Ctrl(ctx->uio, BSL_UIO_UDP_GET_MTU_OVERHEAD, sizeof(uint8_t), &overhead);
+            ctx->config.pmtu = DTLS_DEFAULT_PMTU - overhead;
+        } else {
+            ctx->config.pmtu = DTLS_SCTP_PMTU;
+        }
     }
 #endif
 }
@@ -439,7 +443,7 @@ HITLS_Session *HITLS_GetDupSession(HITLS_Ctx *ctx)
 int32_t HITLS_GetPeerSignatureType(const HITLS_Ctx *ctx, HITLS_SignAlgo *sigType)
 {
     HITLS_SignAlgo signAlg = HITLS_SIGN_BUTT;
-    HITLS_HashAlgo hashAlg = HITLS_HASH_NULL;
+    HITLS_HashAlgo hashAlg = HITLS_HASH_BUTT;
 
     if (ctx == NULL || sigType == NULL) {
         return HITLS_NULL_INPUT;
@@ -720,7 +724,7 @@ int32_t HITLS_LogSecret(HITLS_Ctx *ctx, const char *label, const uint8_t *secret
         BSL_SAL_FREE(outBuffer);
         return ret;
     }
-    offset += index;
+
     ctx->globalConfig->keyLogCb(ctx, (const char *)outBuffer);
 
     BSL_SAL_CleanseData(outBuffer, outLen);
@@ -729,3 +733,14 @@ int32_t HITLS_LogSecret(HITLS_Ctx *ctx, const char *label, const uint8_t *secret
     return HITLS_SUCCESS;
 }
 #endif /* HITLS_TLS_MAINTAIN_KEYLOG */
+
+#ifdef HITLS_TLS_FEATURE_CERT_CB
+int32_t HITLS_SetCertCb(HITLS_Ctx *ctx, HITLS_CertCb certCb, void *arg)
+{
+    if (ctx == NULL) {
+        return HITLS_NULL_INPUT;
+    }
+
+    return HITLS_CFG_SetCertCb(&(ctx->config.tlsConfig), certCb, arg);
+}
+#endif /* HITLS_TLS_FEATURE_CERT_CB */

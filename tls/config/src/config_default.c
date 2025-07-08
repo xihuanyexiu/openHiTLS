@@ -166,6 +166,9 @@ static void BasicInitConfig(HITLS_Config *config)
 {
     config->isSupportExtendMasterSecret = false;
     config->emptyRecordsNum = HITLS_MAX_EMPTY_RECORDS;
+#ifdef HITLS_TLS_FEATURE_MAX_SEND_FRAGMENT
+    config->maxSendFragment = HITLS_MAX_SEND_FRAGMENT_DEFAULT;
+#endif
 #if defined(HITLS_TLS_PROTO_TLS_BASIC) || defined(HITLS_TLS_PROTO_DTLS12)
     config->allowLegacyRenegotiate = false;
 #endif
@@ -191,7 +194,7 @@ static void InitConfig(HITLS_Config *config)
     config->needCheckKeyUsage = true;
 #endif
 #ifdef HITLS_TLS_CONFIG_MANUAL_DH
-    config->isSupportDhAuto = (config->maxVersion == HITLS_VERSION_TLCP_DTLCP11) ? false : true;
+    config->isSupportDhAuto = false;
 #endif
     if (config->maxVersion == HITLS_VERSION_TLCP_DTLCP11) {
         config->isSupportExtendMasterSecret = false;
@@ -257,7 +260,7 @@ int32_t DefaultConfig(HITLS_Lib_Ctx *libCtx, const char *attrName, uint16_t vers
 
     int32_t ret = DefaultCipherSuitesByVersion(version, config);
     if (ret != HITLS_SUCCESS) {
-        return ret;
+        goto ERR;
     }
 #ifdef HITLS_TLS_PROTO_TLS13
     /* Configure the TLS1.3 cipher suite for all TLS versions */

@@ -14,8 +14,6 @@
  */
 
 #include "hitls_build.h"
-
-#include "hitls_build.h"
 #if defined(HITLS_CRYPTO_CODECS) && defined(HITLS_CRYPTO_PROVIDER)
 #include <stdint.h>
 #include <string.h>
@@ -112,7 +110,7 @@ void CRYPT_DECODE_PoolFreeCtx(CRYPT_DECODER_PoolCtx *poolCtx)
 
 static int32_t SetDecodeType(void *val, size_t valLen, const char **targetValue)
 {
-    if (valLen > MAX_CRYPT_DECODE_FORMAT_TYPE_SIZE) {
+    if (valLen == 0 || valLen > MAX_CRYPT_DECODE_FORMAT_TYPE_SIZE) {
         BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);
         return CRYPT_INVALID_ARG;
     }
@@ -178,13 +176,11 @@ static int32_t CollectDecoder(CRYPT_DECODER_Ctx *decoderCtx, void *args)
     ret = CRYPT_DECODE_SetParam(decoderCtx, param);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        CRYPT_DECODE_Free(decoderCtx);
         return ret;
     }
     ret = BSL_LIST_AddElement(poolCtx->decoders, decoderCtx, BSL_LIST_POS_END);
     if (ret != BSL_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        CRYPT_DECODE_Free(decoderCtx);
         return ret;
     }
 
@@ -240,6 +236,7 @@ static int32_t UpdateDecoderPath(CRYPT_DECODER_PoolCtx *poolCtx, CRYPT_DECODER_N
     }
     int32_t ret = BSL_LIST_AddElement(poolCtx->decoderPath, newNode, BSL_LIST_POS_END);
     if (ret != BSL_SUCCESS) {
+        BSL_SAL_FREE(newNode);
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
@@ -422,7 +419,6 @@ int32_t CRYPT_DECODE_ProviderProcessAll(CRYPT_EAL_LibCtx *ctx, CRYPT_DECODE_Prov
     };
     int32_t ret = CRYPT_EAL_ProviderProcessAll(ctx, ProcessEachProviderDecoder, &processArgs);
     if (ret != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
     
@@ -441,7 +437,6 @@ int32_t CRYPT_DECODE_PoolDecode(CRYPT_DECODER_PoolCtx *poolCtx, const BSL_Param 
     }
     int32_t ret = CRYPT_DECODE_ProviderProcessAll(poolCtx->libCtx, CollectDecoder, poolCtx);
     if (ret != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
     if (BSL_LIST_COUNT(poolCtx->decoders) == 0) {
@@ -460,11 +455,7 @@ int32_t CRYPT_DECODE_PoolDecode(CRYPT_DECODER_PoolCtx *poolCtx, const BSL_Param 
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
-    ret = DecodeWithKeyChain(poolCtx, outParam);
-    if (ret != CRYPT_SUCCESS) {
-        BSL_ERR_PUSH_ERROR(ret);
-    }
-    return ret;
+    return DecodeWithKeyChain(poolCtx, outParam);
 }
 
 #endif /* HITLS_CRYPTO_CODECS && HITLS_CRYPTO_PROVIDER */

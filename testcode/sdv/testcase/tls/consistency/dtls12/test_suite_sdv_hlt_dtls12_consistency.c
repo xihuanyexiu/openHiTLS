@@ -158,83 +158,78 @@ EXIT:
     HLT_FreeAllProcess();
 }
 /* END_CASE */
-static int32_t DtlsSctpUioWriteException(BSL_UIO *uio, const void *buf, uint32_t len, uint32_t *writeLen)
+
+static void Test_CertificateParse001(HITLS_Ctx *ctx, uint8_t *data, uint32_t *len, uint32_t bufSize, void *user)
 {
-    int32_t ret;
-    static int32_t count = 0;
-    count++;
-    if (count == 1) {
-        ret = SctpDefaultWrite(uio, (uint8_t *)buf, len / 2, writeLen);
-    } else {
-        ret = SctpDefaultWrite(uio, (uint8_t *)buf, len, writeLen);
+    (void)ctx;
+    (void)bufSize;
+    (void)user;
+    FRAME_Type frameType = { 0 };
+    frameType.versionType = HITLS_VERSION_DTLS12;
+    FRAME_Msg frameMsg = { 0 };
+    frameMsg.recType.data = REC_TYPE_HANDSHAKE;
+    frameMsg.length.data = *len;
+    frameMsg.recVersion.data = HITLS_VERSION_DTLS12;
+    uint32_t parseLen = 0;
+    FRAME_ParseMsgBody(&frameType, data, *len, &frameMsg, &parseLen);
+    ASSERT_EQ(frameMsg.body.hsMsg.type.data, SERVER_HELLO_DONE);
+    int *t = (int*)user;
+    if (*t == 0) {
+        // Change the sequence number to 20
+        data[5] = 20;
     }
-    return ret;
+    (*t)++;
+
+EXIT:
+    FRAME_CleanMsg(&frameType, &frameMsg);
+    return;
 }
-/**
-* @test SDV_TLS_DTLS_WRITE_APP_FAILED_TC001
-* @spec -
-* @title The client and server receive the client Hello message after the connection establishment is complete.
-* @precon nan
-* @brief
-* 1. Use the default configuration items to configure the client and server. Expected result 1.
-* 2. A DTLS over SCTP connection is established between the client and server. Expected result 2.
-* 3. Construct a app message and send it to the client. Check the server ret. Expected result 3.
-* 4. Construct a app message and send it to the client. Check the server ret. Expected result 4.
-* @expect
-* 1. The initialization is successful.
-* 2. The connection is set up successfully.
-* 3. The server ret is HITLS_REC_ERR_IO_EXCEPTION.
-* 4. The server ret is HITLS_SUCCESS.
-* @prior Level 1
-* @auto TRUE
+
+/* @
+* @test  SDV_TLS_DTLS_CONSISTENCY_RFC6347_MTU_TC001
+* @title  Multiple timeout retransmissions result in a decrease in MTU
+* @precon  nan
+* @brief  1. Establish a link using UDP with dtls12 and construct timeout retransmission three times.
+          Expected result 1 is obtained.
+* @expect 1. MTU reduced from 1472 to 548
 @ */
 /* BEGIN_CASE */
-void SDV_TLS_DTLS_WRITE_APP_FAILED_TC001(int version, int connType)
+void SDV_TLS_DTLS_CONSISTENCY_RFC6347_MTU_TC001()
 {
-    if (connType == SCTP && !IsEnableSctpAuth()){
-        return;
-    }
-    bool certverifyflag = true;
-
-    HLT_Tls_Res *serverRes = NULL;
-    HLT_Tls_Res *clientRes = NULL;
-    HLT_Process *localProcess = NULL;
-    HLT_Process *remoteProcess = NULL;
-
-    localProcess = HLT_InitLocalProcess(HITLS);
+    int32_t port = 18888;
+    HLT_Process *localProcess = HLT_InitLocalProcess(HITLS);
+    HLT_Process *remoteProcess = HLT_LinkRemoteProcess(HITLS, UDP, port, true);
     ASSERT_TRUE(localProcess != NULL);
-    remoteProcess = HLT_LinkRemoteProcess(HITLS, connType, 16790, true);
     ASSERT_TRUE(remoteProcess != NULL);
 
-    HLT_Ctx_Config *serverCtxConfig = HLT_NewCtxConfig(NULL, "SERVER");
+    HLT_Ctx_Config *serverCtxConfig = NULL;
+    HLT_Ctx_Config *clientCtxConfig = NULL;
+    serverCtxConfig = HLT_NewCtxConfig(NULL, "SERVER");
+    clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
     ASSERT_TRUE(serverCtxConfig != NULL);
-
-    serverCtxConfig->isSupportClientVerify = certverifyflag;
-
-    serverRes = HLT_ProcessTlsAccept(localProcess, version, serverCtxConfig, NULL);
-    ASSERT_TRUE(serverRes != NULL);
-
-    HLT_Ctx_Config *clientCtxConfig = HLT_NewCtxConfig(NULL, "CLIENT");
     ASSERT_TRUE(clientCtxConfig != NULL);
 
-    clientCtxConfig->isSupportClientVerify = certverifyflag;
+    int32_t user = 0;
+    RecWrapper wrapper = {
+        TRY_SEND_SERVER_HELLO_DONE,
+        REC_TYPE_HANDSHAKE,
+        false,
+        &user,
+        Test_CertificateParse001
+    };
+    RegisterWrapper(wrapper);
 
-    clientRes = HLT_ProcessTlsConnect(remoteProcess, version, clientCtxConfig, NULL);
-    ASSERT_TRUE(clientRes != NULL);
-
-    ASSERT_TRUE(HLT_GetTlsAcceptResult(serverRes) == 0);
-
+    HLT_Tls_Res *serverRes = HLT_ProcessTlsAccept(localProcess, DTLS1_2, serverCtxConfig, NULL);
+    ASSERT_TRUE(serverRes != NULL);
     HITLS_Ctx *ctx = serverRes->ssl;
-    BSL_UIO *uio = ctx->uio;
-    uio->method.write = DtlsSctpUioWriteException;
-    ASSERT_EQ(HLT_ProcessTlsWrite(localProcess, serverRes, (uint8_t *)"Hello World", strlen("Hello World")), HITLS_REC_ERR_IO_EXCEPTION);
-    ASSERT_EQ(HLT_ProcessTlsWrite(localProcess, serverRes, (uint8_t *)"Hello World2", strlen("Hello World2")), HITLS_SUCCESS);
-    uint8_t readBuf[1024] = {0};
-    uint32_t readLen;
-    ASSERT_TRUE(HLT_ProcessTlsRead(remoteProcess, clientRes, readBuf, sizeof(readBuf), &readLen) == 0);
-    ASSERT_TRUE(readLen == strlen("Hello World2"));
-    ASSERT_TRUE(memcmp("Hello World2", readBuf, readLen) == 0);
+    HITLS_SetNoQueryMtu(ctx, false);
+    ASSERT_EQ(ctx->config.pmtu, 1472);
+
+    HLT_Tls_Res *clientRes = HLT_ProcessTlsConnect(remoteProcess, DTLS1_2, clientCtxConfig, NULL);
+    ASSERT_TRUE(clientRes == NULL);
+    ASSERT_EQ(ctx->config.pmtu, 548);
 EXIT:
+    ClearWrapper();
     HLT_FreeAllProcess();
 }
 /* END_CASE */

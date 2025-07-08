@@ -757,7 +757,7 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_SVERSION_FUNC_TC003()
     ASSERT_EQ(HLT_RpcTlsConnect(remoteProcess, clientRes->sslId), HITLS_MSG_HANDLE_UNSUPPORT_EXTENSION_TYPE);
     ASSERT_EQ(HLT_RpcTlsGetAlertFlag(remoteProcess, clientRes->sslId), ALERT_FLAG_SEND);
     ASSERT_EQ(HLT_RpcTlsGetAlertLevel(remoteProcess, clientRes->sslId), ALERT_LEVEL_FATAL);
-    ASSERT_EQ(HLT_RpcTlsGetAlertDescription(remoteProcess, clientRes->sslId), ALERT_ILLEGAL_PARAMETER);
+    ASSERT_EQ(HLT_RpcTlsGetAlertDescription(remoteProcess, clientRes->sslId), ALERT_UNSUPPORTED_EXTENSION);
 EXIT:
     HLT_CleanFrameHandle();
     HLT_FreeAllProcess();
@@ -993,7 +993,7 @@ static void Test_Client_PskTicket(HITLS_Ctx *ctx, uint8_t *data, uint32_t *len, 
     FRAME_ParseMsgBody(&frameType, data, *len, &frameMsg, &parseLen);
     ASSERT_EQ(parseLen, *len);
     ASSERT_EQ(frameMsg.body.hsMsg.type.data, CLIENT_HELLO);
-    frameMsg.body.hsMsg.body.clientHello.psks.identities.data->identity.data[0] = 0x01;
+    frameMsg.body.hsMsg.body.clientHello.psks.identities.data->identity.data[0] += 0x01;
 
     memset_s(data, bufSize, 0, bufSize);
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
