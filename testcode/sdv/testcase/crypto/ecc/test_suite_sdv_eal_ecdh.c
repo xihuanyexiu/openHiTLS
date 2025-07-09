@@ -718,3 +718,124 @@ EXIT:
     CRYPT_EAL_PkeyFreeCtx(pkey);
 }
 /* END_CASE */
+
+/**
+ * @test   SDV_CRYPTO_ECDH_CHECK_KEYPAIR_FUNC_TC001
+ * @title  ECDH CRYPT_EAL_PkeyPairCheck test.
+ */
+/* BEGIN_CASE */
+void SDV_CRYPTO_ECDH_CHECK_KEYPAIR_FUNC_TC001(int paraid, int isProvider)
+{
+#if !defined(HITLS_CRYPTO_ECDH_CHECK)
+    (void)paraid;
+    (void)isProvider;
+    SKIP_TEST();
+#else
+    TestMemInit();
+    uint8_t wrong[KEY_MAX_LEN] = {1};
+    CRYPT_EAL_PkeyPub ecdhPubKey = {0};
+    CRYPT_EAL_PkeyPrv ecdhPrvKey = {0};
+
+    KeyData pubKeyVector = {{0}, KEY_MAX_LEN};
+    KeyData prvKeyVector = {{0}, KEY_MAX_LEN};
+    CRYPT_EAL_PkeyCtx *pkey = TestPkeyNewCtx(NULL, CRYPT_PKEY_ECDH,
+        CRYPT_EAL_PKEY_KEYMGMT_OPERATE, "provider=default", isProvider);
+    CRYPT_EAL_PkeyCtx *pubCtx = TestPkeyNewCtx(NULL, CRYPT_PKEY_ECDH,
+        CRYPT_EAL_PKEY_KEYMGMT_OPERATE, "provider=default", isProvider);
+    CRYPT_EAL_PkeyCtx *prvCtx = TestPkeyNewCtx(NULL, CRYPT_PKEY_ECDH,
+        CRYPT_EAL_PKEY_KEYMGMT_OPERATE, "provider=default", isProvider);
+    ASSERT_TRUE(pkey != NULL);
+    ASSERT_TRUE(pubCtx != NULL);
+    ASSERT_TRUE(prvCtx != NULL);
+    ASSERT_EQ(TestRandInit(), CRYPT_SUCCESS);
+
+    ASSERT_EQ(CRYPT_EAL_PkeySetParaById(pkey, paraid), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeySetParaById(pubCtx, paraid), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeySetParaById(prvCtx, paraid), CRYPT_SUCCESS);
+
+    Ecc_SetPubKey(&ecdhPubKey, CRYPT_PKEY_ECDH, pubKeyVector.data, pubKeyVector.len);
+    Ecc_SetPrvKey(&ecdhPrvKey, CRYPT_PKEY_ECDH, prvKeyVector.data, prvKeyVector.len);
+
+    ASSERT_EQ(CRYPT_EAL_PkeyGen(pkey), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeyPairCheck(pkey, pkey), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeyPrvCheck(pkey), CRYPT_SUCCESS);
+
+    ASSERT_EQ(CRYPT_EAL_PkeyGetPub(pkey, &ecdhPubKey), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeyGetPrv(pkey, &ecdhPrvKey), CRYPT_SUCCESS);
+
+    ASSERT_EQ(CRYPT_EAL_PkeySetPub(pubCtx, &ecdhPubKey), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeySetPrv(prvCtx, &ecdhPrvKey), CRYPT_SUCCESS);
+
+    ASSERT_EQ(CRYPT_EAL_PkeyPairCheck(pubCtx, prvCtx), CRYPT_SUCCESS);
+
+    ecdhPrvKey.key.eccPrv.data = wrong;
+    ASSERT_EQ(CRYPT_EAL_PkeySetPrv(prvCtx, &ecdhPrvKey), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeyPairCheck(pubCtx, prvCtx), CRYPT_ECDH_PAIRWISE_CHECK_FAIL);
+
+EXIT:
+    TestRandDeInit();
+    CRYPT_EAL_PkeyFreeCtx(pkey);
+    CRYPT_EAL_PkeyFreeCtx(pubCtx);
+    CRYPT_EAL_PkeyFreeCtx(prvCtx);
+#endif
+}
+/* END_CASE */
+
+/**
+ * @test   SDV_CRYPTO_ECDH_CHECK_PRVKEY_FUNC_TC001
+ * @title  ECDH CRYPT_EAL_PkeyPrvCheck test.
+ */
+/* BEGIN_CASE */
+void SDV_CRYPTO_ECDH_CHECK_PRVKEY_FUNC_TC001(int paraid, int isProvider)
+{
+#if !defined(HITLS_CRYPTO_ECDH_CHECK)
+    (void)paraid;
+    (void)isProvider;
+    SKIP_TEST();
+#else
+    TestMemInit();
+    CRYPT_EAL_PkeyPrv ecdhPrvKey = {0};
+    CRYPT_ECDH_Ctx *ctx = NULL;
+    BN_BigNum *n = NULL;
+    BN_BigNum *prvKey = NULL;
+
+    KeyData prvKeyVector = {{0}, KEY_MAX_LEN};
+    CRYPT_EAL_PkeyCtx *pkey = TestPkeyNewCtx(NULL, CRYPT_PKEY_ECDH,
+        CRYPT_EAL_PKEY_KEYMGMT_OPERATE, "provider=default", isProvider);
+    CRYPT_EAL_PkeyCtx *prvCtx = TestPkeyNewCtx(NULL, CRYPT_PKEY_ECDH,
+        CRYPT_EAL_PKEY_KEYMGMT_OPERATE, "provider=default", isProvider);
+    ASSERT_TRUE(pkey != NULL);
+    ASSERT_TRUE(prvCtx != NULL);
+    ASSERT_EQ(TestRandInit(), CRYPT_SUCCESS);
+
+    ASSERT_EQ(CRYPT_EAL_PkeySetParaById(pkey, paraid), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeySetParaById(prvCtx, paraid), CRYPT_SUCCESS);
+
+    Ecc_SetPrvKey(&ecdhPrvKey, CRYPT_PKEY_ECDH, prvKeyVector.data, prvKeyVector.len);
+
+    ASSERT_EQ(CRYPT_EAL_PkeyPrvCheck(NULL), CRYPT_NULL_INPUT);
+    ASSERT_EQ(CRYPT_EAL_PkeyPrvCheck(pkey), CRYPT_ECC_PKEY_ERR_EMPTY_KEY);
+
+    ASSERT_EQ(CRYPT_EAL_PkeyGen(pkey), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeyPrvCheck(pkey), CRYPT_SUCCESS);
+
+    ctx = (CRYPT_ECDH_Ctx *)pkey->key;
+    prvKey = ctx->prvkey;
+    n = ECC_GetParaN(ctx->para);
+
+    (void)BN_Copy(prvKey, n);
+    ASSERT_EQ(CRYPT_EAL_PkeyPrvCheck(pkey), CRYPT_ECDH_INVALID_PRVKEY);
+
+    (void)BN_SubLimb(prvKey, prvKey, 1); // key = n - 1
+    ASSERT_EQ(CRYPT_EAL_PkeyPrvCheck(pkey), CRYPT_SUCCESS);
+
+    (void)BN_Zeroize(prvKey); // key = 0
+    ASSERT_EQ(CRYPT_EAL_PkeyPrvCheck(pkey), CRYPT_ECDH_INVALID_PRVKEY);
+EXIT:
+    TestRandDeInit();
+    CRYPT_EAL_PkeyFreeCtx(pkey);
+    CRYPT_EAL_PkeyFreeCtx(prvCtx);
+    BN_Destroy(n);
+#endif
+}
+/* END_CASE */
