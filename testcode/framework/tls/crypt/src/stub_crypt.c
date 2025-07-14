@@ -26,6 +26,7 @@
 #include "crypt_default.h"
 #ifdef HITLS_TLS_FEATURE_PROVIDER
 #include "hitls_crypt.h"
+#include "crypt_eal_rand.h"
 #endif
 
 #define MD5_DIGEST_LENGTH 16
@@ -890,7 +891,7 @@ void FRAME_RegCryptMethod(void)
     HITLS_CRYPT_RegisterDhMethod(&dhMethod);
 #else
     STUB_Init();
-    STUB_Replace(&g_tmpRpInfo[0], HITLS_CRYPT_RandbytesEx, STUB_CRYPT_RandBytesCallbackLibCtx);
+    STUB_Replace(&g_tmpRpInfo[0], CRYPT_EAL_RandbytesEx, STUB_CRYPT_RandBytesCallbackLibCtx);
     STUB_Replace(&g_tmpRpInfo[1], HITLS_CRYPT_HMAC_Init, STUB_CRYPT_HmacInitCallbackLibCtx);
     STUB_Replace(&g_tmpRpInfo[2], HITLS_CRYPT_HMAC, STUB_CRYPT_HmacCallbackLibCtx);
     STUB_Replace(&g_tmpRpInfo[3], HITLS_CRYPT_DigestInit, STUB_CRYPT_DigestInitCallbackLibCtx);
@@ -898,7 +899,7 @@ void FRAME_RegCryptMethod(void)
     STUB_Replace(&g_tmpRpInfo[5], HITLS_CRYPT_Encrypt, STUB_CRYPT_EncryptCallbackLibCtx);
     STUB_Replace(&g_tmpRpInfo[6], HITLS_CRYPT_Decrypt, STUB_CRYPT_DecryptCallbackLibCtx);
     STUB_Replace(&g_tmpRpInfo[7], HITLS_CRYPT_GenerateEcdhKey, STUB_CRYPT_GenerateEcdhKeyPairCallbackLibCtx);
-    STUB_Replace(&g_tmpRpInfo[8], HITLS_CRYPT_CalcSharedSecret, STUB_CRYPT_CalcEcdhSharedSecretCallbackLibCtx);
+    STUB_Replace(&g_tmpRpInfo[8], HITLS_CRYPT_EcdhCalcSharedSecret, STUB_CRYPT_CalcEcdhSharedSecretCallbackLibCtx);
     STUB_Replace(&g_tmpRpInfo[9], HITLS_CRYPT_GenerateDhKeyByParameters, STUB_CRYPT_GenerateDhKeyByParamsCallbackLibCtx);
     STUB_Replace(&g_tmpRpInfo[10], HITLS_CRYPT_GenerateDhKeyBySecbits, STUB_CRYPT_GenerateDhKeyBySecbitsCallbackLibCtx);
 #endif

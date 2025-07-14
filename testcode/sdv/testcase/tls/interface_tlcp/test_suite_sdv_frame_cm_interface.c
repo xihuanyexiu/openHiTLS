@@ -1918,12 +1918,14 @@ void UT_TLS_CM_HITLS_GetSharedGroup_FUNC_TC004(int version)
     uint16_t signAlgs_c[] = {signWrtVersion, CERT_SIG_SCHEME_ECDSA_SECP384R1_SHA384};
     HITLS_CFG_SetGroups(config_c, groups_c, sizeof(groups_c) / sizeof(uint16_t));
     HITLS_CFG_SetSignature(config_c, signAlgs_c, sizeof(signAlgs_c) / sizeof(uint16_t));
+    HITLS_CFG_SetDhAutoSupport(config_c, true);
 
     uint16_t groups_s[] = {HITLS_EC_GROUP_SECP256R1, HITLS_EC_GROUP_SECP521R1};
     uint16_t signAlgs_s[] = {
         signWrtVersion, CERT_SIG_SCHEME_ECDSA_SECP256R1_SHA256, CERT_SIG_SCHEME_ECDSA_SECP521R1_SHA512};
     HITLS_CFG_SetGroups(config_s, groups_s, sizeof(groups_s) / sizeof(uint16_t));
     HITLS_CFG_SetSignature(config_s, signAlgs_s, sizeof(signAlgs_s) / sizeof(uint16_t));
+    HITLS_CFG_SetDhAutoSupport(config_s, true);
 
     FRAME_CertInfo certInfo = {
         "rsa_pss_sha256/rsa_pss_root.crt",
@@ -3334,7 +3336,7 @@ void UT_TLS_CM_InfoCb_API_TC001(void)
 
     HITLS_Config *config = HITLS_CFG_NewDTLS12Config();
     ASSERT_TRUE(config != NULL);
-    FRAME_LinkObj *client = FRAME_CreateLink(config, BSL_UIO_SCTP);
+    FRAME_LinkObj *client = FRAME_CreateLink(config, BSL_UIO_UDP);
     ASSERT_TRUE(client != NULL);
     HITLS_Ctx *clientTlsCtx = FRAME_GetTlsCtx(client);
     ASSERT_TRUE(clientTlsCtx != NULL);
@@ -3909,6 +3911,7 @@ static int32_t STUB_ChangeState(TLS_Ctx *ctx, uint32_t nextState)
     int32_t ret = HITLS_SUCCESS;
     if (HS_STATE_BUTT == nextState) {
         if (true == ctx->isClient) {
+            ctx->hsCtx->hsMsg = NULL;
             ret = HITLS_REC_NORMAL_RECV_BUF_EMPTY;
         }
     }

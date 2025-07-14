@@ -338,13 +338,16 @@ static int32_t SendRecord(TLS_Ctx *ctx, RecCtx *recordCtx, RecConnState *state, 
     RecConnSetSeqNum(state, seq + 1);
     return HITLS_SUCCESS;
 }
-static int32_t SequenceCompare(uint64_t sequence, uint64_t value)
+static int32_t SequenceCompare(RecConnState *state, uint64_t value)
 {
-    if (sequence >= value) {
+    if (state->isWrapped == true) {
         BSL_ERR_PUSH_ERROR(HITLS_REC_ERR_SN_WRAPPING);
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15670, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "Record write: sequence number wrap.", 0, 0, 0, 0);
         return HITLS_REC_ERR_SN_WRAPPING;
+    }
+    if (state->seq == value) {
+        state->isWrapped = true;
     }
     return HITLS_SUCCESS;
 }
@@ -380,7 +383,7 @@ int32_t TlsRecordWrite(TLS_Ctx *ctx, REC_Type recordType, const uint8_t *data, u
     RecConnState *state = GetWriteConnState(ctx);
     RecordPlaintext recPlaintext = {0};
     REC_TextInput plainMsg = {0};
-    int32_t ret = SequenceCompare(state->seq, REC_TLS_SN_MAX_VALUE);
+    int32_t ret = SequenceCompare(state, REC_TLS_SN_MAX_VALUE);
     if (ret != HITLS_SUCCESS) {
         return ret;
     }

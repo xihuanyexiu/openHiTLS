@@ -191,7 +191,7 @@ static void Test_Certificate_Ctx_NotSame(HITLS_Ctx *ctx, uint8_t *data, uint32_t
     ASSERT_EQ(frameMsg.body.hsMsg.type.data, CERTIFICATE);
 
     frameMsg.body.hsMsg.body.certificate.certificateReqCtx.state = ASSIGNED_FIELD;
-    *(frameMsg.body.hsMsg.body.certificate.certificateReqCtx.data) = 123;
+    *(frameMsg.body.hsMsg.body.certificate.certificateReqCtx.data) += 1;
 
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
 EXIT:
@@ -216,7 +216,7 @@ static void Test_Finish_Error(HITLS_Ctx *ctx, uint8_t *data, uint32_t *len, uint
     ASSERT_EQ(frameMsg.body.hsMsg.type.data, FINISHED);
 
     frameMsg.body.hsMsg.body.finished.verifyData.state = ASSIGNED_FIELD;
-    *(frameMsg.body.hsMsg.body.finished.verifyData.data) = 123;
+    *(frameMsg.body.hsMsg.body.finished.verifyData.data) += 1;
 
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
 EXIT:
@@ -324,7 +324,7 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC002(void)
     clientRes = HLT_ProcessTlsConnect(remoteProcess, TLS1_3, clientConfig, NULL);
     ASSERT_TRUE(clientRes == NULL);
 
-    ASSERT_EQ(HLT_GetTlsAcceptResult(serverRes), 0);
+    ASSERT_TRUE(HLT_GetTlsAcceptResult(serverRes) != 0);
 EXIT:
     HLT_FreeAllProcess();
     ClearWrapper();
@@ -386,7 +386,7 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC003(void)
     clientRes = HLT_ProcessTlsConnect(remoteProcess, TLS1_3, clientConfig, NULL);
     ASSERT_TRUE(clientRes == NULL);
 
-    ASSERT_EQ(HLT_GetTlsAcceptResult(serverRes), 0);
+    ASSERT_TRUE(HLT_GetTlsAcceptResult(serverRes) != 0);
 EXIT:
     HLT_FreeAllProcess();
     ClearWrapper();

@@ -18,6 +18,8 @@
 #include "bsl_params.h"
 #include "bsl_err.h"
 #include "crypt_params_key.h"
+#include "bn_bincal.h"
+#include "bn_basic.h"
 
 /* END_HEADER */
 #define CRYPT_EAL_PKEY_KEYMGMT_OPERATE 0
@@ -1427,7 +1429,7 @@ void SDV_CRYPTO_RSA_GET_KEY_BITS_FUNC_TC001(int id, int keyBits, int isProvider)
 {
     uint8_t e3[] = {1, 0, 1};
 
-    CRYPT_EAL_PkeyPara para;
+    CRYPT_EAL_PkeyPara para = {0};
 
     para.id = id;
     para.para.rsaPara.e = e3;
@@ -1440,5 +1442,155 @@ void SDV_CRYPTO_RSA_GET_KEY_BITS_FUNC_TC001(int id, int keyBits, int isProvider)
     ASSERT_TRUE(CRYPT_EAL_PkeyGetKeyBits(pkey) == (uint32_t)keyBits);
 EXIT:
     CRYPT_EAL_PkeyFreeCtx(pkey);
+}
+/* END_CASE */
+
+static int32_t STUB_Gcd(BN_BigNum *r, const BN_BigNum *a, const BN_BigNum *b, BN_Optimizer *opt)
+{
+    (void)a;
+    (void)b;
+    (void)opt;
+    BN_BigNum *val = BN_Create(1);
+    val->data[0] = 2;
+    val->sign = false;
+    BN_Copy(r, val);
+    BN_Destroy(val);
+    return CRYPT_SUCCESS;
+}
+
+/**
+ * @test   SDV_CRYPTO_RSA_NOR_KEYGEN_FAIL_TC001
+ * @title  RSA: Normal Key Generation Failure Test
+ * @brief
+ *    1. Create a context of the RSA algorithm, expected result 1
+ *    2. Generate a key pair, expected result 2
+ * @expect
+ *    1. CRYPT_SUCCESS
+ *    2. CRYPT_RSA_NOR_KEYGEN_FAIL
+ */
+/* BEGIN_CASE */
+void SDV_CRYPTO_RSA_NOR_KEYGEN_FAIL_TC001(int isProvider)
+{
+    uint8_t e[] = {1, 0, 1};
+    CRYPT_EAL_PkeyPara para = {0};
+    CRYPT_EAL_PkeyCtx *pkey = NULL;
+    TestMemInit();
+    STUB_Init();
+    FuncStubInfo tmpRpInfo = {0};
+    SetRsaPara(&para, e, 3, 1024);
+    pkey = TestPkeyNewCtx(NULL, CRYPT_PKEY_RSA, CRYPT_EAL_PKEY_KEYMGMT_OPERATE, "provider=default", isProvider);
+    ASSERT_TRUE(pkey != NULL);
+    ASSERT_EQ(CRYPT_EAL_PkeySetPara(pkey, &para), CRYPT_SUCCESS);
+    STUB_Replace(&tmpRpInfo, BN_Gcd, STUB_Gcd);
+    ASSERT_EQ(CRYPT_EAL_PkeyGen(pkey), CRYPT_RSA_NOR_KEYGEN_FAIL);
+    STUB_Reset(&tmpRpInfo);
+    ASSERT_EQ(CRYPT_EAL_PkeyGen(pkey), CRYPT_SUCCESS);
+
+EXIT:
+    CRYPT_EAL_PkeyFreeCtx(pkey);
+    STUB_Reset(&tmpRpInfo);
+}
+/* END_CASE */
+
+/**
+ * @test   SDV_CRYPTO_RSA_SEED_KEYGEN_TC001
+ * @title  RSA: Deterministic Seed Key Generation Test
+ * @precon Two RSA key generation contexts with the same seed value
+ * @brief
+ *    1. Create two RSA key pairs using the seed.
+ *    2. Compare if the two key pairs are identical.
+ *    3. Compare if the p and q of the two key pairs meet expectations.
+ * @expect
+ *    1. CRYPT_SUCCESS
+ *    2. The two key pairs are identical.
+ *    3. The p and q of the two key pairs meet expectations.
+ */
+/* BEGIN_CASE */
+void SDV_CRYPTO_RSA_SEED_KEYGEN_TC001(Hex *xp, Hex *xp1, Hex *xp2, Hex *xq, Hex *xq1, Hex *xq2,
+    Hex *p, Hex *q, int isProvider)
+{
+#ifdef HITLS_CRYPTO_ACVP_TESTS
+    TestMemInit();
+    uint8_t e[] = {1, 0, 1};
+    uint32_t bits = 1024;
+    
+    uint8_t prvD1[600];
+    uint8_t prvN1[600];
+    uint8_t prvP1[600];
+    uint8_t prvQ1[600];
+    uint8_t prvD2[600];
+    uint8_t prvN2[600];
+    uint8_t prvP2[600];
+    uint8_t prvQ2[600];
+    
+    // Initialize two key contexts
+    CRYPT_EAL_PkeyCtx *pkey1 = NULL;
+    CRYPT_EAL_PkeyCtx *pkey2 = NULL;
+    
+    // Initialize two identical parameter structures
+    BSL_Param param[] = {
+        {CRYPT_PARAM_RSA_E, BSL_PARAM_TYPE_OCTETS, e, 3, 0},
+        {CRYPT_PARAM_RSA_BITS, BSL_PARAM_TYPE_UINT32, &bits, sizeof(bits), 0},
+        {CRYPT_PARAM_RSA_XP, BSL_PARAM_TYPE_OCTETS, xp->x, xp->len, 0},
+        {CRYPT_PARAM_RSA_XP1, BSL_PARAM_TYPE_OCTETS, xp1->x, xp1->len, 0},
+        {CRYPT_PARAM_RSA_XP2, BSL_PARAM_TYPE_OCTETS, xp2->x, xp2->len, 0},
+        {CRYPT_PARAM_RSA_XQ, BSL_PARAM_TYPE_OCTETS, xq->x, xq->len, 0},
+        {CRYPT_PARAM_RSA_XQ1, BSL_PARAM_TYPE_OCTETS, xq1->x, xq1->len, 0},
+        {CRYPT_PARAM_RSA_XQ2, BSL_PARAM_TYPE_OCTETS, xq2->x, xq2->len, 0},
+        BSL_PARAM_END
+    };
+    
+    // Create the first context and generate the key
+    pkey1 = TestPkeyNewCtx(NULL, CRYPT_PKEY_RSA, CRYPT_EAL_PKEY_KEYMGMT_OPERATE, "provider=default", isProvider);
+    ASSERT_TRUE(pkey1 != NULL);
+    ASSERT_EQ(CRYPT_EAL_PkeySetParaEx(pkey1, param), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeyGen(pkey1), CRYPT_SUCCESS);
+    
+    // Create the second context and generate the key
+    pkey2 = TestPkeyNewCtx(NULL, CRYPT_PKEY_RSA, CRYPT_EAL_PKEY_KEYMGMT_OPERATE, "provider=default", isProvider);
+    ASSERT_TRUE(pkey2 != NULL);
+    ASSERT_EQ(CRYPT_EAL_PkeySetParaEx(pkey2, param), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeyGen(pkey2), CRYPT_SUCCESS);
+    
+    // Get private keys
+    CRYPT_EAL_PkeyPrv prvKey1 = {0};
+    CRYPT_EAL_PkeyPrv prvKey2 = {0};
+    
+    SetRsaPrvKey(&prvKey1, prvN1, sizeof(prvN1), prvD1, sizeof(prvD1));
+    SetRsaPrvKey(&prvKey2, prvN2, sizeof(prvN2), prvD2, sizeof(prvD2));
+    
+    prvKey1.key.rsaPrv.p = prvP1;
+    prvKey1.key.rsaPrv.pLen = sizeof(prvP1);
+    prvKey1.key.rsaPrv.q = prvQ1;
+    prvKey1.key.rsaPrv.qLen = sizeof(prvQ1);
+    prvKey2.key.rsaPrv.p = prvP2;
+    prvKey2.key.rsaPrv.pLen = sizeof(prvP2);
+    prvKey2.key.rsaPrv.q = prvQ2;
+    prvKey2.key.rsaPrv.qLen = sizeof(prvQ2);
+    
+    ASSERT_EQ(CRYPT_EAL_PkeyGetPrv(pkey1, &prvKey1), CRYPT_SUCCESS);
+    ASSERT_EQ(CRYPT_EAL_PkeyGetPrv(pkey2, &prvKey2), CRYPT_SUCCESS);
+    
+    // Verify if the two keys are identical
+    ASSERT_EQ(Compare_PrvKey(&prvKey1, &prvKey2), 0);
+
+    // Verify if p and q are as expected
+    ASSERT_EQ(memcmp(prvKey1.key.rsaPrv.p, p->x, p->len), 0);
+    ASSERT_EQ(memcmp(prvKey1.key.rsaPrv.q, q->x, q->len), 0);
+
+EXIT:
+    CRYPT_EAL_PkeyFreeCtx(pkey1);
+    CRYPT_EAL_PkeyFreeCtx(pkey2);
+#else
+    (void)xp;
+    (void)xp1;
+    (void)xp2;
+    (void)xq;
+    (void)xq1;
+    (void)xq2;
+    (void)p;
+    (void)q;
+    (void)isProvider;
+#endif
 }
 /* END_CASE */

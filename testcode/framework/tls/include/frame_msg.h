@@ -134,6 +134,14 @@ typedef struct {
 } FRAME_HsExtOfferedPsks;
 
 typedef struct {
+    FieldState exState;   /* extension Field state */
+    FRAME_Integer exType; /* extension type */
+    FRAME_Integer exLen;  /* Full length of extension */
+    FRAME_Array8 list;  /* CA list */
+    FRAME_Integer listSize; /* CA list length */
+} FRAME_HsExtCaList;
+
+typedef struct {
     FRAME_Integer version;               /* Version number */
     FRAME_Array8 randomValue;            /* Random number */
     FRAME_Integer sessionIdSize;         /* session ID length */
@@ -161,6 +169,7 @@ typedef struct {
     FRAME_HsExtArray8 pskModes;             /* tls1.3 psk exchange mode */
     FRAME_HsExtArray16 supportedVersion;     /* tls1.3 support version */
     FRAME_HsExtOfferedPsks psks;            /* tls1.3 psk */
+    FRAME_HsExtCaList caList;
 } FRAME_ClientHelloMsg;
 
 typedef struct {
@@ -382,6 +391,19 @@ typedef struct {
  * @retval  For other error codes, see hitls_error.h
  */
 int32_t FRAME_PackMsg(FRAME_Type *frameType, const FRAME_Msg *msg, uint8_t *buffer, uint32_t bufLen, uint32_t *usedLen);
+
+/**
+ * @brief    Generate tls13 handshake message according to type
+
+ * @param   type [IN] Specified packing parameters
+ * @param   buf [OUT] Returned handshake message
+ * @param   bufLen [IN] Input buffer size
+ * @param   usedLen [OUT] Returned message length
+ *
+ * @retval  HITLS_SUCCESS
+ * @retval  For other error codes, see hitls_error.h
+ */
+int32_t FRAME_GetTls13DisorderHsMsg(HS_MsgType type, uint8_t *buffer, uint32_t bufLen, uint32_t *usedLen);
 
 /**
  * @brief   Generate a TLS record body byte stream based on the specified parameter of frameType

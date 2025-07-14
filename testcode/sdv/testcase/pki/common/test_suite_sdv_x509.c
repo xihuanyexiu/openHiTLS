@@ -332,7 +332,7 @@ static int32_t SetCertExt(HITLS_X509_Cert *cert)
 
     BslList *oidList = BSL_LIST_New(sizeof(BSL_Buffer));
     ASSERT_TRUE(oidList != NULL);
-    oid = BSL_OBJ_GetOidFromCID(BSL_CID_KP_SERVERAUTH);
+    oid = BSL_OBJ_GetOID(BSL_CID_KP_SERVERAUTH);
     ASSERT_NE(oid, NULL);
     oidBuff.data = (uint8_t *)oid->octs;
     oidBuff.dataLen = oid->octetLen;
@@ -391,7 +391,7 @@ void SDV_PKI_GEN_ENCKEY_TC001(int algId, int curveId, int symId, Hex *pwd)
     CRYPT_Pbkdf2Param param = {
         .pbesId = BSL_CID_PBES2,
         .pbkdfId = BSL_CID_PBKDF2,
-        .hmacId = CRYPT_MAC_HMAC_SHA1,
+        .hmacId = CRYPT_MAC_HMAC_SHA256,
         .symId = symId,
         .pwd = pwd->x,
         .pwdLen = pwd->len,

@@ -357,6 +357,48 @@ EXIT:
 /* END_CASE */
 
 /**
+ * @test   SDV_CRYPTO_SM2_DECOCDE_Sm2CipherText
+ * @title  SM2: decode
+ * @brief test SM2 ciphertext decoding
+ */
+/* BEGIN_CASE */
+void SDV_CRYPTO_SM2_DECOCDE_Sm2CipherText(Hex *cipher)
+{
+    ECC_Para *para = NULL;
+    ECC_Point *c1 = NULL;
+    uint8_t *decode = BSL_SAL_Calloc(1u, cipher->len);
+    ASSERT_TRUE(decode != NULL);
+    // Add uncompressed point identifier
+    decode[0] = 0x04;
+    CRYPT_SM2_EncryptData encData = {
+        .x = decode + 1,                        // Reserve one byte for '04'
+        .xLen = SM2_POINT_SINGLE_COORDINATE_LEN,
+        .y = decode + SM2_POINT_SINGLE_COORDINATE_LEN + 1,
+        .yLen = SM2_POINT_SINGLE_COORDINATE_LEN,
+        .hash = decode + SM2_POINT_COORDINATE_LEN,
+        .hashLen = SM3_MD_SIZE,
+        .cipher = decode + SM2_POINT_COORDINATE_LEN + SM3_MD_SIZE,
+        .cipherLen = cipher->len - SM2_POINT_COORDINATE_LEN - SM3_MD_SIZE
+    };
+
+    int32_t ret = CRYPT_EAL_DecodeSm2EncryptData(cipher->x, cipher->len, &encData);
+    ASSERT_EQ(ret, CRYPT_SUCCESS);
+
+    para = ECC_NewPara(CRYPT_ECC_SM2);
+    ASSERT_TRUE(para != NULL);
+
+    c1 = ECC_NewPoint(para);
+    ASSERT_TRUE(c1 != NULL);
+
+    ASSERT_EQ(ECC_DecodePoint(para, c1, decode, SM2_POINT_COORDINATE_LEN), CRYPT_SUCCESS);
+EXIT:
+    BSL_SAL_Free(decode);
+    ECC_FreePoint(c1);
+    ECC_FreePara(para);
+}
+/* END_CASE */
+
+/**
  * @test   SDV_CRYPTO_SM2_DEC_FUNC_TC002
  * @title  SM2: Private key decryption failure scenario.
  * @precon Vectors: private key, ciphertext.

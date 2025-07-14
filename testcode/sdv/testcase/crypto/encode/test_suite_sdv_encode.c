@@ -282,12 +282,10 @@ void SDV_DECODE_SM2_ENCRYPT_DATA_FUNC_TC001(Hex *encode, Hex *expectX, Hex *expe
     ASSERT_EQ(CRYPT_EAL_DecodeSm2EncryptData(encode->x, encode->len, &data), ret);
 
     if (ret == CRYPT_SUCCESS) {
-        ASSERT_EQ(data.xLen, expectX->len);
-        ASSERT_EQ(data.yLen, expectY->len);
         ASSERT_EQ(data.hashLen, expectHash->len);
         ASSERT_EQ(data.cipherLen, expectCipher->len);
-        ASSERT_TRUE(memcmp(data.x, expectX->x, data.xLen) == 0);
-        ASSERT_TRUE(memcmp(data.y, expectY->x, data.yLen) == 0);
+        ASSERT_TRUE(memcmp(data.x + (data.xLen - expectX->len), expectX->x, expectX->len) == 0);
+        ASSERT_TRUE(memcmp(data.y + (data.yLen - expectY->len), expectY->x, expectY->len) == 0);
         ASSERT_TRUE(memcmp(data.hash, expectHash->x, data.hashLen) == 0);
         ASSERT_TRUE(memcmp(data.cipher, expectCipher->x, data.cipherLen) == 0);
     }
@@ -480,11 +478,12 @@ void SDV_ENCODE_DECODE_SM2_ENCRYPT_COMBO_TC001(Hex *x, Hex *y, Hex *hash, Hex *c
     };
 
     // Prepare decode buffer
+    decBuf[0] = 0x04;
     CRYPT_SM2_EncryptData decData = {
-        .x = decBuf,                                    .xLen = sizeof(decBuf),
-        .y = decBuf + x->len,                           .yLen = sizeof(decBuf) - x->len,
-        .hash = decBuf + x->len + y->len,               .hashLen = sizeof(decBuf) - x->len - y->len,
-        .cipher = decBuf + x->len + y->len + hash->len, .cipherLen = sizeof(decBuf) - x->len - y->len - hash->len
+        .x = decBuf + 1,                                        .xLen = SM2_POINT_SINGLE_COORDINATE_LEN,
+        .y = decBuf + 1 + SM2_POINT_SINGLE_COORDINATE_LEN,      .yLen = SM2_POINT_SINGLE_COORDINATE_LEN,
+        .hash = decBuf +  SM2_POINT_COORDINATE_LEN,             .hashLen = SM3_MD_SIZE,
+        .cipher = decBuf + SM2_POINT_COORDINATE_LEN + hash->len, .cipherLen = sizeof(decBuf) - SM3_MD_SIZE - SM2_POINT_COORDINATE_LEN
     };
 
     // Get encode length and allocate buffer
@@ -499,8 +498,8 @@ void SDV_ENCODE_DECODE_SM2_ENCRYPT_COMBO_TC001(Hex *x, Hex *y, Hex *hash, Hex *c
     ASSERT_EQ(CRYPT_EAL_DecodeSm2EncryptData(encode, encodeLen, &decData), CRYPT_SUCCESS);
 
     // Compare decoded data with original data
-    ASSERT_COMPARE("Compare x", decData.x, decData.xLen, x->x, x->len);
-    ASSERT_COMPARE("Compare y", decData.y, decData.yLen, y->x, y->len);
+    ASSERT_COMPARE("Compare x", decData.x + (decData.xLen - x->len), x->len, x->x, x->len);
+    ASSERT_COMPARE("Compare y", decData.y + (decData.yLen - y->len), y->len, y->x, y->len);
     ASSERT_COMPARE("Compare hash", decData.hash, decData.hashLen, hash->x, hash->len);
     ASSERT_COMPARE("Compare cipher", decData.cipher, decData.cipherLen, cipher->x, cipher->len);
 

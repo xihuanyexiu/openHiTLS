@@ -18,7 +18,7 @@ import json
 import os
 import re
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__))))
-from methods import trans2list, unique_list, save_json_file
+from methods import trans2list, save_json_file
 
 
 class Feature:
@@ -239,7 +239,7 @@ class FeatureConfigParser:
     """ Parses the user feature configuration file. """
     # Specifications of keys and values in the file.
     key_value = {
-        "system": {"require": False, "type": str, "choices": ["linux"], "default": "linux"},
+        "system": {"require": False, "type": str, "choices": ["linux", ""], "default": "linux"},
         "bits": {"require": False, "type": int, "choices": [32, 64], "default": 64},
         "endian": {"require": True, "type": str, "choices": ["little", "big"], "default": "little"},
         "libType": {
@@ -249,7 +249,9 @@ class FeatureConfigParser:
             "default": ["static", "shared", "object"]
         },
         "asmType":{"require": True, "type": str, "choices": [], "default": "no_asm"},
-        "libs":{"require": True, "type": dict, "choices": [], "default": {}}
+        "libs":{"require": True, "type": dict, "choices": [], "default": {}},
+        "bundleLibs":{"require": False, "type": bool, "choices": [True, False], "default": False},
+        "securecLib":{"require": False, "type": str, "choices": ["boundscheck", "securec", ""], "default": ""}
     }
 
     def __init__(self, features: FeatureParser, file_path):
@@ -280,6 +282,18 @@ class FeatureConfigParser:
     @property
     def asm_type(self):
         return self._cfg['asmType']
+
+    @property
+    def bundle_libs(self):
+        if 'bundleLibs' in self._cfg:
+            return self._cfg['bundleLibs']
+        return self.key_value['bundleLibs']['default']
+
+    @property
+    def securec_lib(self):
+        if 'securecLib' in self._cfg:
+            return self._cfg['securecLib']
+        return self.key_value['securecLib']['default']
 
     @staticmethod
     def _get_fea_and_inc(asm_fea):
@@ -315,6 +329,9 @@ class FeatureConfigParser:
             value_type = type(value)
             if value_type == str or value_type == str:
                 if value not in self.key_value.get(key).get("choices"):
+                    if key == "system":
+                        print("Info: There is no {} implementation by default, you should set its SAL callbacks to make it work.".format(value))
+                        continue
                     raise ValueError("Error feature_config file: wrong value of '%s'" % key)
             elif value_type == list:
                 choices = set(self.key_value[key]["choices"])
@@ -335,6 +352,9 @@ class FeatureConfigParser:
                 asm_feas.append(fea)
 
     def set_param(self, key, value, set_default=True):
+        if key == 'bundleLibs':
+            self._cfg[key] = value
+            return
         if value:
             self._cfg[key] = value
             return
@@ -581,7 +601,7 @@ class FeatureConfigParser:
 
         if self._cfg['endian'] == 'big':
             macros.add("-DHITLS_BIG_ENDIAN")
-        if self._cfg.get('system', ""):
+        if self._cfg.get('system', "") == "linux":
             macros.add("-DHITLS_BSL_SAL_LINUX")
 
         bits = self._cfg.get('bits', 0)
@@ -710,7 +730,7 @@ class CompleteOptionParser:
         "CC_WARN_FLAGS",  # Warning options
         "CC_LANGUAGE_FLAGS",  # Language Options
         "CC_CDG_FLAGS",  # Code Generation Options
-        "CC_MD_DEPENDENT_FLAGS",  # MD_Dependent Options
+        "CC_MD_DEPENDENT_FLAGS",  # Machine-Dependent Options
         "CC_OPT_FLAGS",  # Optimization Options
         "CC_SEC_FLAGS",  # Secure compilation options
         "CC_DEFINE_FLAGS",  # Custom Macro
@@ -750,7 +770,6 @@ class CompileConfigParser:
         with open(file_path, 'r') as f:
             self._cfg = json.loads(f.read())
         self._all_options = all_options
-        self._file_check()
 
     @property
     def options(self):
@@ -768,19 +787,6 @@ class CompileConfigParser:
         }
         return config
 
-    def _file_check(self):
-        if 'compileFlag' not in self._cfg or 'linkFlag' not in self._cfg:
-            raise FileNotFoundError("Error compile_config file: missing 'compileFlag' or 'linkFlag'")
-
-        # Check whether the configured compilation options are in the compilation option set.
-        for option_type in self._cfg['compileFlag']:
-            if option_type == 'CC_USER_DEFINE_FLAGS':
-                continue
-
-            for option in self._cfg['compileFlag'][option_type].get('CC_FLAGS_ADD', []):
-                if option not in self._all_options.type_options_map[option_type]:
-                    raise ValueError("unrecognized option {}".format(option))
-
     def save(self, path):
         save_json_file(self._cfg, path)
 
@@ -795,12 +801,12 @@ class CompileConfigParser:
                 self._cfg['compileFlag'][option_type] = {}
 
             flags = self._cfg['compileFlag'][option_type]
-            flags[option_op] = unique_list(flags.get(option_op, []) + [option])
+            flags[option_op] = list(set(flags.get(option_op, []) + [option]))
 
     def change_link_flags(self, flags, is_add):
         link_op = 'LINK_FLAG_ADD' if is_add else 'LINK_FLAG_DEL'
         new_flags = self._cfg['linkFlag'].get(link_op, []) + flags
-        self._cfg['linkFlag'][link_op] = unique_list(new_flags)
+        self._cfg['linkFlag'][link_op] = list(set(new_flags))
 
     def add_debug_options(self):
         flags_add = {'CC_FLAGS_ADD': ['-g3', '-gdwarf-2']}

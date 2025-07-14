@@ -414,6 +414,9 @@ static int32_t ParseClientHelloMsg(FRAME_Type *frameType, const uint8_t *buffer,
                 offset = tmpOffset;
                 break;
         }
+        if (tmpOffset == offset) {
+            break;
+        }
     }
     *parseLen += offset;
     return HITLS_SUCCESS;
@@ -449,6 +452,7 @@ static void CleanClientHelloMsg(FRAME_ClientHelloMsg *clientHello)
     BSL_SAL_FREE(clientHello->supportedVersion.exData.data);
     BSL_SAL_FREE(clientHello->tls13Cookie.exData.data);
     BSL_SAL_FREE(clientHello->pskModes.exData.data);
+    BSL_SAL_FREE(clientHello->caList.list.data);
     return;
 }
 
@@ -580,6 +584,7 @@ static int32_t ParseCertificateMsg(
 
     FrameCertItem *certItem = NULL;
     while (offset < bufLen) {
+        uint32_t tmpOffset = offset;
         FrameCertItem *item = BSL_SAL_Calloc(1u, sizeof(FrameCertItem));
         if (item == NULL) {
             return HITLS_MEMALLOC_FAIL;
@@ -597,6 +602,9 @@ static int32_t ParseCertificateMsg(
             certItem->next = item;
         }
         certItem = item;
+        if (tmpOffset == offset) {
+            break;
+        }
     }
     *parseLen += offset;
 
@@ -809,6 +817,7 @@ static int32_t ParseClientKxMsg(FRAME_Type *frameType, const uint8_t *buffer, ui
             ParseFieldArray8(&buffer[offset], bufLen - offset, &clientKx->pubKey, clientKx->pubKeySize.data, &offset);
             break;
         case HITLS_KEY_EXCH_DHE:
+        case HITLS_KEY_EXCH_RSA:
             ParseFieldInteger16(&buffer[offset], bufLen - offset, &clientKx->pubKeySize, &offset);
             ParseFieldArray8(&buffer[offset], bufLen - offset, &clientKx->pubKey, clientKx->pubKeySize.data, &offset);
             break;

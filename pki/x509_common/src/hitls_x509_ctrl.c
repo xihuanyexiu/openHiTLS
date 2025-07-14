@@ -307,7 +307,7 @@ int32_t HITLS_X509_SetNameList(BslList **dest, void *val, uint32_t valLen)
 
 static int32_t FillNameNodes(HITLS_X509_NameNode *layer2, BslCid cid, uint8_t *data, uint32_t dataLen)
 {
-    BslOidString *oid = BSL_OBJ_GetOidFromCID(cid);
+    BslOidString *oid = BSL_OBJ_GetOID(cid);
     if (oid == NULL) {
         BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_SET_DNNAME_UNKNOWN);
         return HITLS_X509_ERR_SET_DNNAME_UNKNOWN;
@@ -441,6 +441,7 @@ int32_t HITLS_X509_AddDnName(BslList *list, HITLS_X509_DN *dnNames, uint32_t siz
     // sort
     dnNameList = BSL_LIST_Sort(dnNameList, CmpDnNameByEncode);
     if (dnNameList == NULL) {
+        ret = HITLS_X509_ERR_SORT_NAME_NODE;
         goto EXIT;
     }
     // add dnNameList to list

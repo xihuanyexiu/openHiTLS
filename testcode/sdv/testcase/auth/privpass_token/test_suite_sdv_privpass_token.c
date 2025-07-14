@@ -352,8 +352,8 @@ void SDV_AUTH_PRIVPASS_TOKEN_GEN_TOKEN_CHALLENGE_TC001(Hex *tokenType, Hex *issu
         BSL_PARAM_END};
     BSL_Param param3[4] = {
         {AUTH_PARAM_PRIVPASS_TOKENCHALLENGE_TYPE, BSL_PARAM_TYPE_UINT16, &tokenTypeValue, 2, 2},
-        {AUTH_PARAM_PRIVPASS_TOKENCHALLENGE_ISSUERNAME, BSL_PARAM_TYPE_OCTETS_PTR, issuerName->x, issuerName->len,
-            PRIVPASS_MAX_ISSUER_NAME_LEN + 1},
+        {AUTH_PARAM_PRIVPASS_TOKENCHALLENGE_ISSUERNAME, BSL_PARAM_TYPE_OCTETS_PTR, issuerName->x,
+            PRIVPASS_MAX_ISSUER_NAME_LEN + 1, PRIVPASS_MAX_ISSUER_NAME_LEN + 1},
         {AUTH_PARAM_PRIVPASS_TOKENCHALLENGE_REDEMPTION, BSL_PARAM_TYPE_OCTETS_PTR, redemption->x, redemption->len,
             redemption->len},
         BSL_PARAM_END};
@@ -363,14 +363,16 @@ void SDV_AUTH_PRIVPASS_TOKEN_GEN_TOKEN_CHALLENGE_TC001(Hex *tokenType, Hex *issu
             issuerName->len},
         {AUTH_PARAM_PRIVPASS_TOKENCHALLENGE_REDEMPTION, BSL_PARAM_TYPE_OCTETS_PTR, redemption->x, redemption->len,
             redemption->len},
-        {AUTH_PARAM_PRIVPASS_TOKENCHALLENGE_ORIGININFO, BSL_PARAM_TYPE_OCTETS_PTR, originInfo->x, originInfo->len,
-            PRIVPASS_MAX_ORIGIN_INFO_LEN + 1}, BSL_PARAM_END};
+        {AUTH_PARAM_PRIVPASS_TOKENCHALLENGE_ORIGININFO, BSL_PARAM_TYPE_OCTETS_PTR, originInfo->x,
+            PRIVPASS_MAX_ISSUER_NAME_LEN + 1, PRIVPASS_MAX_ORIGIN_INFO_LEN + 1},
+        BSL_PARAM_END};
     BSL_Param param5[4] = {
         {AUTH_PARAM_PRIVPASS_TOKENCHALLENGE_TYPE, BSL_PARAM_TYPE_UINT16, &tokenTypeValue, 2, 2},
         {AUTH_PARAM_PRIVPASS_TOKENCHALLENGE_ISSUERNAME, BSL_PARAM_TYPE_OCTETS_PTR, issuerName->x, issuerName->len,
             issuerName->len},
-        {AUTH_PARAM_PRIVPASS_TOKENCHALLENGE_REDEMPTION, BSL_PARAM_TYPE_OCTETS_PTR, redemption->x, redemption->len,
-            PRIVPASS_REDEMPTION_LEN + 1}, BSL_PARAM_END};
+        {AUTH_PARAM_PRIVPASS_TOKENCHALLENGE_REDEMPTION, BSL_PARAM_TYPE_OCTETS_PTR, redemption->x,
+            PRIVPASS_MAX_ISSUER_NAME_LEN + 1, PRIVPASS_REDEMPTION_LEN + 1},
+        BSL_PARAM_END};
 
     ctx = HITLS_AUTH_PrivPassNewCtx(HITLS_AUTH_PRIVPASS_PUB_VERIFY_TOKENS);
     ASSERT_NE(ctx, NULL);
@@ -527,7 +529,7 @@ void SDV_AUTH_PRIVPASS_TOKEN_CHALLENGE_OBTAIN_TC001(Hex *challenge)
     HITLS_AUTH_PrivPassToken *tokenChallenge1 = NULL;
     HITLS_AUTH_PrivPassToken *tokenChallenge2 = NULL;
     HITLS_AUTH_PrivPassCtx *ctx = NULL;
-    BSL_Param param[5] = {
+    BSL_Param param1[5] = {
         {AUTH_PARAM_PRIVPASS_TOKENCHALLENGE_TYPE, BSL_PARAM_TYPE_UINT16, &tokenType, 2, 0},
         {AUTH_PARAM_PRIVPASS_TOKENCHALLENGE_ISSUERNAME, BSL_PARAM_TYPE_OCTETS_PTR, issuerNameBuffer,
             issuerNameBufferLen, 0},
@@ -536,24 +538,34 @@ void SDV_AUTH_PRIVPASS_TOKEN_CHALLENGE_OBTAIN_TC001(Hex *challenge)
         {AUTH_PARAM_PRIVPASS_TOKENCHALLENGE_ORIGININFO, BSL_PARAM_TYPE_OCTETS_PTR, originInfoBuffer,
             originInfoBufferLen, 0},
         BSL_PARAM_END};
+    BSL_Param param2[5] = {
+        {AUTH_PARAM_PRIVPASS_TOKENCHALLENGE_TYPE, BSL_PARAM_TYPE_UINT16, &tokenType, 2, 0},
+        {AUTH_PARAM_PRIVPASS_TOKENCHALLENGE_ISSUERNAME, BSL_PARAM_TYPE_OCTETS_PTR, issuerNameBuffer, 0, 0},
+        {AUTH_PARAM_PRIVPASS_TOKENCHALLENGE_REDEMPTION, BSL_PARAM_TYPE_OCTETS_PTR, redemptionBuffer, 0, 0},
+        {AUTH_PARAM_PRIVPASS_TOKENCHALLENGE_ORIGININFO, BSL_PARAM_TYPE_OCTETS_PTR, originInfoBuffer, 0, 0},
+        BSL_PARAM_END};
     // Create context
     ctx = HITLS_AUTH_PrivPassNewCtx(HITLS_AUTH_PRIVPASS_PUB_VERIFY_TOKENS);
     ASSERT_NE(ctx, NULL);
 
     ASSERT_EQ(HITLS_AUTH_PrivPassDeserialization(ctx, HITLS_AUTH_PRIVPASS_TOKEN_CHALLENGE, challenge->x, challenge->len,
         &tokenChallenge1), HITLS_AUTH_SUCCESS);
-    ASSERT_EQ(HITLS_AUTH_PrivPassTokenCtrl(tokenChallenge1, HITLS_AUTH_PRIVPASS_GET_TOKENCHALLENGE_TYPE, param, 0),
+    ASSERT_EQ(HITLS_AUTH_PrivPassTokenCtrl(tokenChallenge1, HITLS_AUTH_PRIVPASS_GET_TOKENCHALLENGE_TYPE, param1, 0),
         HITLS_AUTH_SUCCESS);
     ASSERT_EQ(HITLS_AUTH_PrivPassTokenCtrl(tokenChallenge1, HITLS_AUTH_PRIVPASS_GET_TOKENCHALLENGE_REDEMPTION,
-        param, 0),
+        param1, 0),
         HITLS_AUTH_SUCCESS);
     ASSERT_EQ(HITLS_AUTH_PrivPassTokenCtrl(tokenChallenge1, HITLS_AUTH_PRIVPASS_GET_TOKENCHALLENGE_ORIGININFO,
-        param, 0),
+        param1, 0),
         HITLS_AUTH_SUCCESS);
     ASSERT_EQ(HITLS_AUTH_PrivPassTokenCtrl(tokenChallenge1, HITLS_AUTH_PRIVPASS_GET_TOKENCHALLENGE_ISSUERNAME,
-        param, 0),
+        param1, 0),
         HITLS_AUTH_SUCCESS);
-    ASSERT_EQ(HITLS_AUTH_PrivPassGenTokenChallenge(ctx, param, &tokenChallenge2), HITLS_AUTH_SUCCESS);
+    param2[0].valueLen = param1[0].useLen;
+    param2[1].valueLen = param1[1].useLen;
+    param2[2].valueLen = param1[2].useLen;
+    param2[3].valueLen = param1[3].useLen;
+    ASSERT_EQ(HITLS_AUTH_PrivPassGenTokenChallenge(ctx, param2, &tokenChallenge2), HITLS_AUTH_SUCCESS);
     ASSERT_EQ(HITLS_AUTH_PrivPassSerialization(ctx, tokenChallenge2, tokenChallengeBuffer,
         &tokenChallengeBufferLen), HITLS_AUTH_SUCCESS);
 

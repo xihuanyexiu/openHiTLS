@@ -185,7 +185,7 @@ EXIT:
 /* BEGIN_CASE */
 void SDV_X509_CSR_PARSE_FUNC_TC002(int format, char *path, int expectedNum, char *dnType1,
     char *dnName1, char *dnType2, char *dnName2, char *dnType3, char *dnName3, char *dnType4, char *dnName4,
-    char *dnType5, char *dnName5)
+    char *dnType5, char *dnName5, char *dnType6, char *dnName6, char *dnType7, char *dnName7)
 {
     TestMemInit();
     HITLS_X509_Csr *csr = NULL;
@@ -196,10 +196,10 @@ void SDV_X509_CSR_PARSE_FUNC_TC002(int format, char *path, int expectedNum, char
     ASSERT_NE(rawSubject, NULL);
     int count = BSL_LIST_COUNT(rawSubject);
     ASSERT_EQ(count, expectedNum);
-    char *dnTypes[5] = {dnType1, dnType2, dnType3, dnType4, dnType5};
-    char *dnName[5] = {dnName1, dnName2, dnName3, dnName4, dnName5};
+    char *dnTypes[7] = {dnType1, dnType2, dnType3, dnType4, dnType5, dnType6, dnType7};
+    char *dnName[7] = {dnName1, dnName2, dnName3, dnName4, dnName5, dnName6, dnName7};
     HITLS_X509_NameNode *nameNode = BSL_LIST_GET_FIRST(rawSubject);
-    for (int i = 0; i < count && count <= 10 && nameNode != NULL; i++, nameNode = BSL_LIST_GET_NEXT(rawSubject)) {
+    for (int i = 0; i < count && count <= 14 && nameNode != NULL; i++, nameNode = BSL_LIST_GET_NEXT(rawSubject)) {
         if (nameNode->layer == 1) {
             continue;
         }
@@ -242,7 +242,7 @@ void SDV_X509_CSR_PARSE_FUNC_TC003(int format, char *path, int attrNum, int attr
 
     HITLS_X509_AttrEntry *entry = BSL_LIST_GET_FIRST(rawAttrs->list);
     ASSERT_EQ(attrCid, entry->cid);
-    BslOidString *oid = BSL_OBJ_GetOidFromCID(entry->cid);
+    BslOidString *oid = BSL_OBJ_GetOID(entry->cid);
     ASSERT_NE(oid, NULL);
     ASSERT_COMPARE("csr attr oid", entry->attrId.buff, entry->attrId.len, (uint8_t *)oid->octs, oid->octetLen);
     ASSERT_COMPARE("csr attr value", entry->attrValue.buff, entry->attrValue.len, attrValue->x, attrValue->len);

@@ -30,7 +30,8 @@
 #define RSA_MAX_MODULUS_BITS 16384
 #define RSA_MAX_MODULUS_LEN (RSA_MAX_MODULUS_BITS / 8)
 
-#define PARAMISNULL(a) (a == NULL || a->value == NULL)
+#define PARAMISNULL(a) ((a) == NULL || (a)->value == NULL)
+#define PARAMISNULLLENIS0(a) ((a) == NULL || (a)->value == NULL || (a)->valueLen == 0)
 
 /* JSON to PEM decoder context */
 typedef struct {
@@ -241,7 +242,7 @@ static int32_t TestRsaSetPrvKey(void *ctx, const BSL_Param *param)
     const BSL_Param *dp = TestFindConstParam(param, CRYPT_PARAM_RSA_DP);
     const BSL_Param *dq = TestFindConstParam(param, CRYPT_PARAM_RSA_DQ);
     const BSL_Param *qInv = TestFindConstParam(param, CRYPT_PARAM_RSA_QINV);
-    if (PARAMISNULL(n) || PARAMISNULL(d) || n->valueType != BSL_PARAM_TYPE_OCTETS ||
+    if (PARAMISNULLLENIS0(n) || PARAMISNULLLENIS0(d) || n->valueType != BSL_PARAM_TYPE_OCTETS ||
         d->valueType != BSL_PARAM_TYPE_OCTETS) {
         return CRYPT_NULL_INPUT;
     }
@@ -348,6 +349,7 @@ static const CRYPT_EAL_Func g_jsonPemDecoderFuncs[] = {
 /* Provider registration */
 static const CRYPT_EAL_AlgInfo g_testDecode[] = {
     {BSL_CID_DECODE_UNKNOWN, g_jsonPemDecoderFuncs, "provider=test_decoder, inFormat=JSON, outFormat=PEM"},
+
     CRYPT_EAL_ALGINFO_END
 };
 
@@ -383,7 +385,7 @@ static int32_t TestSm2SetPubKey(void *ctx, const BSL_Param *param)
     if (ctx == NULL || param == NULL) {
         return CRYPT_NULL_INPUT;
     }
-    const BSL_Param *pubKey = TestFindConstParam(param, CRYPT_PARAM_EC_POINT_UNCOMPRESSED);
+    const BSL_Param *pubKey = TestFindConstParam(param, CRYPT_PARAM_EC_PUBKEY);
     if (PARAMISNULL(pubKey)) {
         return CRYPT_NULL_INPUT;
     }
@@ -422,7 +424,7 @@ static int32_t TestSm2Import(void *ctx, const BSL_Param *param)
     int32_t ret;
     TestSm2OrEd25519Ctx *sm2Ctx = (TestSm2OrEd25519Ctx *)ctx;
 
-    const BSL_Param *pubKey = TestFindConstParam(param, CRYPT_PARAM_EC_POINT_UNCOMPRESSED);
+    const BSL_Param *pubKey = TestFindConstParam(param, CRYPT_PARAM_EC_PUBKEY);
     if (!PARAMISNULL(pubKey)) {
         ret = TestSm2SetPubKey(ctx, param);
         if (ret != CRYPT_SUCCESS) {
@@ -536,6 +538,7 @@ static const CRYPT_EAL_AlgInfo g_testKeyMgmt[] = {
     {CRYPT_PKEY_RSA, g_testKeyMgmtRsa, "provider=test_decoder"},
     {CRYPT_PKEY_SM2, g_testKeyMgmtSm2, "provider=test_decoder"},
     {CRYPT_PKEY_ED25519, g_testKeyMgmtEd25519, "provider=test_decoder"},
+    
     CRYPT_EAL_ALGINFO_END
 };
 

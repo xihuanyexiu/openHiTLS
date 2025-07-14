@@ -93,13 +93,13 @@ int32_t ParseNewSessionTicketExtension(TLS_Ctx *ctx, const uint8_t *buf, uint32_
         if (bufLen - bufOffset >= extMsgLen) {
             uint32_t hsExTypeId = HS_GetExtensionTypeId(extMsgType);
             if (hsExTypeId != HS_EX_TYPE_ID_UNRECOGNIZED ||
-                !IsParseNeedCustomExtensions(ctx->customExts, extMsgType, HITLS_EX_TYPE_NEW_SESSION_TICKET)) {
+                !IsParseNeedCustomExtensions(CUSTOM_EXT_FROM_CTX(ctx), extMsgType, HITLS_EX_TYPE_TLS1_3_NEW_SESSION_TICKET)) {
                 msg->extensionTypeMask |= 1ULL << hsExTypeId;
-                }
+            }
 
-            if (IsParseNeedCustomExtensions(ctx->customExts, extMsgType, HITLS_EX_TYPE_NEW_SESSION_TICKET)) {
+            if (IsParseNeedCustomExtensions(CUSTOM_EXT_FROM_CTX(ctx), extMsgType, HITLS_EX_TYPE_TLS1_3_NEW_SESSION_TICKET)) {
                 ret = ParseCustomExtensions(ctx, buf + bufOffset, extMsgType, extMsgLen,
-                    HITLS_EX_TYPE_NEW_SESSION_TICKET);
+                    HITLS_EX_TYPE_TLS1_3_NEW_SESSION_TICKET, NULL, 0);
                 if (ret != HITLS_SUCCESS) {
                     return ret;
                 }

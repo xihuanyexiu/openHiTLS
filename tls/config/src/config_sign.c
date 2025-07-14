@@ -420,25 +420,29 @@ static int32_t ProcessOids(TLS_SigSchemeInfo *scheme, BslOidInfo *keyTypeOidInfo
 {
     int32_t ret = HITLS_SUCCESS;
     if (keyTypeOidInfo != NULL && keyTypeOidInfo->oidStr.octs != NULL) {
-        ret = BSL_OBJ_Create(&keyTypeOidInfo->oidStr, keyTypeOidInfo->oidName, scheme->keyType);
+        ret = BSL_OBJ_Create(keyTypeOidInfo->oidStr.octs, keyTypeOidInfo->oidStr.octetLen,
+            keyTypeOidInfo->oidName, scheme->keyType);
         if (ret != HITLS_SUCCESS) {
             return ret;
         }
     }
     if (paraOidInfo != NULL && paraOidInfo->oidStr.octs != NULL) {
-        ret = BSL_OBJ_Create(&paraOidInfo->oidStr, paraOidInfo->oidName, scheme->paraId);
+        ret = BSL_OBJ_Create(paraOidInfo->oidStr.octs, paraOidInfo->oidStr.octetLen,
+            paraOidInfo->oidName, scheme->paraId);
         if (ret != HITLS_SUCCESS) {
             return ret;
         }
     }
     if (hashOidInfo != NULL && hashOidInfo->oidStr.octs != NULL) {
-        ret = BSL_OBJ_Create(&hashOidInfo->oidStr, hashOidInfo->oidName, scheme->hashAlgId);
+        ret = BSL_OBJ_Create(hashOidInfo->oidStr.octs, hashOidInfo->oidStr.octetLen,
+            hashOidInfo->oidName, scheme->hashAlgId);
         if (ret != HITLS_SUCCESS) {
             return ret;
         }
     }
     if (signHashAlgOidInfo != NULL && signHashAlgOidInfo->oidStr.octs != NULL) {
-        ret = BSL_OBJ_Create(&signHashAlgOidInfo->oidStr, signHashAlgOidInfo->oidName, scheme->signHashAlgId);
+        ret = BSL_OBJ_Create(signHashAlgOidInfo->oidStr.octs, signHashAlgOidInfo->oidStr.octetLen,
+            signHashAlgOidInfo->oidName, scheme->signHashAlgId);
         if (ret != HITLS_SUCCESS) {
             return ret;
         }
@@ -465,7 +469,7 @@ static int32_t ProviderAddSignatureSchemeInfo(const BSL_Param *params, void *arg
     if (ret != HITLS_SUCCESS) {
         return ret;
     }
-
+    ret = HITLS_CONFIG_ERR_LOAD_SIGN_SCHEME_INFO;
     PROCESS_STRING_PARAM(param, scheme, params, CRYPT_PARAM_CAP_TLS_SIGNALG_IANA_SIGN_NAME, name);
     PROCESS_PARAM_UINT16(param, scheme, params, CRYPT_PARAM_CAP_TLS_SIGNALG_IANA_SIGN_ID, signatureScheme);
     PROCESS_PARAM_INT32(param, scheme, params, CRYPT_PARAM_CAP_TLS_SIGNALG_KEY_TYPE, keyType);

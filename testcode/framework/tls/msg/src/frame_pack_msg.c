@@ -505,7 +505,39 @@ static int32_t PackPskBinder(const FRAME_HsArrayPskBinder *field, uint8_t *buf, 
     *offset += bufoffset;
     return HITLS_SUCCESS;
 }
+static int32_t PackHsExtCaList(const FRAME_HsExtCaList *field, uint8_t *buf,
+    uint32_t bufLen, uint32_t *offset)
+{
+    if (field->exState == MISSING_FIELD) {
+        return HITLS_SUCCESS;
+    }
 
+    // Calculate the total length to be assembled
+    uint32_t length = 0;
+    length += ((field->exType.state == MISSING_FIELD) ? 0 : sizeof(uint16_t));
+    length += ((field->exLen.state == MISSING_FIELD) ? 0 : sizeof(uint16_t));
+    length += ((field->listSize.state == MISSING_FIELD) ? 0 : sizeof(uint16_t));
+    length += ((field->list.state == MISSING_FIELD) ? 0 : sizeof(uint8_t) * field->list.size);
+
+    if (bufLen < length) {
+        return HITLS_INTERNAL_EXCEPTION;
+    }
+
+    uint32_t bufoffset = 0;
+    uint32_t tmpOffset = 0;
+    PackInteger16(&field->exType, &buf[bufoffset], bufLen - bufoffset, &bufoffset);
+    tmpOffset = bufoffset;
+    PackInteger16(&field->exLen, &buf[bufoffset], bufLen - bufoffset, &bufoffset);
+    PackInteger16(&field->listSize, &buf[bufoffset], bufLen - bufoffset, &bufoffset);
+    PackArray8(&field->list, &buf[bufoffset], bufLen - bufoffset, &bufoffset);
+
+    if (field->exLen.state == INITIAL_FIELD) {
+        uint32_t len = bufoffset - sizeof(uint16_t) - tmpOffset;
+        BSL_Uint16ToByte(len, &buf[tmpOffset]);
+    }
+    *offset += bufoffset;
+    return HITLS_SUCCESS;
+}
 static int32_t PackHsExtOfferedPsks(const FRAME_HsExtOfferedPsks *field, uint8_t *buf,
     uint32_t bufLen, uint32_t *offset)
 {
@@ -714,7 +746,7 @@ static int32_t PackClientHelloMsg(const FRAME_ClientHelloMsg *clientHello, uint8
         PackHsExtArrayForTicket(&clientHello->sessionTicket, &buf[offset], bufLen - offset, &offset);
         PackHsExtArray8(&clientHello->encryptThenMac, &buf[offset], bufLen - offset, &offset);
         PackHsExtOfferedPsks(&clientHello->psks, &buf[offset], bufLen - offset, &offset);
-
+        PackHsExtCaList(&clientHello->caList, &buf[offset], bufLen - offset, &offset);
         if (clientHello->extensionLen.state == INITIAL_FIELD) {
             uint32_t extensionLen = offset - sizeof(uint16_t) - bufOffset;
             BSL_Uint16ToByte(extensionLen, &buf[bufOffset]);
@@ -1072,7 +1104,7 @@ static int32_t PackClientKeyExchangeMsg(FRAME_Type *type, const FRAME_ClientKeyE
     // Currently, ECDHE and DHE key exchange packets can be assembled.
     if (type->keyExType == HITLS_KEY_EXCH_ECDHE) {
         return PackClientEcdheMsg(type, clientKeyExchange, buf, bufLen, usedLen);
-    } else if (type->keyExType == HITLS_KEY_EXCH_DHE) {
+    } else if (type->keyExType == HITLS_KEY_EXCH_DHE || type->keyExType == HITLS_KEY_EXCH_RSA) {
         return PackClientDheMsg(clientKeyExchange, buf, bufLen, usedLen);
     }
 
@@ -1389,4 +1421,18 @@ int32_t FRAME_PackMsg(FRAME_Type *frameType, const FRAME_Msg *msg, uint8_t *buff
     }
     *usedLen = headerLen + bodyLen;
     return ret;
+}
+
+int32_t FRAME_GetTls13DisorderHsMsg(HS_MsgType type, uint8_t *buffer, uint32_t bufLen, uint32_t *usedLen)
+{
+    if (bufLen < 5) {
+        return HITLS_INTERNAL_EXCEPTION;
+    }
+    buffer[0] = type;
+    buffer[1] = 0;
+    buffer[2] = 0;
+    buffer[3] = 1;
+    buffer[4] = 0;
+    *usedLen = 5;
+    return HITLS_SUCCESS;
 }

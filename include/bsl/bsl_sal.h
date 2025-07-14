@@ -585,10 +585,85 @@ long BSL_SAL_TicksPerSec(void);
 
 /**
  * @ingroup  bsl_sal_net
+ * @brief socket address.
+ * 
+ * It should be defined like following union in linux, to cover various socket addresses.
+ *     union SockAddr {
+ *         struct sockaddr addr;
+ *         struct sockaddr_in6 addrIn6;
+ *         struct sockaddr_in addrIn;
+ *         struct sockaddr_un addrUn;
+ *     };
  *
- * socket address
  */
 typedef void *BSL_SAL_SockAddr;
+
+/**
+ * @ingroup bsl_sal
+ * @brief   Socket address information
+ * 
+ * It should be defined like 'struct addinfo' in linux,
+ *        struct addrinfo {
+ *            int              ai_flags;
+ *            int              ai_family;
+ *            int              ai_socktype;
+ *            int              ai_protocol;
+ *            socklen_t        ai_addrlen;
+ *            struct sockaddr *ai_addr;
+ *            char            *ai_canonname;
+ *            struct addrinfo *ai_next;
+ *        };
+ */
+typedef void *BSL_SAL_SockAddrInfo;
+
+/**
+ * @ingroup bsl_sal
+ * @brief   Create a BSL_SAL_SockAddr
+ *
+ * @return New BSL_SAL_SockAddr object
+ */
+typedef int32_t (*BslSalSockAddrNew)(BSL_SAL_SockAddr *sockAddr);
+
+/**
+ * @ingroup bsl_sal
+ * @brief   Release the UIO_Addr object.
+ *
+ * @param   uioAddr [IN] UIO_Addr object
+ */
+typedef void (*BslSalSockAddrFree)(BSL_SAL_SockAddr sockAddr);
+
+#define SAL_IPV4 2 /* IPv4 Internet protocols */
+#define SAL_IPV6 10 /* IPv6 Internet protocols */
+
+/**
+ * @ingroup bsl_sal
+ * @brief   Obtain the UIO_Addr protocal family
+ *
+ * @param   sockAddr [IN] UIO_Addr object
+ * @retval  Return 0 if the address is not valid.
+ * @retval  Return SAL_IPV4 if the address is IPv4.
+ * @retval  Return SAL_IPV6 if the address is IPv6.
+ */
+typedef int32_t (*BslSalSockAddrGetFamily)(const BSL_SAL_SockAddr sockAddr);
+
+/**
+ * @ingroup bsl_sal
+ * @brief   Obtain the size of the BSL_SAL_SockAddr address.
+ * @details Only for internal use
+ *
+ * @param   sockAddr   [IN] UIO object
+ * @retval  Address size, if the address is not valid, return 0
+ */
+typedef uint32_t (*BslSalSockAddrSize)(const BSL_SAL_SockAddr sockAddr);
+
+/**
+ * @ingroup bsl_sal
+ * @brief   Copy the BSL_SAL_SockAddr address.
+ *
+ * @param   src [IN] Source address
+ * @param   dst [OUT] Destination address
+ */
+typedef void (*BslSalSockAddrCopy)(BSL_SAL_SockAddr dst, const BSL_SAL_SockAddr src);
 
 /**
  * @ingroup bsl_sal
@@ -635,6 +710,10 @@ int32_t BSL_SAL_SockClose(int32_t sockId);
  */
 int32_t BSL_SAL_SetSockopt(int32_t sockId, int32_t level, int32_t name, const void *val, int32_t len);
 
+#define SAL_PROTO_IP_LEVEL 0 /* IPv4 level */
+#define SAL_PROTO_IPV6_LEVEL 41 /* IPv6 level */
+#define SAL_MTU_OPTION 14  /* Retrieve the current known path MTU of the current socket */
+#define SAL_IPV6_MTU_OPTION 24 /* Retrieve the current known path MTU of the current socket for IPv6 */
 /**
  * @ingroup bsl_sal
  * @brief   Get the socket
@@ -644,8 +723,12 @@ int32_t BSL_SAL_SetSockopt(int32_t sockId, int32_t level, int32_t name, const vo
  * @attention none
  * @param sockId [IN] Socket file descriptor ID
  * @param level [IN] Level of the option to be set.
+ * SAL_PROTO_IP_LEVEL: ipv4 level
+ * SAL_PROTO_IPV6_LEVEL: ipv6 level
  * @param name [IN] Options to be set
- * @param val [OUT] Value of the option.
+ * SAL_MTU_OPTION: ipv4 mtu option
+ * SAL_IPV6_MTU_OPTION: ipv6 mtu option
+ * @param val [OUT] Value of the option
  * @param len [OUT] val Length
  * @retval If the operation succeeds, BSL_SUCCESS is returned
  */
@@ -856,6 +939,12 @@ typedef enum {
     BSL_SAL_NET_SELECT_CB_FUNC,
     BSL_SAL_NET_IOCTL_CB_FUNC,
     BSL_SAL_NET_SOCKGETLASTSOCKETERROR_CB_FUNC,
+    BSL_SAL_NET_SOCKADDR_NEW_CB_FUNC,
+    BSL_SAL_NET_SOCKADDR_FREE_CB_FUNC,
+    BSL_SAL_NET_SOCKADDR_SIZE_CB_FUNC,
+    BSL_SAL_NET_SENDTO_CB_FUNC,
+    BSL_SAL_NET_RECVFROM_CB_FUNC,
+    BSL_SAL_NET_GETFAMILY_CB_FUNC,
 
     BSL_SAL_TIME_GET_UTC_TIME_CB_FUNC = 0x0400,
     BSL_SAL_TIME_DATE_TO_STR_CONVERT_CB_FUNC,
@@ -1175,6 +1264,43 @@ typedef int32_t (*BslSalSockSend)(int32_t sockId, const void *msg, size_t len, i
  * @retval Negative integer: receive operation failed.
  */
 typedef int32_t (*BslSalSockRecv)(int32_t sockfd, void *buff, size_t len, int32_t flags);
+
+/**
+ * @ingroup bsl_sal
+ * @brief Same as linux funciton "sendto"
+ *
+ * @param sock [IN] Socket descriptor.
+ * @param buf [IN] The buffer containing the data to be sent.
+ * @param len [IN] Length of the buffer.
+ * @param flags [IN] The type of message transmission.
+ * @param address [IN] Points to a sockaddr structure containing the destination address.
+ * @param addrLen [IN] Length of the sockaddr structure.
+ * @param err [OUT] The error code if "sendto" failed.
+ * @return BSL_SUCCESS, success.
+ *         Otherwise, failure.
+ */
+typedef int32_t (*BslSalNetSendTo)(int32_t sock, const void *buf, size_t len, int32_t flags, void *address, int32_t addrLen, int32_t *err);
+
+/**
+ * @ingroup bsl_salZ
+ * @brief Same as linux funciton "recvfrom"
+ * @param sock [IN] Socket descriptor.
+ * @param buf [IN] The buffer where the message should be stored.
+ * @param len [IN] Length of the buffer.
+ * @param flags [IN] The type of message transmission.
+ * @param address [IN] A null pointer, or points to a sockaddr structure in
+                   which the sending address is to be stored.
+ * @param addrLen [IN] Either a null pointer, if address is a null pointer,
+                   or a pointer to a socklen_t object which on input
+                   specifies the length of the supplied sockaddr
+                   structure, and on output specifies the length of the
+                   stored address.
+
+ * @param err [OUT] The error code if "recvfrom" failed.
+ * @return BSL_SUCCESS, success.
+ *         Otherwise, failure.
+ */
+typedef int32_t (*BslSalNetRecvFrom)(int32_t sock, void *buf, size_t len, int32_t flags, void *address, int32_t *addrLen, int32_t *err);
 
 /**
  * @ingroup bsl_sal

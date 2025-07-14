@@ -111,6 +111,10 @@ CRYPT_ML_DSA_Ctx *CRYPT_ML_DSA_DupCtx(CRYPT_ML_DSA_Ctx *ctx)
         CRYPT_MEM_ALLOC_FAIL);
     newCtx->pubLen = ctx->pubLen;
     newCtx->prvLen = ctx->prvLen;
+    newCtx->needEncodeCtx = ctx->needEncodeCtx;
+    newCtx->isMuMsg = ctx->isMuMsg;
+    newCtx->deterministicSignFlag = ctx->deterministicSignFlag;
+    newCtx->needPreHash = ctx->needPreHash;
     return newCtx;
 ERR:
     CRYPT_ML_DSA_FreeCtx(newCtx);
@@ -556,7 +560,7 @@ static int32_t MLDSAPreHashEncode(CRYPT_ML_DSA_Ctx *ctx, int32_t hashId, const u
         BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);
         return CRYPT_INVALID_ARG;
     }
-    BslOidString *oidInfo = BSL_OBJ_GetOidFromCID(hashId);
+    BslOidString *oidInfo = BSL_OBJ_GetOID(hashId);
     RETURN_RET_IF(oidInfo == NULL, CRYPT_ERR_ALGID);
 
     const EAL_MdMethod *hashMethod = EAL_MdFindMethod(hashId);

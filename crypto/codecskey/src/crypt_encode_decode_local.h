@@ -44,21 +44,6 @@ typedef struct {
     BSL_Buffer *enData;
 } EncryptPara;
 
-typedef struct {
-    BslCid keyType;
-    BSL_ASN1_Buffer keyParam;
-    BSL_ASN1_BitString pubKey;
-} CRYPT_DECODE_SubPubkeyInfo;
-
-typedef struct {
-    int32_t version;
-    BslCid keyType;
-    BSL_ASN1_Buffer keyParam;
-    uint8_t *pkeyRawKey;
-    uint32_t pkeyRawKeyLen;
-    void *attrs; // HITLS_X509_Attrs *
-} CRYPT_ENCODE_DECODE_Pk8PrikeyInfo;
-
 typedef enum {
     CRYPT_RSA_PUB_N_IDX = 0,
     CRYPT_RSA_PUB_E_IDX = 1,
@@ -129,25 +114,21 @@ int32_t ParsePk8PriKeyBuff(BSL_Buffer *buff, CRYPT_EAL_PkeyCtx **ealPriKey);
 int32_t ParsePk8EncPriKeyBuff(BSL_Buffer *buff, const BSL_Buffer *pwd, CRYPT_EAL_PkeyCtx **ealPriKey);
 
 int32_t CRYPT_DECODE_Pkcs8PrvDecrypt(CRYPT_EAL_LibCtx *libctx, const char *attrName, BSL_Buffer *buff,
-    const BSL_Buffer *pwd, BSL_Buffer *decode);
+    const BSL_Buffer *pwd, BSL_ASN1_DecTemplCallBack keyInfoCb, BSL_Buffer *decode);
 
 int32_t CRYPT_DECODE_ParseEncDataAsn1(CRYPT_EAL_LibCtx *libctx, const char *attrName, BslCid symAlg,
-    EncryptPara *encPara, const BSL_Buffer *pwd, BSL_Buffer *decode);
+    EncryptPara *encPara, const BSL_Buffer *pwd, BSL_ASN1_DecTemplCallBack keyInfoCb, BSL_Buffer *decode);
 
 #endif
 
 int32_t CRYPT_EAL_ParseAsn1SubPubkey(uint8_t *buff, uint32_t buffLen, void **ealPubKey, bool isComplete);
 
-int32_t CRYPT_DECODE_SubPubkey(uint8_t *buff, uint32_t buffLen, CRYPT_DECODE_SubPubkeyInfo *subPubkeyInfo,
-    bool isComplete);
-
-int32_t CRYPT_DECODE_AlgoIdAsn1Buff(uint8_t *buff, uint32_t buffLen, BSL_ASN1_Buffer *algoId, uint32_t algoIdNum);
+int32_t CRYPT_DECODE_AlgoIdAsn1Buff(uint8_t *buff, uint32_t buffLen, BSL_ASN1_DecTemplCallBack keyInfoCb,
+    BSL_ASN1_Buffer *algoId, uint32_t algoIdNum);
 
 int32_t CRYPT_DECODE_ConstructBufferOutParam(BSL_Param **outParam, uint8_t *buffer, uint32_t bufferLen);
 
 int32_t CRYPT_DECODE_ParseSubKeyInfo(uint8_t *buff, uint32_t buffLen, BSL_ASN1_Buffer *pubAsn1, bool isComplete);
-
-int32_t CRYPT_DECODE_Pkcs8Info(uint8_t *buff, uint32_t buffLen, CRYPT_ENCODE_DECODE_Pk8PrikeyInfo *pk8PrikeyInfo);
 
 int32_t CRYPT_DECODE_PrikeyAsn1Buff(uint8_t *buffer, uint32_t bufferLen, BSL_ASN1_Buffer *asn1, uint32_t arrNum);
 
@@ -156,11 +137,11 @@ int32_t CRYPT_DECODE_RsaPubkeyAsn1Buff(uint8_t *buff, uint32_t buffLen, BSL_ASN1
 
 int32_t CRYPT_DECODE_RsaPrikeyAsn1Buff(uint8_t *buff, uint32_t buffLen, BSL_ASN1_Buffer *asn1, uint32_t asn1Num);
 
-int32_t CRYPT_RSA_ParsePubkeyAsn1Buff( uint8_t *buff, uint32_t buffLen, BSL_ASN1_Buffer *param,
+int32_t CRYPT_RSA_ParsePubkeyAsn1Buff(uint8_t *buff, uint32_t buffLen, BSL_ASN1_Buffer *param,
     CRYPT_RSA_Ctx **rsaPubKey, BslCid cid);
 int32_t CRYPT_RSA_ParsePkcs8Key(uint8_t *buff, uint32_t buffLen, CRYPT_RSA_Ctx **rsaPriKey);
 
-int32_t CRYPT_RSA_ParseSubPubkeyAsn1Buff( uint8_t *buff, uint32_t buffLen, CRYPT_RSA_Ctx **pubKey, bool isComplete);
+int32_t CRYPT_RSA_ParseSubPubkeyAsn1Buff(uint8_t *buff, uint32_t buffLen, CRYPT_RSA_Ctx **pubKey, bool isComplete);
 
 int32_t CRYPT_RSA_ParsePrikeyAsn1Buff(uint8_t *buff, uint32_t buffLen, BSL_ASN1_Buffer *rsaPssParam,
     CRYPT_RSA_Ctx **rsaPriKey);
@@ -207,8 +188,6 @@ int32_t CRYPT_ENCODE_AlgoIdAsn1Buff(BSL_ASN1_Buffer *algoId, uint32_t algoIdNum,
 
 int32_t CRYPT_ENCODE_PkcsEncryptedBuff(CRYPT_EAL_LibCtx *libCtx, const char *attrName, CRYPT_Pbkdf2Param *pkcsParam,
     BSL_Buffer *unEncrypted, BSL_ASN1_Buffer *asn1);
-
-int32_t CRYPT_ENCODE_Pkcs8Info(CRYPT_ENCODE_DECODE_Pk8PrikeyInfo *pk8PrikeyInfo, BSL_Buffer *asn1);
 
 int32_t CRYPT_ENCODE_EccPrikeyAsn1Buff(BSL_ASN1_Buffer *asn1, uint32_t asn1Num, BSL_Buffer *encode);
 

@@ -205,3 +205,44 @@ int32_t ParseErrorExtLengthProcess(TLS_Ctx *ctx, uint32_t logId, const void *for
     ctx->method.sendAlert(ctx, ALERT_LEVEL_FATAL, ALERT_DECODE_ERROR);
     return HITLS_PARSE_INVALID_MSG_LEN;
 }
+
+bool GetExtensionFlagValue(TLS_Ctx *ctx, uint32_t hsExTypeId)
+{
+    switch (hsExTypeId) {
+        case HS_EX_TYPE_ID_SERVER_NAME:                 return ctx->hsCtx->extFlag.haveServerName;
+        case HS_EX_TYPE_ID_SUPPORTED_GROUPS:            return ctx->hsCtx->extFlag.haveSupportedGroups;
+        case HS_EX_TYPE_ID_POINT_FORMATS:               return ctx->hsCtx->extFlag.havePointFormats;
+        case HS_EX_TYPE_ID_SIGNATURE_ALGORITHMS:        return ctx->hsCtx->extFlag.haveSignatureAlgorithms;
+        case HS_EX_TYPE_ID_EXTENDED_MASTER_SECRET:      return ctx->hsCtx->extFlag.haveExtendedMasterSecret;
+        case HS_EX_TYPE_ID_SUPPORTED_VERSIONS:          return ctx->hsCtx->extFlag.haveSupportedVers;
+        case HS_EX_TYPE_ID_CERTIFICATE_AUTHORITIES:     return ctx->hsCtx->extFlag.haveCA;
+        case HS_EX_TYPE_ID_POST_HS_AUTH:                return ctx->hsCtx->extFlag.havePostHsAuth;
+        case HS_EX_TYPE_ID_KEY_SHARE:                   return ctx->hsCtx->extFlag.haveKeyShare;
+        case HS_EX_TYPE_ID_EARLY_DATA:                  return ctx->hsCtx->extFlag.haveEarlyData;
+        case HS_EX_TYPE_ID_PSK_KEY_EXCHANGE_MODES:      return ctx->hsCtx->extFlag.havePskExMode;
+        case HS_EX_TYPE_ID_PRE_SHARED_KEY:              return ctx->hsCtx->extFlag.havePreShareKey;
+        case HS_EX_TYPE_ID_APP_LAYER_PROTOCOLS:         return ctx->hsCtx->extFlag.haveAlpn;
+        case HS_EX_TYPE_ID_SESSION_TICKET:              return ctx->hsCtx->extFlag.haveTicket;
+        case HS_EX_TYPE_ID_ENCRYPT_THEN_MAC:            return ctx->hsCtx->extFlag.haveEncryptThenMac;
+        case HS_EX_TYPE_ID_SIGNATURE_ALGORITHMS_CERT:   return ctx->hsCtx->extFlag.haveSignatureAlgorithmsCert;
+        case HS_EX_TYPE_ID_COOKIE:
+        case HS_EX_TYPE_ID_RENEGOTIATION_INFO:
+        default:
+            break;
+    }
+    return true;
+}
+
+int32_t CheckForDuplicateExtension(uint64_t extensionTypeMask, uint32_t extensionId, TLS_Ctx *ctx)
+{
+    // can not process duplication unknown ext, unknown ext is verified elsewhere
+    if (((extensionTypeMask & (1ULL << extensionId)) != 0) && extensionId != HS_EX_TYPE_ID_UNRECOGNIZED) {
+        BSL_ERR_PUSH_ERROR(HITLS_PARSE_DUPLICATE_EXTENDED_MSG);
+        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID17328, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
+            "extension type %u is repeated.", extensionId, 0, 0, 0);
+        ctx->method.sendAlert(ctx, ALERT_LEVEL_FATAL, ALERT_ILLEGAL_PARAMETER);
+        return HITLS_PARSE_DUPLICATE_EXTENDED_MSG;
+    }
+
+    return HITLS_SUCCESS;
+}

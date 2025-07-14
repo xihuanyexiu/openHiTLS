@@ -236,6 +236,10 @@ typedef struct {
     void *infoCb;                       // connection establishment callback function
     void *msgCb;                        // Message callback function
     void *msgArg;                       // Message callback parameter function
+    void *certCb;
+    void *certArg;
+    void *clientHelloCb;
+    void *clientHelloArg;
     // Indicates whether to enable the function of sending handshake information by flight
     bool isFlightTransmitEnable;
     bool isNoSetCert;                   // Indicates whether the certificate does not need to be set
@@ -260,6 +264,7 @@ typedef struct {
     int32_t providerLibFmts[MAX_PROVIDER_COUNT];
     int32_t providerCnt;
     char attrName[MAX_ATTR_NAME_LEN];
+    uint32_t modeSupport;       // support features, such as HITLS_MODE_SEND_FALLBACK_SCSV. All mode at hitls_type.h
 } HLT_Ctx_Config;
 
 typedef struct {

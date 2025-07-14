@@ -510,7 +510,7 @@ static void RefreshCtx(CRYPT_DH_Ctx *dhCtx, BN_BigNum *x, BN_BigNum *y, int32_t 
     }
 }
 
-/* SP800-56Ar3 5.6.1.1.4 Key-Pair Generation by Testing Candidates */
+/* SP800-56Ar3 5_6_1_1_4 Key-Pair Generation by Testing Candidates */
 static int32_t DH_GenSp80056ATestCandidates(CRYPT_DH_Ctx *ctx)
 {
     int32_t ret;
@@ -702,41 +702,43 @@ int32_t CRYPT_DH_ComputeShareKey(const CRYPT_DH_Ctx *ctx, const CRYPT_DH_Ctx *pu
     if (ret != CRYPT_SUCCESS) {
         return ret;
     }
-    BN_BigNum *minP = BN_Create(BN_Bits(ctx->para->p) + 1);
-    BN_BigNum *r = BN_Create(BN_Bits(ctx->para->p));
+    uint32_t bits = BN_Bits(ctx->para->p);
+    BN_BigNum *tmp = BN_Create(bits);
     BN_Mont *mont = BN_MontCreate(ctx->para->p);
     BN_Optimizer *opt = BN_OptimizerCreate();
-    if (minP == NULL || r == NULL || mont == NULL || opt == NULL) {
+    if (tmp == NULL || mont == NULL || opt == NULL) {
         ret = CRYPT_MEM_ALLOC_FAIL;
         BSL_ERR_PUSH_ERROR(ret);
         goto EXIT;
     }
-    ret = BN_SubLimb(minP, ctx->para->p, 1);
+    ret = BN_SubLimb(tmp, ctx->para->p, 1);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         goto EXIT;
     }
     /* Check whether the public key meets the requirements. */
-    ret = PubCheck(pubKey->y, minP);
+    ret = PubCheck(pubKey->y, tmp);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         goto EXIT;
     }
-    ret = BN_MontExpConsttime(r, pubKey->y, ctx->x, mont, opt);
+    ret = BN_MontExpConsttime(tmp, pubKey->y, ctx->x, mont, opt);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         goto EXIT;
     }
-    ret = BN_Bn2Bin(r, shareKey, shareKeyLen);
+    ret = BN_Bn2Bin(tmp, shareKey, shareKeyLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
+        goto EXIT;
     }
-    bytes = BN_Bytes(ctx->para->p);
-    CheckAndFillZero(shareKey, shareKeyLen, bytes);
-
+    // no need to filled zero in the leading.
+    if ((ctx->flags & CRYPT_DH_NO_PADZERO) == 0) {
+        bytes = BN_BITS_TO_BYTES(bits);
+        CheckAndFillZero(shareKey, shareKeyLen, bytes);
+    }
 EXIT:
-    BN_Destroy(minP);
-    BN_Destroy(r);
+    BN_Destroy(tmp);
     BN_MontDestroy(mont);
     BN_OptimizerDestroy(opt);
     return ret;
@@ -974,6 +976,44 @@ static uint32_t CRYPT_DH_GetSharedKeyLen(const CRYPT_DH_Ctx *ctx)
     return 0;
 }
 
+int32_t CRYPT_DH_Check(const CRYPT_DH_Ctx *prv, const CRYPT_DH_Ctx *pub)
+{
+    int32_t ret;
+    if (prv == NULL || pub == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    if (prv->x == NULL || pub->y == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_DH_KEYINFO_ERROR);
+        return CRYPT_DH_KEYINFO_ERROR;
+    }
+    if (prv->para == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_DH_PARA_ERROR);
+        return CRYPT_DH_PARA_ERROR;
+    }
+    BN_Mont *mont = BN_MontCreate(prv->para->p);
+    BN_BigNum *y = BN_Create(BN_Bits(prv->para->p));
+    if (y == NULL || mont == NULL) {
+        ret = CRYPT_MEM_ALLOC_FAIL;
+        BSL_ERR_PUSH_ERROR(ret);
+        goto ERR;
+    }
+    ret = BN_MontExpConsttime(y, prv->para->g, prv->x, mont, NULL);
+    if (ret != CRYPT_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+        goto ERR;
+    }
+    if (BN_Cmp(y, pub->y) != 0) {
+        ret = CRYPT_DH_PAIRWISE_CHECK_FAIL;
+        BSL_ERR_PUSH_ERROR(ret);
+    }
+
+ERR:
+    BN_Destroy(y);
+    BN_MontDestroy(mont);
+    return ret;
+}
+
 int32_t CRYPT_DH_Cmp(const CRYPT_DH_Ctx *a, const CRYPT_DH_Ctx *b)
 {
     RETURN_RET_IF(a == NULL || b == NULL, CRYPT_NULL_INPUT);
@@ -1017,6 +1057,25 @@ static int32_t CRYPT_DH_GetLen(const CRYPT_DH_Ctx *ctx, GetLenFunc func, void *v
     return CRYPT_SUCCESS;
 }
 
+static int32_t CRYPT_DH_SetFlag(CRYPT_DH_Ctx *ctx, const void *val, uint32_t len)
+{
+    if (val == NULL) {
+        BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
+        return CRYPT_NULL_INPUT;
+    }
+    if (len != sizeof(uint32_t)) {
+        BSL_ERR_PUSH_ERROR(CRYPT_DH_SET_FLAG_LEN_ERROR);
+        return CRYPT_DH_SET_FLAG_LEN_ERROR;
+    }
+    uint32_t flag = *(const uint32_t *)val;
+    if (flag == 0 || flag >= CRYPT_DH_MAXFLAG) {
+        BSL_ERR_PUSH_ERROR(CRYPT_DH_FLAG_NOT_SUPPORT_ERROR);
+        return CRYPT_DH_FLAG_NOT_SUPPORT_ERROR;
+    }
+    ctx->flags |= flag;
+    return CRYPT_SUCCESS;
+}
+
 int32_t CRYPT_DH_Ctrl(CRYPT_DH_Ctx *ctx, int32_t opt, void *val, uint32_t len)
 {
     if (ctx == NULL) {
@@ -1038,6 +1097,8 @@ int32_t CRYPT_DH_Ctrl(CRYPT_DH_Ctx *ctx, int32_t opt, void *val, uint32_t len)
             return GetUintCtrl(ctx, val, len, (GetUintCallBack)CRYPT_DH_GetSharedKeyLen);
         case CRYPT_CTRL_SET_PARA_BY_ID:
             return CRYPT_DH_SetParamById(ctx, *(CRYPT_PKEY_ParaId *)val);
+        case CRYPT_CTRL_SET_DH_FLAG:
+            return CRYPT_DH_SetFlag(ctx, val, len);
         case CRYPT_CTRL_UP_REFERENCES:
             if (val == NULL || len != (uint32_t)sizeof(int)) {
                 BSL_ERR_PUSH_ERROR(CRYPT_INVALID_ARG);

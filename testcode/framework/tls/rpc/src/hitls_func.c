@@ -20,12 +20,13 @@
 #include <arpa/inet.h>
 
 #include "uio_base.h"
+#include "bsl_sal.h"
+#include "sal_net.h"
 #include "hitls.h"
 #include "hitls_cert_type.h"
 #include "hitls_config.h"
 #include "hitls_error.h"
 #include "hitls_psk.h"
-#include "hitls_session.h"
 #include "hitls_session.h"
 #include "hitls_debug.h"
 #include "hitls_sni.h"
@@ -192,6 +193,7 @@ static const HitlsConfig g_groupList[] = {
     {"SecP384r1MLKEM1024", 4589}, // for new kem group
     {"test_new_group", 477}, // for new group
     {"test_new_group_kem",  478}, // NEW_KEM_ALGID
+    {"test_new_group_with_new_key_type", 479}, // NEW_PKEY_ALGID
 };
 
 static const HitlsConfig g_signatureList[] = {
@@ -221,6 +223,8 @@ static const HitlsConfig g_signatureList[] = {
     {"CERT_SIG_SCHEME_RSA_PSS_PSS_SHA512", CERT_SIG_SCHEME_RSA_PSS_PSS_SHA512},
     {"HITLS_INVALID_SIG_TC01", 0xFFFF},
     {"HITLS_INVALID_SIG_TC02", 0xFFFE},
+    {"test_new_sign_alg_name", 23333},
+    {"test_new_sign_alg_name_with_new_key_type", 24444},
 };
 
 static const HitlsConfig g_eccFormatList[] = {
@@ -342,22 +346,30 @@ HITLS_Config *HitlsNewCtx(TLS_VERSION tlsVersion)
 {
     HITLS_Config *hitlsConfig = NULL;
     switch (tlsVersion) {
+#ifdef HITLS_TLS_PROTO_DTLS12
         case DTLS1_2:
             LOG_DEBUG("HiTLS New DTLS1_2 Ctx");
             hitlsConfig = HITLS_CFG_NewDTLS12Config();
             break;
+#endif
+#ifdef HITLS_TLS_PROTO_TLS12
         case TLS1_2:
             LOG_DEBUG("HiTLS New TLS1_2 Ctx");
             hitlsConfig = HITLS_CFG_NewTLS12Config();
             break;
+#endif
+#ifdef HITLS_TLS_PROTO_TLS13
         case TLS1_3:
             LOG_DEBUG("HiTLS New TLS1_3 Ctx");
             hitlsConfig = HITLS_CFG_NewTLS13Config();
             break;
+#endif
+#ifdef HITLS_TLS_PROTO_ALL
         case TLS_ALL:
             LOG_DEBUG("HiTLS New TLS_ALL Ctx");
             hitlsConfig = HITLS_CFG_NewTLSConfig();
             break;
+#endif
 #ifdef HITLS_TLS_PROTO_TLCP11
         case TLCP1_1:
             LOG_DEBUG("HiTLS New TLCP1_1 Ctx");
@@ -457,23 +469,27 @@ static int8_t HitlsSetConfig(const HitlsConfig *hitlsConfigList, int configListS
 int HitlsSetCtx(HITLS_Config *outCfg, HLT_Ctx_Config *inCtxCfg)
 {
     int ret = 0;
+#ifdef HITLS_TLS_FEATURE_SESSION
     if (inCtxCfg->setSessionCache >= 0) {
         LOG_DEBUG("HiTLS Set SessionCache is %d", inCtxCfg->setSessionCache);
         HITLS_CFG_SetSessionCacheMode(outCfg, inCtxCfg->setSessionCache);
     }
-
+#endif
+#ifdef HITLS_TLS_PROTO_ALL
     // Set the protocol version.
     if ((inCtxCfg->minVersion != 0) && (inCtxCfg->maxVersion != 0)) {
         LOG_DEBUG("HiTLS Set minVersion is %u maxVersion is %u", inCtxCfg->minVersion, inCtxCfg->maxVersion);
         ret = HITLS_CFG_SetVersion(outCfg, inCtxCfg->minVersion, inCtxCfg->maxVersion);
         ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetVersion Error ERROR");
     }
+#endif
     if (inCtxCfg->SupportType == SERVER_CFG_SET_TRUE) {
         HITLS_CFG_SetCipherServerPreference(outCfg, true);
     }
     if (inCtxCfg->SupportType == SERVER_CFG_SET_FALSE) {
         HITLS_CFG_SetCipherServerPreference(outCfg, false);
     }
+#ifdef HITLS_TLS_FEATURE_RENEGOTIATION
     // Setting Renegotiation
     LOG_DEBUG("HiTLS Set Support Renegotiation is %d", inCtxCfg->isSupportRenegotiation);
     ret = HITLS_CFG_SetRenegotiationSupport(outCfg, inCtxCfg->isSupportRenegotiation);
@@ -482,12 +498,12 @@ int HitlsSetCtx(HITLS_Config *outCfg, HLT_Ctx_Config *inCtxCfg)
     LOG_DEBUG("HiTLS Set allow Client Renegotiate is %d", inCtxCfg->allowClientRenegotiate);
     ret = HITLS_CFG_SetClientRenegotiateSupport(outCfg, inCtxCfg->allowClientRenegotiate);
     ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetClientRenegotiateSupport ERROR");
-
+#endif
+#ifdef HITLS_TLS_FEATURE_CERT_MODE
     // Whether to enable dual-ended verification
     LOG_DEBUG("HiTLS Set Support Client Verify is %d", inCtxCfg->isSupportClientVerify);
     ret = HITLS_CFG_SetClientVerifySupport(outCfg, inCtxCfg->isSupportClientVerify);
     ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetClientVerifySupport ERROR");
-
     LOG_DEBUG("HiTLS Set readAhead is %d", inCtxCfg->readAhead);
     ret = HITLS_CFG_SetReadAhead(outCfg, inCtxCfg->readAhead);
     ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetReadAhead ERROR");
@@ -496,32 +512,36 @@ int HitlsSetCtx(HITLS_Config *outCfg, HLT_Ctx_Config *inCtxCfg)
     LOG_DEBUG("HiTLS Set Support Not Client Cert is %d", inCtxCfg->isSupportNoClientCert);
     ret = HITLS_CFG_SetNoClientCertSupport(outCfg, inCtxCfg->isSupportNoClientCert);
     ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetNoClientCertSupport ERROR");
-
+#endif
+#ifdef HITLS_TLS_FEATURE_PHA
     // Whether to enable pha
     LOG_DEBUG("HiTLS Set Support pha is %d", inCtxCfg->isSupportPostHandshakeAuth);
     ret = HITLS_CFG_SetPostHandshakeAuthSupport(outCfg, inCtxCfg->isSupportPostHandshakeAuth);
     ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetPostHandshakeAuth ERROR");
-
+#endif
     // Indicates whether extended master keys are supported.
     LOG_DEBUG("HiTLS Set Support Extend Master Secret is %d", inCtxCfg->isSupportExtendMasterSecret);
     ret = HITLS_CFG_SetExtenedMasterSecretSupport(outCfg, inCtxCfg->isSupportExtendMasterSecret);
     ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetExtenedMasterSecretSupport ERROR");
 
+#ifdef HITLS_TLS_CONFIG_KEY_USAGE
     // Support CloseCheckKeyUsage
     LOG_DEBUG("HiTLS Set CloseCheckKeyUsage is false");
     ret = HITLS_CFG_SetCheckKeyUsage(outCfg, inCtxCfg->needCheckKeyUsage);
     ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetCheckKeyUsage ERROR");
-
+#endif
+#ifdef HITLS_TLS_FEATURE_SESSION_TICKET
 	// Indicates whether to support sessionTicket.
     LOG_DEBUG("HiTLS Set Support SessionTicket is %d", inCtxCfg->isSupportSessionTicket);
     ret = HITLS_CFG_SetSessionTicketSupport(outCfg, inCtxCfg->isSupportSessionTicket);
     ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetSessionTicketSupport ERROR");
-
+#endif
+#ifdef HITLS_TLS_SUITE_CIPHER_CBC
     // Whether encrypt-then-mac is supported
     LOG_DEBUG("HiTLS Set Support EncryptThenMac is %d", inCtxCfg->isEncryptThenMac);
     ret = HITLS_CFG_SetEncryptThenMac(outCfg, (uint32_t)inCtxCfg->isEncryptThenMac);
     ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetEncryptThenMac ERROR");
-
+#endif
     // ECC Point Format Configuration for Asymmetric Algorithms
     if (strncmp("NULL", inCtxCfg->pointFormats, strlen(inCtxCfg->pointFormats)) != 0) {
         LOG_DEBUG("HiTLS Set PoinFormats is %s", inCtxCfg->pointFormats);
@@ -553,14 +573,13 @@ int HitlsSetCtx(HITLS_Config *outCfg, HLT_Ctx_Config *inCtxCfg)
         ret = HitlsSetConfig(g_signatureList, configListSize, outCfg, inCtxCfg->signAlgorithms, SIGNATURE);
         ASSERT_RETURN(ret == SUCCESS, "Hitls Set Signature ERROR");
     }
-
+#ifdef HITLS_TLS_FEATURE_SNI
     // sni
     if (strncmp("NULL", inCtxCfg->serverName, strlen(inCtxCfg->serverName)) != 0) {
         LOG_DEBUG("HiTLS Set ServerName is %s", inCtxCfg->serverName);
         ret = HITLS_CFG_SetServerName(outCfg, (uint8_t *)inCtxCfg->serverName, strlen(inCtxCfg->serverName));
         ASSERT_RETURN(ret == SUCCESS, "Hitls Set ServerName ERROR");
     }
-
     // Register the server_name function callback.
     if (strncmp("NULL", inCtxCfg->sniDealCb, strlen(inCtxCfg->sniDealCb)) != 0) {
         LOG_DEBUG("HiTLS Set server_name callback is %s", inCtxCfg->sniDealCb);
@@ -574,7 +593,8 @@ int HitlsSetCtx(HITLS_Config *outCfg, HLT_Ctx_Config *inCtxCfg)
         ret = HITLS_CFG_SetServerNameArg(outCfg, GetExampleData(inCtxCfg->sniArg));
         ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetServerNameArg Fail");
     }
-
+#endif
+#ifdef HITLS_TLS_FEATURE_ALPN
     // alpn
     if (strncmp("NULL", inCtxCfg->alpnList, strlen(inCtxCfg->alpnList)) != 0) {
         LOG_DEBUG("HiTLS Set alpnList is %s", inCtxCfg->alpnList);
@@ -589,12 +609,12 @@ int HitlsSetCtx(HITLS_Config *outCfg, HLT_Ctx_Config *inCtxCfg)
             outCfg, GetExtensionCb(inCtxCfg->alpnSelectCb), GetExampleData(inCtxCfg->alpnUserData));
         ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetAlpnProtosSelectCb Fail");
     }
-
+#endif
     // Loading Certificates
     ret = HiTLS_X509_LoadCertAndKey(outCfg, inCtxCfg->caCert, inCtxCfg->chainCert,
         inCtxCfg->eeCert, inCtxCfg->signCert, inCtxCfg->privKey, inCtxCfg->signPrivKey);
     ASSERT_RETURN(ret == SUCCESS, "Load cert Fail");
-
+#ifdef HITLS_TLS_FEATURE_PSK
     if (strncmp("NULL", inCtxCfg->psk, strlen(inCtxCfg->psk)) != 0) {
         ret = ExampleSetPsk(inCtxCfg->psk);
         ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetPskClientCallback Fail");
@@ -605,13 +625,16 @@ int HitlsSetCtx(HITLS_Config *outCfg, HLT_Ctx_Config *inCtxCfg)
         ret = HITLS_CFG_SetPskServerCallback(outCfg, ExampleServerCb);
         ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetPskServerCallback Fail");
     }
+#endif
 
+#if defined(HITLS_TLS_FEATURE_SESSION_TICKET)
     if (strncmp("NULL", inCtxCfg->ticketKeyCb, strlen(inCtxCfg->ticketKeyCb)) != 0) {
         LOG_DEBUG("HiTLS Set Ticker key callback is %s", inCtxCfg->ticketKeyCb);
         ret = HITLS_CFG_SetTicketKeyCallback(outCfg, GetTicketKeyCb(inCtxCfg->ticketKeyCb));
         ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetTicketKeyCallback Fail");
     }
-
+#endif
+#ifdef HITLS_TLS_FEATURE_INDICATOR
     // Load link setup callback
     if (inCtxCfg->infoCb != NULL) {
         LOG_DEBUG("HiTLS Set info callback");
@@ -630,37 +653,63 @@ int HitlsSetCtx(HITLS_Config *outCfg, HLT_Ctx_Config *inCtxCfg)
         ret = HITLS_CFG_SetMsgCbArg(outCfg, inCtxCfg->msgArg);
         ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetMsgCbArg Fail");
     }
-
+#ifdef HITLS_TLS_FEATURE_CERT_CB
+    if (inCtxCfg->certCb != NULL && inCtxCfg->certArg != NULL) {
+        LOG_DEBUG("HiTLS Set cert callback");
+        ret = HITLS_CFG_SetCertCb(outCfg, inCtxCfg->certCb, inCtxCfg->certArg);
+        ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetCertCb Fail");
+    }
+#endif
+#ifdef HITLS_TLS_FEATURE_CLIENT_HELLO_CB
+    if (inCtxCfg->clientHelloCb != NULL && inCtxCfg->clientHelloArg != NULL) {
+        LOG_DEBUG("HiTLS Set clientHello callback");
+        ret = HITLS_CFG_SetClientHelloCb(outCfg, inCtxCfg->clientHelloCb, inCtxCfg->clientHelloArg);
+        ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetClientHelloCb Fail");
+    }
+#endif
+#endif
+#ifdef HITLS_TLS_FEATURE_FLIGHT
     // Sets whether to enable the function of sending handshake messages by flight.
     LOG_DEBUG("HiTLS Set Support isFlightTransmitEnable is %d", inCtxCfg->isFlightTransmitEnable);
     ret = HITLS_CFG_SetFlightTransmitSwitch(outCfg, inCtxCfg->isFlightTransmitEnable);
     ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetFlightTransmitSwitch ERROR");
-
+#endif
+#ifdef HITLS_TLS_FEATURE_SECURITY
     // Setting the security level
     LOG_DEBUG("HiTLS Set SecurityLevel is %d", inCtxCfg->securitylevel);
     ret = HITLS_CFG_SetSecurityLevel(outCfg, inCtxCfg->securitylevel);
     ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetSecurityLevel ERROR");
-
+#endif
+#ifdef HITLS_TLS_CONFIG_MANUAL_DH
     // Indicates whether the DH key length can be followed by the certificate.
     LOG_DEBUG("HiTLS Set Support DHAuto is %d", inCtxCfg->isSupportDhAuto);
     ret = HITLS_CFG_SetDhAutoSupport(outCfg, inCtxCfg->isSupportDhAuto);
     ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetDhAutoSupport ERROR");
-
+#endif
+#ifdef HITLS_TLS_PROTO_TLS13
     // TLS1.3 key exchange mode
     if (outCfg->maxVersion == HITLS_VERSION_TLS13) {
         LOG_DEBUG("HiTLS Set keyExchMode is %u", inCtxCfg->keyExchMode);
     ret = HITLS_CFG_SetKeyExchMode(outCfg, inCtxCfg->keyExchMode);
     ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetKeyExchMode ERROR");
     }
-
+#endif
+#ifdef HITLS_TLS_FEATURE_CERT_MODE
     // Set whether to enable isSupportVerifyNone;
     LOG_DEBUG("HiTLS Set Support pha is %d", inCtxCfg->isSupportVerifyNone);
     ret = HITLS_CFG_SetVerifyNoneSupport(outCfg, inCtxCfg->isSupportVerifyNone);
     ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetVerifyNoneSupport ERROR");
-
+#endif
     LOG_DEBUG("HiTLS Set Empty Record Number is %u", inCtxCfg->emptyRecordsNum);
     ret = HITLS_CFG_SetEmptyRecordsNum(outCfg, inCtxCfg->emptyRecordsNum);
-    ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetEmptyRecordsNum");
+    ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetEmptyRecordsNum ERROR");
+
+#ifdef HITLS_TLS_FEATURE_MODE
+    // HiTLS Set ModeSupport
+    LOG_DEBUG("HiTLS Set ModeSupport is %u", inCtxCfg->modeSupport);
+    ret = HITLS_CFG_SetModeSupport(outCfg, inCtxCfg->modeSupport);
+    ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetModeSupport ERROR");
+#endif
 
 #if defined(HITLS_TLS_PROTO_TLS_BASIC) || defined(HITLS_TLS_PROTO_DTLS12)
     LOG_DEBUG("HiTLS Set allow Legacy Renegotiate is %d", inCtxCfg->allowLegacyRenegotiate);
@@ -691,12 +740,14 @@ void HitlsFreeSsl(void *ssl)
 const BSL_UIO_Method *GetDefaultMethod(HILT_TransportType type)
 {
     switch (type) {
-        case SCTP:
-            return SctpGetDefaultMethod();
+#ifdef HITLS_BSL_UIO_TCP
         case TCP:
             return TcpGetDefaultMethod();
+#endif
+#ifdef HITLS_BSL_UIO_UDP
         case UDP:
             return UdpGetDefaultMethod();
+#endif
         default:
             break;
     }
@@ -706,7 +757,6 @@ const BSL_UIO_Method *GetDefaultMethod(HILT_TransportType type)
 int HitlsSetSsl(void *ssl, HLT_Ssl_Config *sslConfig)
 {
     int ret;
-    SetNeedCbSctpCtrlCmd(sslConfig->sctpCtrlCmd);
     if (sslConfig->SupportType == SERVER_CTX_SET_TRUE) {
         HITLS_SetCipherServerPreference((HITLS_Ctx *)ssl, true);
     }
@@ -726,16 +776,24 @@ int HitlsSetSsl(void *ssl, HLT_Ssl_Config *sslConfig)
     }
 
     if (BSL_UIO_GetTransportType(uio) == BSL_UIO_UDP) {
-        struct sockaddr_in serverAddr;
-        uint32_t addrlen = sizeof(serverAddr);
-        if (getpeername(sslConfig->sockFd, (struct sockaddr *)&serverAddr, &addrlen) == 0) {
-            ret = BSL_UIO_Ctrl(uio, BSL_UIO_UDP_SET_CONNECTED, (int32_t)sizeof(serverAddr), &serverAddr);
+        BSL_SAL_SockAddr serverAddr = NULL;
+        ret = SAL_SockAddrNew(&serverAddr);
+        if (ret != BSL_SUCCESS) {
+            LOG_ERROR("SAL_SockAddrNew failed\n");
+            BSL_UIO_Free(uio);
+            return ret;
+        }
+        int32_t addrlen = (int32_t)SAL_SockAddrSize(serverAddr);
+        if (getpeername(sslConfig->sockFd, (struct sockaddr *)serverAddr, (socklen_t *)&addrlen) == 0) {
+            ret = BSL_UIO_Ctrl(uio, BSL_UIO_UDP_SET_CONNECTED, addrlen, serverAddr);
             if (ret != HITLS_SUCCESS) {
-                LOG_ERROR("BSL_UIO_SET_PEER_IP_ADDR failed\n");
+                LOG_ERROR("BSL_UIO_SET_PEER_IP_ADDR failed %d\n", addrlen);
+                SAL_SockAddrFree(serverAddr);
                 BSL_UIO_Free(uio);
                 return ERROR;
             }
         }
+        SAL_SockAddrFree(serverAddr);
     }
 
     BSL_UIO_SetInit(uio, 1);
@@ -752,38 +810,44 @@ int HitlsSetSsl(void *ssl, HLT_Ssl_Config *sslConfig)
     return SUCCESS;
 }
 
-int HitlsAccept(void *ssl)
+void *HitlsAccept(void *ssl)
 {
-    int ret, tryNum;
-    tryNum = 0;
+    static int ret;
+    int timeout = TIME_OUT_SEC;
+    if (getenv("SSL_TIMEOUT") != NULL) {
+        timeout = atoi(getenv("SSL_TIMEOUT"));
+    }
+    time_t start = time(NULL);
     LOG_DEBUG("HiTLS Tls Accept Ing...");
     do {
         ret = HITLS_Accept(ssl);
         usleep(1000); // stay 1000us
-        tryNum++;
-    } while ((ret == HITLS_REC_NORMAL_RECV_BUF_EMPTY ||
-            ret == HITLS_REC_NORMAL_IO_BUSY) &&
-            (tryNum < FUNC_TIME_OUT_SEC * 1000)); // usleep(1000) after each attemp.
+    } while ((ret == HITLS_REC_NORMAL_RECV_BUF_EMPTY || ret == HITLS_REC_NORMAL_IO_BUSY ||
+            ret == HITLS_CALLBACK_CLIENT_HELLO_RETRY || ret == HITLS_CALLBACK_CERT_RETRY) &&
+            ((time(NULL) - start < timeout))); // usleep(1000) after each attemp.
     if (ret != SUCCESS) {
         LOG_ERROR("HITLS_Accept Error is %d", ret);
     } else {
         LOG_DEBUG("HiTLS Tls Accept Success");
     }
-    return ret;
+    return &ret;
 }
 
 int HitlsConnect(void *ssl)
 {
-    int ret, tryNum;
-    tryNum = 0;
+    int ret;
+    int timeout = TIME_OUT_SEC;
+    if (getenv("SSL_TIMEOUT") != NULL) {
+        timeout = atoi(getenv("SSL_TIMEOUT"));
+    }
+    time_t start = time(NULL);
     LOG_DEBUG("HiTLS Tls Connect Ing...");
     do {
         ret = HITLS_Connect(ssl);
         usleep(1000); // stay 1000us
-        tryNum++;
-    } while ((ret == HITLS_REC_NORMAL_RECV_BUF_EMPTY ||
-            ret == HITLS_REC_NORMAL_IO_BUSY) &&
-            (tryNum < FUNC_TIME_OUT_SEC * 1000)); // usleep(1000) after each attemp.
+    } while ((ret == HITLS_REC_NORMAL_RECV_BUF_EMPTY || ret == HITLS_REC_NORMAL_IO_BUSY ||
+            ret == HITLS_CALLBACK_CERT_RETRY) &&
+            ((time(NULL) - start < timeout))); // usleep(1000) after each attemp.
     if (ret != SUCCESS) {
         LOG_ERROR("HITLS_Connect Error is %d", ret);
     } else {
@@ -794,33 +858,39 @@ int HitlsConnect(void *ssl)
 
 int HitlsWrite(void *ssl, uint8_t *data, uint32_t dataLen)
 {
-    int ret, tryNum;
+    int ret;
+    int timeout = 4;
+    if (getenv("SSL_TIMEOUT") != NULL) {
+        timeout = atoi(getenv("SSL_TIMEOUT"));
+    }
+    time_t start = time(NULL);
     LOG_DEBUG("HiTLS Write Ing...");
-    tryNum = 0;
     uint32_t len = 0;
     do {
         ret = HITLS_Write(ssl, data, dataLen, &len);
-        tryNum++;
         usleep(1000); // stay 1000us
     } while ((ret == HITLS_REC_NORMAL_RECV_BUF_EMPTY ||
             ret == HITLS_REC_NORMAL_IO_BUSY) &&
-            (tryNum < 4000)); // A maximum of 4000 calls
+            (time(NULL) - start < timeout)); // A maximum of 4000 calls
     LOG_DEBUG("HiTLS Write Result is %d", ret);
     return ret;
 }
 
 int HitlsRead(void *ssl, uint8_t *data, uint32_t bufSize, uint32_t *readLen)
 {
-    int ret, tryNum;
+    int ret;
+    int timeout = 8;
+    if (getenv("SSL_TIMEOUT") != NULL) {
+        timeout = atoi(getenv("SSL_TIMEOUT"));
+    }
+    time_t start = time(NULL);
     LOG_DEBUG("HiTLS Read Ing...");
-    tryNum = 0;
     do {
         ret = HITLS_Read(ssl, data, bufSize, readLen);
-        tryNum++;
         usleep(1000); // stay 1000us
-    } while ((ret == HITLS_REC_NORMAL_RECV_BUF_EMPTY ||
-            ret == HITLS_REC_NORMAL_IO_BUSY) &&
-            (tryNum < 8000)); // A maximum of 4000 calls
+    } while ((ret == HITLS_REC_NORMAL_RECV_BUF_EMPTY || ret == HITLS_REC_NORMAL_IO_BUSY ||
+            ret == HITLS_CALLBACK_CERT_RETRY) &&
+            ((time(NULL) - start < timeout))); // A maximum of 8000 calls
     LOG_DEBUG("HiTLS Read Result is %d", ret);
     return ret;
 }
@@ -832,50 +902,87 @@ int HitlsClose(void *ctx)
 
 int HitlsRenegotiate(void *ssl)
 {
+#ifdef HITLS_TLS_FEATURE_RENEGOTIATION
     return HITLS_Renegotiate(ssl);
+#else
+    (void)ssl;
+    return -1;
+#endif
 }
 
 int HitlsSetMtu(void *ssl, uint16_t mtu)
 {
+#ifdef HITLS_TLS_PROTO_DTLS12
     return HITLS_SetMtu(ssl, mtu);
+#else
+    (void)ssl;
+    (void)mtu;
+    return -1;
+#endif
 }
 
 int HitlsSetSession(void *ssl, void *session)
 {
+#ifdef HITLS_TLS_FEATURE_SESSION
     return HITLS_SetSession(ssl, session);
+#else
+    (void)ssl;
+    (void)session;
+    return -1;
+#endif
 }
 
 int HitlsSessionReused(void *ssl)
 {
-    int32_t ret;
     uint8_t isReused = 0;
-
+    (void)ssl;
+#ifdef HITLS_TLS_FEATURE_SESSION
+    int32_t ret;
     ret = HITLS_IsSessionReused(ssl, &isReused);
     if (ret != HITLS_SUCCESS) {
         return 0;
     }
-
+#endif
     return (int)isReused;
 }
 
 void *HitlsGet1Session(void *ssl)
 {
+#ifdef HITLS_TLS_FEATURE_SESSION
     return HITLS_GetDupSession(ssl);
+#else
+    (void)ssl;
+    return NULL;
+#endif
 }
 
 int HitlsSessionHasTicket(void *session)
 {
+#ifdef HITLS_TLS_FEATURE_SESSION_TICKET
     return (HITLS_SESS_HasTicket(session) ? 1 : 0);
+#else
+    (void)session;
+    return 0;
+#endif
 }
 
 int HitlsSessionIsResumable(void *session)
 {
+#ifdef HITLS_TLS_FEATURE_SESSION_TICKET
     return (HITLS_SESS_IsResumable(session) ? 1 : 0);
+#else
+    (void)session;
+    return 0;
+#endif
 }
 
 void HitlsFreeSession(void *session)
 {
+#ifdef HITLS_TLS_FEATURE_SESSION
     HITLS_SESS_Free(session);
+#else
+    (void)session;
+#endif
 }
 
 int HitlsGetErrorCode(void *ssl)

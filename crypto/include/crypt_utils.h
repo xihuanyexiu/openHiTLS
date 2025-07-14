@@ -99,18 +99,6 @@ do {                                         \
     ((uint64_t)(p)[(i) + 1] <<  8) | ((uint64_t)(p)[(i) + 0] <<  0)    \
 )
 
-
-/**
- * Check whether conditions are met. If conditions are met, go to the label EXIT.
- */
-#define GOTO_EXIT_IF(condition, ret) \
-    do {                        \
-        if (condition) {        \
-            BSL_ERR_PUSH_ERROR((ret));   \
-            goto EXIT;          \
-        }                       \
-    } while (0)
-
 /**
  * Check whether conditions are met. If yes, an error code is returned.
  */
@@ -140,6 +128,13 @@ do {                                         \
         } \
     } while (0)
 
+#define GOTO_ERR_IF_TRUE(condition, ret) do { \
+        if (condition) { \
+            BSL_ERR_PUSH_ERROR((ret)); \
+            goto ERR; \
+        } \
+    } while (0)
+
 /**
  * Check whether conditions are met. If yes, an error code is returned.
  */
@@ -148,6 +143,14 @@ do {                                         \
         (ret) = (func);                \
         if ((ret) != CRYPT_SUCCESS) {  \
             BSL_ERR_PUSH_ERROR((ret)); \
+            return ret;                \
+        }                              \
+    } while (0)
+
+#define RETURN_RET_IF_ERR_EX(func, ret)   \
+    do {                               \
+        (ret) = (func);                \
+        if ((ret) != CRYPT_SUCCESS) {  \
             return ret;                \
         }                              \
     } while (0)
@@ -251,7 +254,7 @@ do {                                         \
  * @param size [IN] Size of hash data
  * @param out [OUT] Output hash value
  */
-int32_t CalcHash(const EAL_MdMethod *hashMethod, const CRYPT_ConstData *hashData, uint32_t size,
+int32_t CRYPT_CalcHash(const EAL_MdMethod *hashMethod, const CRYPT_ConstData *hashData, uint32_t size,
     uint8_t *out, uint32_t *outlen);
 
 /**
@@ -384,7 +387,7 @@ static inline void Uint64ToBeBytes(uint64_t v, uint8_t *bytes)
     bytes[7] = (uint8_t)(v & 0xffu);
 }
 
-#ifdef HITLS_CRYPTO_RSA
+#if defined(HITLS_CRYPTO_RSA_SIGN) || defined(HITLS_CRYPTO_RSA_VERIFY)
 uint32_t CRYPT_GetMdSizeById(CRYPT_MD_AlgId id);
 #endif
 

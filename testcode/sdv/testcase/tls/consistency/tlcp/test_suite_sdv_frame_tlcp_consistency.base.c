@@ -116,7 +116,7 @@ int32_t RandBytes(uint8_t *randNum, uint32_t randLen)
 int32_t GenerateEccPremasterSecret(TLS_Ctx *ctx);
 
 int32_t RecordDecryptPrepare(
-    TLS_Ctx *ctx, uint16_t version, uint64_t seq, REC_Type recordType, REC_TextInput *cryptMsg);
+    TLS_Ctx *ctx, uint16_t version, REC_Type recordType, REC_TextInput *cryptMsg);
 int32_t RecConnDecrypt(
     TLS_Ctx *ctx, RecConnState *state, const REC_TextInput *cryptMsg, uint8_t *data, uint32_t *dataLen);
 
@@ -146,9 +146,8 @@ int32_t STUB_TlsRecordRead(TLS_Ctx *ctx, REC_Type recordType, uint8_t *data, uin
     (void)readLen;
     RecConnState *state = ctx->recCtx->readStates.currentState;
     uint16_t version = ctx->negotiatedInfo.version;
-    uint64_t seq = state->seq;
     REC_TextInput encryptedMsg = {0};
-    ret = RecordDecryptPrepare(ctx, version, seq, recordType, &encryptedMsg);
+    ret = RecordDecryptPrepare(ctx, version, recordType, &encryptedMsg);
     if (ret != HITLS_SUCCESS) {
         return ret;
     }

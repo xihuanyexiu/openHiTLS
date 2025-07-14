@@ -63,13 +63,6 @@ typedef struct BSL_UIO_MethodStruct BSL_UIO_Method;
 typedef void (*BSL_UIO_USERDATA_FREE_FUNC)(void *);
 
 /**
- * @ingroup bsl
- *
- * @brief   UIO_Addr structure
- */
-typedef union UIO_Address BSL_UIO_Addr;
-
-/**
  * @ingroup bsl_uio
  * @brief   Transmission protocol enumeration
  */
@@ -122,6 +115,9 @@ typedef enum {
 
     /* UDP uses 0x2XX */
     BSL_UIO_UDP_SET_CONNECTED = 0x200,
+    BSL_UIO_UDP_GET_MTU_OVERHEAD,
+    BSL_UIO_UDP_QUERY_MTU,
+    BSL_UIO_UDP_MTU_EXCEEDED,
 
     /* SCTP uses 0x3XX */
     BSL_UIO_SCTP_CHECK_PEER_AUTH = 0x300,
@@ -132,7 +128,7 @@ typedef enum {
     BSL_UIO_SCTP_GET_SEND_STREAM_ID,
     BSL_UIO_SCTP_SET_APP_STREAM_ID,
     BSL_UIO_SCTP_MASK_APP_MESSAGE,
-
+    BSL_UIO_SCTP_SET_CALLBACK,
     /* MEM uses 0x4XX */
     BSL_UIO_MEM_NEW_BUF = 0x400,
     BSL_UIO_MEM_GET_PTR,

@@ -24,11 +24,10 @@
                     "tlv": null,
                     "uio": {
                         "uio_plt": null,
-                        "uio_addr" : {"deps": ["uio_plt"]},
                         "uio_buffer": {"deps": ["uio_plt"]},
                         "uio_sctp": {"deps": ["uio_plt", "sal_net"]},
-                        "uio_tcp": {"deps": ["uio_plt", "sal_net", "uio_addr"]},
-                        "uio_udp": {"deps": ["uio_plt", "sal_net", "uio_addr"]},
+                        "uio_tcp": {"deps": ["uio_plt", "sal_net"]},
+                        "uio_udp": {"deps": ["uio_plt", "sal_net"]},
                         "uio_mem": {"deps": ["uio_plt", "sal_mem", "buffer"]}
                     },
                     "usrdata": null,
@@ -217,6 +216,9 @@
                     "sm4": null,
                     "x25519": null,
                     "ecc": null
+                },
+                "armv7": {
+                    "sm3": null
                 }
             }
         },
@@ -228,7 +230,8 @@
                         "proto_tls12":null,
                         "proto_tls13":null,
                         "proto_tlcp11":null,
-                        "proto_dtls12":null
+                        "proto_dtls12":null,
+                        "proto_dtlcp11":null
                     },
                     "host": {
                         "host_client": null,
@@ -260,10 +263,16 @@
                             "feature_session_ticket": null,
                             "feature_session_id": null
                         },
+                        "feature_mode": {
+                            "feature_mode_fall_back_scsv": null
+                        },
                         "feature_key_update": null,
                         "feature_flight": null,
                         "feature_cert_mode": null,
-                        "feature_kem": null
+                        "feature_kem": null,
+                        "feature_client_hello_cb": null,
+                        "feature_cerb_cb": null,
+                        "feature_max_send_fragment": null
                     },
                     "proto": {
                         "deps": ["tlv", "sal", "eal", "list"],
@@ -552,6 +561,12 @@
                         },
                         "suite_ecc_sm4_cbc_sm3": {
                             "deps": ["sm3", "cbc", "sm4", "sm2"]
+                        },
+                        "suite_ecdhe_sm4_gcm_sm3": {
+                            "deps": ["sm3", "gcm", "sm4", "sm2", "ecdh"]
+                        },
+                        "suite_ecc_sm4_gcm_sm3": {
+                            "deps": ["sm3", "gcm", "sm4", "sm2"]
                         }
                     },
                     "suite_cipher": {
@@ -734,7 +749,8 @@
                     "public": "crypto/sm3/src/sm3_public.c",
                     "no_asm": ["crypto/sm3/src/noasm_sm3.c"],
                     "armv8": ["crypto/sm3/src/asm/*armv8.S", "crypto/sm3/src/asm_sm3.c"],
-                    "x8664": ["crypto/sm3/src/asm/*x86_64.s", "crypto/sm3/src/asm_sm3.c"]
+                    "x8664": ["crypto/sm3/src/asm/*x86_64.s", "crypto/sm3/src/asm_sm3.c"],
+                    "armv7": ["crypto/sm3/src/noasm_sm3.c"]
                 },
                 ".deps": ["platform::Secure_C"]
             },

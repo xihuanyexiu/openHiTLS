@@ -172,8 +172,20 @@
     #ifndef HITLS_TLS_FEATURE_CERT_MODE
         #define HITLS_TLS_FEATURE_CERT_MODE
     #endif
+    #ifndef HITLS_TLS_FEATURE_MODE
+        #define HITLS_TLS_FEATURE_MODE
+    #endif
     #ifndef HITLS_TLS_FEATURE_KEM
         #define HITLS_TLS_FEATURE_KEM
+    #endif
+    #ifndef HITLS_TLS_FEATURE_CLIENT_HELLO_CB
+        #define HITLS_TLS_FEATURE_CLIENT_HELLO_CB
+    #endif
+    #ifndef HITLS_TLS_FEATURE_CERT_CB
+        #define HITLS_TLS_FEATURE_CERT_CB
+    #endif
+    #ifndef HITLS_TLS_FEATURE_MAX_SEND_FRAGMENT
+        #define HITLS_TLS_FEATURE_MAX_SEND_FRAGMENT
     #endif
 #endif /* HITLS_TLS_FEATURE */
 
@@ -183,6 +195,12 @@
     #endif
     #ifndef HITLS_TLS_FEATURE_SESSION_ID
         #define HITLS_TLS_FEATURE_SESSION_ID
+    #endif
+#endif
+
+#ifdef HITLS_TLS_FEATURE_MODE
+    #ifndef HITLS_TLS_FEATURE_MODE_FALL_BACK_SCSV
+        #define HITLS_TLS_FEATURE_MODE_FALL_BACK_SCSV
     #endif
 #endif
 

@@ -172,12 +172,17 @@ typedef struct {
     uint8_t compressionMethodsSize;
     uint8_t *compressionMethods;
     uint8_t cookieLen;
-    bool haveScsvCipher; /* According to RFC 5746, a special signaling cipher suite value (SCSV) can be used to indicate
-                            that security renegotiation is supported. */
+    bool haveEmptyRenegoScsvCipher; /* According to RFC 5746, a special signaling cipher suite value (SCSV) can be used
+                                        to indicate that security renegotiation is supported. */
+    bool haveFallBackScsvCipher;    /* According to RFC 7507, a special signaling cipher suite value (SCSV) can be used
+                                        to indicate that a downgrade negotiation process is in progress. */
     uint8_t refCnt;      /* Do not involve multiple threads. Process the hrr check clientHello. */
     uint32_t truncateHelloLen; /* is used for binder calculation. */
     ClientHelloExt extension;
     uint64_t extensionTypeMask;
+    uint8_t *extensionBuff;
+    uint32_t extensionBuffLen;
+    uint8_t extensionCount; /* Size of the extension buffer */
 } ClientHelloMsg;
 
 /* It is used to transmit server hello message */
@@ -276,7 +281,6 @@ typedef struct {
     uint8_t reserved;               /* Four-byte alignment */
     uint8_t certTypesSize;
     uint16_t signatureAlgorithmsSize;
-    HITLS_TrustedCAList *caList;
 #ifdef HITLS_TLS_PROTO_TLS13
     uint16_t *signatureAlgorithmsCert;
     uint16_t signatureAlgorithmsCertSize;

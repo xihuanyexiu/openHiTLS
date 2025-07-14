@@ -59,6 +59,9 @@ typedef struct TlsSessionManager TLS_SessionMgr;
 /* the default number of tickets of TLS1.3 server is 2 */
 #define HITLS_TLS13_TICKET_NUM_DEFAULT 2u
 #define HITLS_MAX_EMPTY_RECORDS 32
+#ifdef HITLS_TLS_FEATURE_MAX_SEND_FRAGMENT
+#define HITLS_MAX_SEND_FRAGMENT_DEFAULT 16384
+#endif
 /* max cert list is 100k */
 #define HITLS_MAX_CERT_LIST_DEFAULT (1024 * 100)
 
@@ -105,6 +108,8 @@ typedef struct {
 #define TLS_CAPABILITY_LIST_MALLOC_SIZE 10
 #endif
 
+typedef struct CustomExt_Methods HITLS_CustomExts;
+
 /**
  * @brief   TLS Global Configuration
  */
@@ -124,6 +129,7 @@ typedef struct TlsConfig {
     uint32_t originVersionMask;         /* the original supported proto version mask */
     uint16_t minVersion;                /* min supported proto version */
     uint16_t maxVersion;                /* max supported proto version */
+    uint32_t modeSupport;               /* support mode */
 
     uint16_t *tls13CipherSuites;        /* tls13 cipher suite */
     uint32_t tls13cipherSuitesSize;
@@ -184,12 +190,11 @@ typedef struct TlsConfig {
     uint8_t sessionIdCtx[HITLS_SESSION_ID_CTX_MAX_SIZE];  /* the sessionId context */
 
     uint32_t ticketNums;                /* TLS1.3 ticket number */
+    uint16_t maxSendFragment;           /* max send fragment to restrict the amount of plaintext bytes in any record  */
     TLS_SessionMgr *sessMgr;            /* session management */
 
     void *userData;                     /* user data */
     HITLS_ConfigUserDataFreeCb userDataFreeCb;
-
-    char *providerAttr;
 
     bool needCheckKeyUsage;             /* whether to check keyusage, default on */
     bool needCheckPmsVersion;           /* whether to verify the version in premastersecret */
@@ -217,8 +222,9 @@ typedef struct TlsConfig {
     bool isSupportServerPreference;     /* server cipher suites can be preferentially selected */
 
     /* DTLS */
+#if defined(HITLS_TLS_PROTO_DTLS12) && defined(HITLS_BSL_UIO_UDP)
     bool isSupportDtlsCookieExchange;    /* is dtls support cookie exchange */
-
+#endif
     /**
      * Configurations in the HITLS_Ctx are classified into private configuration and global configuration.
      * The following parameters directly reference the global configuration in tls.
@@ -230,8 +236,10 @@ typedef struct TlsConfig {
     void *alpnUserData;                 /* the user data for alpn callback */
     void *sniArg;			            /* the args for servername callback */
     HITLS_SniDealCb sniDealCb;          /* server name callback function */
+#ifdef HITLS_TLS_FEATURE_CLIENT_HELLO_CB
     HITLS_ClientHelloCb clientHelloCb;          /* ClientHello callback */
     void *clientHelloCbArg;                     /* the args for ClientHello callback */
+#endif /* HITLS_TLS_FEATURE_CLIENT_HELLO_CB */
 #ifdef HITLS_TLS_PROTO_DTLS12
     HITLS_AppGenCookieCb appGenCookieCb;
     HITLS_AppVerifyCookieCb appVerifyCookieCb;
@@ -239,6 +247,8 @@ typedef struct TlsConfig {
     HITLS_NewSessionCb newSessionCb;    /* negotiates to generate a session */
     HITLS_KeyLogCb keyLogCb;            /* the key log callback */
     bool isKeepPeerCert;                /* whether to save the peer certificate */
+
+    HITLS_CustomExts *customExts;
 } TLS_Config;
 
 #define LIBCTX_FROM_CONFIG(config) ((config == NULL) ? NULL : (config)->libCtx)

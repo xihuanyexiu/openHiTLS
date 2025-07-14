@@ -630,7 +630,7 @@ int32_t HITLS_X509_ParseExtItem(BSL_ASN1_Buffer *extItem, HITLS_X509_ExtEntry *e
     // extnid
     extEntry->extnId = asnArr[HITLS_X509_EXT_OID_IDX];
     BslOidString oid = {extEntry->extnId.len, (char *)extEntry->extnId.buff, 0};
-    extEntry->cid = BSL_OBJ_GetCIDFromOid(&oid);
+    extEntry->cid = BSL_OBJ_GetCID(&oid);
     // critical
     if (asnArr[HITLS_X509_EXT_CRITICAL_IDX].tag == 0) {
         extEntry->critical = false;
@@ -657,7 +657,7 @@ static void FreeExtEntryCont(HITLS_X509_ExtEntry *entry)
 
 static int32_t GetExtEntryByCid(BslList *extList, BslCid cid, HITLS_X509_ExtEntry **entry, bool *isNew)
 {
-    BslOidString *oid = BSL_OBJ_GetOidFromCID(cid);
+    BslOidString *oid = BSL_OBJ_GetOID(cid);
     if (oid == NULL) {
         BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_EXT_OID);
         return HITLS_X509_ERR_EXT_OID;
@@ -720,7 +720,7 @@ static int32_t ParseExtAsnItem(BSL_ASN1_Buffer *asn, void *param, BSL_ASN1_List 
     }
 
     BslOidString oid = {extEntry.extnId.len, (char *)extEntry.extnId.buff, 0};
-    switch (BSL_OBJ_GetCIDFromOid(&oid)) {
+    switch (BSL_OBJ_GetCID(&oid)) {
         case BSL_CID_CE_KEYUSAGE:
             return ParseExtKeyUsage(&extEntry, (HITLS_X509_CertExt *)ext->extData);
         case BSL_CID_CE_BASICCONSTRAINTS:
@@ -817,7 +817,10 @@ static int32_t SetExtKeyUsage(HITLS_X509_Ext *ext, HITLS_X509_ExtEntry *entry, c
     uint16_t keyUsage = (uint16_t)ku->keyUsage;
     BSL_ASN1_BitString bs = {0};
     bs.len = (keyUsage & HITLS_X509_EXT_KU_DECIPHER_ONLY) == 0 ? 1 : 2; // 2: decipher only is not 0
-    bs.buff = (uint8_t *)&keyUsage;
+    uint8_t buff[2] = {0}; // The max length of content(BitString, except unused bits) is 2 bytes.
+    buff[0] = (uint8_t)keyUsage;
+    buff[1] = (uint8_t)(keyUsage >> 8); // 8: 8 bits per byte
+    bs.buff = buff;
     uint8_t tmp = bs.len == 1 ? (uint8_t)keyUsage : (uint8_t)(keyUsage >> BITS_OF_BYTE);
     for (int32_t i = 1; i < BITS_OF_BYTE; i++) {
         if ((uint8_t)(tmp << i) == 0) {
@@ -1193,6 +1196,17 @@ int32_t HITLS_X509_GetExt(BslList *ext, BslCid cid, BSL_Buffer *val, uint32_t ex
     return decodeExt(extEntry, val->data);
 }
 
+static int32_t GetExtKeyUsage(HITLS_X509_Ext *ext, uint32_t *val, uint32_t valLen)
+{
+    if (val == NULL || valLen != sizeof(uint32_t)) {
+        BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_INVALID_PARAM);
+        return HITLS_X509_ERR_INVALID_PARAM;
+    }
+    HITLS_X509_CertExt *certExt = (HITLS_X509_CertExt *)ext->extData;
+    *val = certExt->extFlags & HITLS_X509_EXT_FLAG_KUSAGE ? certExt->keyUsage : HITLS_X509_EXT_KU_NONE;
+    return HITLS_PKI_SUCCESS;
+}
+
 static int32_t GetExtCtrl(HITLS_X509_Ext *ext, int32_t cmd, void *val, uint32_t valLen)
 {
     BSL_Buffer buff = {val, valLen};
@@ -1206,6 +1220,8 @@ static int32_t GetExtCtrl(HITLS_X509_Ext *ext, int32_t cmd, void *val, uint32_t 
         case HITLS_X509_EXT_GET_CRLNUMBER:
             return HITLS_X509_GetExt(ext->extList, BSL_CID_CE_CRLNUMBER, &buff, sizeof(HITLS_X509_ExtCrlNumber),
                 (DecodeExtCb)X509_ParseCrlNumber);
+        case HITLS_X509_EXT_GET_KUSAGE:
+            return GetExtKeyUsage(ext, val, valLen);
         default:
             BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_INVALID_PARAM);
             return HITLS_X509_ERR_INVALID_PARAM;
@@ -1261,8 +1277,7 @@ int32_t HITLS_X509_ExtCtrl(HITLS_X509_Ext *ext, int32_t cmd, void *val, uint32_t
     }
     static int32_t cmdSet[] = {HITLS_X509_EXT_SET_SKI, HITLS_X509_EXT_SET_AKI, HITLS_X509_EXT_SET_KUSAGE,
         HITLS_X509_EXT_SET_SAN, HITLS_X509_EXT_SET_BCONS, HITLS_X509_EXT_SET_EXKUSAGE, HITLS_X509_EXT_GET_SKI,
-        HITLS_X509_EXT_GET_AKI, HITLS_X509_EXT_CHECK_SKI, HITLS_X509_EXT_KU_KEYENC, HITLS_X509_EXT_KU_DIGITALSIGN,
-        HITLS_X509_EXT_KU_CERTSIGN, HITLS_X509_EXT_KU_KEYAGREEMENT};
+        HITLS_X509_EXT_GET_AKI, HITLS_X509_EXT_CHECK_SKI, HITLS_X509_EXT_GET_KUSAGE};
     if (!X509_CheckCmdValid(cmdSet, sizeof(cmdSet) / sizeof(int32_t), cmd)) {
         BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_EXT_UNSUPPORT);
         return HITLS_X509_ERR_EXT_UNSUPPORT;

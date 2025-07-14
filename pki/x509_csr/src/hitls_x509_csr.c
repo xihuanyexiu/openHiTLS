@@ -134,6 +134,7 @@ void HITLS_X509_CsrFree(HITLS_X509_Csr *csr)
     if (ret > 0) {
         return;
     }
+    BSL_SAL_ReferencesFree(&(csr->references));
     if (csr->flag == HITLS_X509_CSR_GEN_FLAG) {
         BSL_LIST_FREE(csr->reqInfo.subjectName, (BSL_LIST_PFUNC_FREE)HITLS_X509_FreeNameNode);
         BSL_SAL_FREE(csr->reqInfo.reqInfoRawData);
@@ -163,7 +164,7 @@ int32_t HITLS_X509_CsrTagGetOrCheck(int32_t type, uint32_t idx, void *data, void
     if (type == BSL_ASN1_TYPE_GET_ANY_TAG) {
         BSL_ASN1_Buffer *param = (BSL_ASN1_Buffer *)data;
         BslOidString oidStr = {param->len, (char *)param->buff, 0};
-        BslCid cid = BSL_OBJ_GetCIDFromOid(&oidStr);
+        BslCid cid = BSL_OBJ_GetCID(&oidStr);
         if (cid == BSL_CID_UNKNOWN) {
             return HITLS_X509_ERR_GET_ANY_TAG;
         }
@@ -649,7 +650,7 @@ int32_t HITLS_X509_CsrCtrl(HITLS_X509_Csr *csr, int32_t cmd, void *val, uint32_t
     }
 
     if (((csr->flag & HITLS_X509_CSR_PARSE_FLAG) != 0) && cmd >= HITLS_X509_SET_VERSION &&
-        cmd < HITLS_X509_EXT_KU_KEYENC) {
+        cmd < HITLS_X509_EXT_SET_SKI) {
         BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_SET_AFTER_PARSE);
         return HITLS_X509_ERR_SET_AFTER_PARSE;
     }

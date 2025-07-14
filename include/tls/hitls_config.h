@@ -898,9 +898,11 @@ int32_t HITLS_CFG_SetKeyExchMode(HITLS_Config *config, uint32_t mode);
 uint32_t HITLS_CFG_GetKeyExchMode(HITLS_Config *config);
 
 /* If the ClientHello callback is successfully executed, the handshake continues */
-#define HITLS_CONTINUE_HANDHSAKE 1
+#define HITLS_CLIENT_HELLO_SUCCESS 1
 /* The  ClientHello callback fails. Send an alert message and terminate the handshake */
-#define HITLS_ALERT_HANDSHAKE 0
+#define HITLS_CLIENT_HELLO_FAILED 0
+/* The ClientHello callback is suspended. The handshake process is suspended and the callback is called again */
+#define HITLS_CLIENT_HELLO_RETRY (-1)
 
 /**
  * @ingroup hitls_config
@@ -909,13 +911,15 @@ uint32_t HITLS_CFG_GetKeyExchMode(HITLS_Config *config);
  * @param   ctx  [IN] Ctx context
  * @param   alert   [OUT] The callback that returns a failure should indicate the alert value to be sent in al.
  * @param   arg  [IN] Product input context
- * @retval  HITLS_CONTINUE_HANDHSAKE: successful. Other values are considered as failure.
+ * @retval  HITLS_CLIENT_HELLO_SUCCESS: successful.
+ * @retval  HITLS_CLIENT_HELLO_RETRY: suspend the handshake process
+ * @retval  HITLS_CLIENT_HELLO_FAILED: failed, send an alert message and terminate the handshake
  */
 typedef int32_t (*HITLS_ClientHelloCb)(HITLS_Ctx *ctx, int32_t *alert, void *arg);
 
 /**
  * @ingroup hitls_config
- * @brief   Set the cookie verification callback on the server.
+ * @brief   Set the ClientHello callback on the server.
  *
  * @param   config [OUT] Config context
  * @param   callback [IN] ClientHello callback
@@ -1358,6 +1362,29 @@ int32_t HITLS_CFG_GetEmptyRecordsNum(const HITLS_Config *config, uint32_t *empty
 
 /**
  * @ingroup hitls_config
+ * @brief   Set the max send fragment to restrict the amount of plaintext bytes in any record
+ *
+ * @param   config [IN/OUT] TLS link configuration
+ * @param   maxSendFragment [IN] Indicates the max send fragment to restrict the amount of plaintext bytes in any record
+ * @retval  HITLS_NULL_INPUT, the input parameter pointer is null.
+ * @retval  HITLS_CONFIG_INVALID_LENGTH, the maxSendFragment is less than 64 or greater than 16384.
+ * @retval  HITLS_SUCCESS, if successful.
+ */
+int32_t HITLS_CFG_SetMaxSendFragment(HITLS_Config *config, uint16_t maxSendFragment);
+
+/**
+ * @ingroup hitls_config
+ * @brief   Obtain the max send fragment to restrict the amount of plaintext bytes in any record
+ *
+ * @param   config [IN] TLS link configuration.
+ * @param   maxSendFragment [OUT] Indicates the max send fragment
+ * @retval  HITLS_NULL_INPUT, the input parameter pointer is null.
+ * @retval  HITLS_SUCCESS, if successful.
+ */
+int32_t HITLS_CFG_GetMaxSendFragment(const HITLS_Config *config, uint16_t *maxSendFragment);
+
+/**
+ * @ingroup hitls_config
  * @brief   Set the maximum size of the certificate chain that can be sent by the peer end.
  *
  * @param   config [IN/OUT] TLS link configuration.
@@ -1465,6 +1492,39 @@ int32_t HITLS_CFG_SetReadAhead(HITLS_Config *config, int32_t onOff);
  * @retval  HITLS_SUCCESS
  */
 int32_t HITLS_CFG_GetReadAhead(HITLS_Config *config, int32_t *onOff);
+
+/**
+ * @ingroup hitls_config
+ * @brief   Set the function to support the specified feature.
+ *
+ * @param   config [OUT] Config context
+ * @param   mode [IN] Mode features to enabled.
+ * @retval  HITLS_NULL_INPUT, the input parameter pointer is null.
+ * @retval  HITLS_SUCCESS, if successful.
+ */
+int32_t HITLS_CFG_SetModeSupport(HITLS_Config *config, uint32_t mode);
+
+/**
+ * @ingroup hitls_config
+ * @brief   Disable the specified feature.
+ *
+ * @param   config [OUT] Config context
+ * @param   mode [IN] Mode features to disabled.
+ * @retval  HITLS_NULL_INPUT, the input parameter pointer is null.
+ * @retval  HITLS_SUCCESS, if successful.
+ */
+int32_t HITLS_CFG_ClearModeSupport(HITLS_Config *config, uint32_t mode);
+
+/**
+ * @ingroup hitls_config
+ * @brief   Obtain the mode of the function feature in the config file.
+ *
+ * @param   config [OUT] Config context
+ * @param   mode [OUT] Mode obtain the output parameters of the mode.
+ * @retval  HITLS_NULL_INPUT, the input parameter pointer is null.
+ * @retval  HITLS_SUCCESS, if successful.
+ */
+int32_t HITLS_CFG_GetModeSupport(HITLS_Config *config, uint32_t *mode);
 
 #ifdef __cplusplus
 }

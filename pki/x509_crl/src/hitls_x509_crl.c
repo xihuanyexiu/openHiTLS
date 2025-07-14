@@ -92,7 +92,7 @@ int32_t HITLS_X509_CrlTagGetOrCheck(int32_t type, uint32_t idx, void *data, void
         case BSL_ASN1_TYPE_GET_ANY_TAG: {
             BSL_ASN1_Buffer *param = (BSL_ASN1_Buffer *) data;
             BslOidString oidStr = {param->len, (char *)param->buff, 0};
-            BslCid cid = BSL_OBJ_GetCIDFromOid(&oidStr);
+            BslCid cid = BSL_OBJ_GetCID(&oidStr);
             if (cid == BSL_CID_UNKNOWN) {
                 return HITLS_X509_ERR_GET_ANY_TAG;
             }
@@ -1195,7 +1195,7 @@ int32_t HITLS_X509_CrlCtrl(HITLS_X509_Crl *crl, int32_t cmd, void *val, uint32_t
 #endif
     } else if (cmd >= HITLS_X509_GET_ENCODELEN && cmd < HITLS_X509_SET_VERSION) {
         return X509_CrlGetCtrl(crl, cmd, val, valLen);
-    } else if (cmd < HITLS_X509_EXT_KU_KEYENC) {
+    } else if (cmd < HITLS_X509_EXT_SET_SKI) {
 #ifdef HITLS_PKI_X509_CRL_GEN
         return X509_CrlSetCtrl(crl, cmd, val, valLen);
 #else
@@ -1204,7 +1204,7 @@ int32_t HITLS_X509_CrlCtrl(HITLS_X509_Crl *crl, int32_t cmd, void *val, uint32_t
 #endif
     } else if (cmd <= HITLS_X509_EXT_CHECK_SKI) {
         static int32_t cmdSet[] = {HITLS_X509_EXT_SET_CRLNUMBER, HITLS_X509_EXT_SET_AKI, HITLS_X509_EXT_GET_CRLNUMBER,
-            HITLS_X509_EXT_GET_AKI};
+            HITLS_X509_EXT_GET_AKI, HITLS_X509_EXT_GET_KUSAGE};
         if (!X509_CheckCmdValid(cmdSet, sizeof(cmdSet) / sizeof(int32_t), cmd)) {
             BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_EXT_UNSUPPORT);
             return HITLS_X509_ERR_EXT_UNSUPPORT;
@@ -1334,7 +1334,8 @@ static int32_t SetExtReason(void *param, HITLS_X509_ExtEntry *extEntry, void *va
         return HITLS_X509_ERR_INVALID_PARAM;
     }
     extEntry->critical = reason->critical;
-    BSL_ASN1_Buffer asns = {BSL_ASN1_TAG_ENUMERATED, sizeof(int8_t), (uint8_t *)&reason->reason};
+    uint8_t tmp = (uint8_t)reason->reason; // int32_t -> uint8_t: avoid value errors in bit-endian scenario
+    BSL_ASN1_Buffer asns = {BSL_ASN1_TAG_ENUMERATED, sizeof(uint8_t), (uint8_t *)&tmp};
     BSL_ASN1_TemplateItem items = {BSL_ASN1_TAG_ENUMERATED, 0, 0};
     BSL_ASN1_Template reasonTempl = {&items, 1};
 
