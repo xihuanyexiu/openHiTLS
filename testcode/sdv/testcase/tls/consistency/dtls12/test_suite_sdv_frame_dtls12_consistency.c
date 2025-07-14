@@ -2905,7 +2905,7 @@ EXIT:
 /* END_CASE */
 
 /* @
-* @test UT_TLS_DTLS_CONSISTENCY_RETANSIMATE_TC001
+* @test UT_TLS_DTLS_CONSISTENCY_RETRANSMIT_TC001
 * @spec -
 * @title When testing the behavior of the client preparing to receive messages, querying the remaining timeout time,
             selecting whether to sleep, and then retransmitting the message
@@ -2924,7 +2924,7 @@ EXIT:
 * @auto TRUE
 @ */
 /* BEGIN_CASE */
-void UT_TLS_DTLS_CONSISTENCY_RETANSIMATE_TC001(int isNeedSleep, int clientState)
+void UT_TLS_DTLS_CONSISTENCY_RETRANSMIT_TC001(int isNeedSleep, int clientState)
 {
     FRAME_Init();
     HITLS_Config *tlsConfig = HITLS_CFG_NewDTLS12Config();
