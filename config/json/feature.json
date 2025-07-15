@@ -271,7 +271,8 @@
                         "feature_kem": null,
                         "feature_client_hello_cb": null,
                         "feature_cerb_cb": null,
-                        "feature_max_send_fragment": null
+                        "feature_max_send_fragment": null,
+                        "feature_custom_extension": null
                     },
                     "proto": {
                         "deps": ["tlv", "sal", "eal", "list"],
