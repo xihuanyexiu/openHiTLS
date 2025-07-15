@@ -116,17 +116,9 @@ int32_t DefaultCfgStatusPark(HandshakeTestInfo *testInfo, int uioType)
     return StatusPark(testInfo, uioType);
 }
 
-uint32_t DtlsTimerCb(HITLS_Ctx *ctx, uint32_t us)
-{
-    (void)ctx;
-    (void)us;
-    return 5000000; // timeout value is 5 second.
-}
-
 int32_t DefaultCfgStatusParkWithSuite(HandshakeTestInfo *testInfo, int uioType)
 {
     FRAME_Init();
-
 
     testInfo->config = HITLS_CFG_NewDTLS12Config();
     if (testInfo->config == NULL) {
@@ -135,9 +127,6 @@ int32_t DefaultCfgStatusParkWithSuite(HandshakeTestInfo *testInfo, int uioType)
     HITLS_CFG_SetCheckKeyUsage(testInfo->config, false);
     uint16_t cipherSuits[] = {HITLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384};
     HITLS_CFG_SetCipherSuites(testInfo->config, cipherSuits, sizeof(cipherSuits) / sizeof(uint16_t));
-    if (uioType == BSL_UIO_UDP) {
-        HITLS_CFG_SetDtlsTimerCb(testInfo->config, DtlsTimerCb);
-    }
 
     testInfo->config->isSupportExtendMasterSecret = testInfo->isSupportExtendMasterSecret;
     testInfo->config->isSupportClientVerify = testInfo->isSupportClientVerify;
