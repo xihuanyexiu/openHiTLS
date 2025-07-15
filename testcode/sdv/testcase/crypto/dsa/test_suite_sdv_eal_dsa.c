@@ -44,13 +44,14 @@ static uint8_t g_kRandBuf[64];
 static uint32_t g_kRandBufLen = 0;
 
 
-int32_t CryptDsaFips1864GenPq(CRYPT_DSA_Ctx *ctx, DSA_FIPS186_4_Para *fipsPara, uint32_t type,
+extern int32_t CryptDsaFips1864GenPq(CRYPT_DSA_Ctx *ctx, DSA_FIPS186_4_Para *fipsPara, uint32_t type,
     BSL_Buffer *seed, uint32_t *counter);
-int32_t CryptDsaFips1864ValidatePq(int32_t algId, uint64_t type, BSL_Buffer *seed, CRYPT_DSA_Para *dsaPara, uint32_t counter);
-int32_t CryptDsaFips1864GenUnverifiableG(CRYPT_DSA_Para *dsaPara);
-int32_t CryptDsaFips1864GenVerifiableG(DSA_FIPS186_4_Para *fipsPara, BSL_Buffer *seed, CRYPT_DSA_Para *dsaPara);
-int32_t CryptDsaFips1864PartialValidateG(const CRYPT_DSA_Para *dsaPara);
-int32_t CryptDsaFips1864ValidateG(DSA_FIPS186_4_Para *fipsPara, BSL_Buffer *seed, CRYPT_DSA_Para *dsaPara);
+extern int32_t CryptDsaFips1864ValidatePq(int32_t algId, uint32_t type,
+    BSL_Buffer *seed, CRYPT_DSA_Para *dsaPara, uint32_t counter);
+extern int32_t CryptDsaFips1864GenUnverifiableG(CRYPT_DSA_Para *dsaPara);
+extern int32_t CryptDsaFips1864GenVerifiableG(DSA_FIPS186_4_Para *fipsPara, BSL_Buffer *seed, CRYPT_DSA_Para *dsaPara);
+extern int32_t CryptDsaFips1864PartialValidateG(const CRYPT_DSA_Para *dsaPara);
+extern int32_t CryptDsaFips1864ValidateG(DSA_FIPS186_4_Para *fipsPara, BSL_Buffer *seed, CRYPT_DSA_Para *dsaPara);
 
 int32_t STUB_RandRangeK(void *libCtx, BN_BigNum *r, const BN_BigNum *p)
 {
