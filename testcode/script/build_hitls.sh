@@ -198,9 +198,9 @@ parse_option()
                 add_options="${add_options} -DHITLS_CRYPTO_CMVP_FIPS"
                 libname="libhitls_fips.so"
                 ;;
-            "gm")
-                add_options="${add_options} -DHITLS_CRYPTO_CMVP_GM"
-                libname="libhitls_gm.so"
+            "sm")
+                add_options="${add_options} -DHITLS_CRYPTO_CMVP_SM"
+                libname="libhitls_sm.so"
                 ;;
             "help")
                 usage

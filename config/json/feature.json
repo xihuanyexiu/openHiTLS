@@ -1090,6 +1090,7 @@
                     "crypto/drbg/include",
                     "crypto/modes/include",
                     "crypto/entropy/include",
+                    "crypto/entropy/src",
                     "crypto/hybridkem/include",
                     "crypto/eal/src",
                     "crypto/include",
