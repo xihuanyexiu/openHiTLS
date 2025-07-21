@@ -128,10 +128,10 @@ static int32_t MonobitTest(const uint8_t *data, uint32_t len)
     double v;
     double pValue;
     for (uint32_t i = 0; i < len; i++) {
-        s += 2 * (data[i]) - 1; // convert 0, 1 to -1, 1
+        s += 2 * (data[i]) - 1; // 2: convert 0, 1 to -1, 1
     }
     v = fabs(s) / sqrt(len);
-    pValue = erfc((v / sqrt(2.0)));
+    pValue = erfc((v / sqrt(2.0))); // 2.0: divide by square root of 2.
     return pValue >= ALPHA ? CRYPT_SUCCESS : CRYPT_CMVP_RANDOMNESS_ERR;
 }
 
@@ -167,7 +167,7 @@ static int32_t PokerTest(const uint8_t *data, uint32_t len, int32_t blocklen)
     }
     double s = 0.0;
     for (uint32_t i = 0; i < maxComb; i++) {
-        s += pow(dict[i], 2);
+        s += pow(dict[i], 2); // 2: square each dict value
     }
     double v = (pow(2.0, (double)blocklen) / (double) N) * s - N;
     double pValue = Igamc(((double)maxComb - 1.0) / 2.0, v / 2.0); // p_value = igamc((2^m - 1) / 2, v / 2)

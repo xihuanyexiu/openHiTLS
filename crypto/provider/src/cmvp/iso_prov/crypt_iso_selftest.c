@@ -157,8 +157,8 @@ static int32_t IsoCopyParam(BSL_Param *param, int32_t *selfTestFlag, BSL_Param *
             index++;
         }
         if (index >= BSL_PARAM_MAX_NUMBER) {
-            BSL_ERR_PUSH_ERROR(CRYPT_PROVIDER_ERR_SELFTEST);
-            return CRYPT_PROVIDER_ERR_SELFTEST;
+            BSL_ERR_PUSH_ERROR(CRYPT_CMVP_COMMON_ERR);
+            return CRYPT_CMVP_COMMON_ERR;
         }
     }
     int32_t count = index + 2;
@@ -203,8 +203,8 @@ static int32_t IsoCreateInternalLibCtx(BSL_Param *param, CRYPT_EAL_LibCtx **libC
 
         libPath = CMVP_GetLibPath(IsoCreateInternalLibCtx);
         if (libPath == NULL) {
-            BSL_ERR_PUSH_ERROR(CRYPT_PROVIDER_ERR_SELFTEST);
-            ret = CRYPT_PROVIDER_ERR_SELFTEST;
+            BSL_ERR_PUSH_ERROR(CRYPT_CMVP_COMMON_ERR);
+            ret = CRYPT_CMVP_COMMON_ERR;
             break;
         }
 

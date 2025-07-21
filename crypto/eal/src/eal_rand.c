@@ -781,12 +781,6 @@ ERR:
     return NULL;
 }
 
-CRYPT_EAL_RndCtx *CRYPT_EAL_ProviderDrbgNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t algId, const char *attrName,
-    BSL_Param *param)
-{
-    return EAL_ProvRandInitDrbg(libCtx, algId, attrName, param);
-}
-
 int32_t CRYPT_EAL_ProviderRandInitCtxInner(CRYPT_EAL_LibCtx *libCtx, int32_t algId, const char *attrName,
     const uint8_t *pers, uint32_t persLen, BSL_Param *param)
 {
@@ -825,6 +819,20 @@ int32_t CRYPT_EAL_ProviderRandInitCtxInner(CRYPT_EAL_LibCtx *libCtx, int32_t alg
     return CRYPT_SUCCESS;
 }
 #endif // end of HITLS_CRYPTO_PROVIDER
+
+CRYPT_EAL_RndCtx *CRYPT_EAL_ProviderDrbgNewCtx(CRYPT_EAL_LibCtx *libCtx, int32_t algId, const char *attrName,
+    BSL_Param *param)
+{
+#ifdef HITLS_CRYPTO_PROVIDER
+    return EAL_ProvRandInitDrbg(libCtx, algId, attrName, param);
+#else
+    (void) libCtx;
+    (void) algId;
+    (void) attrName;
+    (void) param;
+    return NULL;
+#endif
+}
 
 int32_t CRYPT_EAL_NoProviderRandInitCtxInner(int32_t algId,
     const uint8_t *pers, uint32_t persLen, BSL_Param *param)

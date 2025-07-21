@@ -556,9 +556,7 @@ enum CRYPT_ERROR {
     CRYPT_PAILLIER_ERR_INPUT_VALUE,          /**< Some special values, which are used as input errors. */
     CRYPT_PAILLIER_CTRL_NOT_SUPPORT_ERROR,   /**< The Ctrl type is not supported When paillier is used for Ctrl. */
 
-    CRYPT_PROVIDER_ERR_SELFTEST = 0x013A0001,       /**< Selftest error. */
-
-    CRYPT_CMVP_COMMON_ERR = 0x013B0001, /**< Common error in CMVP selftest. */
+    CRYPT_CMVP_COMMON_ERR = 0x013A0001, /**< Common error in CMVP selftest. */
     CRYPT_CMVP_ERR_INTEGRITY,           /**< Integrity error in CMVP selftest. */
     CRYPT_CMVP_RANDOMNESS_ERR,          /**< Randomness error in CMVP selftest. */
     CRYPT_CMVP_ERR_ALGO_SELFTEST,       /**< Algorithm selftest error in CMVP selftest. */
