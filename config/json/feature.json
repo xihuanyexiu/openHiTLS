@@ -31,7 +31,7 @@
                         "uio_mem": {"deps": ["uio_plt", "sal_mem", "buffer"]}
                     },
                     "params": null,
-                    "asn1": {"deps": ["sal_time"]}
+                    "asn1": {"deps": ["sal_time", "uio_plt"]}
                 }
             }
         },
