@@ -23,6 +23,7 @@
 #include "session.h"
 #endif
 #include "cert_method.h"
+#include "record.h"
 
 #ifdef HITLS_TLS_CONNECTION_INFO_NEGOTIATION
 int32_t HITLS_GetNegotiatedVersion(const HITLS_Ctx *ctx, uint16_t *version)
@@ -338,6 +339,14 @@ int32_t HITLS_SetModeSupport(HITLS_Ctx *ctx, uint32_t mode)
     return HITLS_CFG_SetModeSupport(&(ctx->config.tlsConfig), mode);
 }
 
+int32_t HITLS_ClearModeSupport(HITLS_Ctx *ctx, uint32_t mode)
+{
+    if (ctx == NULL) {
+        return HITLS_NULL_INPUT;
+    }
+    return HITLS_CFG_ClearModeSupport(&(ctx->config.tlsConfig), mode);
+}
+
 int32_t HITLS_GetModeSupport(HITLS_Ctx *ctx, uint32_t *mode)
 {
     if (ctx == NULL) {
@@ -471,6 +480,9 @@ int32_t HITLS_SetMaxSendFragment(HITLS_Ctx *ctx, uint16_t maxSendFragment)
 {
     if (ctx == NULL) {
         return HITLS_NULL_INPUT;
+    }
+    if (ctx->recCtx != NULL && ctx->recCtx->outBuf != NULL && ctx->recCtx->outBuf->start != ctx->recCtx->outBuf->end) {
+        return HITLS_REC_NORMAL_IO_BUSY;
     }
     return HITLS_CFG_SetMaxSendFragment(&(ctx->config.tlsConfig), maxSendFragment);
 }
