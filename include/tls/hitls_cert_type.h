@@ -77,6 +77,7 @@ typedef enum {
     CERT_CTRL_GET_ENCODE_LEN,           /**< Obtain the length of the certificate code. */
     CERT_CTRL_GET_PUB_KEY,              /**< Obtaining the Certificate Public Key (Release Required). */
     CERT_CTRL_GET_SIGN_ALGO,            /**< Obtain the certificate signature algorithm. */
+    CERT_CTRL_GET_ENCODE_SUBJECT_DN,    /**< Get the subject distinguished name as a buffer. */
 
     CERT_KEY_CTRL_GET_SIGN_LEN,         /**< Obtain the signature length. */
     CERT_KEY_CTRL_GET_TYPE,             /**< Obtaining the Key Type. */

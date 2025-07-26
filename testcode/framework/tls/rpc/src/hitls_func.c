@@ -716,7 +716,13 @@ int HitlsSetCtx(HITLS_Config *outCfg, HLT_Ctx_Config *inCtxCfg)
     ret = HITLS_CFG_SetLegacyRenegotiateSupport(outCfg, inCtxCfg->allowLegacyRenegotiate);
     ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetLegacyRenegotiateSupport ERROR");
 #endif /* defined(HITLS_TLS_PROTO_TLS_BASIC) || defined(HITLS_TLS_PROTO_DTLS12) */
-
+#ifdef HITLS_TLS_FEATURE_CERTIFICATE_AUTHORITIES
+    if (inCtxCfg->caList != NULL) {
+        LOG_DEBUG("HiTLS Set caList");
+        ret = HITLS_CFG_SetCAList(outCfg, inCtxCfg->caList);
+        ASSERT_RETURN(ret == SUCCESS, "HITLS_CFG_SetCAList Fail");
+    }
+#endif /* HITLS_TLS_FEATURE_CERTIFICATE_AUTHORITIES */
     return SUCCESS;
 }
 

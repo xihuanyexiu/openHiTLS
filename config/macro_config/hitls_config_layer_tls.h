@@ -190,6 +190,9 @@
     #ifndef HITLS_TLS_FEATURE_CUSTOM_EXTENSION
         #define HITLS_TLS_FEATURE_CUSTOM_EXTENSION
     #endif
+    #ifndef HITLS_TLS_FEATURE_CERTIFICATE_AUTHORITIES
+        #define HITLS_TLS_FEATURE_CERTIFICATE_AUTHORITIES
+    #endif
 #endif /* HITLS_TLS_FEATURE */
 
 #ifdef HITLS_TLS_FEATURE_SESSION
@@ -348,12 +351,6 @@
     #endif
     #ifndef HITLS_TLS_CONFIG_CERT_CALLBACK
         #define HITLS_TLS_CONFIG_CERT_CALLBACK
-    #endif
-#endif
-
-#if defined(HITLS_TLS_PROTO_TLS13)
-    #ifndef HITLS_TLS_EXTENSION_CERT_AUTH
-        #define HITLS_TLS_EXTENSION_CERT_AUTH
     #endif
 #endif
 

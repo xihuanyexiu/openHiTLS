@@ -819,7 +819,25 @@ HITLS_CERT_Chain *HITLS_GetPeerCertChain(const HITLS_Ctx *ctx);
  * @param   ctx [OUT] TLS connection handle
  * @retval  Peer CA list
  */
-HITLS_TrustedCAList *HITLS_GetClientCAList(const HITLS_Ctx *ctx);
+HITLS_TrustedCAList *HITLS_GetPeerCAList(const HITLS_Ctx *ctx);
+
+/**
+ * @ingroup hitls_cert
+ * @brief   Obtain the trusted CA list of the current context.
+ *
+ * @param   ctx [OUT] TLS connection handle
+ * @retval  Trusted CA list
+ */
+HITLS_TrustedCAList *HITLS_GetCAList(const HITLS_Ctx *ctx);
+
+/**
+ * @ingroup hitls_cert
+ * @brief   Set the trusted CA list of the current context.
+ *
+ * @param   ctx [OUT] TLS connection handle
+ * @retval  Trusted CA list
+ */
+int32_t HITLS_SetCAList(HITLS_Ctx *ctx, HITLS_TrustedCAList *list);
 
 /**
  * @ingroup hitls_cert
@@ -927,6 +945,23 @@ HITLS_KeyLogCb HITLS_CFG_GetKeyLogCb(HITLS_Config *config);
  * @retval  For other error codes, see hitls_error.h.
  */
 int32_t HITLS_LogSecret(HITLS_Ctx *ctx, const char *label, const uint8_t *secret, size_t secretLen);
+
+/**
+ * @ingroup hitls_cert
+ * @brief   Load the CA file and parse it into a trusted CA list.
+ *
+ * @attention The user cannot release the memory.
+ * @param   config [OUT] TLS link configuration
+ * @param   input  [IN] Input data
+ * @param   inputLen [IN] Length of the input data
+ * @param   inputType [IN] Type of the input data
+ * @param   format [IN] File format
+ * @param   caList [OUT] Trusted CA list
+ * @retval  HITLS_SUCCESS, if successful.
+ *          For details about other error codes, see hitls_error.h.
+ */
+int32_t HITLS_CFG_ParseCAList(HITLS_Config *config, const char *input, uint32_t inputLen, HITLS_ParseType inputType,
+                              HITLS_ParseFormat format, HITLS_TrustedCAList **caList);
 
 #ifdef __cplusplus
 }

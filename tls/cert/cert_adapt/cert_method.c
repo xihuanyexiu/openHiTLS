@@ -302,6 +302,7 @@ uint32_t g_tlsCertCtrlErrorCode[] = {
     HITLS_CERT_KEY_CTRL_ERR_GET_PARAM_ID,
     HITLS_CERT_KEY_CTRL_ERR_IS_DATA_ENC_USAGE,
     HITLS_CERT_KEY_CTRL_ERR_IS_NON_REPUDIATION_USAGE,
+    HITLS_CERT_CTRL_ERR_GET_SUBJECT_DN,
 };
 
 int32_t SAL_CERT_StoreCtrl(HITLS_Config *config, HITLS_CERT_Store *store, HITLS_CERT_CtrlCmd cmd, void *in, void *out)
