@@ -327,12 +327,15 @@ typedef enum {
     HITLS_PKCS12_GET_SECRETBAGS,                /** Get secret-Bags from p12-ctx.
                                                     The list is read-only and should not be modified. */
     HITLS_PKCS12_ADD_SECRETBAG,                 /** Add secret-Bag to p12-ctx. */
+} HITLS_PKCS12_Cmd;
+
+typedef enum {
     HITLS_PKCS12_BAG_ADD_ATTR,                  /** Add attribute to safeBag. */
     HITLS_PKCS12_BAG_GET_ATTR,                  /** Get attribute from safeBag. */
     HITLS_PKCS12_BAG_GET_VALUE,                 /** Get value from safeBag. */
     HITLS_PKCS12_BAG_GET_ID,                    /** Get id from safeBag. */
     HITLS_PKCS12_BAG_GET_TYPE,                  /** Get type from safeBag. */
-} HITLS_PKCS12_Cmd;
+} HITLS_PKCS12_BagCmd;
 
 #ifdef __cplusplus
 }

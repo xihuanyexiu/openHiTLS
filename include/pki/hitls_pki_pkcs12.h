@@ -76,19 +76,6 @@ void HITLS_PKCS12_BagFree(HITLS_PKCS12_Bag *bag);
 
 /**
  * @ingroup pkcs12
- * @brief Add attributes to a bag.
- *
- * @attention A bag can have multiple properties, but each property only contains one value.
- * @param bag          [IN] bag
- * @param type         [IN] BSL_CID_LOCALKEYID/BSL_CID_FRIENDLYNAME
- * @param attrValue    [IN] the attr buffer
- * @retval #HITLS_PKI_SUCCESS, success.
- *         Error codes can be found in hitls_pki_errno.h
- */
-int32_t HITLS_PKCS12_BagAddAttr(HITLS_PKCS12_Bag *bag, uint32_t type, const BSL_Buffer *attrValue);
-
-/**
- * @ingroup pkcs12
  * @brief Generic function to set a p12 context.
  *
  * @param bag    [IN] bag context.
