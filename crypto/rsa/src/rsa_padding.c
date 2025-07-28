@@ -165,7 +165,7 @@ int32_t CRYPT_RSA_SetPss(CRYPT_RSA_Ctx *ctx, const EAL_MdMethod *hashMethod, con
         ctx->pad.salt.len = 0;
     } else if (saltLen != 0) {
         // Generate a salt information to the salt.
-        ret = GenPssSalt(ctx->libCtx, &salt, hashMethod, saltLen, padLen);
+        ret = GenPssSalt(ctx->libCtx, &salt, hashMethod, (int32_t)saltLen, padLen);
         RETURN_RET_IF((ret != CRYPT_SUCCESS), CRYPT_RSA_ERR_GEN_SALT);
     }
     RETURN_RET_IF((salt.data == NULL && salt.len != 0), CRYPT_RSA_ERR_PSS_SALT_DATA);

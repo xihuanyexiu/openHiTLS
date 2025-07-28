@@ -943,7 +943,7 @@ static int32_t EncodeEncryptedData(CRYPT_EAL_LibCtx *libCtx, const char *attrNam
             break;
         }
 
-        ret = PbkdfDeriveKey(libCtx, attrName, pkcsParam->itCnt, pkcsParam->hmacId, salt,
+        ret = PbkdfDeriveKey(libCtx, attrName, pkcsParam->itCnt, (int32_t)pkcsParam->hmacId, salt,
             pkcsParam->pwd, pkcsParam->pwdLen, &keyBuff);
         if (ret != CRYPT_SUCCESS) {
             BSL_ERR_PUSH_ERROR(ret);
