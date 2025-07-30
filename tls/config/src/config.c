@@ -513,6 +513,7 @@ HITLS_Config *HITLS_CFG_NewDTLS12Config(void)
     newConfig->originVersionMask = newConfig->version;
     return newConfig;
 }
+
 #endif
 
 #ifdef HITLS_TLS_PROTO_TLCP11
@@ -899,12 +900,11 @@ int32_t HITLS_CFG_SetEcPointFormats(HITLS_Config *config, const uint8_t *pointFo
     }
 
     uint8_t *newData = BSL_SAL_Dump(pointFormats, pointFormatsSize * sizeof(uint8_t));
-    /* If the allocation fails, an error code is returned. */
     if (newData == NULL) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16602, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "Dump fail", 0, 0, 0, 0);
         return HITLS_MEMALLOC_FAIL;
     }
-    /* Reallocate the memory of pointFormats and update the length of pointFormats */
+
     BSL_SAL_FREE(config->pointFormats);
     config->pointFormats = newData;
     config->pointFormatsSize = pointFormatsSize;
@@ -923,14 +923,12 @@ int32_t HITLS_CFG_SetGroups(HITLS_Config *config, const uint16_t *groups, uint32
     }
 
     uint16_t *newData = BSL_SAL_Dump(groups, groupsSize * sizeof(uint16_t));
-    /* If the allocation fails, return an error code */
     if (newData == NULL) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16603, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "Dump fail", 0, 0, 0, 0);
         BSL_ERR_PUSH_ERROR(HITLS_MEMALLOC_FAIL);
         return HITLS_MEMALLOC_FAIL;
     }
 
-    /* Reallocate the memory of groups and update the length of groups */
     BSL_SAL_FREE(config->groups);
     config->groups = newData;
     config->groupsSize = groupsSize;
@@ -1146,13 +1144,11 @@ int32_t HITLS_CFG_SetSignature(HITLS_Config *config, const uint16_t *signAlgs, u
     }
 
     uint16_t *newData = BSL_SAL_Dump(signAlgs, signAlgsSize * sizeof(uint16_t));
-    /* If the allocation fails, return an error code. */
     if (newData == NULL) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16605, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "Dump fail", 0, 0, 0, 0);
         return HITLS_MEMALLOC_FAIL;
     }
 
-    /* Reallocate the signAlgs memory and update the signAlgs length */
     BSL_SAL_FREE(config->signAlgorithms);
     config->signAlgorithms = newData;
     config->signAlgorithmsSize = signAlgsSize;
@@ -1179,7 +1175,7 @@ int32_t HITLS_CFG_SetServerName(HITLS_Config *config, uint8_t *serverName, uint3
     }
     (void)memcpy_s(newData, serverNameSize, serverName, serverNameStrlen);
     newData[serverNameSize - 1] = '\0';
-    /* Reallocate the serverName memory and update the serverName length */
+
     BSL_SAL_FREE(config->serverName);
     config->serverName = newData;
     config->serverNameSize = serverNameSize;
@@ -1287,13 +1283,11 @@ int32_t HITLS_CFG_SetExtenedMasterSecretSupport(HITLS_Config *config, bool suppo
     if (config == NULL) {
         return HITLS_NULL_INPUT;
     }
-    /** et the extended master key flag */
     config->isSupportExtendMasterSecret = support;
     return HITLS_SUCCESS;
 }
 
 #if defined(HITLS_TLS_FEATURE_PSK) && (defined(HITLS_TLS_PROTO_TLS_BASIC) || defined(HITLS_TLS_PROTO_DTLS12))
-// Set the identity hint interface
 int32_t HITLS_CFG_SetPskIdentityHint(HITLS_Config *config, const uint8_t *hint, uint32_t hintSize)
 {
     if ((config == NULL) || (hint == NULL) || (hintSize == 0)) {
@@ -1310,7 +1304,6 @@ int32_t HITLS_CFG_SetPskIdentityHint(HITLS_Config *config, const uint8_t *hint, 
         return HITLS_MEMALLOC_FAIL;
     }
 
-    /* Repeated settings are supported */
     BSL_SAL_FREE(config->pskIdentityHint);
     config->pskIdentityHint = newData;
     config->hintSize = hintSize;

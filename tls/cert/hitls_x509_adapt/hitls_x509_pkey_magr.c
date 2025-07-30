@@ -28,6 +28,7 @@
 #include "hitls_type.h"
 #include "crypt_eal_pkey.h"
 #include "hitls_crypt_type.h"
+#include "cert.h"
 
 static int32_t g_tryTypes[] = { CRYPT_PRIKEY_PKCS8_UNENCRYPT, CRYPT_PRIKEY_PKCS8_ENCRYPT, CRYPT_PRIKEY_RSA,
     CRYPT_PRIKEY_ECC };
