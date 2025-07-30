@@ -91,7 +91,7 @@ void FreeDNList(HITLS_TrustedCAList *caList)
 
     return;
 }
-// Allocate memory for the caListNode
+
 HITLS_TrustedCANode *ParseDN(const uint8_t *data, uint32_t len)
 {
     HITLS_TrustedCANode *dnNode = (HITLS_TrustedCANode *)BSL_SAL_Calloc(1u, sizeof(HITLS_TrustedCANode));
@@ -380,7 +380,6 @@ void CleanCertificateRequest(CertificateRequestMsg *msg)
         return;
     }
 
-    /* release Certificate request message */
     BSL_SAL_FREE(msg->certTypes);
 #ifdef HITLS_TLS_PROTO_TLS13
     BSL_SAL_FREE(msg->certificateReqCtx);
