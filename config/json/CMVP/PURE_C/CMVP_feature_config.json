@@ -50,34 +50,6 @@
                 "params",
                 "asn1"
             ]
-        },
-        "hitls_tls": {
-            "c": [
-                "proto_version",
-                "host",
-                "callback",
-                "feature",
-                "proto",
-                "config",
-                "connection",
-                "suite",
-                "suite_cipher",
-                "suite_kx",
-                "suite_auth",
-                "maintain"
-            ]
-        },
-        "hitls_pki":{
-            "c": [
-                "x509",
-                "pkcs12",
-                "info"
-            ]
-        },
-        "hitls_auth":{
-            "c": [
-                "privpass_token"
-            ]
         }
     }
 }
