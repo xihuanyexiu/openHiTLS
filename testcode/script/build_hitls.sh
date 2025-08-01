@@ -30,6 +30,9 @@ LIB_TYPE="static shared"
 enable_sctp="--enable-sctp"
 BITS=64
 
+subdir="CMVP"
+libname=""
+
 usage()
 {
     printf "%-50s %-30s\n" "Build openHiTLS Code"                      "sh build_hitls.sh"
@@ -47,6 +50,7 @@ usage()
     printf "%-50s %-30s\n" "Build openHiTLS Code With Lib Type"        "sh build_hitls.sh shared"
     printf "%-50s %-30s\n" "Build openHiTLS Code With Lib Fuzzer"      "sh build_hitls.sh libfuzzer"
     printf "%-50s %-30s\n" "Build openHiTLS Code With command line"    "sh build_hitls.sh exe"
+    printf "%-50s %-30s\n" "Build openHiTLS Code With Iso Provider"     "sh build_hitls.sh iso"
     printf "%-50s %-30s\n" "Build openHiTLS Code With Help"            "sh build_hitls.sh help"
 }
 
@@ -111,6 +115,22 @@ build_hitls_code()
     make -j
 }
 
+build_hitls_provider()
+{
+    # Compile openHiTLS
+    cd ${HITLS_ROOT_DIR}/build
+    python3 ../configure.py --add_options="$add_options" --del_options="$del_options" \
+        --feature_config=./config/json/${subdir}/${get_arch}/${subdir}_feature_config.json \
+        --compile=./config/json/${subdir}/${get_arch}/${subdir}_compile_config.json \
+        --lib_type=shared
+    cmake .. -DCMAKE_SKIP_RPATH=TRUE -DCMAKE_INSTALL_PREFIX=../output/${subdir}/${get_arch}
+    make -j
+    make install
+    cd ../output/${subdir}/${get_arch}/lib
+    mv libhitls.so $libname
+    mv libhitls.so.hmac $libname.hmac
+}
+
 parse_option()
 {
     for i in $paramList
@@ -169,6 +189,18 @@ parse_option()
                 executes="ON"
                 add_options="${add_options} -fno-plt"
                 ;;
+            "iso")
+                add_options="${add_options} -DHITLS_CRYPTO_CMVP_ISO19790"
+                libname="libhitls_iso.so"
+                ;;
+            "fips")
+                add_options="${add_options} -DHITLS_CRYPTO_CMVP_FIPS"
+                libname="libhitls_fips.so"
+                ;;
+            "gm")
+                add_options="${add_options} -DHITLS_CRYPTO_CMVP_GM"
+                libname="libhitls_gm.so"
+                ;;
             "help")
                 usage
                 exit 0
@@ -186,4 +218,8 @@ clean
 parse_option
 down_depend_code
 build_depend_code
-build_hitls_code
+if [[ $libname != "" ]]; then
+    build_hitls_provider
+else
+    build_hitls_code
+fi

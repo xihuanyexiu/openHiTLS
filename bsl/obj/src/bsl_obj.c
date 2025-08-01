@@ -403,6 +403,10 @@ const BslAsn1DnInfo *BSL_OBJ_GetDnInfoFromCid(BslCid cid)
     return NULL;
 }
 
+#endif // HITLS_PKI_X509 || HITLS_PKI_INFO
+
+#if defined(HITLS_PKI_X509) || defined(HITLS_PKI_INFO) || defined(HITLS_CRYPTO_KEY_INFO)
+
 const char *BSL_OBJ_GetOidNameFromCID(BslCid ulCID)
 {
     if (ulCID >= BSL_CID_MAX) { /* check if ulCID is within range */
@@ -415,7 +419,7 @@ const char *BSL_OBJ_GetOidNameFromCID(BslCid ulCID)
     return g_oidTable[index].oidName;
 }
 
-#endif // HITLS_PKI_X509 || HITLS_PKI_INFO
+#endif // HITLS_PKI_X509 || HITLS_PKI_INFO || HITLS_CRYPTO_KEY_INFO
 
 
 #ifdef HITLS_BSL_HASH

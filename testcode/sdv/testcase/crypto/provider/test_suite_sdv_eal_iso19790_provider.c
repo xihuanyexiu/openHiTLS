@@ -51,9 +51,7 @@
 #ifdef HITLS_CRYPTO_CMVP_ISO19790
 #define ISO19790_LOG_FILE "iso19790_audit.log"
 #define HITLS_ISO_LIB_NAME "libhitls_iso.so"
-#define HITLS_ISO_PROVIDER_PATH "../../output/CMVP/PURE_C/lib"
-// #define HITLS_ISO_PROVIDER_PATH "../../output/CMVP/X8664/lib"
-// #define HITLS_ISO_PROVIDER_PATH "../../output/CMVP/ARMV8_LE/lib"
+#define HITLS_ISO_PROVIDER_PATH "../../output/CMVP/x86_64/lib"
 
 static FILE* g_logFile = NULL;
 
