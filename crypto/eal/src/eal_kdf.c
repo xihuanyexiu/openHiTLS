@@ -73,7 +73,6 @@ static void EalKdfCopyMethod(const EAL_KdfMethod *method, EAL_KdfUnitaryMethod *
     dest->derive = method->derive;
     dest->deinit = method->deinit;
     dest->freeCtx = method->freeCtx;
-    dest->ctrl = method->ctrl;
 }
 
 #ifdef HITLS_CRYPTO_PROVIDER
@@ -252,33 +251,17 @@ int32_t CRYPT_EAL_KdfDeInitCtx(CRYPT_EAL_KdfCTX *ctx)
     return CRYPT_SUCCESS;
 }
 
-int32_t CRYPT_EAL_KdfCtrl(CRYPT_EAL_KdfCTX *ctx, int32_t cmd, void *val, uint32_t valLen)
-{
-    if (ctx == NULL || ctx->method == NULL || ctx->method->ctrl== NULL) {
-        EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_KDF, CRYPT_KDF_MAX, CRYPT_NULL_INPUT);
-        return CRYPT_NULL_INPUT;
-    }
-
-    int32_t ret = ctx->method->ctrl(ctx->data, cmd, val, valLen);
-    if (ret != CRYPT_SUCCESS) {
-        EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_KDF, ctx->id, ret);
-    }
-
-    return ret;
-}
-
 void CRYPT_EAL_KdfFreeCtx(CRYPT_EAL_KdfCTX *ctx)
 {
     if (ctx == NULL) {
         return;
     }
-    if (ctx->method == NULL || ctx->method->freeCtx == NULL) {
+    if (ctx->method != NULL && ctx->method->freeCtx != NULL) {
+        ctx->method->freeCtx(ctx->data);
+        EAL_EventReport(CRYPT_EVENT_ZERO, CRYPT_ALGO_KDF, ctx->id, CRYPT_SUCCESS);
+    } else {
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_KDF, ctx->id, CRYPT_EAL_ALG_NOT_SUPPORT);
-        BSL_SAL_FREE(ctx->method);
-        BSL_SAL_FREE(ctx);
-        return;
     }
-    ctx->method->freeCtx(ctx->data);
     BSL_SAL_FREE(ctx->method);
     BSL_SAL_FREE(ctx);
     return;

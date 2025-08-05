@@ -965,7 +965,7 @@ int32_t CRYPT_DSA_Sign(const CRYPT_DSA_Ctx *ctx, int32_t algId, const uint8_t *d
 {
     uint8_t hash[64]; // 64 is max hash len
     uint32_t hashLen = sizeof(hash) / sizeof(hash[0]);
-    int32_t ret = EAL_Md(algId, data, dataLen, hash, &hashLen);
+    int32_t ret = EAL_Md(algId, NULL, NULL, data, dataLen, hash, &hashLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -1071,7 +1071,7 @@ int32_t CRYPT_DSA_Verify(const CRYPT_DSA_Ctx *ctx, int32_t algId, const uint8_t 
 {
     uint8_t hash[64]; // 64 is max hash len
     uint32_t hashLen = sizeof(hash) / sizeof(hash[0]);
-    int32_t ret = EAL_Md(algId, data, dataLen, hash, &hashLen);
+    int32_t ret = EAL_Md(algId, NULL, NULL, data, dataLen, hash, &hashLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -1141,7 +1141,7 @@ static int32_t DSAFips1864GenQ(int32_t algId, uint32_t qBits, const uint8_t *see
 {
     uint8_t hash[64] = {0}; // 64 is max hash len
     uint32_t hashLen = sizeof(hash) / sizeof(hash[0]);
-    int32_t ret = EAL_Md(algId, seed, seedLen, hash, &hashLen);
+    int32_t ret = EAL_Md(algId, NULL, NULL, seed, seedLen, hash, &hashLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -1185,7 +1185,7 @@ static int32_t DSAFips1864GenP(DSA_FIPS186_4_Para *fipsPara, const BN_BigNum *po
         }
         hashLen = sizeof(hash) / sizeof(hash[0]);
         (void)memset_s(hash, hashLen, 0, hashLen);
-        ret = EAL_Md(fipsPara->algId, seed->data, seed->dataLen, hash, &hashLen);
+        ret = EAL_Md(fipsPara->algId, NULL, NULL, seed->data, seed->dataLen, hash, &hashLen);
         GOTO_ERR_IF_TRUE(ret != CRYPT_SUCCESS, ret);
         ret = BN_Bin2Bn(V, hash, hashLen);
         GOTO_ERR_IF_TRUE(ret != CRYPT_SUCCESS, ret);
@@ -1390,7 +1390,7 @@ int32_t CryptDsaFips1864GenVerifiableG(DSA_FIPS186_4_Para *fipsPara, BSL_Buffer 
         msg[seed->dataLen + 6] = (uint8_t)(cnt & 0xff); // skip 6 bytes.
         hashLen = sizeof(hash) / sizeof(hash[0]);
         (void)memset_s(hash, hashLen, 0, hashLen);
-        GOTO_ERR_IF(EAL_Md(fipsPara->algId, msg, msgLen, hash, &hashLen), ret);
+        GOTO_ERR_IF(EAL_Md(fipsPara->algId, NULL, NULL, msg, msgLen, hash, &hashLen), ret);
         GOTO_ERR_IF(BN_Bin2Bn(gTmp, hash, hashLen), ret);
         GOTO_ERR_IF(BN_ModExp(gTmp, gTmp, e, dsaPara->p, opt), ret);
         if (BN_IsNegative(gTmp) == true || BN_IsZero(gTmp) == true || BN_IsOne(gTmp) == true) { // gTmp < 2

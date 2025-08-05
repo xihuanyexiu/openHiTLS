@@ -118,7 +118,6 @@ void SDV_X509_STORE_VFY_PARAM_EXR_FUNC_TC001(char *path1, char *path2, char *pat
 {
     int ret;
     TestMemInit();
-    BSL_GLOBAL_Init();
     HITLS_X509_StoreCtx *storeCtx = NULL;
     storeCtx = HITLS_X509_NewStoreCtxMock();
     ASSERT_NE(storeCtx, NULL);
@@ -132,7 +131,6 @@ void SDV_X509_STORE_VFY_PARAM_EXR_FUNC_TC001(char *path1, char *path2, char *pat
 EXIT:
     HITLS_X509_FreeStoreCtxMock(storeCtx);
     BSL_LIST_FREE(chain, (BSL_LIST_PFUNC_FREE)HITLS_X509_CertFree);
-    BSL_GLOBAL_DeInit();
 }
 /* END_CASE */
 
@@ -142,7 +140,6 @@ void SDV_X509_STORE_VFY_CRL_FUNC_TC001(int type, int expResult, char *path1, cha
 {
     int ret;
     TestMemInit();
-    BSL_GLOBAL_Init();
     HITLS_X509_StoreCtx *storeCtx = NULL;
     storeCtx = HITLS_X509_NewStoreCtxMock();
     ASSERT_NE(storeCtx, NULL);
@@ -164,7 +161,6 @@ void SDV_X509_STORE_VFY_CRL_FUNC_TC001(int type, int expResult, char *path1, cha
 EXIT:
     HITLS_X509_FreeStoreCtxMock(storeCtx);
     BSL_LIST_FREE(chain, (BSL_LIST_PFUNC_FREE)HITLS_X509_CertFree);
-    BSL_GLOBAL_DeInit();
 }
 /* END_CASE */
 
@@ -199,7 +195,6 @@ void SDV_X509_STORE_CTRL_FUNC_TC001(void)
 
 EXIT:
     HITLS_X509_StoreCtxFree(store);
-    BSL_GLOBAL_DeInit();
 }
 /* END_CASE */
 
@@ -230,7 +225,6 @@ EXIT:
     HITLS_X509_StoreCtxFree(store);
     HITLS_X509_CertFree(cert);
     HITLS_X509_CrlFree(crl);
-    BSL_GLOBAL_DeInit();
 }
 /* END_CASE */
 
@@ -286,7 +280,6 @@ EXIT:
     HITLS_X509_CertFree(entity);
     HITLS_X509_CrlFree(crl);
     BSL_LIST_FREE(chain, (BSL_LIST_PFUNC_FREE)HITLS_X509_CertFree);
-    BSL_GLOBAL_DeInit();
 }
 /* END_CASE */
 
@@ -325,7 +318,6 @@ EXIT:
     HITLS_X509_CertFree(ca);
     HITLS_X509_CertFree(entity);
     BSL_LIST_FREE(chain, (BSL_LIST_PFUNC_FREE)HITLS_X509_CertFree);
-    BSL_GLOBAL_DeInit();
 }
 /* END_CASE */
 
@@ -374,7 +366,6 @@ EXIT:
     HITLS_X509_CertFree(ca);
     HITLS_X509_CertFree(entity);
     BSL_LIST_FREE(chain, (BSL_LIST_PFUNC_FREE)HITLS_X509_CertFree);
-    BSL_GLOBAL_DeInit();
 }
 /* END_CASE */
 
@@ -399,7 +390,6 @@ EXIT:
     HITLS_X509_StoreCtxFree(store);
     HITLS_X509_CertFree(root);
     BSL_LIST_FREE(chain, (BSL_LIST_PFUNC_FREE)HITLS_X509_CertFree);
-    BSL_GLOBAL_DeInit();
 }
 /* END_CASE */
 
@@ -424,7 +414,6 @@ EXIT:
     HITLS_X509_StoreCtxFree(store);
     HITLS_X509_CertFree(root);
     BSL_LIST_FREE(chain, (BSL_LIST_PFUNC_FREE)HITLS_X509_CertFree);
-    BSL_GLOBAL_DeInit();
 }
 /* END_CASE */
 
@@ -452,7 +441,6 @@ EXIT:
     HITLS_X509_StoreCtxFree(store);
     HITLS_X509_CertFree(root);
     BSL_LIST_FREE(chain, (BSL_LIST_PFUNC_FREE)HITLS_X509_CertFree);
-    BSL_GLOBAL_DeInit();
 }
 /* END_CASE */
 
@@ -495,7 +483,6 @@ EXIT:
     HITLS_X509_CertFree(ca);
     HITLS_X509_CertFree(entity);
     BSL_LIST_FREE(chain, (BSL_LIST_PFUNC_FREE)HITLS_X509_CertFree);
-    BSL_GLOBAL_DeInit();
 }
 /* END_CASE */
 
@@ -552,7 +539,6 @@ EXIT:
     HITLS_X509_CrlFree(rootcrl);
     HITLS_X509_CrlFree(cacrl);
     BSL_LIST_FREE(chain, (BSL_LIST_PFUNC_FREE)HITLS_X509_CertFree);
-    BSL_GLOBAL_DeInit();
 }
 /* END_CASE */
 
@@ -578,7 +564,6 @@ EXIT:
     HITLS_X509_StoreCtxFree(store);
     HITLS_X509_CertFree(root);
     BSL_LIST_FREE(chain, (BSL_LIST_PFUNC_FREE)HITLS_X509_CertFree);
-    BSL_GLOBAL_DeInit();
 }
 /* END_CASE */
 
@@ -612,7 +597,6 @@ EXIT:
     HITLS_X509_CertFree(ca);
     HITLS_X509_CertFree(entity);
     BSL_LIST_FREE(chain, (BSL_LIST_PFUNC_FREE)HITLS_X509_CertFree);
-    BSL_GLOBAL_DeInit();
 }
 /* END_CASE */
 
