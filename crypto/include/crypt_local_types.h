@@ -317,6 +317,8 @@ typedef struct {
     EAL_MdMethod mgfMeth;          /**< pss mgfid method when padding */
     CRYPT_MD_AlgId mdId;           /**< pss mdid when padding */
     CRYPT_MD_AlgId mgfId;          /**< pss mgfid when padding */
+    void *mdProvCtx;
+    void *mgfProvCtx;
 } RSA_PadingPara;
 
 /* Prototype of the KDF algorithm operation functions */
@@ -352,8 +354,7 @@ typedef struct {
 } EAL_CidToKdfMeth;
 
 /* Prototype of the RAND algorithm operation functions */
-typedef void *(*RandNewCtx)(int32_t algId, BSL_Param *param);
-typedef void *(*RandDrbgNewCtx)(void *provCtx, int32_t algId, BSL_Param *param);
+typedef void *(*RandDrbgNewCtx)(void *libCtx, int32_t algId, BSL_Param *param);
 typedef int32_t (*RandDrbgInst)(void *ctx, const uint8_t *pers, uint32_t persLen, BSL_Param *param);
 typedef int32_t (*RandDrbgUnInst)(void *ctx);
 typedef int32_t (*RandDrbgGen)(void *ctx, uint8_t *bytes, uint32_t len,
@@ -363,8 +364,7 @@ typedef int32_t (*RandDrbgCtrl)(void *ctx, int32_t cmd, void *val, uint32_t valL
 typedef void (*RandDrbgFreeCtx)(void *ctx);
 
 typedef struct {
-    RandNewCtx newCtx;
-    RandDrbgNewCtx provNewCtx;
+    RandDrbgNewCtx newCtx;
     RandDrbgInst inst;
     RandDrbgUnInst unInst;
     RandDrbgGen gen;
