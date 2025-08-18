@@ -161,6 +161,7 @@ void CRYPT_DSA_FreeCtx(CRYPT_DSA_Ctx *ctx)
     CRYPT_DSA_FreePara(ctx->para);
     BN_Destroy(ctx->x);
     BN_Destroy(ctx->y);
+    BSL_SAL_FREE(ctx->mdAttr);
     BSL_SAL_FREE(ctx);
 }
 
@@ -333,6 +334,9 @@ CRYPT_DSA_Ctx *CRYPT_DSA_DupCtx(CRYPT_DSA_Ctx *dsaCtx)
     GOTO_ERR_IF_SRC_NOT_NULL(dsaNewCtx->x, dsaCtx->x, BN_Dup(dsaCtx->x), CRYPT_MEM_ALLOC_FAIL);
     GOTO_ERR_IF_SRC_NOT_NULL(dsaNewCtx->y, dsaCtx->y, BN_Dup(dsaCtx->y), CRYPT_MEM_ALLOC_FAIL);
     GOTO_ERR_IF_SRC_NOT_NULL(dsaNewCtx->para, dsaCtx->para, ParaDup(dsaCtx->para), CRYPT_MEM_ALLOC_FAIL);
+    GOTO_ERR_IF_SRC_NOT_NULL(dsaNewCtx->mdAttr, dsaCtx->mdAttr, BSL_SAL_Dump(dsaCtx->mdAttr,
+        strlen(dsaCtx->mdAttr) + 1), CRYPT_MEM_ALLOC_FAIL);
+    dsaNewCtx->libCtx = dsaCtx->libCtx;
     BSL_SAL_ReferencesInit(&(dsaNewCtx->references));
     return dsaNewCtx;
 
@@ -523,6 +527,19 @@ int32_t CRYPT_DSA_SetParaEx(CRYPT_DSA_Ctx *ctx, const BSL_Param *para)
     if (para == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
+    }
+#ifdef HITLS_CRYPTO_PROVIDER
+    int32_t ret;
+    const BSL_Param *temp = NULL;
+    if ((temp = BSL_PARAM_FindConstParam(para, CRYPT_PARAM_MD_ATTR)) != NULL) {
+        ret = CRYPT_PkeySetMdAttr((const char *)(temp->value), temp->valueLen, &(ctx->mdAttr));
+        if (ret != CRYPT_SUCCESS) {
+            return ret;
+        }
+    }
+#endif
+    if (BSL_PARAM_FindConstParam(para, CRYPT_PARAM_DSA_P) == NULL) {
+        return CRYPT_SUCCESS;
     }
     CRYPT_DsaPara dsaPara = {0};
     (void)GetConstParamValue(para, CRYPT_PARAM_DSA_P, &dsaPara.p, &dsaPara.pLen);
@@ -969,7 +986,7 @@ int32_t CRYPT_DSA_Sign(const CRYPT_DSA_Ctx *ctx, int32_t algId, const uint8_t *d
     }
     uint8_t hash[64]; // 64 is max hash len
     uint32_t hashLen = sizeof(hash) / sizeof(hash[0]);
-    int32_t ret = EAL_Md(algId, ctx->libCtx, NULL, data, dataLen, hash, &hashLen);
+    int32_t ret = EAL_Md(algId, ctx->libCtx, ctx->mdAttr, data, dataLen, hash, &hashLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -1079,7 +1096,7 @@ int32_t CRYPT_DSA_Verify(const CRYPT_DSA_Ctx *ctx, int32_t algId, const uint8_t 
     }
     uint8_t hash[64]; // 64 is max hash len
     uint32_t hashLen = sizeof(hash) / sizeof(hash[0]);
-    int32_t ret = EAL_Md(algId, ctx->libCtx, NULL, data, dataLen, hash, &hashLen);
+    int32_t ret = EAL_Md(algId, ctx->libCtx, ctx->mdAttr, data, dataLen, hash, &hashLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -1145,11 +1162,12 @@ static int32_t GetDsaParamValue(const BSL_Param *params, int32_t paramId, uint32
     return CRYPT_SUCCESS;
 }
 
-static int32_t DSAFips1864GenQ(int32_t algId, uint32_t qBits, const uint8_t *seed, uint32_t seedLen, BN_BigNum *q)
+static int32_t DSAFips1864GenQ(int32_t algId, void *libCtx, const char *mdAttr, uint32_t qBits,
+    const uint8_t *seed, uint32_t seedLen, BN_BigNum *q)
 {
     uint8_t hash[64] = {0}; // 64 is max hash len
     uint32_t hashLen = sizeof(hash) / sizeof(hash[0]);
-    int32_t ret = EAL_Md(algId, NULL, NULL, seed, seedLen, hash, &hashLen);
+    int32_t ret = EAL_Md(algId, libCtx, mdAttr, seed, seedLen, hash, &hashLen);
     if (ret != CRYPT_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
@@ -1169,7 +1187,7 @@ static int32_t DSAFips1864GenQ(int32_t algId, uint32_t qBits, const uint8_t *see
 }
 
 static int32_t DSAFips1864GenP(DSA_FIPS186_4_Para *fipsPara, const BN_BigNum *pow,
-    BN_Optimizer *opt, BSL_Buffer *seed, CRYPT_DSA_Para *dsaPara)
+    BN_Optimizer *opt, BSL_Buffer *seed, CRYPT_DSA_Para *dsaPara, void *libCtx, const char *mdAttr)
 {
     uint8_t hash[64]; // 64 is max hash len
     uint32_t hashLen;
@@ -1193,7 +1211,7 @@ static int32_t DSAFips1864GenP(DSA_FIPS186_4_Para *fipsPara, const BN_BigNum *po
         }
         hashLen = sizeof(hash) / sizeof(hash[0]);
         (void)memset_s(hash, hashLen, 0, hashLen);
-        ret = EAL_Md(fipsPara->algId, NULL, NULL, seed->data, seed->dataLen, hash, &hashLen);
+        ret = EAL_Md(fipsPara->algId, libCtx, mdAttr, seed->data, seed->dataLen, hash, &hashLen);
         GOTO_ERR_IF_TRUE(ret != CRYPT_SUCCESS, ret);
         ret = BN_Bin2Bn(V, hash, hashLen);
         GOTO_ERR_IF_TRUE(ret != CRYPT_SUCCESS, ret);
@@ -1283,7 +1301,8 @@ int32_t CryptDsaFips1864GenPq(CRYPT_DSA_Ctx *ctx, DSA_FIPS186_4_Para *fipsPara, 
         /* Generate Q */
         GOTO_ERR_IF(CRYPT_RandEx(ctx->libCtx, seed->data, seed->dataLen), ret);
         (void)memcpy_s(msg.data, seed->dataLen, seed->data, seed->dataLen);
-        GOTO_ERR_IF(DSAFips1864GenQ(fipsPara->algId, fipsPara->n, seed->data, seed->dataLen, qTmp), ret);
+        GOTO_ERR_IF(DSAFips1864GenQ(fipsPara->algId, ctx->libCtx, ctx->mdAttr, fipsPara->n, seed->data, seed->dataLen,
+            qTmp), ret);
         ret = BN_PrimeCheck(qTmp, 0, opt, NULL);
         if (ret == CRYPT_BN_NOR_CHECK_PRIME) {
             continue;
@@ -1293,7 +1312,7 @@ int32_t CryptDsaFips1864GenPq(CRYPT_DSA_Ctx *ctx, DSA_FIPS186_4_Para *fipsPara, 
         uint32_t cntMax = 4 * fipsPara->l - 1; // 4 * fipsPara->l - 1 from FIPS.186-4.
         for (uint32_t cnt = 0; cnt <= cntMax; cnt++) {
             GOTO_ERR_IF(BN_Zeroize(pTmp), ret);
-            GOTO_ERR_IF(DSAFips1864GenP(fipsPara, pow, opt, &msg, &dsaParaTmp), ret);
+            GOTO_ERR_IF(DSAFips1864GenP(fipsPara, pow, opt, &msg, &dsaParaTmp, ctx->libCtx, ctx->mdAttr), ret);
             if (BN_Cmp(pTmp, pow) < 0) {
                 continue;
             }
@@ -1315,7 +1334,7 @@ ERR:
 }
 
 // fips186-4 A.1.1.3
-int32_t CryptDsaFips1864ValidatePq(int32_t algId, uint32_t type,
+int32_t CryptDsaFips1864ValidatePq(int32_t algId, void *libCtx, const char *mdAttr, uint32_t type,
     BSL_Buffer *seed, CRYPT_DSA_Para *dsaPara, uint32_t counter)
 {
     BSL_Buffer msg = {NULL, 0};
@@ -1337,7 +1356,7 @@ int32_t CryptDsaFips1864ValidatePq(int32_t algId, uint32_t type,
     GOTO_ERR_IF(BN_SetLimb(pow, 1), ret);
     GOTO_ERR_IF(BN_Lshift(pow, pow, pBits - 1), ret);
     /* Validate Q */
-    GOTO_ERR_IF(DSAFips1864GenQ(algId, qBits, seed->data, seed->dataLen, qTmp), ret);
+    GOTO_ERR_IF(DSAFips1864GenQ(algId, libCtx, mdAttr, qBits, seed->data, seed->dataLen, qTmp), ret);
     GOTO_ERR_IF(BN_PrimeCheck(qTmp, 0, opt, NULL), ret);
     ret = CRYPT_DSA_PARA_NOT_EQUAL;
     GOTO_ERR_IF_TRUE(BN_Cmp(qTmp, dsaPara->q), ret);
@@ -1345,7 +1364,7 @@ int32_t CryptDsaFips1864ValidatePq(int32_t algId, uint32_t type,
     DSA_FIPS186_4_Para fipsPara = {algId, 0, pBits, qBits};
     for (uint32_t i = 0; i <= counter; i++) {
         GOTO_ERR_IF(BN_Zeroize(pTmp), ret);
-        GOTO_ERR_IF(DSAFips1864GenP(&fipsPara, pow, opt, &msg, &dsaParaTmp), ret);
+        GOTO_ERR_IF(DSAFips1864GenP(&fipsPara, pow, opt, &msg, &dsaParaTmp, libCtx, mdAttr), ret);
         if (BN_Cmp(pTmp, pow) < 0) {
             continue;
         }
