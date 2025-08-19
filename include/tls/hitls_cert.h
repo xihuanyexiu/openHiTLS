@@ -1103,6 +1103,54 @@ int32_t HITLS_LoadCrlBuffer(HITLS_Ctx *ctx, const uint8_t *buf, uint32_t bufLen,
  */
 int32_t HITLS_ClearVerifyCrls(HITLS_Ctx *ctx);
 
+/**
+ * @ingroup hitls_cert
+ * @brief   Set the certificate verification flags.
+ *
+ * @param   config [OUT] TLS link configuration
+ * @param   verifyFlags   [IN] Verification flags, type: uint32_t
+ * @retval  HITLS_SUCCESS, if successful.
+ * @retval  For other error codes, see hitls_error.h.
+ */
+#define HITLS_CFG_SetVerifyFlags(config, verifyFlags) \
+    HITLS_CFG_CtrlSetVerifyParams(config, NULL, CERT_STORE_CTRL_SET_VERIFY_FLAGS, verifyFlags, NULL)
+
+/**
+ * @ingroup hitls_cert
+ * @brief   Set the certificate verification flags.
+ *
+ * @param   ctx  [OUT] TLS link object
+ * @param   verifyFlags [IN] Verification flags, type: uint32_t
+ * @retval  HITLS_SUCCESS, if successful.
+ * @retval  For other error codes, see hitls_error.h.
+ */
+#define HITLS_SetVerifyFlags(ctx, verifyFlags) \
+    HITLS_CtrlSetVerifyParams(ctx, NULL, CERT_STORE_CTRL_SET_VERIFY_FLAGS, verifyFlags, NULL)
+
+/**
+ * @ingroup hitls_cert
+ * @brief   Set the certificate verification flags.
+ *
+ * @param   config [IN] TLS link configuration
+ * @param   verifyFlags   [OUT] Verification flags, type: uint32_t *
+ * @retval  HITLS_SUCCESS, if successful.
+ * @retval  For other error codes, see hitls_error.h.
+ */
+#define HITLS_CFG_GetVerifyFlags(config, verifyFlags) \
+    HITLS_CFG_CtrlGetVerifyParams(config, NULL, CERT_STORE_CTRL_GET_VERIFY_FLAGS, verifyFlags)
+
+/**
+ * @ingroup hitls_cert
+ * @brief   Set the certificate verification flags.
+ *
+ * @param   ctx  [IN] TLS link object
+ * @param   verifyFlags [OUT] Verification flags, type: uint32_t *
+ * @retval  HITLS_SUCCESS, if successful.
+ * @retval  For other error codes, see hitls_error.h.
+ */
+#define HITLS_GetVerifyFlags(ctx, verifyFlags) \
+    HITLS_CtrlGetVerifyParams(ctx, NULL, CERT_STORE_CTRL_GET_VERIFY_FLAGS, verifyFlags)
+
 #ifdef __cplusplus
 }
 #endif
