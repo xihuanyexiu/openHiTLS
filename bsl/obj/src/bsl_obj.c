@@ -16,6 +16,7 @@
 #include "hitls_build.h"
 #ifdef HITLS_BSL_OBJ
 #include <stddef.h>
+#include <stdio.h>
 #include "securec.h"
 #include "bsl_sal.h"
 #include "bsl_obj.h"
@@ -32,6 +33,10 @@ static BSL_SAL_ThreadLockHandle g_oidHashRwLock = NULL;
 
 static uint32_t g_oidHashInitOnce = BSL_SAL_ONCE_INIT;
 #endif // HITLS_BSL_HASH
+
+#define BSL_OBJ_ARCS_X_MAX 2
+#define BSL_OBJ_ARCS_Y_MAX 40
+#define BSL_OBJ_ARCS_MAX (BSL_OBJ_ARCS_X_MAX * BSL_OBJ_ARCS_Y_MAX + BSL_OBJ_ARCS_Y_MAX - 1)
 
 BslOidInfo g_oidTable[] = {
     {{9, "\140\206\110\1\145\3\4\1\1", BSL_OID_GLOBAL}, "aes-128-ecb", BSL_CID_AES128_ECB},
@@ -96,6 +101,7 @@ BslOidInfo g_oidTable[] = {
     {{3, "\125\35\17", BSL_OID_GLOBAL}, "KeyUsage", BSL_CID_CE_KEYUSAGE},
     {{3, "\125\35\21", BSL_OID_GLOBAL}, "SubjectAltName", BSL_CID_CE_SUBJECTALTNAME},
     {{3, "\125\35\23", BSL_OID_GLOBAL}, "BasicConstraints", BSL_CID_CE_BASICCONSTRAINTS},
+    {{3, "\125\35\37", BSL_OID_GLOBAL}, "CRLDistributionPoints", BSL_CID_CE_CRLDISTRIBUTIONPOINTS},
     {{3, "\125\35\45", BSL_OID_GLOBAL}, "ExtendedKeyUsage", BSL_CID_CE_EXTKEYUSAGE},
     {{8, "\53\6\1\5\5\7\3\1", BSL_OID_GLOBAL}, "ServerAuth", BSL_CID_KP_SERVERAUTH},
     {{8, "\53\6\1\5\5\7\3\2", BSL_OID_GLOBAL}, "ClientAuth", BSL_CID_KP_CLIENTAUTH},
@@ -159,6 +165,8 @@ BslOidInfo g_oidTable[] = {
     {{9, "\53\44\3\3\2\10\1\1\15", BSL_OID_GLOBAL}, "BRAINPOOLP512R1", BSL_CID_ECC_BRAINPOOLP512R1},
     {{7, "\52\206\110\316\75\2\1", BSL_OID_GLOBAL}, "EC-PUBLICKEY", BSL_CID_EC_PUBLICKEY}, // ecc subkey
     {{10, "\11\222\46\211\223\362\54\144\1\1", BSL_OID_GLOBAL}, "UID", BSL_CID_AT_USERID},
+    {{3, "\125\35\22", BSL_OID_GLOBAL}, "IssuerAlternativeName", BSL_CID_CE_ISSUERALTERNATIVENAME},
+    {{8, "\53\6\1\5\5\7\1\1", BSL_OID_GLOBAL}, "AuthorityInformationAccess", BSL_CID_CE_AUTHORITYINFORMATIONACCESS},
 };
 
 uint32_t g_tableSize = (uint32_t)sizeof(g_oidTable)/sizeof(g_oidTable[0]);
@@ -573,5 +581,64 @@ void BSL_OBJ_FreeHashTable(void)
     }
 }
 #endif // HITLS_BSL_HASH
+
+/*
+* Conversion Rules:
+* The first byte represents the first two nodes: X.Y, where X = first byte / 40, Y = first byte % 40.
+* Subsequent nodes use variable length encoding (Base 128), where the highest bit of each byte indicates
+* whether there are subsequent bytes (1 indicates continuation, 0 indicates end).
+* Detailed conversion process:
+* 1、Split the first two nodes, the first byte is decomposed into two numbers: first_node and second_node,
+* first_node = byte_value / 40, second_node = byte_value % 40.
+* 2、Decoding subsequent nodes, Each node may be composed of multiple bytes, with the most significant bit (MSB)
+* of each byte being the continuation flag and the remaining 7 bits being a part of the actual value,
+* Multiple 7-bit groups are combined in big endian order.
+*/
+char *BSL_OBJ_GetOidNumericString(const uint8_t *oid, uint32_t len)
+{
+    if (oid == NULL || len < 1 || oid[0] > BSL_OBJ_ARCS_MAX) {
+        BSL_ERR_PUSH_ERROR(BSL_INVALID_ARG);
+        return NULL;
+    }
+
+    char buffer[256] = {0};
+    if (snprintf_s(buffer, sizeof(buffer) + 1, sizeof(buffer), "%d.%d", oid[0] / BSL_OBJ_ARCS_Y_MAX,
+        oid[0] % BSL_OBJ_ARCS_Y_MAX) < 0) {
+        return NULL;
+    }
+
+    uint64_t value = 0;
+    for (uint32_t i = 1; i < len; i++) {
+        if (value > (UINT64_MAX >> 7)) {
+            /* Overflow check */
+            BSL_ERR_PUSH_ERROR(BSL_INVALID_ARG);
+            return NULL;
+        }
+        if ((value == 0) && ((oid[i]) == 0x80)) {
+            /* Any value must be encoded with the minimum number of bytes.
+              No unnecessary or meaningless leading bytes are allowed */
+            BSL_ERR_PUSH_ERROR(BSL_INVALID_ARG);
+            return NULL;
+        }
+
+        value = (value << 7) | (oid[i] & 0x7F);
+        if (!(oid[i] & 0x80)) {
+            char temp[20];
+            if (snprintf_s(temp, sizeof(temp) + 1, sizeof(temp), ".%lu", value) < 0) {
+                BSL_ERR_PUSH_ERROR(BSL_INTERNAL_EXCEPTION);
+                return NULL;
+            }
+            strcat(buffer, temp);
+            value = 0;
+        }
+    }
+
+    if (value != 0) {
+        BSL_ERR_PUSH_ERROR(BSL_INVALID_ARG);
+        return NULL;
+    }
+
+    return strdup(buffer);
+}
 
 #endif

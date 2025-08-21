@@ -1314,3 +1314,23 @@ EXIT:
 #endif
 }
 /* END_CASE */
+
+/* BEGIN_CASE */
+void SDV_HITLS_X509_PrintCrl_TC001(char *certPath, int format, int printFlag, char *expectFile)
+{
+    TestMemInit();
+    HITLS_X509_Crl *crl = NULL;
+    int32_t *version = NULL;
+    Hex expect = { (uint8_t *)expectFile, 0};
+    
+    ASSERT_EQ(HITLS_X509_CrlParseFile(format, certPath, &crl), HITLS_PKI_SUCCESS);
+    ASSERT_NE(crl, NULL);
+    ASSERT_EQ(HITLS_X509_CrlCtrl(crl, HITLS_X509_GET_VERSION, &version, sizeof(int32_t)), HITLS_PKI_SUCCESS);
+    BSL_Buffer data = {(uint8_t *)crl, sizeof(HITLS_X509_Crl *)};
+    ASSERT_EQ(HITLS_PKI_PrintCtrl(HITLS_PKI_SET_PRINT_FLAG, &printFlag, sizeof(int), NULL), HITLS_PKI_SUCCESS);
+    ASSERT_EQ(PrintBuffTest(HITLS_PKI_PRINT_CRL, &data, "Print crl file", &expect, true), 0);
+
+EXIT:
+    HITLS_X509_CrlFree(crl);
+}
+/* END_CASE */

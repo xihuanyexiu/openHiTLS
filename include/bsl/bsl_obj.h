@@ -546,6 +546,9 @@ typedef enum {
     BSL_CID_ECDH_NISTP521_MLKEM768 = 2116,
     BSL_CID_ECDH_NISTP521_MLKEM1024 = 2117,
 
+    BSL_CID_CE_ISSUERALTERNATIVENAME = 2200,
+    BSL_CID_CE_AUTHORITYINFORMATIONACCESS = 2201,
+
     BSL_CID_SM9 = 5201,
     BSL_CID_ECC_SM9 = 5202,
     BSL_CID_PAILLIER = 5203,
@@ -605,6 +608,15 @@ BslOidString *BSL_OBJ_GetOID(BslCid ulCID);
  * @return The algorithm ID
  */
 BslCid BSL_OBJ_GetCID(const BslOidString *oidStr);
+
+/**
+ * @ingroup bsl_obj
+ * @brief Get oid number string from the hex string
+ * @param[in] oid The hex string
+ * @param[in] len The hex string length
+ * @return Oid number string
+ */
+char *BSL_OBJ_GetOidNumericString(const uint8_t *oid, uint32_t len);
 
 #ifdef __cplusplus
 }
