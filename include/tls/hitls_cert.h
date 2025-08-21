@@ -1050,6 +1050,59 @@ int32_t HITLS_CtrlSetVerifyParams(HITLS_Ctx *ctx, HITLS_CERT_Store *store, uint3
  */
 int32_t HITLS_CtrlGetVerifyParams(HITLS_Ctx *ctx, HITLS_CERT_Store *store, uint32_t cmd, void *out);
 
+/**
+ * @ingroup hitls_cert
+ * @brief   Load CRL from file and add it into the verify store of the TLS configuration.
+ *
+ * @param   config [OUT] TLS link configuration
+ * @param   file   [IN]  CRL file path
+ * @param   format [IN]  Data format, see HITLS_ParseFormat
+ * @retval  HITLS_SUCCESS if successful
+ * @retval  For other error codes, see hitls_error.h
+ */
+int32_t HITLS_CFG_LoadCrlFile(HITLS_Config *config, const char *file, HITLS_ParseFormat format);
+
+/**
+ * @ingroup hitls_cert
+ * @brief   Load CRL from buffer and add it into the verify store of the TLS configuration.
+ *
+ * @param   config [OUT] TLS link configuration
+ * @param   buf    [IN]  CRL data
+ * @param   bufLen [IN]  Data length
+ * @param   format [IN]  Data format, see HITLS_ParseFormat
+ * @retval  HITLS_SUCCESS if successful
+ * @retval  For other error codes, see hitls_error.h
+ */
+int32_t HITLS_CFG_LoadCrlBuffer(HITLS_Config *config, const uint8_t *buf, uint32_t bufLen, HITLS_ParseFormat format);
+
+/**
+ * @ingroup hitls_cert
+ * @brief   Clear all CRLs in the verify store of the configuration.
+ *
+ * @param   config [IN] TLS link configuration
+ * @retval  HITLS_SUCCESS if successful
+ * @retval  For other error codes, see hitls_error.h
+ */
+int32_t HITLS_CFG_ClearVerifyCrls(HITLS_Config *config);
+
+/**
+ * @ingroup hitls_cert
+ * @brief   Load CRL from file and add it into the verify store of the TLS context.
+ */
+int32_t HITLS_LoadCrlFile(HITLS_Ctx *ctx, const char *file, HITLS_ParseFormat format);
+
+/**
+ * @ingroup hitls_cert
+ * @brief   Load CRL from buffer and add it into the verify store of the TLS context.
+ */
+int32_t HITLS_LoadCrlBuffer(HITLS_Ctx *ctx, const uint8_t *buf, uint32_t bufLen, HITLS_ParseFormat format);
+
+/**
+ * @ingroup hitls_cert
+ * @brief   Clear all CRLs in the verify store of the context.
+ */
+int32_t HITLS_ClearVerifyCrls(HITLS_Ctx *ctx);
+
 #ifdef __cplusplus
 }
 #endif
