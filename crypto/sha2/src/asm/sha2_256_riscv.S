@@ -210,7 +210,6 @@
     .global SHA256CompressMultiBlocks
     .type SHA256CompressMultiBlocks, @function
 SHA256CompressMultiBlocks:
-    # 保存现场
     addi sp, sp, -96
     sd s0, 0(sp)
     sd s1, 8(sp)

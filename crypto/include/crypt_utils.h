@@ -365,8 +365,16 @@ bool IsSupportNEON(void);
 #if defined(__aarch64__)
 bool IsSupportSHA512(void);
 #endif // __aarch64__
+#elif defined(__riscv) || defined (__riscv64)
 
-#endif // __arm__ || __arm || __aarch64__
+bool IsSupportZBB(void);
+bool IsSupportAESD(void);
+bool IsSupportAESE(void);
+bool IsSupportSHA2(void);
+bool IsSupportSM4(void);
+bool IsSupportSM3(void);
+bool IsSupportV(void);
+#endif // __riscv || __riscv64
 
 #ifdef __cplusplus
 }
