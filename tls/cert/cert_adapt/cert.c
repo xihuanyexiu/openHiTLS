@@ -443,7 +443,7 @@ static int32_t SelectCertByInfo(HITLS_Ctx *ctx, CERT_ExpectInfo *info)
     while (it != BSL_HASH_IterEnd(certPairs)) {
         uint32_t keyType = (uint32_t)BSL_HASH_HashIterKey(certPairs, it);
         CERT_Pair *certPair = (CERT_Pair *)BSL_HASH_IterValue(certPairs, it);
-        if (certPair == NULL || certPair->cert == NULL) {
+        if (certPair == NULL || certPair->cert == NULL || certPair->privateKey == NULL) {
             it = BSL_HASH_IterNext(certPairs, it);
             continue;
         }
