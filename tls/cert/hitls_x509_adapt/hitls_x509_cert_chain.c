@@ -22,8 +22,8 @@
 #include "hitls_type.h"
 #include "hitls_pki_x509.h"
 #include "bsl_list.h"
+#include "hitls_cert.h"
 #include "hitls_error.h"
-
 
 static int32_t BuildArrayFromList(HITLS_X509_List *list, HITLS_CERT_X509 **listArray, uint32_t *num)
 {
@@ -92,6 +92,7 @@ int32_t HITLS_X509_Adapt_VerifyCertChain(HITLS_Ctx *ctx, HITLS_CERT_Store *store
     /* The default user id as specified in GM/T 0009-2012 */
     char sm2DefaultUserid[] = "1234567812345678";
     HITLS_X509_List *certList = NULL;
+    HITLS_VerifyCb verCb = NULL;
     int32_t ret = BuildCertListFromCertArray(list, num, &certList);
     if (ret != HITLS_SUCCESS) {
         return ret;
@@ -113,6 +114,20 @@ int32_t HITLS_X509_Adapt_VerifyCertChain(HITLS_Ctx *ctx, HITLS_CERT_Store *store
     if (ret != HITLS_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
         goto EXIT;
+    }
+    ret = HITLS_X509_StoreCtxCtrl((HITLS_X509_StoreCtx *)store, HITLS_X509_STORECTX_SET_USR_DATA, ctx, sizeof(void *));
+    if (ret != HITLS_SUCCESS) {
+        BSL_ERR_PUSH_ERROR(ret);
+        goto EXIT;
+    }
+    verCb = HITLS_GetVerifyCb(ctx);
+    if (verCb != NULL) {
+        ret = HITLS_X509_StoreCtxCtrl((HITLS_X509_StoreCtx *)store, HITLS_X509_STORECTX_SET_VERIFY_CB, &verCb,
+            sizeof(X509_STORECTX_VerifyCb));
+        if (ret != HITLS_SUCCESS) {
+            BSL_ERR_PUSH_ERROR(ret);
+            goto EXIT;
+        }
     }
     ret = HITLS_X509_CertVerify((HITLS_X509_StoreCtx *)store, certList);
     if (ret != HITLS_SUCCESS) {
