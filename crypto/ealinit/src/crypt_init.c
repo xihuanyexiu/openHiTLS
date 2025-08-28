@@ -201,19 +201,20 @@ int32_t CRYPT_EAL_Init(uint64_t opts)
     if (ret != CRYPT_SUCCESS) {
         return ret;
     }
-  
-    ret = RandModuleInit(initOpt, alg);
-    if (ret != CRYPT_SUCCESS) {
-        BslModuleFree(initOpt);
-        return ret;
-    }
 
     ret = ProviderModuleInit(initOpt, alg);
     if (ret != CRYPT_SUCCESS) {
-        RandModuleFree(initOpt);
         BslModuleFree(initOpt);
         return ret;
     }
+    
+    ret = RandModuleInit(initOpt, alg);
+    if (ret != CRYPT_SUCCESS) {
+        BslModuleFree(initOpt);
+        ProviderModuleFree(initOpt);
+        return ret;
+    }
+
     ret = GlobalLockInit(initOpt, alg);
     if (ret != CRYPT_SUCCESS) {
         RandModuleFree(initOpt);

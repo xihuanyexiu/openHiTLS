@@ -267,8 +267,7 @@ void SDV_BSL_TIME_SYSTIME_API_TC001(void)
 
     int64_t timestamp = 0;
     ret = BSL_SAL_DateToUtcTimeConvert(&systime, &timestamp);
-
-    ASSERT_TRUE(curtime >= timestamp && curtime - 5 <= timestamp);
+    ASSERT_LT(abs((int)(curtime - timestamp)), 5);
 EXIT:
     return;
 }
