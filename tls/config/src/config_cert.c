@@ -15,6 +15,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "securec.h"
 #include "hitls_build.h"
 #include "bsl_err_internal.h"
 #include "bsl_list.h"
@@ -26,10 +27,11 @@
 #include "cert_method.h"
 #include "cert_mgr.h"
 #include "cert.h"
+#include "cert_mgr.h"
 #ifdef HITLS_TLS_FEATURE_SECURITY
 #include "security.h"
 #endif
-
+#define MAX_PATH_LEN 4096
 #ifdef HITLS_TLS_FEATURE_SECURITY
 static int32_t CheckCertSecuritylevel(HITLS_Config *config, HITLS_CERT_X509 *cert, bool isCACert)
 {
@@ -1119,4 +1121,137 @@ int32_t HITLS_CFG_ClearVerifyCrls(HITLS_Config *config)
     }
 
     return SAL_CERT_StoreCtrl(config, certStore, CERT_STORE_CTRL_CLEAR_CRL_LIST, NULL, NULL);
+}
+
+#ifdef HITLS_TLS_CONFIG_CERT_LOAD_FILE
+int32_t HITLS_CFG_UseCertificateChainFile(HITLS_Config *config, const char *file)
+{
+    if (config == NULL || file == NULL) {
+        return HITLS_NULL_INPUT;
+    }
+    int32_t ret = HITLS_SUCCESS;
+    HITLS_CERT_Chain *certList = SAL_CERT_X509ParseBundleFile(LIBCTX_FROM_CONFIG(config), ATTRIBUTE_FROM_CONFIG(config),
+                                                              config, (const uint8_t *)file, (uint32_t)strlen(file),
+                                                              TLS_PARSE_TYPE_FILE, TLS_PARSE_FORMAT_PEM);
+    if (certList == NULL) {
+        return HITLS_CFG_ERR_LOAD_CERT_FILE;
+    }
+    HITLS_CERT_X509 *tempCert = (HITLS_CERT_X509 *)BSL_LIST_GET_FIRST(certList);
+    if (tempCert == NULL) {
+        SAL_CERT_ChainFree(certList);
+        return HITLS_CFG_ERR_LOAD_CERT_FILE;
+    }
+    ret = HITLS_CFG_SetCertificate(config, tempCert, true);
+    if (ret != HITLS_SUCCESS) {
+        SAL_CERT_ChainFree(certList);
+        return ret;
+    }
+    tempCert = (HITLS_CERT_X509 *)BSL_LIST_GET_NEXT(certList);
+    if (tempCert != NULL) {
+        ret = HITLS_CFG_ClearChainCerts(config);
+        if (ret != HITLS_SUCCESS) {
+            SAL_CERT_ChainFree(certList);
+            return ret;
+        }
+    }
+
+    while (tempCert != NULL) {
+        ret = HITLS_CFG_AddChainCert(config, tempCert, true);
+        if (ret != HITLS_SUCCESS) {
+            SAL_CERT_ChainFree(certList);
+            return ret;
+        }
+        tempCert = (HITLS_CERT_X509 *)BSL_LIST_GET_NEXT(certList);
+    }
+    SAL_CERT_ChainFree(certList);
+    return ret;
+}
+
+int32_t HITLS_CFG_LoadVerifyFile(HITLS_Config *config, const char *file)
+{
+    if (config == NULL || file == NULL || strlen(file) == 0 || config->certMgrCtx == NULL) {
+        return HITLS_NULL_INPUT;
+    }
+    int32_t ret;
+    HITLS_CERT_X509 *cert =
+        SAL_CERT_X509Parse(LIBCTX_FROM_CONFIG(config), ATTRIBUTE_FROM_CONFIG(config), config, (const uint8_t *)file,
+                           (uint32_t)strlen(file), TLS_PARSE_TYPE_FILE, TLS_PARSE_FORMAT_PEM);
+    if (cert == NULL) {
+        return HITLS_CFG_ERR_LOAD_CERT_FILE;
+    }
+#ifdef HITLS_TLS_FEATURE_SECURITY
+    ret = CheckCertSecuritylevel(config, cert, false);
+    if (ret != HITLS_SUCCESS) {
+        SAL_CERT_X509Free(cert);
+        return ret;
+    }
+#endif
+    HITLS_CERT_Store *store = SAL_CERT_GetCertStore(config->certMgrCtx);
+    ret = SAL_CERT_StoreCtrl(config, store, CERT_STORE_CTRL_ADD_CERT_LIST, cert, NULL);
+    if (ret != HITLS_SUCCESS) {
+        SAL_CERT_X509Free(cert);
+        BSL_ERR_PUSH_ERROR(ret);
+    }
+    return ret;
+}
+#endif /* HITLS_TLS_CONFIG_CERT_LOAD_FILE */
+
+static int32_t LoadVerifyDirAddPath(HITLS_Config *config, HITLS_CERT_Store *store,
+    const char *start, size_t len)
+{
+    if (start == NULL) {
+        return HITLS_CONFIG_INVALID_LENGTH;
+    }
+    if (len == 0) {
+        return HITLS_SUCCESS; /* nothing to add */
+    }
+    if (len >= MAX_PATH_LEN) {
+        return HITLS_CONFIG_INVALID_LENGTH;
+    }
+
+    char buf[MAX_PATH_LEN + 1] = {0};
+    if (memcpy_s(buf, sizeof(buf), start, len) != EOK) {
+        return HITLS_MEMCPY_FAIL;
+    }
+    buf[len] = '\0';
+
+    return SAL_CERT_StoreCtrl(config, store, CERT_STORE_CTRL_ADD_CA_PATH, (void *)buf, NULL);
+}
+
+int32_t HITLS_CFG_LoadVerifyDir(HITLS_Config *config, const char *path)
+{
+    if (config == NULL || path == NULL || strlen(path) == 0 || config->certMgrCtx == NULL) {
+        return HITLS_NULL_INPUT;
+    }
+
+    HITLS_CERT_Store *store = SAL_CERT_GetCertStore(config->certMgrCtx);
+
+    /* Single path without separator */
+    if (strchr(path, ':') == NULL) {
+        return LoadVerifyDirAddPath(config, store, path, strlen(path));
+    }
+
+    /* Multiple colon-separated paths */
+    int32_t ret = HITLS_SUCCESS;
+    const char *start = path;
+    const char *p = path;
+
+    while (*p != '\0') {
+        if (*p == ':') {
+            uint32_t len = (uint32_t)(p - start);
+            ret = LoadVerifyDirAddPath(config, store, start, len);
+            if (ret != HITLS_SUCCESS) {
+                return ret;
+            }
+            start = p + 1;
+        }
+        p++;
+    }
+
+    /* trailing segment */
+    if (start < p) {
+        ret = LoadVerifyDirAddPath(config, store, start, (uint32_t)(p - start));
+    }
+
+    return ret;
 }
