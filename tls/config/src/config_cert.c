@@ -1255,3 +1255,23 @@ int32_t HITLS_CFG_LoadVerifyDir(HITLS_Config *config, const char *path)
 
     return ret;
 }
+
+int32_t HITLS_CFG_FreeCert(HITLS_Config *config, HITLS_CERT_X509 *cert)
+{
+    if (config == NULL || config->certMgrCtx == NULL) {
+        return HITLS_NULL_INPUT;
+    }
+
+    SAL_CERT_X509Free(cert);
+    return HITLS_SUCCESS;
+}
+
+int32_t HITLS_CFG_FreeKey(HITLS_Config *config, HITLS_CERT_Key *key)
+{
+    if (config == NULL || config->certMgrCtx == NULL) {
+        return HITLS_NULL_INPUT;
+    }
+
+    SAL_CERT_KeyFree(config->certMgrCtx, key);
+    return HITLS_SUCCESS;
+}
