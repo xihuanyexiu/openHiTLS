@@ -390,10 +390,10 @@ static void KdfUpdate(uint8_t *I, uint8_t *A, uint8_t *B, uint32_t k, const Pkcs
     }
 }
 
-int32_t HITLS_PKCS12_KDF(BSL_Buffer *output, const uint8_t *pwd, uint32_t pwdLen, HITLS_PKCS12_KDF_IDX type,
-    HITLS_PKCS12_MacData *macData)
+int32_t HITLS_PKCS12_KDF(HITLS_PKCS12 *p12, const uint8_t *pwd, uint32_t pwdLen, HITLS_PKCS12_KDF_IDX type,
+    BSL_Buffer *output)
 {
-    if (output == NULL || output->data == NULL || macData == NULL) {
+    if (p12 == NULL || output == NULL || output->data == NULL || p12->macData == NULL) {
         BSL_ERR_PUSH_ERROR(HITLS_PKCS12_ERR_NULL_POINTER);
         return HITLS_PKCS12_ERR_NULL_POINTER;
     }
@@ -402,7 +402,7 @@ int32_t HITLS_PKCS12_KDF(BSL_Buffer *output, const uint8_t *pwd, uint32_t pwdLen
         BSL_ERR_PUSH_ERROR(HITLS_PKCS12_ERR_INVALID_PARAM);
         return HITLS_PKCS12_ERR_INVALID_PARAM;
     }
-
+    HITLS_PKCS12_MacData *macData = p12->macData;
     uint32_t n = output->dataLen;
     uint32_t iter = macData->iteration;
     uint8_t *key = output->data;
@@ -412,7 +412,7 @@ int32_t HITLS_PKCS12_KDF(BSL_Buffer *output, const uint8_t *pwd, uint32_t pwdLen
         BSL_ERR_PUSH_ERROR(HITLS_PKCS12_ERR_INVALID_ALGO);
         return HITLS_PKCS12_ERR_INVALID_ALGO;
     }
-    CRYPT_EAL_MdCTX *ctx = CRYPT_EAL_MdNewCtx((CRYPT_MD_AlgId)macData->alg);
+    CRYPT_EAL_MdCTX *ctx = CRYPT_EAL_ProviderMdNewCtx(p12->libCtx, (CRYPT_MD_AlgId)macData->alg, p12->attrName);
     if (ctx == NULL) {
         BSL_ERR_PUSH_ERROR(BSL_MALLOC_FAIL);
         return BSL_MALLOC_FAIL;
@@ -546,7 +546,7 @@ static int32_t TransCodePwd(BSL_Buffer *pwd, uint8_t **transcoded, uint32_t *tra
     return HITLS_PKI_SUCCESS;
 }
 
-static int32_t GetHmacKey(BSL_Buffer *pwd, uint32_t macSize, HITLS_PKCS12_MacData *macData, uint8_t **keyData)
+static int32_t GetHmacKey(HITLS_PKCS12 *p12, BSL_Buffer *pwd, uint32_t macSize, uint8_t **keyData)
 {
     uint32_t temPwdLen = 0;
     uint8_t *temPwd = NULL;
@@ -563,7 +563,7 @@ static int32_t GetHmacKey(BSL_Buffer *pwd, uint32_t macSize, HITLS_PKCS12_MacDat
         return BSL_MALLOC_FAIL;
     }
     BSL_Buffer keyBuffer = {key, macSize};
-    ret = HITLS_PKCS12_KDF(&keyBuffer, temPwd, temPwdLen, HITLS_PKCS12_KDF_MACKEY_ID, macData);
+    ret = HITLS_PKCS12_KDF(p12, temPwd, temPwdLen, HITLS_PKCS12_KDF_MACKEY_ID, &keyBuffer);
     BSL_SAL_CleanseData(temPwd, temPwdLen);
     BSL_SAL_FREE(temPwd);
     if (ret != HITLS_PKI_SUCCESS) {
@@ -575,9 +575,9 @@ static int32_t GetHmacKey(BSL_Buffer *pwd, uint32_t macSize, HITLS_PKCS12_MacDat
     return ret;
 }
 
-static int32_t ParamCheckAndInit(HITLS_PKCS12_MacData *macData, BSL_Buffer *pwd, uint32_t *macId, uint32_t *macSize)
+static int32_t ParamCheckAndInit(HITLS_PKCS12 *p12, BSL_Buffer *pwd, uint32_t *macId, uint32_t *macSize)
 {
-    if (macData == NULL || macData->macSalt == NULL) {
+    if (p12 == NULL || p12->macData == NULL || p12->macData->macSalt == NULL) {
         BSL_ERR_PUSH_ERROR(HITLS_PKCS12_ERR_NULL_POINTER);
         return HITLS_PKCS12_ERR_NULL_POINTER;
     }
@@ -586,13 +586,14 @@ static int32_t ParamCheckAndInit(HITLS_PKCS12_MacData *macData, BSL_Buffer *pwd,
         BSL_ERR_PUSH_ERROR(HITLS_PKCS12_ERR_INVALID_PARAM);
         return HITLS_PKCS12_ERR_INVALID_PARAM;
     }
+    HITLS_PKCS12_MacData *macData = p12->macData;
     if (macData->iteration < 1000) { // The nist sp800-132 required the minimum iteration count = 1000.
         BSL_ERR_PUSH_ERROR(HITLS_PKCS12_ERR_INVALID_ITERATION);
         return HITLS_PKCS12_ERR_INVALID_ITERATION;
     }
     *macId = GetMacId(macData->alg);
     *macSize = CRYPT_EAL_MdGetDigestSize((CRYPT_MD_AlgId)macData->alg);
-    if (macId == BSL_CID_UNKNOWN || macSize == 0) {
+    if (*macId == BSL_CID_UNKNOWN || *macSize == 0) {
         BSL_ERR_PUSH_ERROR(HITLS_PKCS12_ERR_INVALID_ALGO);
         return HITLS_PKCS12_ERR_INVALID_ALGO;
     }
@@ -606,7 +607,7 @@ static int32_t ParamCheckAndInit(HITLS_PKCS12_MacData *macData, BSL_Buffer *pwd,
             BSL_ERR_PUSH_ERROR(BSL_MALLOC_FAIL);
             return BSL_MALLOC_FAIL;
         }
-        int32_t ret = CRYPT_EAL_RandbytesEx(NULL, salt, macData->macSalt->dataLen);
+        int32_t ret = CRYPT_EAL_RandbytesEx(p12->libCtx, salt, macData->macSalt->dataLen);
         if (ret != CRYPT_SUCCESS) {
             BSL_SAL_Free(salt);
             BSL_ERR_PUSH_ERROR(ret);
@@ -617,21 +618,21 @@ static int32_t ParamCheckAndInit(HITLS_PKCS12_MacData *macData, BSL_Buffer *pwd,
     return HITLS_PKI_SUCCESS;
 }
 
-int32_t HITLS_PKCS12_CalMac(BSL_Buffer *output, BSL_Buffer *pwd, BSL_Buffer *initData, HITLS_PKCS12_MacData *macData)
+int32_t HITLS_PKCS12_CalMac(HITLS_PKCS12 *p12, BSL_Buffer *pwd, BSL_Buffer *initData, BSL_Buffer *output)
 {
     uint32_t macId;
     uint32_t macSize;
-    int32_t ret = ParamCheckAndInit(macData, pwd, &macId, &macSize);
+    int32_t ret = ParamCheckAndInit(p12, pwd, &macId, &macSize);
     if (ret != HITLS_PKI_SUCCESS) {
         return ret;
     }
     uint8_t *keyData = NULL;
-    ret = GetHmacKey(pwd, macSize, macData, &keyData);
+    ret = GetHmacKey(p12, pwd, macSize, &keyData);
     if (ret != HITLS_PKI_SUCCESS) {
         return ret; // has pushed err code.
     }
 
-    CRYPT_EAL_MacCtx *ctx = CRYPT_EAL_MacNewCtx(macId);
+    CRYPT_EAL_MacCtx *ctx = CRYPT_EAL_ProviderMacNewCtx(p12->libCtx, macId, p12->attrName);
     if (ctx == NULL) {
         BSL_SAL_CleanseData(keyData, macSize);
         BSL_SAL_FREE(keyData);
