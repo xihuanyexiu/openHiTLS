@@ -102,4 +102,4 @@ const CRYPT_EAL_Func g_defEalSignMlDsa[] = {
 };
 #endif
 
-#endif /* HITLS_CRYPTO_PKEY && HITLS_CRYPTO_PROVIDER */
+#endif
