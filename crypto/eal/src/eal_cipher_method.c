@@ -269,6 +269,7 @@ static const EAL_SymAlgMap SYM_ID_MAP[] = {
     {.id = CRYPT_CIPHER_SM4_GCM, .modeId = CRYPT_MODE_GCM },
     {.id = CRYPT_CIPHER_SM4_CFB, .modeId = CRYPT_MODE_CFB },
     {.id = CRYPT_CIPHER_SM4_OFB, .modeId = CRYPT_MODE_OFB },
+    {.id = CRYPT_CIPHER_SM4_CCM, .modeId = CRYPT_MODE_CCM },
 #endif
 };
 
@@ -402,6 +403,7 @@ const EAL_SymMethod *EAL_GetSymMethod(int32_t algId)
         case CRYPT_CIPHER_SM4_GCM:
         case CRYPT_CIPHER_SM4_CFB:
         case CRYPT_CIPHER_SM4_OFB:
+        case CRYPT_CIPHER_SM4_CCM:
             return &SM4_METHOD;
 #endif
 #ifdef HITLS_CRYPTO_CHACHA20
