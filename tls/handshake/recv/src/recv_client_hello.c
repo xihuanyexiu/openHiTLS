@@ -481,6 +481,21 @@ static int32_t ServerSelectNegoVersion(TLS_Ctx *ctx, const ClientHelloMsg *clien
             "SslCheck fail", ALERT_INSUFFICIENT_SECURITY);
     }
 #endif /* HITLS_TLS_FEATURE_SECURITY */
+
+#ifdef HITLS_TLS_PROTO_TLCP11
+    if (ctx->negotiatedInfo.version == HITLS_VERSION_TLCP_DTLCP11) {
+        ctx->config.tlsConfig.version &= ~TLS_VERSION_MASK;
+        ctx->config.tlsConfig.originVersionMask &= ~TLS_VERSION_MASK;
+        ChangeMinMaxVersion(ctx->config.tlsConfig.version, ctx->config.tlsConfig.originVersionMask,
+                            &ctx->config.tlsConfig.minVersion, &ctx->config.tlsConfig.maxVersion);
+    } else {
+        ctx->config.tlsConfig.version &= ~TLCP_VERSION_BITS;
+        ctx->config.tlsConfig.originVersionMask &= ~TLCP_VERSION_BITS;
+        // The tlcp version will not appear in the maximum and minimum version numbers of non tlcp protocols, so there
+        // is no need to set the maximum and minimum version numbers here.
+    }
+#endif
+
     return HITLS_SUCCESS;
 }
 #endif /* HITLS_TLS_PROTO_TLS_BASIC || HITLS_TLS_PROTO_DTLS12 */
@@ -810,7 +825,7 @@ offering to resume a known previous session, it behaves as follows:
 */
 static int32_t ResumeCheckExtendedMasterScret(TLS_Ctx *ctx, const ClientHelloMsg *clientHello, HITLS_Session **sess)
 {
-    if (*sess == NULL || ctx->config.tlsConfig.maxVersion == HITLS_VERSION_TLCP_DTLCP11) {
+    if (*sess == NULL) {
         return HITLS_SUCCESS;
     }
     (void)clientHello;
@@ -1085,14 +1100,14 @@ static int32_t ServerCheckVersionDowngrade(TLS_Ctx *ctx, const ClientHelloMsg *c
         }
         return HITLS_SUCCESS;
     }
-    
+
     if (ctx->negotiatedInfo.version < ctx->config.tlsConfig.maxVersion) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15335, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "server supports a higher protocol version.", 0, 0, 0, 0);
         ctx->method.sendAlert(ctx, ALERT_LEVEL_FATAL, ALERT_INAPPROPRIATE_FALLBACK);
         return HITLS_MSG_HANDLE_ERR_INAPPROPRIATE_FALLBACK;
     }
-    
+
     return HITLS_SUCCESS;
 }
 
@@ -1154,12 +1169,6 @@ static int32_t ServerPostProcessClientHello(TLS_Ctx *ctx, const ClientHelloMsg *
     if (ret != HITLS_SUCCESS) {
         return ret;
     }
-    /* TLCP does not pay attention to the extension */
-#ifdef HITLS_TLS_PROTO_TLCP11
-    if (ctx->negotiatedInfo.version == HITLS_VERSION_TLCP_DTLCP11) {
-        return HITLS_SUCCESS;
-    }
-#endif
     return ServerProcessClientHelloExt(ctx, clientHello);
 }
 #endif /* HITLS_TLS_PROTO_TLS_BASIC || HITLS_TLS_PROTO_DTLS12 */
@@ -2256,6 +2265,7 @@ int32_t Tls13ServerRecvClientHelloProcess(TLS_Ctx *ctx, HS_Msg *msg)
     }
     switch (clientHello->version) {
 #ifdef HITLS_TLS_PROTO_TLS_BASIC
+        case HITLS_VERSION_TLCP_DTLCP11:
         case HITLS_VERSION_TLS12:
             BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15251, BSL_LOG_LEVEL_INFO, BSL_LOG_BINLOG_TYPE_RUN,
                 "tls1.3 server receive a 0x%x clientHello.", selectedVersion, 0, 0, 0);
