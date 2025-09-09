@@ -743,7 +743,7 @@ static int32_t DealResumeServerName(TLS_Ctx *ctx, const ClientHelloMsg *clientHe
 
 static int32_t ServerCheckResumeSni(TLS_Ctx *ctx, const ClientHelloMsg *clientHello, HITLS_Session **sess)
 {
-    if (*sess == NULL || ctx->config.tlsConfig.maxVersion == HITLS_VERSION_TLCP_DTLCP11) {
+    if (*sess == NULL) {
         return HITLS_SUCCESS;
     }
     int32_t ret = HITLS_SUCCESS;
