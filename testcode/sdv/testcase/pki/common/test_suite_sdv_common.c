@@ -1318,6 +1318,7 @@ EXIT:
 /* BEGIN_CASE */
 void SDV_HITLS_X509_PrintCrl_TC001(char *certPath, int format, int printFlag, char *expectFile)
 {
+#if defined(HITLS_PKI_INFO_CRL) && defined(HITLS_PKI_X509_CRL)
     TestMemInit();
     HITLS_X509_Crl *crl = NULL;
     int32_t *version = NULL;
@@ -1332,5 +1333,12 @@ void SDV_HITLS_X509_PrintCrl_TC001(char *certPath, int format, int printFlag, ch
 
 EXIT:
     HITLS_X509_CrlFree(crl);
+#else
+    (void)certPath;
+    (void)format;
+    (void)printFlag;
+    (void)expectFile;
+    SKIP_TEST();
+#endif
 }
 /* END_CASE */
