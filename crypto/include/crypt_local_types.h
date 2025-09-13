@@ -45,7 +45,7 @@ typedef int32_t (*MdGetParam)(void *data, BSL_Param *param);
 typedef int32_t (*MdSqueeze)(void *data, uint8_t *out, uint32_t len);
 
 typedef struct {
-    uint32_t id;
+    int32_t id;
     uint16_t blockSize;  // Block size processed by the hash algorithm at a time, which is used with other algorithms.
     uint16_t mdSize;     // Output length of the HASH algorithm
     MdNewCtx newCtx;     // generate md context
