@@ -17,8 +17,8 @@
 #ifdef HITLS_CRYPTO_SHA512
 
 .section .rodata
-.balign 64
-.K512:
+.align 3
+.LK512:
     .dword 0x428a2f98d728ae22, 0x7137449123ef65cd
     .dword 0xb5c0fbcfec4d3b2f, 0xe9b5dba58189dbbc
     .dword 0x3956c25bf348b538, 0x59f111f1b605d019
@@ -64,17 +64,17 @@
  *  Macro description: prepares the message schedule w for i = 0 to 15.
  *  Input register：
  *      INDEX： Int
-        w_i: W[INDEX] 
- *  Modify the register： w_i
+        t1: W[INDEX] 
+ *  Modify the register： t1
  *  Output register：
- *      w_i： Latest W[i] value, W[i] = M(i)
+ *      t1： Latest W[i] value, W[i] = M(i)
  *  Function/Macro Call：None
  *
  */  
-    .macro MSGSCHEDULE_W_16 INDEX, w_i
-    ld \w_i, (8*\INDEX)(a1)  # Load the message block M(i) into w_i
-    rev8 \w_i, \w_i  # Reverse the byte order of w_i
-    sd \w_i, (8*\INDEX)(sp) # Store the latest W[i] value
+    .macro MSGSCHEDULE_W_16 INDEX
+    ld t1, (8*\INDEX)(a1)  # Load the message block M(i) into t1
+    rev8 t1, t1  # Reverse the byte order of t1
+    sd t1, (8*\INDEX)(sp) # Store the latest W[i] value
     .endm
 
 
@@ -118,7 +118,7 @@
  *  Input register：
  *      INDEX: Int, current round index
  *      e, f, g, h: SHA-512 registers for T1 calculation
- *      K: Base address register for the constant table (e.g., t0, storing .K512 address)
+ *      K: Base address register for the constant table (e.g., t0, storing .LK512 address)
  *  Modify the register: t1, t2, t3, t4, h
  *  Output register：
  *      h: Updated value after adding W[i], K[i], and sigma1(e)
@@ -147,7 +147,6 @@
 /*
  *  Macro description: Calculate SHA-512 T2 value and update t2 register.
  *  Input register：
- *      INDEX: Int, current round index
  *      a, b, c: SHA-512 working registers
  *  Modify the register: t2, t3, t4, t5
  *  Output register：
@@ -155,7 +154,7 @@
  *  Function/Macro Call: None
  *
  */
-    .macro SHA512_T2 INDEX, a, b, c
+    .macro SHA512_T2 a, b, c
     rori t2, \a, 28  # t2 = a ror 28
     rori t3, \a, 34  # t3 = a ror 34
     rori t4, \a, 39  # t4 = a ror 39
@@ -183,7 +182,7 @@
  */
     .macro ROUND INDEX, a, b, c, d, e, f, g, h
     SHA512_T1 \INDEX, \e, \f, \g, \h, t0
-    SHA512_T2 \INDEX, \a, \b, \c
+    SHA512_T2 \a, \b, \c
     add \d, \d, t1  # d += t1
     add \h, t2, t1  # h = t1 + t2
     .endm
@@ -201,8 +200,8 @@
  *  Function/Macro Call: MSGSCHEDULE_W_16, ROUND
  *
  */
-    .macro ROUND_16 INDEX, a, b, c, d, e, f, g, h, w_i
-    MSGSCHEDULE_W_16 \INDEX, \w_i  
+    .macro ROUND_16 INDEX, a, b, c, d, e, f, g, h
+    MSGSCHEDULE_W_16 \INDEX
     ROUND \INDEX, \a, \b, \c, \d, \e, \f, \g, \h
     .endm
 
@@ -242,6 +241,9 @@
     .global SHA512CompressMultiBlocks
     .type SHA512CompressMultiBlocks, @function
 SHA512CompressMultiBlocks:
+
+    beqz a2, .Lend_sha512
+
     addi sp, sp, -96
     sd s0, 0(sp)
     sd s1, 8(sp)
@@ -258,7 +260,7 @@ SHA512CompressMultiBlocks:
 
     addi sp, sp, -128
 
-    la t0, .K512          # Load the address of the K constants
+    la t0, .LK512          # Load the address of the K constants
 
     ld s2, 0(a0)    #A load hash[0]
     ld s3, 8(a0)    #B load hash[1]
@@ -269,29 +271,29 @@ SHA512CompressMultiBlocks:
     ld s8, 48(a0)   #G load hash[6]
     ld s9, 56(a0)   #H load hash[7] 
 
-Lloop_compress_80:
+.Lloop_compress_80:
 
     addi a2, a2, -1
 
-    ROUND_16 0, s2, s3, s4, s5, s6, s7, s8, s9, t1
-    ROUND_16 1, s9, s2, s3, s4, s5, s6, s7, s8, t1
-    ROUND_16 2, s8, s9, s2, s3, s4, s5, s6, s7, t1
-    ROUND_16 3, s7, s8, s9, s2, s3, s4, s5, s6, t1
+    ROUND_16 0, s2, s3, s4, s5, s6, s7, s8, s9
+    ROUND_16 1, s9, s2, s3, s4, s5, s6, s7, s8
+    ROUND_16 2, s8, s9, s2, s3, s4, s5, s6, s7
+    ROUND_16 3, s7, s8, s9, s2, s3, s4, s5, s6
 
-    ROUND_16 4, s6, s7, s8, s9, s2, s3, s4, s5, t1
-    ROUND_16 5, s5, s6, s7, s8, s9, s2, s3, s4, t1
-    ROUND_16 6, s4, s5, s6, s7, s8, s9, s2, s3, t1
-    ROUND_16 7, s3, s4, s5, s6, s7, s8, s9, s2, t1
+    ROUND_16 4, s6, s7, s8, s9, s2, s3, s4, s5
+    ROUND_16 5, s5, s6, s7, s8, s9, s2, s3, s4
+    ROUND_16 6, s4, s5, s6, s7, s8, s9, s2, s3
+    ROUND_16 7, s3, s4, s5, s6, s7, s8, s9, s2
 
-    ROUND_16 8, s2, s3, s4, s5, s6, s7, s8, s9, t1
-    ROUND_16 9, s9, s2, s3, s4, s5, s6, s7, s8, t1
-    ROUND_16 10, s8, s9, s2, s3, s4, s5, s6, s7, t1
-    ROUND_16 11, s7, s8, s9, s2, s3, s4, s5, s6, t1
+    ROUND_16 8, s2, s3, s4, s5, s6, s7, s8, s9
+    ROUND_16 9, s9, s2, s3, s4, s5, s6, s7, s8
+    ROUND_16 10, s8, s9, s2, s3, s4, s5, s6, s7
+    ROUND_16 11, s7, s8, s9, s2, s3, s4, s5, s6
 
-    ROUND_16 12, s6, s7, s8, s9, s2, s3, s4, s5, t1
-    ROUND_16 13, s5, s6, s7, s8, s9, s2, s3, s4, t1
-    ROUND_16 14, s4, s5, s6, s7, s8, s9, s2, s3, t1
-    ROUND_16 15, s3, s4, s5, s6, s7, s8, s9, s2, t1
+    ROUND_16 12, s6, s7, s8, s9, s2, s3, s4, s5
+    ROUND_16 13, s5, s6, s7, s8, s9, s2, s3, s4
+    ROUND_16 14, s4, s5, s6, s7, s8, s9, s2, s3
+    ROUND_16 15, s3, s4, s5, s6, s7, s8, s9, s2
 
     ROUND_80 16, s2, s3, s4, s5, s6, s7, s8, s9
     ROUND_80 17, s9, s2, s3, s4, s5, s6, s7, s8
@@ -405,7 +407,7 @@ Lloop_compress_80:
 
     addi a1, a1, 128  # Move to the next block of input data
 
-    bnez a2, Lloop_compress_80
+    bnez a2, .Lloop_compress_80
 
 
     addi sp, sp, 128
@@ -425,6 +427,7 @@ Lloop_compress_80:
 
     addi sp, sp, 96
 
+.Lend_sha512:
     ret
 
     .size SHA512CompressMultiBlocks, .-SHA512CompressMultiBlocks

@@ -416,7 +416,7 @@
 #define HITLS_CRYPTO_SHA1_ASM
 #endif
 
-#if (defined(HITLS_CRYPTO_SHA2_X8664) || defined(HITLS_CRYPTO_SHA2_RISCV)) && !defined(HITLS_CRYPTO_SHA2_ASM)
+#if (defined(HITLS_CRYPTO_SHA2_X8664) || defined(HITLS_CRYPTO_SHA2_RISCV64)) && !defined(HITLS_CRYPTO_SHA2_ASM)
 #define HITLS_CRYPTO_SHA2_ASM
 #endif
 

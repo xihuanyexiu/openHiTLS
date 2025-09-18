@@ -6,8 +6,4 @@ testcode/framework/tls/lib/
 testcode/output/
 platform/*
 .DS_Store
-output
-test*
-.gitignore
-riscv.toolchain.cmake
 

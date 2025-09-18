@@ -18,7 +18,7 @@
 
 .section .rodata
 .balign 64
-.K256:
+.LK256:
     .word 0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5
     .word 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5
     .word 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3
@@ -92,7 +92,7 @@
  *  Input register：
  *      INDEX： Int, current round index
  *      e, f, g, h: SHA-256 registers for T1 calculation
- *      K: Base address register for the constant table (= t0 = storing .K256 address)
+ *      K: Base address register for the constant table (= t0 = storing .LK256 address)
  *  Modify the register： t1, t2, t3, t4, h
  *  Output register：
  *      h: Updated value after adding W[i], K[i], and sigma1(e)
@@ -226,7 +226,7 @@ SHA256CompressMultiBlocks:
 
     addi sp, sp, -64
 
-    la t0, .K256          # Load the address of the K constants
+    la t0, .LK256          # Load the address of the K constants
 
     lw s2, 0(a0)    #A load hash[0]
     lw s3, 4(a0)    #B load hash[1]
@@ -237,7 +237,7 @@ SHA256CompressMultiBlocks:
     lw s8, 24(a0)   #G load hash[6]
     lw s9, 28(a0)   #H load hash[7] 
 
-Lloop_compress_64:
+.Lloop_compress_64:
 
     addi a2, a2, -1
 
@@ -353,7 +353,7 @@ Lloop_compress_64:
 
     addi a1, a1, 64  # Move to the next block of input data
 
-    bnez a2, Lloop_compress_64
+    bnez a2, .Lloop_compress_64
 
 
     addi sp, sp, 64
