@@ -708,7 +708,7 @@ int32_t HITLS_SetExtenedMasterSecretSupport(HITLS_Ctx *ctx, bool support)
     return HITLS_CFG_SetExtenedMasterSecretSupport(&(ctx->config.tlsConfig), support);
 }
 
-int32_t HITLS_GetExtenedMasterSecretSupport(HITLS_Ctx *ctx, uint8_t *isSupport)
+int32_t HITLS_GetExtenedMasterSecretSupport(HITLS_Ctx *ctx, bool *isSupport)
 {
     if (ctx == NULL) {
         return HITLS_NULL_INPUT;

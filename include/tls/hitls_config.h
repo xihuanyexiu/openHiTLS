@@ -660,7 +660,7 @@ int32_t HITLS_CFG_SetTmpDh(HITLS_Config *config, HITLS_CRYPT_Key *dhPkey);
  * @retval  HITLS_SUCCESS, if successful.
  * @retval  HITLS_NULL_INPUT, config is null.
  */
-int32_t HITLS_CFG_GetRenegotiationSupport(const HITLS_Config *config, uint8_t *isSupport);
+int32_t HITLS_CFG_GetRenegotiationSupport(const HITLS_Config *config, bool *isSupport);
 
 
 /**
@@ -672,7 +672,7 @@ int32_t HITLS_CFG_GetRenegotiationSupport(const HITLS_Config *config, uint8_t *i
  * @retval  HITLS_SUCCESS, if successful.
  * @retval  HITLS_NULL_INPUT, config is null.
  */
-int32_t HITLS_CFG_GetClientVerifySupport(HITLS_Config *config, uint8_t *isSupport);
+int32_t HITLS_CFG_GetClientVerifySupport(HITLS_Config *config, bool *isSupport);
 
 /**
  * @ingroup hitls_config
@@ -684,7 +684,7 @@ int32_t HITLS_CFG_GetClientVerifySupport(HITLS_Config *config, uint8_t *isSuppor
  * @retval  HITLS_SUCCESS, if successful.
  * @retval  HITLS_NULL_INPUT, config is null.
  */
-int32_t HITLS_CFG_GetNoClientCertSupport(HITLS_Config *config, uint8_t *isSupport);
+int32_t HITLS_CFG_GetNoClientCertSupport(HITLS_Config *config, bool *isSupport);
 
 /**
  * @ingroup hitls_config
@@ -695,7 +695,7 @@ int32_t HITLS_CFG_GetNoClientCertSupport(HITLS_Config *config, uint8_t *isSuppor
  * @retval  HITLS_SUCCESS, if successful.
  * @retval  HITLS_NULL_INPUT, config is null.
  */
-int32_t HITLS_CFG_GetExtenedMasterSecretSupport(HITLS_Config *config, uint8_t *isSupport);
+int32_t HITLS_CFG_GetExtenedMasterSecretSupport(HITLS_Config *config, bool *isSupport);
 
 /**
  * @ingroup hitls_config
@@ -707,7 +707,7 @@ int32_t HITLS_CFG_GetExtenedMasterSecretSupport(HITLS_Config *config, uint8_t *i
  * @retval  HITLS_SUCCESS, if successful.
  * @retval  HITLS_NULL_INPUT, config is null.
  */
-int32_t HITLS_CFG_GetDhAutoSupport(HITLS_Config *config, uint8_t *isSupport);
+int32_t HITLS_CFG_GetDhAutoSupport(HITLS_Config *config, bool *isSupport);
 
 /**
  * @ingroup hitls_config
@@ -736,7 +736,7 @@ int32_t HITLS_CFG_SetPostHandshakeAuthSupport(HITLS_Config *config, bool support
  * @retval  HITLS_SUCCESS, if successful.
  * @retval  HITLS_NULL_INPUT, config is null.
  */
-int32_t HITLS_CFG_GetPostHandshakeAuthSupport(HITLS_Config *config, uint8_t *isSupport);
+int32_t HITLS_CFG_GetPostHandshakeAuthSupport(HITLS_Config *config, bool *isSupport);
 
 /**
  * @ingroup hitls_config
@@ -757,7 +757,7 @@ int32_t HITLS_CFG_SetVerifyNoneSupport(HITLS_Config *config, bool support);
  * @retval  HITLS_SUCCESS, if successful.
  * @retval  HITLS_NULL_INPUT, config is null.
  */
-int32_t HITLS_CFG_GetVerifyNoneSupport(HITLS_Config *config, uint8_t *isSupport);
+int32_t HITLS_CFG_GetVerifyNoneSupport(HITLS_Config *config, bool *isSupport);
 
 /**
  * @ingroup hitls_config
@@ -779,7 +779,7 @@ int32_t HITLS_CFG_SetClientOnceVerifySupport(HITLS_Config *config, bool support)
  * @retval  HITLS_SUCCESS, if successful.
  * @retval  HITLS_NULL_INPUT, config is null.
  */
-int32_t HITLS_CFG_GetClientOnceVerifySupport(HITLS_Config *config, uint8_t *isSupport);
+int32_t HITLS_CFG_GetClientOnceVerifySupport(HITLS_Config *config, bool *isSupport);
 
 /**
  * @ingroup hitls_config
@@ -1089,7 +1089,7 @@ int32_t HITLS_CFG_GetDescription(const HITLS_Cipher *cipher, uint8_t *buf, int32
  * @retval  HITLS_SUCCESS, obtained successfully.
  *          HITLS_NULL_INPUT, the input parameter pointer is null.
  */
-int32_t HITLS_CIPHER_IsAead(const HITLS_Cipher *cipher, uint8_t *isAead);
+int32_t HITLS_CIPHER_IsAead(const HITLS_Cipher *cipher, bool *isAead);
 
 /**
  * @ingroup hitls_config
@@ -1210,7 +1210,7 @@ int32_t HITLS_CFG_SetDtlsPostHsTimeoutVal(HITLS_Config *config, uint32_t timeout
  * @retval  HITLS_NULL_INPUT, the input parameter pointer is null.
  * @retval  HITLS_SUCCESS, if successful.
  */
-int32_t HITLS_CFG_SetEncryptThenMac(HITLS_Config *config, uint32_t encryptThenMacType);
+int32_t HITLS_CFG_SetEncryptThenMac(HITLS_Config *config, bool encryptThenMacType);
 
 /**
  * @ingroup hitls_config
@@ -1221,7 +1221,7 @@ int32_t HITLS_CFG_SetEncryptThenMac(HITLS_Config *config, uint32_t encryptThenMa
  * @retval  HITLS_NULL_INPUT, the input parameter pointer is null.
  * @retval  HITLS_SUCCESS, if successful.
  */
-int32_t HITLS_CFG_GetEncryptThenMac(const HITLS_Config *config, uint32_t *encryptThenMacType);
+int32_t HITLS_CFG_GetEncryptThenMac(const HITLS_Config *config, bool *encryptThenMacType);
 
 /**
  * @ingroup hitls_config
@@ -1279,7 +1279,7 @@ int32_t HITLS_CFG_SetConfigUserDataFreeCb(HITLS_Config *config, HITLS_ConfigUser
  * @retval  HITLS_SUCCESS, obtained successfully.
  *          HITLS_NULL_INPUT, the input parameter pointer is null.
  */
-int32_t HITLS_CFG_IsDtls(const HITLS_Config *config, uint8_t *isDtls);
+int32_t HITLS_CFG_IsDtls(const HITLS_Config *config, bool *isDtls);
 
 /**
  * @ingroup hitls_config
@@ -1314,7 +1314,7 @@ int32_t HITLS_CFG_GetCipherServerPreference(const HITLS_Config *config, bool *is
  * @retval  HITLS_NULL_INPUT, the input parameter pointer is null.
  * @retval  HITLS_SUCCESS, if successful.
  */
-int32_t HITLS_CFG_SetFlightTransmitSwitch(HITLS_Config *config, uint8_t isEnable);
+int32_t HITLS_CFG_SetFlightTransmitSwitch(HITLS_Config *config, bool isEnable);
 
 /**
  * @ingroup hitls_config
@@ -1325,7 +1325,7 @@ int32_t HITLS_CFG_SetFlightTransmitSwitch(HITLS_Config *config, uint8_t isEnable
  * @retval  HITLS_NULL_INPUT, the input parameter pointer is null.
  * @retval  HITLS_SUCCESS, if successful.
  */
-int32_t HITLS_CFG_GetFlightTransmitSwitch(const HITLS_Config *config, uint8_t *isEnable);
+int32_t HITLS_CFG_GetFlightTransmitSwitch(const HITLS_Config *config, bool *isEnable);
 
 /**
  * @ingroup hitls_config

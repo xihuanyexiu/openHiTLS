@@ -366,7 +366,7 @@ void UT_TLS_CFG_SET_GET_EXTENEDMASTERSECRETSUPPORT_API_TC001(int tlsVersion)
     FRAME_Init();
     HITLS_Config *config = NULL;
     bool support = -1;
-    uint8_t isSupport = -1;
+    bool isSupport = -1;
     ASSERT_TRUE(HITLS_CFG_SetExtenedMasterSecretSupport(config, support) == HITLS_NULL_INPUT);
     ASSERT_TRUE(HITLS_CFG_GetExtenedMasterSecretSupport(config, &isSupport) == HITLS_NULL_INPUT);
 
@@ -427,7 +427,7 @@ void  UT_TLS_CFG_SET_GET_POSTHANDSHAKEAUTHSUPPORT_API_TC001(int tlsVersion)
     FRAME_Init();
     HITLS_Config *config = NULL;
     bool support = -1;
-    uint8_t isSupport = -1;
+    bool isSupport = -1;
     ASSERT_TRUE(HITLS_CFG_SetPostHandshakeAuthSupport(config, support) == HITLS_NULL_INPUT);
     ASSERT_TRUE(HITLS_CFG_GetPostHandshakeAuthSupport(config, &isSupport) == HITLS_NULL_INPUT);
 
@@ -640,7 +640,7 @@ void UT_TLS_CFG_SET_GET_ENCRYPTTHENMAC_API_TC001(int tlsVersion)
 {
     FRAME_Init();
     HITLS_Config *config = NULL;
-    uint32_t encryptThenMacType = 0;
+    bool encryptThenMacType = false;
 
     ASSERT_TRUE(HITLS_CFG_SetEncryptThenMac(config, encryptThenMacType) == HITLS_NULL_INPUT);
     ASSERT_TRUE(HITLS_CFG_GetEncryptThenMac(config, &encryptThenMacType) == HITLS_NULL_INPUT);
@@ -657,13 +657,13 @@ void UT_TLS_CFG_SET_GET_ENCRYPTTHENMAC_API_TC001(int tlsVersion)
     }
 
     ASSERT_TRUE(HITLS_CFG_GetEncryptThenMac(config, NULL) == HITLS_NULL_INPUT);
-    encryptThenMacType = 1;
+    encryptThenMacType = true;
     ASSERT_TRUE(HITLS_CFG_SetEncryptThenMac(config, encryptThenMacType) == HITLS_SUCCESS);
-    encryptThenMacType = 2;
+    encryptThenMacType = true;
     ASSERT_TRUE(HITLS_CFG_SetEncryptThenMac(config, encryptThenMacType) == HITLS_SUCCESS);
-    ASSERT_TRUE(config->isEncryptThenMac = true);
+    ASSERT_TRUE(config->isEncryptThenMac == true);
 
-    uint32_t getencryptThenMacType = -1;
+    bool getencryptThenMacType = false;
     ASSERT_TRUE(HITLS_CFG_GetEncryptThenMac(config, &getencryptThenMacType) == HITLS_SUCCESS);
     ASSERT_TRUE(getencryptThenMacType == config->isEncryptThenMac);
 EXIT:
@@ -690,7 +690,7 @@ void UT_TLS_CFG_IS_DTLS_API_TC001(int tlsVersion)
 {
     FRAME_Init();
     HITLS_Config *config = NULL;
-    uint8_t isDtls = false;
+    bool isDtls = false;
 
     ASSERT_TRUE(HITLS_CFG_IsDtls(config, &isDtls) == HITLS_NULL_INPUT);
     switch (tlsVersion) {
@@ -1629,7 +1629,7 @@ void UT_TLS_CFG_SET_GET_DHAUTOSUPPORT_TC001(int tlsVersion)
     FRAME_Init();
     HITLS_Config *config = NULL;
     bool support = -1;
-    uint8_t isSupport = -1;
+    bool isSupport = -1;
     ASSERT_TRUE(HITLS_CFG_SetDhAutoSupport(config, support) == HITLS_NULL_INPUT);
     ASSERT_TRUE(HITLS_CFG_GetDhAutoSupport(config, &isSupport) == HITLS_NULL_INPUT);
 

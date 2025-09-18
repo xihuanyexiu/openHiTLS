@@ -79,7 +79,7 @@ int32_t HITLS_SetMaxProtoVersion(HITLS_Ctx *ctx, uint16_t version)
 #endif
 
 #ifdef HITLS_TLS_CONNECTION_INFO_NEGOTIATION
-int32_t HITLS_IsAead(const HITLS_Ctx *ctx, uint8_t *isAead)
+int32_t HITLS_IsAead(const HITLS_Ctx *ctx, bool *isAead)
 {
     if (ctx == NULL) {
         return HITLS_NULL_INPUT;
@@ -90,7 +90,7 @@ int32_t HITLS_IsAead(const HITLS_Ctx *ctx, uint8_t *isAead)
 }
 #endif
 #ifdef HITLS_TLS_PROTO_DTLS
-int32_t HITLS_IsDtls(const HITLS_Ctx *ctx, uint8_t *isDtls)
+int32_t HITLS_IsDtls(const HITLS_Ctx *ctx, bool *isDtls)
 {
     if (ctx == NULL) {
         return HITLS_NULL_INPUT;
@@ -100,13 +100,13 @@ int32_t HITLS_IsDtls(const HITLS_Ctx *ctx, uint8_t *isDtls)
 #endif
 
 #ifdef HITLS_TLS_FEATURE_SESSION
-int32_t HITLS_IsSessionReused(HITLS_Ctx *ctx, uint8_t *isReused)
+int32_t HITLS_IsSessionReused(HITLS_Ctx *ctx, bool *isReused)
 {
     if (ctx == NULL || isReused == NULL) {
         return HITLS_NULL_INPUT;
     }
 
-    *isReused = (uint8_t)ctx->negotiatedInfo.isResume;
+    *isReused = ctx->negotiatedInfo.isResume;
     return HITLS_SUCCESS;
 }
 #endif
@@ -223,13 +223,13 @@ int32_t HITLS_GetQuietShutdown(const HITLS_Ctx *ctx, int32_t *mode)
     return HITLS_SUCCESS;
 }
 #ifdef HITLS_TLS_FEATURE_RENEGOTIATION
-int32_t HITLS_GetRenegotiationState(const HITLS_Ctx *ctx, uint8_t *isRenegotiationState)
+int32_t HITLS_GetRenegotiationState(const HITLS_Ctx *ctx, bool *isRenegotiationState)
 {
     if (ctx == NULL || isRenegotiationState == NULL) {
         return HITLS_NULL_INPUT;
     }
 
-    *isRenegotiationState = (uint8_t)ctx->negotiatedInfo.isRenegotiation;
+    *isRenegotiationState = ctx->negotiatedInfo.isRenegotiation;
 
     return HITLS_SUCCESS;
 }
@@ -266,7 +266,7 @@ int32_t HITLS_GetShutdownState(const HITLS_Ctx *ctx, uint32_t *mode)
 }
 
 #ifdef HITLS_TLS_FEATURE_CERT_MODE
-int32_t HITLS_GetClientVerifySupport(HITLS_Ctx *ctx, uint8_t *isSupport)
+int32_t HITLS_GetClientVerifySupport(HITLS_Ctx *ctx, bool *isSupport)
 {
     if (ctx == NULL) {
         return HITLS_NULL_INPUT;
@@ -275,7 +275,7 @@ int32_t HITLS_GetClientVerifySupport(HITLS_Ctx *ctx, uint8_t *isSupport)
     return HITLS_CFG_GetClientVerifySupport(&(ctx->config.tlsConfig), isSupport);
 }
 
-int32_t HITLS_GetNoClientCertSupport(HITLS_Ctx *ctx, uint8_t *isSupport)
+int32_t HITLS_GetNoClientCertSupport(HITLS_Ctx *ctx, bool *isSupport)
 {
     if (ctx == NULL) {
         return HITLS_NULL_INPUT;
@@ -286,7 +286,7 @@ int32_t HITLS_GetNoClientCertSupport(HITLS_Ctx *ctx, uint8_t *isSupport)
 #endif
 
 #ifdef HITLS_TLS_FEATURE_PHA
-int32_t HITLS_GetPostHandshakeAuthSupport(HITLS_Ctx *ctx, uint8_t *isSupport)
+int32_t HITLS_GetPostHandshakeAuthSupport(HITLS_Ctx *ctx, bool *isSupport)
 {
     if (ctx == NULL) {
         return HITLS_NULL_INPUT;
@@ -296,7 +296,7 @@ int32_t HITLS_GetPostHandshakeAuthSupport(HITLS_Ctx *ctx, uint8_t *isSupport)
 }
 #endif
 #ifdef HITLS_TLS_FEATURE_CERT_MODE
-int32_t HITLS_GetVerifyNoneSupport(HITLS_Ctx *ctx, uint8_t *isSupport)
+int32_t HITLS_GetVerifyNoneSupport(HITLS_Ctx *ctx, bool *isSupport)
 {
     if (ctx == NULL) {
         return HITLS_NULL_INPUT;
@@ -307,7 +307,7 @@ int32_t HITLS_GetVerifyNoneSupport(HITLS_Ctx *ctx, uint8_t *isSupport)
 #endif
 
 #if defined(HITLS_TLS_FEATURE_CERT_MODE) && defined(HITLS_TLS_FEATURE_RENEGOTIATION)
-int32_t HITLS_GetClientOnceVerifySupport(HITLS_Ctx *ctx, uint8_t *isSupport)
+int32_t HITLS_GetClientOnceVerifySupport(HITLS_Ctx *ctx, bool *isSupport)
 {
     if (ctx == NULL) {
         return HITLS_NULL_INPUT;
@@ -357,7 +357,7 @@ int32_t HITLS_GetModeSupport(const HITLS_Ctx *ctx, uint32_t *mode)
 #endif
 
 #ifdef HITLS_TLS_SUITE_CIPHER_CBC
-int32_t HITLS_SetEncryptThenMac(HITLS_Ctx *ctx, uint32_t encryptThenMacType)
+int32_t HITLS_SetEncryptThenMac(HITLS_Ctx *ctx, bool encryptThenMacType)
 {
     if (ctx == NULL) {
         return HITLS_NULL_INPUT;
@@ -366,7 +366,7 @@ int32_t HITLS_SetEncryptThenMac(HITLS_Ctx *ctx, uint32_t encryptThenMacType)
     return HITLS_CFG_SetEncryptThenMac(&(ctx->config.tlsConfig), encryptThenMacType);
 }
 
-int32_t HITLS_GetEncryptThenMac(const HITLS_Ctx *ctx, uint32_t *encryptThenMacType)
+int32_t HITLS_GetEncryptThenMac(const HITLS_Ctx *ctx, bool *encryptThenMacType)
 {
     if (ctx == NULL || encryptThenMacType == NULL) {
         return HITLS_NULL_INPUT;
@@ -374,7 +374,7 @@ int32_t HITLS_GetEncryptThenMac(const HITLS_Ctx *ctx, uint32_t *encryptThenMacTy
 
     // Returns the negotiated value if it has been negotiated
     if (ctx->negotiatedInfo.version > 0) {
-        *encryptThenMacType = (uint32_t)ctx->negotiatedInfo.isEncryptThenMac;
+        *encryptThenMacType = ctx->negotiatedInfo.isEncryptThenMac;
         return HITLS_SUCCESS;
     } else {
         return HITLS_CFG_GetEncryptThenMac(&(ctx->config.tlsConfig), encryptThenMacType);
@@ -457,7 +457,7 @@ int32_t HITLS_SetSessionTicketSupport(HITLS_Ctx *ctx, bool isSupport)
     return HITLS_CFG_SetSessionTicketSupport(&(ctx->config.tlsConfig), isSupport);
 }
 
-int32_t HITLS_GetSessionTicketSupport(const HITLS_Ctx *ctx, uint8_t *isSupport)
+int32_t HITLS_GetSessionTicketSupport(const HITLS_Ctx *ctx, bool *isSupport)
 {
     if (ctx == NULL) {
         return HITLS_NULL_INPUT;
@@ -543,7 +543,7 @@ uint32_t HITLS_GetTicketNums(HITLS_Ctx *ctx)
 }
 #endif
 #ifdef HITLS_TLS_FEATURE_FLIGHT
-int32_t HITLS_SetFlightTransmitSwitch(HITLS_Ctx *ctx, uint8_t isEnable)
+int32_t HITLS_SetFlightTransmitSwitch(HITLS_Ctx *ctx, bool isEnable)
 {
     if (ctx == NULL) {
         return HITLS_NULL_INPUT;
@@ -552,7 +552,7 @@ int32_t HITLS_SetFlightTransmitSwitch(HITLS_Ctx *ctx, uint8_t isEnable)
     return HITLS_CFG_SetFlightTransmitSwitch(&(ctx->config.tlsConfig), isEnable);
 }
 
-int32_t HITLS_GetFlightTransmitSwitch(const HITLS_Ctx *ctx, uint8_t *isEnable)
+int32_t HITLS_GetFlightTransmitSwitch(const HITLS_Ctx *ctx, bool *isEnable)
 {
     if (ctx == NULL) {
         return HITLS_NULL_INPUT;

@@ -525,7 +525,7 @@ void UT_TLS_CM_GET_NEGOTIATED_VERSION_FUNC_TC001(int version)
     ASSERT_TRUE(config != NULL);
 
     config->isSupportRenegotiation = true;
-    ASSERT_EQ(HITLS_CFG_SetEncryptThenMac(config, 1), HITLS_SUCCESS);
+    ASSERT_EQ(HITLS_CFG_SetEncryptThenMac(config, true), HITLS_SUCCESS);
 
     uint16_t signAlgs[] = {CERT_SIG_SCHEME_RSA_PKCS1_SHA256, CERT_SIG_SCHEME_ECDSA_SECP256R1_SHA256};
     HITLS_CFG_SetSignature(config, signAlgs, sizeof(signAlgs) / sizeof(uint16_t));
@@ -675,7 +675,7 @@ void UT_TLS_CM_IS_AEAD_FUNC_TC001(int version, int ciphersuite)
 {
     FRAME_Init();
     int ret;
-    uint8_t isAEAD = 0;
+    bool isAEAD = false;
     HITLS_Config *config_c = GetHitlsConfigViaVersion(version);
     HITLS_Config *config_s = GetHitlsConfigViaVersion(version);
     FRAME_LinkObj *client = NULL;
@@ -819,7 +819,7 @@ void UT_TLS_CM_IS_SERVER_FUNC_TC001(int version)
 {
     FRAME_Init();
     int ret;
-    uint8_t isServer;
+    bool isServer;
     HITLS_Config *config = GetHitlsConfigViaVersion(version);
     FRAME_LinkObj *client = NULL;
     FRAME_LinkObj *server = NULL;
@@ -863,7 +863,7 @@ void UT_TLS_CM_READHASPENDING_FUNC_TC001(int version)
     HITLS_Config *config = GetHitlsConfigViaVersion(version);
     FRAME_LinkObj *client = NULL;
     FRAME_LinkObj *server = NULL;
-    uint8_t isPending = 0;
+    bool isPending = false;
     ASSERT_TRUE(config != NULL);
 
     client = FRAME_CreateLink(config, BSL_UIO_TCP);
@@ -1136,7 +1136,7 @@ void UT_TLS_CM_GET_LOCAL_SIGN_SCHEME_FUNC_TC001(int version)
     config = GetHitlsConfigViaVersion(version);
     ASSERT_TRUE(config != NULL);
     config->isSupportRenegotiation = true;
-    ASSERT_EQ(HITLS_CFG_SetEncryptThenMac(config, 1), HITLS_SUCCESS);
+    ASSERT_EQ(HITLS_CFG_SetEncryptThenMac(config, true), HITLS_SUCCESS);
 
     uint16_t signAlgs[] = {CERT_SIG_SCHEME_RSA_PKCS1_SHA256, CERT_SIG_SCHEME_ECDSA_SECP256R1_SHA256};
     HITLS_CFG_SetSignature(config, signAlgs, sizeof(signAlgs) / sizeof(uint16_t));
@@ -1454,7 +1454,7 @@ void UT_TLS_CM_GET_HANDSHAKE_STATE_FUNC_TC001(int version)
     config = GetHitlsConfigViaVersion(version);
     ASSERT_TRUE(config != NULL);
     config->isSupportRenegotiation = true;
-    ASSERT_EQ(HITLS_CFG_SetEncryptThenMac(config, 1), HITLS_SUCCESS);
+    ASSERT_EQ(HITLS_CFG_SetEncryptThenMac(config, true), HITLS_SUCCESS);
 
     uint16_t signAlgs[] = {CERT_SIG_SCHEME_RSA_PKCS1_SHA256, CERT_SIG_SCHEME_ECDSA_SECP256R1_SHA256};
     HITLS_CFG_SetSignature(config, signAlgs, sizeof(signAlgs) / sizeof(uint16_t));
@@ -1562,7 +1562,7 @@ EXIT:
 void UT_TLS_CM_IS_HANDSHAKING_FUNC_TC001(int version)
 {
     FRAME_Init();
-    uint8_t isHandShaking = 0;
+    bool isHandShaking = false;
     HITLS_Config *tlsConfig = GetHitlsConfigViaVersion(version);
     ASSERT_TRUE(tlsConfig != NULL);
     tlsConfig->isSupportRenegotiation = true;
@@ -1576,19 +1576,19 @@ void UT_TLS_CM_IS_HANDSHAKING_FUNC_TC001(int version)
     ASSERT_TRUE(clientTlsCtx->state == CM_STATE_IDLE);
     ASSERT_TRUE(serverTlsCtx->state == CM_STATE_IDLE);
     ASSERT_TRUE(HITLS_IsHandShaking(clientTlsCtx, &isHandShaking) == HITLS_SUCCESS);
-    ASSERT_TRUE(isHandShaking == 0);
+    ASSERT_TRUE(isHandShaking == false);
 
     ASSERT_TRUE(FRAME_CreateConnection(client, server, true, TRY_RECV_SERVER_HELLO) == HITLS_SUCCESS);
     ASSERT_TRUE(clientTlsCtx->state == CM_STATE_HANDSHAKING);
     ASSERT_TRUE(serverTlsCtx->state == CM_STATE_HANDSHAKING);
     ASSERT_TRUE(HITLS_IsHandShaking(clientTlsCtx, &isHandShaking) == HITLS_SUCCESS);
-    ASSERT_TRUE(isHandShaking == 1);
+    ASSERT_TRUE(isHandShaking == true);
 
     ASSERT_TRUE(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT) == HITLS_SUCCESS);
     ASSERT_TRUE(clientTlsCtx->state == CM_STATE_TRANSPORTING);
     ASSERT_TRUE(serverTlsCtx->state == CM_STATE_TRANSPORTING);
     ASSERT_TRUE(HITLS_IsHandShaking(clientTlsCtx, &isHandShaking) == HITLS_SUCCESS);
-    ASSERT_TRUE(isHandShaking == 0);
+    ASSERT_TRUE(isHandShaking == false);
 
     if (version == HITLS_VERSION_TLS12) {
         ASSERT_EQ(HITLS_Renegotiate(clientTlsCtx), HITLS_SUCCESS);
@@ -1596,13 +1596,13 @@ void UT_TLS_CM_IS_HANDSHAKING_FUNC_TC001(int version)
         ASSERT_TRUE(serverTlsCtx->state == CM_STATE_RENEGOTIATION);
         ASSERT_TRUE(clientTlsCtx->state == CM_STATE_RENEGOTIATION);
         ASSERT_TRUE(HITLS_IsHandShaking(clientTlsCtx, &isHandShaking) == HITLS_SUCCESS);
-        ASSERT_TRUE(isHandShaking == 1);
+        ASSERT_TRUE(isHandShaking == true);
 
         ASSERT_TRUE(FRAME_CreateRenegotiationState(client, server, true, HS_STATE_BUTT) == HITLS_SUCCESS);
         ASSERT_TRUE(clientTlsCtx->state == CM_STATE_TRANSPORTING);
         ASSERT_TRUE(serverTlsCtx->state == CM_STATE_TRANSPORTING);
         ASSERT_TRUE(HITLS_IsHandShaking(clientTlsCtx, &isHandShaking) == HITLS_SUCCESS);
-        ASSERT_TRUE(isHandShaking == 0);
+        ASSERT_TRUE(isHandShaking == false);
     }
 EXIT:
     HITLS_CFG_FreeConfig(tlsConfig);
@@ -1633,7 +1633,7 @@ void UT_TLS_CM_HITLS_IsBeforeHandShake_FUNC_TC001(int version)
 {
     FRAME_Init();
     int ret = 0;
-    uint8_t isBefore = 0;
+    bool isBefore = false;
     HITLS_Config *config_c = GetHitlsConfigViaVersion(version);
     HITLS_Config *config_s = GetHitlsConfigViaVersion(version);
     ASSERT_TRUE(config_c != NULL);
@@ -1647,19 +1647,19 @@ void UT_TLS_CM_HITLS_IsBeforeHandShake_FUNC_TC001(int version)
     ret = HITLS_IsBeforeHandShake(client->ssl, &isBefore);
     ASSERT_TRUE(ret == HITLS_SUCCESS);
     ASSERT_TRUE(client->ssl->state == CM_STATE_IDLE);
-    ASSERT_TRUE(isBefore == 1);
+    ASSERT_TRUE(isBefore == true);
 
     ASSERT_EQ(FRAME_CreateConnection(client, server, true, TRY_RECV_SERVER_HELLO), HITLS_SUCCESS);
 
     ret = HITLS_IsBeforeHandShake(client->ssl, &isBefore);
     ASSERT_TRUE(ret == HITLS_SUCCESS);
     ASSERT_TRUE(client->ssl->state == CM_STATE_HANDSHAKING);
-    ASSERT_TRUE(isBefore == 0);
+    ASSERT_TRUE(isBefore == false);
 
     ASSERT_EQ(FRAME_CreateConnection(client, server, true, HS_STATE_BUTT), HITLS_SUCCESS);
     ASSERT_TRUE(ret == HITLS_SUCCESS);
     ASSERT_TRUE(client->ssl->state == CM_STATE_TRANSPORTING);
-    ASSERT_TRUE(isBefore == 0);
+    ASSERT_TRUE(isBefore == false);
 
 EXIT:
     HITLS_CFG_FreeConfig(config_c);
@@ -2350,7 +2350,7 @@ void UT_TLS_CM_HITLS_GetFinishVerifyData_FUNC_TC001(int version)
     FRAME_LinkObj *server = NULL;
     config = GetHitlsConfigViaVersion(version);
     ASSERT_TRUE(config != NULL);
-    ASSERT_EQ(HITLS_CFG_SetEncryptThenMac(config, 1), HITLS_SUCCESS);
+    ASSERT_EQ(HITLS_CFG_SetEncryptThenMac(config, true), HITLS_SUCCESS);
 
     uint16_t signAlgs[] = {CERT_SIG_SCHEME_RSA_PKCS1_SHA256, CERT_SIG_SCHEME_ECDSA_SECP256R1_SHA256};
     HITLS_CFG_SetSignature(config, signAlgs, sizeof(signAlgs) / sizeof(uint16_t));
@@ -2398,7 +2398,7 @@ void UT_TLS_CM_HITLS_GetFinishVerifyData_FUNC_TC002(int version)
     FRAME_LinkObj *server = NULL;
     config = GetHitlsConfigViaVersion(version);
     ASSERT_TRUE(config != NULL);
-    ASSERT_EQ(HITLS_CFG_SetEncryptThenMac(config, 1), HITLS_SUCCESS);
+    ASSERT_EQ(HITLS_CFG_SetEncryptThenMac(config, true), HITLS_SUCCESS);
 
     uint16_t signAlgs[] = {CERT_SIG_SCHEME_RSA_PKCS1_SHA256, CERT_SIG_SCHEME_ECDSA_SECP256R1_SHA256};
     HITLS_CFG_SetSignature(config, signAlgs, sizeof(signAlgs) / sizeof(uint16_t));
@@ -2455,7 +2455,7 @@ void UT_TLS_CM_HITLS_GetFinishVerifyData_FUNC_TC003(int version)
     ASSERT_TRUE(config != NULL);
 
     config->isSupportRenegotiation = true;
-    ASSERT_EQ(HITLS_CFG_SetEncryptThenMac(config, 1), HITLS_SUCCESS);
+    ASSERT_EQ(HITLS_CFG_SetEncryptThenMac(config, true), HITLS_SUCCESS);
 
     uint16_t signAlgs[] = {CERT_SIG_SCHEME_RSA_PKCS1_SHA256, CERT_SIG_SCHEME_ECDSA_SECP256R1_SHA256};
     HITLS_CFG_SetSignature(config, signAlgs, sizeof(signAlgs) / sizeof(uint16_t));
@@ -2544,7 +2544,7 @@ void UT_TLS_CM_HITLS_GetRenegotiationState_FUNC_TC001(void)
     FRAME_LinkObj *client = NULL;
     FRAME_LinkObj *server = NULL;
 
-    uint8_t isRenegotiation = true;
+    bool isRenegotiation = true;
     config = HITLS_CFG_NewTLS12Config();
     ASSERT_TRUE(config != NULL);
 
@@ -2685,7 +2685,7 @@ void UT_HITLS_CM_SET_GET_CLIENTVERIFYSUPPORT_API_TC001(int tlsVersion)
     HITLS_Config *config = NULL;
     HITLS_Ctx *ctx = NULL;
     bool support = -1;
-    uint8_t isSupport = -1;
+    bool isSupport = -1;
     ASSERT_TRUE(HITLS_SetClientVerifySupport(ctx, support) == HITLS_NULL_INPUT);
     ASSERT_TRUE(HITLS_GetClientVerifySupport(ctx, &isSupport) == HITLS_NULL_INPUT);
 
@@ -2742,7 +2742,7 @@ void UT_HITLS_CM_SET_GET_NOCLIENTCERTSUPPORT_API_TC001(int tlsVersion)
     HITLS_Config *config = NULL;
     HITLS_Ctx *ctx = NULL;
     bool support = -1;
-    uint8_t isSupport = -1;
+    bool isSupport = -1;
     ASSERT_TRUE(HITLS_SetNoClientCertSupport(ctx, support) == HITLS_NULL_INPUT);
     ASSERT_TRUE(HITLS_GetNoClientCertSupport(ctx, &isSupport) == HITLS_NULL_INPUT);
 
@@ -2799,7 +2799,7 @@ void UT_HITLS_CM_SET_GET_VERIFYNONESUPPORT_API_TC001(int tlsVersion)
     HITLS_Config *config = NULL;
     HITLS_Ctx *ctx = NULL;
     bool support = -1;
-    uint8_t isSupport = -1;
+    bool isSupport = -1;
     ASSERT_TRUE(HITLS_SetVerifyNoneSupport(ctx, support) == HITLS_NULL_INPUT);
     ASSERT_TRUE(HITLS_GetVerifyNoneSupport(ctx, &isSupport) == HITLS_NULL_INPUT);
 
@@ -2856,7 +2856,7 @@ void UT_HITLS_CM_SET_GET_CLIENTONCEVERIFYSUPPORT_API_TC001(int tlsVersion)
     HITLS_Config *config = NULL;
     HITLS_Ctx *ctx = NULL;
     bool support = -1;
-    uint8_t isSupport = -1;
+    bool isSupport = -1;
     ASSERT_TRUE(HITLS_SetClientOnceVerifySupport(ctx, support) == HITLS_NULL_INPUT);
     ASSERT_TRUE(HITLS_GetClientOnceVerifySupport(ctx, &isSupport) == HITLS_NULL_INPUT);
 
@@ -3206,7 +3206,7 @@ void UT_HITLS_CM_SET_GET_RENEGOTIATIONSUPPORT_FUNC_TC001(int tlsVersion)
     HITLS_Config *config = NULL;
     HITLS_Ctx *ctx = NULL;
     bool support = -1;
-    uint8_t isSupport = -1;
+    bool isSupport = -1;
     ASSERT_TRUE(HITLS_SetRenegotiationSupport(ctx, support) == HITLS_NULL_INPUT);
     ASSERT_TRUE(HITLS_GetRenegotiationSupport(ctx, &isSupport) == HITLS_NULL_INPUT);
 
@@ -3261,8 +3261,8 @@ void UT_HITLS_CM_SET_GET_FLIGHTTRANSMITSWITCH_FUNC_TC001(int tlsVersion)
     FRAME_Init();
     HITLS_Config *config = NULL;
     HITLS_Ctx *ctx = NULL;
-    uint8_t isEnable = -1;
-    uint8_t getIsEnable = -1;
+    bool isEnable = false;
+    bool getIsEnable = false;
     ASSERT_TRUE(HITLS_SetFlightTransmitSwitch(ctx, isEnable) == HITLS_NULL_INPUT);
     ASSERT_TRUE(HITLS_GetFlightTransmitSwitch(ctx, &getIsEnable) == HITLS_NULL_INPUT);
 
@@ -4273,7 +4273,7 @@ void UT_TLS_CM_IS_DTLS_API_TC001(int tlsVersion)
     HitlsInit();
     HITLS_Config *config = NULL;
     HITLS_Ctx *ctx = NULL;
-    uint8_t isDtls = 0;
+    bool isDtls = false;
     ASSERT_TRUE(HITLS_IsDtls(ctx, &isDtls) == HITLS_NULL_INPUT);
 
     config = GetHitlsConfigViaVersion(tlsVersion);
@@ -4500,7 +4500,7 @@ void UT_HITLS_CM_SET_GET_ENCRYPTTHENMAC_TC001(int tlsVersion)
     FRAME_Init();
     HITLS_Config *config = NULL;
     HITLS_Ctx *ctx = NULL;
-    uint32_t encryptThenMacType = 0;
+    bool encryptThenMacType = false;
 
     ASSERT_TRUE(HITLS_SetEncryptThenMac(ctx, encryptThenMacType) == HITLS_NULL_INPUT);
     ASSERT_TRUE(HITLS_GetEncryptThenMac(ctx, &encryptThenMacType) == HITLS_NULL_INPUT);
@@ -4510,13 +4510,13 @@ void UT_HITLS_CM_SET_GET_ENCRYPTTHENMAC_TC001(int tlsVersion)
     ASSERT_TRUE(ctx != NULL);
 
     ASSERT_TRUE(HITLS_GetEncryptThenMac(ctx, NULL) == HITLS_NULL_INPUT);
-    encryptThenMacType = 1;
+    encryptThenMacType = true;
     ASSERT_TRUE(HITLS_SetEncryptThenMac(ctx, encryptThenMacType) == HITLS_SUCCESS);
-    encryptThenMacType = -1;
+    encryptThenMacType = true;
     ASSERT_TRUE(HITLS_SetEncryptThenMac(ctx, encryptThenMacType) == HITLS_SUCCESS);
-    ASSERT_TRUE(config->isEncryptThenMac = true);
+    ASSERT_TRUE(config->isEncryptThenMac == true);
 
-    uint32_t getencryptThenMacType = -1;
+    bool getencryptThenMacType = false;
     ASSERT_TRUE(HITLS_GetEncryptThenMac(ctx, &getencryptThenMacType) == HITLS_SUCCESS);
     ASSERT_TRUE(getencryptThenMacType == true);
 EXIT:
