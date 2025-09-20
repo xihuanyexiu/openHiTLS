@@ -15,6 +15,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "securec.h"
 #include "hitls_build.h"
 #include "bsl_err_internal.h"
 #include "bsl_list.h"
@@ -26,10 +27,11 @@
 #include "cert_method.h"
 #include "cert_mgr.h"
 #include "cert.h"
+#include "cert_mgr.h"
 #ifdef HITLS_TLS_FEATURE_SECURITY
 #include "security.h"
 #endif
-
+#define MAX_PATH_LEN 4096
 #ifdef HITLS_TLS_FEATURE_SECURITY
 static int32_t CheckCertSecuritylevel(HITLS_Config *config, HITLS_CERT_X509 *cert, bool isCACert)
 {
@@ -887,4 +889,64 @@ int32_t HITLS_CFG_FreeKey(HITLS_Config *config, HITLS_CERT_Key *key)
 
     SAL_CERT_KeyFree(config->certMgrCtx, key);
     return HITLS_SUCCESS;
+}
+
+static int32_t LoadVerifyDirAddPath(HITLS_Config *config, HITLS_CERT_Store *store,
+    const char *start, size_t len)
+{
+    if (start == NULL) {
+        return HITLS_CONFIG_INVALID_LENGTH;
+    }
+    if (len == 0) {
+        return HITLS_SUCCESS; /* nothing to add */
+    }
+    if (len >= MAX_PATH_LEN) {
+        return HITLS_CONFIG_INVALID_LENGTH;
+    }
+
+    char buf[MAX_PATH_LEN + 1] = {0};
+    if (memcpy_s(buf, sizeof(buf), start, len) != EOK) {
+        return HITLS_MEMCPY_FAIL;
+    }
+    buf[len] = '\0';
+
+    return SAL_CERT_StoreCtrl(config, store, CERT_STORE_CTRL_ADD_CA_PATH, (void *)buf, NULL);
+}
+
+int32_t HITLS_CFG_LoadVerifyDir(HITLS_Config *config, const char *path)
+{
+    if (config == NULL || path == NULL || strlen(path) == 0 || config->certMgrCtx == NULL) {
+        return HITLS_NULL_INPUT;
+    }
+
+    HITLS_CERT_Store *store = SAL_CERT_GetCertStore(config->certMgrCtx);
+
+    /* Single path without separator */
+    if (strchr(path, ':') == NULL) {
+        return LoadVerifyDirAddPath(config, store, path, strlen(path));
+    }
+
+    /* Multiple colon-separated paths */
+    int32_t ret = HITLS_SUCCESS;
+    const char *start = path;
+    const char *p = path;
+
+    while (*p != '\0') {
+        if (*p == ':') {
+            uint32_t len = (uint32_t)(p - start);
+            ret = LoadVerifyDirAddPath(config, store, start, len);
+            if (ret != HITLS_SUCCESS) {
+                return ret;
+            }
+            start = p + 1;
+        }
+        p++;
+    }
+
+    /* trailing segment */
+    if (start < p) {
+        ret = LoadVerifyDirAddPath(config, store, start, (uint32_t)(p - start));
+    }
+
+    return ret;
 }
