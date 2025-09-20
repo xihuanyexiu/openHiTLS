@@ -18,7 +18,6 @@
 #include <linux/limits.h>
 #include <stdbool.h>
 #include "string.h"
-#include "securec.h"
 #include "bsl_sal.h"
 #include "bsl_errno.h"
 #include "app_function.h"

@@ -17,7 +17,7 @@
 #ifdef HITLS_CRYPTO_HKDF
 
 #include <stdint.h>
-#include "securec.h"
+#include <string.h>
 #include "bsl_err_internal.h"
 #include "bsl_sal.h"
 #include "crypt_local_types.h"
@@ -167,7 +167,7 @@ int32_t CRYPT_HKDF_Expand(void *macCtx, const EAL_MacMethod *macMeth, uint16_t m
         GOTO_ERR_IF(macMeth->update(macCtx, &counter, 1), ret);
         GOTO_ERR_IF(macMeth->final(macCtx, hash, &hashLen), ret);
         hashLen = hashLen > (outLen - totalLen) ? (outLen - totalLen) : hashLen;
-        (void)memcpy_s(out + totalLen, outLen - totalLen, hash, hashLen);
+        memcpy(out + totalLen, hash, hashLen);
         totalLen += hashLen;
     }
 
@@ -253,7 +253,7 @@ int32_t CRYPT_HKDF_SetMacMethod(CRYPT_HKDF_Ctx *ctx, const CRYPT_MAC_AlgId id)
         }
         ctx->macMeth.freeCtx(ctx->macCtx);
         ctx->macCtx = NULL;
-        (void)memset_s(&ctx->macMeth, sizeof(EAL_MacMethod), 0, sizeof(EAL_MacMethod));
+        memset(&ctx->macMeth, 0, sizeof(EAL_MacMethod));
     }
 
     EAL_MacMethod *macMeth = EAL_MacFindMethod(id, &ctx->macMeth);
@@ -492,7 +492,7 @@ int32_t CRYPT_HKDF_Deinit(CRYPT_HKDF_Ctx *ctx)
     BSL_SAL_FREE(ctx->salt);
     BSL_SAL_ClearFree((void *)ctx->prk, ctx->prkLen);
     BSL_SAL_ClearFree((void *)ctx->info, ctx->infoLen);
-    (void)memset_s(ctx, sizeof(CRYPT_HKDF_Ctx), 0, sizeof(CRYPT_HKDF_Ctx));
+    memset(ctx, 0, sizeof(CRYPT_HKDF_Ctx));
     return CRYPT_SUCCESS;
 }
 

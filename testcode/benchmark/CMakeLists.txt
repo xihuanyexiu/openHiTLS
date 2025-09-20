@@ -29,4 +29,4 @@ target_link_directories(openhitls_benchmark PRIVATE ${OPENHITLS_ROOT}/build
 target_include_directories(openhitls_benchmark PRIVATE ${OPENHITLS_ROOT}/include/crypto
                                                        ${OPENHITLS_ROOT}/include/bsl
                                                        ${OPENHITLS_ROOT}/platform/Secure_C/include)
-target_link_libraries(openhitls_benchmark PRIVATE hitls_crypto hitls_bsl boundscheck)
+target_link_libraries(openhitls_benchmark PRIVATE hitls_crypto hitls_bsl)

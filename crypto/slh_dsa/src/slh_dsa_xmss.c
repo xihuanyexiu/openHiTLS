@@ -17,7 +17,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include "securec.h"
+#include <string.h>
 #include "bsl_err_internal.h"
 #include "bsl_sal.h"
 #include "crypt_errno.h"
@@ -44,7 +44,7 @@ int32_t XmssNode(uint8_t *node, uint32_t idx, uint32_t height, SlhDsaAdrs *adrs,
             return ret;
         }
         if (AuthPath && (idx == ((LeafIdx >> height) ^ 0x01))) {
-            (void)memcpy_s(AuthPath + (height * n), n, node, n);
+            memcpy(AuthPath + (height * n), node, n);
         }
         return CRYPT_SUCCESS;
     }
@@ -75,8 +75,8 @@ int32_t XmssNode(uint8_t *node, uint32_t idx, uint32_t height, SlhDsaAdrs *adrs,
     ctx->adrsOps.setTreeIndex(adrs, idx);
 
     uint8_t tmp[MAX_MDSIZE * 2];
-    (void)memcpy_s(tmp, MAX_MDSIZE * 2, leftNode, n);
-    (void)memcpy_s(tmp + n, MAX_MDSIZE * 2 - n, rightNode, n);
+    memcpy(tmp, leftNode, n);
+    memcpy(tmp + n, rightNode, n);
 
     ret = ctx->hashFuncs.h(ctx, adrs, tmp, 2 * n, node);
     if (ret != CRYPT_SUCCESS) {
@@ -84,7 +84,7 @@ int32_t XmssNode(uint8_t *node, uint32_t idx, uint32_t height, SlhDsaAdrs *adrs,
     }
     if ((height != ctx->para.hp) && 
         AuthPath && (idx == ((LeafIdx >> height) ^ 0x01))) {
-        (void)memcpy_s(AuthPath + (height * n), n, node, n);
+        memcpy(AuthPath + (height * n), node, n);
     }
     return CRYPT_SUCCESS;
 }
@@ -150,21 +150,21 @@ int32_t XmssPkFromSig(uint32_t idx, const uint8_t *sig, uint32_t sigLen, const u
         }
         uint8_t tmp[MAX_MDSIZE * 2];
         if (((idx >> k) & 1) != 0) {
-            (void)memcpy_s(tmp, sizeof(tmp), sig + (len + k) * n, n);
-            (void)memcpy_s(tmp + n, sizeof(tmp) - n, node0, n);
+            memcpy(tmp, sig + (len + k) * n, n);
+            memcpy(tmp + n, node0, n);
             ctx->adrsOps.setTreeIndex(adrs, (ctx->adrsOps.getTreeIndex(adrs) - 1) >> 1);
         } else {
-            (void)memcpy_s(tmp, sizeof(tmp), node0, n);
-            (void)memcpy_s(tmp + n, sizeof(tmp) - n, sig + (len + k) * n, n);
+            memcpy(tmp, node0, n);
+            memcpy(tmp + n, sig + (len + k) * n, n);
             ctx->adrsOps.setTreeIndex(adrs, ctx->adrsOps.getTreeIndex(adrs) >> 1);
         }
         ret = ctx->hashFuncs.h(ctx, adrs, tmp, 2 * n, node1);
         if (ret != CRYPT_SUCCESS) {
             return ret;
         }
-        (void)memcpy_s(node0, sizeof(node0), node1, sizeof(node1));
+        memcpy(node0, node1, sizeof(node1));
     }
-    (void)memcpy_s(pk, n, node0, n);
+    memcpy(pk, node0, n);
     return CRYPT_SUCCESS;
 }
 

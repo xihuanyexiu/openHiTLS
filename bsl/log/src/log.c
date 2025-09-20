@@ -16,8 +16,9 @@
 #include "hitls_build.h"
 #ifdef HITLS_BSL_LOG
 
+#include <stddef.h>
+#include <string.h>
 #include <stdbool.h>
-#include "securec.h"
 #include "bsl_errno.h"
 #include "bsl_log.h"
 #include "bsl_log_internal.h"
@@ -37,9 +38,8 @@ int32_t BSL_LOG_GetVersion(char *version, uint32_t *versionLen)
     }
 
     uint32_t len = (uint32_t)strlen(g_openHiTLSVersion);
-    if (memcpy_s(version, *versionLen, g_openHiTLSVersion, len) != EOK) {
-        return BSL_MEMCPY_FAIL;
-    }
+    memcpy(version, g_openHiTLSVersion, len);
+
 
     *versionLen = len;
     return BSL_SUCCESS;

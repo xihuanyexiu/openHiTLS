@@ -16,12 +16,12 @@
 #include "hitls_build.h"
 #if defined(HITLS_CRYPTO_RSA_BLINDING) || defined(HITLS_CRYPTO_RSA_BSSA)
 
+#include <string.h>
 #include "crypt_utils.h"
 #include "crypt_rsa.h"
 #include "rsa_local.h"
 #include "crypt_errno.h"
 #include "bsl_sal.h"
-#include "securec.h"
 #include "bsl_err_internal.h"
 
 RSA_Blind *RSA_BlindNewCtx(void)
@@ -31,7 +31,7 @@ RSA_Blind *RSA_BlindNewCtx(void)
         BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
         return NULL;
     }
-    (void)memset_s(ret, sizeof(RSA_Blind), 0, sizeof(RSA_Blind));
+    memset(ret, 0, sizeof(RSA_Blind));
     return ret;
 }
 

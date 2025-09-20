@@ -13,10 +13,11 @@
  * See the Mulan PSL v2 for more details.
  */
 
+
 #include "app_rand.h"
 #include <stddef.h>
+#include <string.h>
 #include <linux/limits.h>
-#include "securec.h"
 #include "bsl_uio.h"
 #include "crypt_eal_rand.h"
 #include "bsl_base64.h"

@@ -17,7 +17,7 @@
 #ifdef HITLS_CRYPTO_ECDSA
 
 #include <stdbool.h>
-#include "securec.h"
+#include <string.h>
 #include "crypt_errno.h"
 #include "crypt_types.h"
 #include "crypt_utils.h"

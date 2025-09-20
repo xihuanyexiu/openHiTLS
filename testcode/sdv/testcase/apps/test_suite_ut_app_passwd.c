@@ -18,7 +18,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
-#include <securec.h>
 #include "app_passwd.h"
 #include "app_errno.h"
 #include "app_help.h"
@@ -43,7 +42,7 @@ int32_t STUB_BSL_UI_ReadPwdUtil(BSL_UI_ReadPwdParam *param, char *buff, uint32_t
     (void)checkDataCallBack;
     (void)callBackData;
     char result[] = "12345678";
-    (void)strcpy_s(buff, *buffLen, result);
+    (void)strcpy(buff, result);
     *buffLen = (uint32_t)strlen(buff) + 1;
     return BSL_SUCCESS;
 }
@@ -115,7 +114,7 @@ int32_t STUB_BSL_UI_ReadPwdUtilIs1024(BSL_UI_ReadPwdParam *param, char *buff, ui
         "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
         "1111111111111111111111111111111111";
         printf("=======%d\n", *buffLen);
-    (void)strcpy_s(buff, *buffLen, result);
+    (void)strcpy(buff, result);
     *buffLen = (uint32_t)strlen(result) + 1;
         printf("=======%d\n", *buffLen);
     return BSL_SUCCESS;

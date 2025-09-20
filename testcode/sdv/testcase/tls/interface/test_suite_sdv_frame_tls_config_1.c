@@ -36,7 +36,6 @@
 #include <sys/select.h>
 #include <sys/time.h>
 #include <linux/ioctl.h>
-#include "securec.h"
 #include "bsl_sal.h"
 #include "sal_net.h"
 #include "hitls.h"
@@ -88,7 +87,6 @@
 #include "sctp_channel.h"
 #include "hitls_crypt_init.h"
 #include <stdlib.h>
-#include "securec.h"
 #include "bsl_sal.h"
 #include "bsl_log.h"
 #include "bsl_err.h"

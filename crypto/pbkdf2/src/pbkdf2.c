@@ -17,7 +17,7 @@
 #ifdef HITLS_CRYPTO_PBKDF2
 
 #include <stdint.h>
-#include "securec.h"
+#include <string.h>
 #include "bsl_err_internal.h"
 #include "bsl_sal.h"
 #include "crypt_local_types.h"
@@ -126,7 +126,7 @@ int32_t CRYPT_PBKDF2_CalcT(const CRYPT_PBKDF2_Ctx *pCtx, uint32_t blockCount, ui
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
-    (void)memcpy_s(tmpT, PBKDF2_MAX_BLOCKSIZE, u, blockSize);
+    memcpy(tmpT, u, blockSize);
     for (uint32_t un = 1; un < iterCnt; un++) {
         /* t = t ^ Un */
         ret = CRYPT_PBKDF2_Un(pCtx, u, &blockSize, tmpT, blockSize);
@@ -136,7 +136,7 @@ int32_t CRYPT_PBKDF2_CalcT(const CRYPT_PBKDF2_Ctx *pCtx, uint32_t blockCount, ui
         }
     }
     uint32_t len = (*tlen > blockSize) ? blockSize : (*tlen);
-    (void)memcpy_s(t, *tlen, tmpT, len);
+    memcpy(t, tmpT, len);
     *tlen = len;
     BSL_SAL_CleanseData(u, PBKDF2_MAX_BLOCKSIZE);
     BSL_SAL_CleanseData(tmpT, PBKDF2_MAX_BLOCKSIZE);
@@ -267,7 +267,7 @@ int32_t CRYPT_PBKDF2_SetMacMethod(CRYPT_PBKDF2_Ctx *ctx, const CRYPT_MAC_AlgId i
         }
         ctx->macMeth.freeCtx(ctx->macCtx);
         ctx->macCtx = NULL;
-        (void)memset_s(&ctx->macMeth, sizeof(EAL_MacMethod), 0, sizeof(EAL_MacMethod));
+        memset(&ctx->macMeth, 0, sizeof(EAL_MacMethod));
     }
 
     EAL_MacMethod *macMeth = EAL_MacFindMethod(id, &ctx->macMeth);
@@ -481,7 +481,7 @@ int32_t CRYPT_PBKDF2_Deinit(CRYPT_PBKDF2_Ctx *ctx)
     }
     BSL_SAL_ClearFree((void *)ctx->password, ctx->passLen);
     BSL_SAL_FREE(ctx->salt);
-    (void)memset_s(ctx, sizeof(CRYPT_PBKDF2_Ctx), 0, sizeof(CRYPT_PBKDF2_Ctx));
+    memset(ctx, 0, sizeof(CRYPT_PBKDF2_Ctx));
     return CRYPT_SUCCESS;
 }
 

@@ -16,10 +16,10 @@
 #include "hitls_build.h"
 #ifdef HITLS_BSL_LIST
 
+#include <string.h>
 #include "bsl_list_internal.h"
 #include "bsl_err_internal.h"
 #include "bsl_sal.h"
-#include "securec.h"
 #include "bsl_list.h"
 
 #define MAX_LIST_ELEM_CNT_DEFAULT 10000000
@@ -421,7 +421,7 @@ BslList *BSL_LIST_Copy(BslList *pSrcList, BSL_LIST_PFUNC_DUP pFuncCpy, BSL_LIST_
                 return NULL;
             }
 
-            (void)memcpy_s(pDstData, dataLen, pSrcData, dataLen);
+            memcpy(pDstData, pSrcData, dataLen);
         }
 
         if (pDstData == NULL) {

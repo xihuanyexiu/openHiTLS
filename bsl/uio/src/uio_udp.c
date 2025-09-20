@@ -15,7 +15,6 @@
 
 #include "hitls_build.h"
 #ifdef HITLS_BSL_UIO_UDP
-#include "securec.h"
 #include "bsl_sal.h"
 #include "bsl_binlog_id.h"
 #include "bsl_log_internal.h"

@@ -12,8 +12,7 @@
  * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
  * See the Mulan PSL v2 for more details.
  */
-
-#include "securec.h"
+#include <string.h>
 #include "bsl_bytes.h"
 #include "bsl_sal.h"
 #include "hitls_error.h"
@@ -50,10 +49,7 @@ int32_t GenClientHelloMandatoryCtx(TLS_Ctx *tlsCtx, FRAME_Msg *msg)
     ClientHelloMsg *clientHello = &msg->body.handshakeMsg.body.clientHello;
     TLS_Config *tlsConfig = &tlsCtx->config.tlsConfig;
     tlsConfig->maxVersion = clientHello->version;
-    int32_t ret = memcpy_s(tlsCtx->hsCtx->clientRandom, HS_RANDOM_SIZE, clientHello->randomValue, HS_RANDOM_SIZE);
-    if (ret != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(tlsCtx->hsCtx->clientRandom, clientHello->randomValue, HS_RANDOM_SIZE);
 
     if (clientHello->sessionIdSize > 0) {
 #if defined(HITLS_TLS_FEATURE_SESSION) || defined(HITLS_TLS_PROTO_TLS13)
@@ -140,9 +136,8 @@ int32_t PackClientHelloMsg(FRAME_Msg *msg)
     }
 
     ret = HS_PackMsg(tlsCtx, CLIENT_HELLO);
-    if (memcpy_s(&msg->buffer[msg->len], REC_MAX_PLAIN_LENGTH, tlsCtx->hsCtx->msgBuf, tlsCtx->hsCtx->msgLen) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(&msg->buffer[msg->len], tlsCtx->hsCtx->msgBuf, tlsCtx->hsCtx->msgLen);
+
     msg->len += tlsCtx->hsCtx->msgLen;
 EXIT:
     HITLS_Free(tlsCtx);
@@ -160,10 +155,7 @@ int32_t PackServerHelloMsg(FRAME_Msg *msg)
     tlsCtx->negotiatedInfo.version = serverHello->version;
 
     int32_t ret = 0;
-    ret = memcpy_s(tlsCtx->hsCtx->serverRandom, HS_RANDOM_SIZE, serverHello->randomValue, HS_RANDOM_SIZE);
-    if (ret != EOK) {
-        goto EXIT;
-    }
+    memcpy(tlsCtx->hsCtx->serverRandom, serverHello->randomValue, HS_RANDOM_SIZE);
 
     if (serverHello->sessionIdSize > 0) {    // SessionId
 #if defined(HITLS_TLS_FEATURE_SESSION) || defined(HITLS_TLS_PROTO_TLS13)
@@ -180,9 +172,8 @@ int32_t PackServerHelloMsg(FRAME_Msg *msg)
     tlsCtx->negotiatedInfo.isExtendedMasterSecret = serverHello->haveExtendedMasterSecret;
 
     ret = HS_PackMsg(tlsCtx, SERVER_HELLO);
-    if (memcpy_s(&msg->buffer[msg->len], REC_MAX_PLAIN_LENGTH, tlsCtx->hsCtx->msgBuf, tlsCtx->hsCtx->msgLen) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(&msg->buffer[msg->len], tlsCtx->hsCtx->msgBuf, tlsCtx->hsCtx->msgLen);
+
     msg->len += tlsCtx->hsCtx->msgLen;
 
 EXIT:
@@ -203,10 +194,7 @@ int32_t PackCertificateMsg(FRAME_Msg *msg)
     while (cur != NULL) {
         BSL_Uint24ToByte(cur->dataSize, &msg->buffer[offset]);
         offset += TEST_CERT_LEN_TAG_SIZE;
-        int32_t ret = memcpy_s(&msg->buffer[offset], RECORD_BUF_LEN - offset, cur->data, cur->dataSize);
-        if (ret != EOK) {
-            return HITLS_MEMCPY_FAIL;
-        }
+        memcpy(&msg->buffer[offset], cur->data, cur->dataSize);
 
         offset += cur->dataSize;
         allCertsLen += TEST_CERT_LEN_TAG_SIZE + cur->dataSize;
@@ -238,11 +226,7 @@ int32_t PackServerKxMsg(FRAME_Msg *msg)
     /* Public key length and public key content */
     msg->buffer[offset] = (uint8_t)serverKx->keyEx.ecdh.pubKeySize;
     offset += sizeof(uint8_t);
-    int32_t ret = memcpy_s(&msg->buffer[offset], RECORD_BUF_LEN - offset,
-        serverKx->keyEx.ecdh.pubKey, serverKx->keyEx.ecdh.pubKeySize);
-    if (ret != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(&msg->buffer[offset], serverKx->keyEx.ecdh.pubKey, serverKx->keyEx.ecdh.pubKeySize);
     offset += serverKx->keyEx.ecdh.pubKeySize;
 
     /* signature algorithm */
@@ -253,11 +237,7 @@ int32_t PackServerKxMsg(FRAME_Msg *msg)
     BSL_Uint16ToByte(serverKx->keyEx.ecdh.signSize, &msg->buffer[offset]);
     offset += sizeof(uint16_t);
 
-    ret = memcpy_s(&msg->buffer[offset], RECORD_BUF_LEN - offset,
-        serverKx->keyEx.ecdh.signData, serverKx->keyEx.ecdh.signSize);
-    if (ret != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(&msg->buffer[offset], serverKx->keyEx.ecdh.signData, serverKx->keyEx.ecdh.signSize);
     offset += serverKx->keyEx.ecdh.signSize;
 
     /* Assemble the packet header. */
@@ -287,11 +267,7 @@ int32_t PackClientKxMsg(FRAME_Msg *msg)
     uint32_t offset = msg->len + DTLS_HS_MSG_HEADER_SIZE;   // Reserved packet header
     msg->buffer[offset] = (uint8_t)clientKx->dataSize;
     offset += sizeof(uint8_t);
-    int32_t ret = memcpy_s(&msg->buffer[offset], RECORD_BUF_LEN - offset, clientKx->data, clientKx->dataSize);
-    if (ret != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
-
+    memcpy(&msg->buffer[offset], clientKx->data, clientKx->dataSize);
     /* Assemble the packet header. */
     const uint32_t sequence = msg->body.handshakeMsg.sequence;
     const uint32_t bodyLen = clientKx->dataSize + sizeof(uint8_t);
@@ -317,16 +293,11 @@ int32_t PackFinishMsg(FRAME_Msg *msg)
     }
 
     tlsCtx->hsCtx->verifyCtx->verifyDataSize = finished->verifyDataSize;
-    ret = memcpy_s(tlsCtx->hsCtx->verifyCtx->verifyData, MAX_SIGN_SIZE,
-        finished->verifyData, finished->verifyDataSize);
-    if (ret != EOK) {
-        goto EXIT;
-    }
+    memcpy(tlsCtx->hsCtx->verifyCtx->verifyData, finished->verifyData, finished->verifyDataSize);
 
     ret = HS_PackMsg(tlsCtx, FINISHED);
-    if (memcpy_s(&msg->buffer[msg->len], REC_MAX_PLAIN_LENGTH, tlsCtx->hsCtx->msgBuf, tlsCtx->hsCtx->msgLen) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(&msg->buffer[msg->len], tlsCtx->hsCtx->msgBuf, tlsCtx->hsCtx->msgLen);
+
     msg->len += tlsCtx->hsCtx->msgLen;
 
 EXIT:
@@ -394,10 +365,7 @@ int32_t PackAppData(FRAME_Msg *msg)
     uint32_t offset = msg->len;
     BSL_Uint32ToByte(appMsg->len, &msg->buffer[offset]);
     offset += sizeof(uint32_t);
-    int32_t ret = memcpy_s(&msg->buffer[offset], RECORD_BUF_LEN - offset, appMsg->buffer, appMsg->len);
-    if (ret != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(&msg->buffer[offset], appMsg->buffer, appMsg->len);
     msg->len += sizeof(uint32_t) + appMsg->len;
     return HITLS_SUCCESS;
 }

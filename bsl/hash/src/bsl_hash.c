@@ -16,7 +16,7 @@
 #include "hitls_build.h"
 #ifdef HITLS_BSL_HASH
 
-#include "securec.h"
+#include <string.h>
 #include "bsl_sal.h"
 #include "list_base.h"
 #include "bsl_errno.h"
@@ -348,7 +348,7 @@ BSL_HASH_Hash *BSL_HASH_Create(uint32_t bktSize, BSL_HASH_CodeCalcFunc hashFunc,
         return NULL;
     }
 
-    (void)memset_s(hash, size, 0, size);
+    memset(hash, 0, size);
     hash->bucketSize = bktSize;
     BSL_HASH_HookRegister(hash, hashFunc, matchFunc, keyFunc, valueFunc);
 

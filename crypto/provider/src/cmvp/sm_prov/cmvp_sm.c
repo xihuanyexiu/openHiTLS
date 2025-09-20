@@ -24,7 +24,6 @@
 #include "crypt_utils.h"
 #include "cmvp_integrity_hmac.h"
 #include "crypt_params_key.h"
-#include "securec.h"
 #include "bsl_sal.h"
 
 bool CMVP_SmPkeyPct(void *ctx, int32_t algId)

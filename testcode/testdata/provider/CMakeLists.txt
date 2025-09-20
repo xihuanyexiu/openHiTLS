@@ -101,7 +101,7 @@ target_include_directories(provider_new_alg_test PUBLIC ${CMAKE_CURRENT_SOURCE_D
                                                ${OPENHITLS_ROOT}/bsl/asn1/include
                                                ${OPENHITLS_ROOT}/crypto/codecskey/include
                                                ${OPENHITLS_ROOT}/platform/Secure_C/include)
-target_link_libraries(provider_new_alg_test  boundscheck)
+target_link_libraries(provider_new_alg_test)
 target_compile_options(provider_new_alg_test PUBLIC -g -O0 -DHITLS_BSL_OBJ -DHITLS_CRYPTO_CODECSKEY -DHITLS_CRYPTO_KEY_DECODE)
 set_target_properties(provider_new_alg_test PROPERTIES
 LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/path1"
@@ -154,7 +154,6 @@ target_include_directories(provider_sha256 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
                                                ${OPENHITLS_ROOT}/crypto/sha2/include
                                                ${OPENHITLS_ROOT}/crypto/sha2/src
                                                ${OPENHITLS_ROOT}/platform/Secure_C/include)
-target_link_libraries(provider_sha256 PRIVATE boundscheck)
 target_link_directories(provider_sha256 PRIVATE ${OPENHITLS_ROOT}/platform/Secure_C/lib)
 target_compile_options(provider_sha256 PRIVATE -g -O0 -DHITLS_CRYPTO_SHA256 -DHITLS_CRYPTO_SHA2 -DHITLS_CRYPTO_MD -DHITLS_CRYPTO_PROVIDER -DHITLS_BSL_PARAMS)
 set_target_properties(provider_sha256 PROPERTIES

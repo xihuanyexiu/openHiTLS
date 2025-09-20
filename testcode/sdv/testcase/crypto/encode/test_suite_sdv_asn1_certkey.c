@@ -20,7 +20,6 @@
 #include <pthread.h>
 #include <string.h>
 
-#include "securec.h"
 #include "bsl_sal.h"
 #include "bsl_asn1_internal.h"
 #include "bsl_err.h"
@@ -774,7 +773,7 @@ void SDV_BSL_ASN1_PARSE_ECCPRIKEY_FAIL_TC001(Hex *asn1)
     CRYPT_EAL_PkeyCtx *pkeyCtx = NULL;
     uint8_t *buff = (uint8_t *)BSL_SAL_Calloc(asn1->len + 1, 1);
     ASSERT_TRUE(buff != NULL);
-    (void)memcpy_s(buff, asn1->len, asn1->x, asn1->len);
+    memcpy(buff, asn1->x, asn1->len);
     BSL_Buffer encode = {buff, asn1->len};
     ASSERT_EQ(CRYPT_EAL_DecodeBuffKey(BSL_FORMAT_UNKNOWN, CRYPT_PRIKEY_ECC, &encode, NULL, 0, &pkeyCtx),
         CRYPT_DECODE_ASN1_BUFF_FAILED);

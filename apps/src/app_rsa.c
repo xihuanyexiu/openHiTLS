@@ -20,7 +20,6 @@
 #include <termios.h>
 #include <unistd.h>
 #include <linux/limits.h>
-#include "securec.h"
 #include "bsl_uio.h"
 #include "bsl_ui.h"
 #include "app_errno.h"
@@ -144,11 +143,8 @@ static int32_t GetRsaByStd(uint8_t **readBuf, uint64_t *readBufLen)
             rsaData = ExpandingMem(rsaData, newRsaDataCapacity, rsaDataCapacity);
             rsaDataCapacity = newRsaDataCapacity;
         }
-        if (memcpy_s(rsaData + rsaDataSize, rsaDataCapacity - rsaDataSize, buf, readLen) != 0) {
-            BSL_SAL_FREE(buf);
-            BSL_SAL_FREE(rsaData);
-            return HITLS_APP_SECUREC_FAIL;
-        }
+        memcpy(rsaData + rsaDataSize, buf, readLen);
+
         rsaDataSize += readLen;
         i *= (uint32_t)isMatchRsaData; // reset 0 if false.
         while (!isMatchRsaData && (i < num)) {
@@ -281,7 +277,7 @@ int32_t HITLS_RsaMain(int argc, char *argv[])
             mainRet = CRYPT_EAL_DecodeBuffKey(BSL_FORMAT_PEM, CRYPT_PRIKEY_RSA,
                 &read, (uint8_t *)pwd, pwdLen, &ealPKey);
         }
-        (void)memset_s(pwd, APP_MAX_PASS_LENGTH, 0, APP_MAX_PASS_LENGTH);
+        memset(pwd, 0, APP_MAX_PASS_LENGTH);
     }
     if (mainRet != CRYPT_SUCCESS) {
         (void)AppPrintError("Decode failed.\n");

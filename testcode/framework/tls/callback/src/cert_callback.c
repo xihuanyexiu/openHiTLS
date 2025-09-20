@@ -15,6 +15,7 @@
 
 #include <unistd.h>
 #include <stdbool.h>
+#include <string.h>
 #include <stdio.h>
 #include "hitls_build.h"
 #include "crypt_eal_pkey.h"
@@ -121,11 +122,7 @@ void *HiTLS_X509_LoadCertListToStore(HITLS_Config *tlsCfg, const char *fileList)
     char certList[MAX_CERT_LEN] = {0};
     char certPath[SINGLE_CERT_LEN] = {0};
 
-    ret = memcpy_s(certList, MAX_CERT_LEN, fileList, strlen(fileList));
-    if (ret != EOK) {
-        LOG_ERROR("memcpy_s Error");
-        return NULL;
-    }
+    memcpy(certList, fileList, strlen(fileList));
 
     void *store = SAL_CERT_StoreNew(tlsCfg->certMgrCtx);
     if(store == NULL){
@@ -133,13 +130,12 @@ void *HiTLS_X509_LoadCertListToStore(HITLS_Config *tlsCfg, const char *fileList)
         return NULL;
     }
 
-    char *rest = NULL;
-    char *token = strtok_s(certList, ":", &rest);
+    char *token = strtok(certList, ":");
     do {
-        (void)memset_s(certPath, SINGLE_CERT_LEN, 0, SINGLE_CERT_LEN);
-        ret = sprintf_s(certPath, SINGLE_CERT_LEN, "%s%s", DEFAULT_CERT_PATH, token);
+        memset(certPath, 0, SINGLE_CERT_LEN);
+        ret = sprintf(certPath, "%s%s", DEFAULT_CERT_PATH, token);
         if (ret <= 0) {
-            LOG_ERROR("sprintf_s Error");
+            LOG_ERROR("sprintf Error");
             HITLS_X509_StoreCtxFree(store);
             return NULL;
         }
@@ -156,7 +152,7 @@ void *HiTLS_X509_LoadCertListToStore(HITLS_Config *tlsCfg, const char *fileList)
             HITLS_X509_StoreCtxFree(store);
             return NULL;
         }
-        token = strtok_s(NULL, ":", &rest);
+        token = strtok(NULL, ":");
     } while (token != NULL);
 
     return store;
@@ -169,19 +165,13 @@ int32_t HITLS_X509_LoadEECertList(HITLS_Config *tlsCfg, const char *eeFileList, 
     char certList[MAX_CERT_LEN] = {0};
     char certPath[SINGLE_CERT_LEN] = {0};
 
-    ret = memcpy_s(certList, MAX_CERT_LEN, eeFileList, strlen(eeFileList));
-    if (ret != EOK) {
-        LOG_ERROR("memcpy_s Error");
-        return ERROR;
-    }
-
-    char *rest = NULL;
-    char *token = strtok_s(certList, ":", &rest);
+    memcpy(certList, eeFileList, strlen(eeFileList));
+    char *token = strtok(certList, ":");
     do {
-        (void)memset_s(certPath, SINGLE_CERT_LEN, 0, SINGLE_CERT_LEN);
-        ret = sprintf_s(certPath, SINGLE_CERT_LEN, "%s%s", DEFAULT_CERT_PATH, token);
+        memset(certPath, 0, SINGLE_CERT_LEN);
+        ret = sprintf(certPath, "%s%s", DEFAULT_CERT_PATH, token);
         if (ret <= 0) {
-            LOG_ERROR("sprintf_s Error");
+            LOG_ERROR("sprintf Error");
             return ERROR;
         }
         LOG_DEBUG("Load Cert Path is %s", certPath);
@@ -201,7 +191,7 @@ int32_t HITLS_X509_LoadEECertList(HITLS_Config *tlsCfg, const char *eeFileList, 
             HITLS_X509_Adapt_CertFree(cert);
             return ERROR;
         }
-        token = strtok_s(NULL, ":", &rest);
+        token = strtok(NULL, ":");
     } while (token != NULL);
     return SUCCESS;
 }
@@ -213,19 +203,13 @@ int32_t HITLS_X509_LoadPrivateKeyList(HITLS_Config *tlsCfg, const char *keyFileL
     char fileList[MAX_CERT_LEN] = {0};
     char filePath[SINGLE_CERT_LEN] = {0};
 
-    ret = memcpy_s(fileList, MAX_CERT_LEN, keyFileList, strlen(keyFileList));
-    if (ret != EOK) {
-        LOG_ERROR("memcpy_s Error");
-        return ERROR;
-    }
-
-    char *rest = NULL;
-    char *token = strtok_s(fileList, ":", &rest);
+    memcpy(fileList, keyFileList, strlen(keyFileList));
+    char *token = strtok(fileList, ":");
     do {
-        (void)memset_s(filePath, SINGLE_CERT_LEN, 0, SINGLE_CERT_LEN);
-        ret = sprintf_s(filePath, SINGLE_CERT_LEN, "%s%s", DEFAULT_CERT_PATH, token);
+        memset(filePath, 0, SINGLE_CERT_LEN);
+        ret = sprintf(filePath, "%s%s", DEFAULT_CERT_PATH, token);
         if (ret <= 0) {
-            LOG_ERROR("sprintf_s Error");
+            LOG_ERROR("sprintf Error");
             return ERROR;
         }
         LOG_DEBUG("Load Cert Path is %s", filePath);
@@ -251,7 +235,7 @@ int32_t HITLS_X509_LoadPrivateKeyList(HITLS_Config *tlsCfg, const char *keyFileL
             CRYPT_EAL_PkeyFreeCtx(key);
             return ERROR;
         }
-        token = strtok_s(NULL, ":", &rest);
+        token = strtok(NULL, ":");
     } while (token != NULL);
     return SUCCESS;
 }

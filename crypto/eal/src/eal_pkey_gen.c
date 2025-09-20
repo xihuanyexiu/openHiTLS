@@ -18,7 +18,7 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
-#include "securec.h"
+#include <string.h>
 #include "eal_pkey_local.h"
 #include "crypt_eal_pkey.h"
 #include "crypt_errno.h"
@@ -124,7 +124,7 @@ static int32_t PkeyCopyCtx(CRYPT_EAL_PkeyCtx *to, const CRYPT_EAL_PkeyCtx *from)
         return CRYPT_EAL_ALG_NOT_SUPPORT;
     }
     EAL_PkeyUnitaryMethod *temp = to->method;
-    (void)memcpy_s(to, sizeof(CRYPT_EAL_PkeyCtx), from, sizeof(CRYPT_EAL_PkeyCtx));
+    memcpy(to, from, sizeof(CRYPT_EAL_PkeyCtx));
     to->key = from->method->dupCtx(from->key);
     if (to->key == NULL) {
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_PKEY, from->id, CRYPT_EAL_PKEY_DUP_ERROR);

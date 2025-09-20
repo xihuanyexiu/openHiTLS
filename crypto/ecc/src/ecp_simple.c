@@ -15,8 +15,7 @@
 
 #include "hitls_build.h"
 #ifdef HITLS_CRYPTO_ECC
-
-#include "securec.h"
+#include <string.h>
 #include "bsl_sal.h"
 #include "bsl_err_internal.h"
 #include "crypt_utils.h"
@@ -613,13 +612,10 @@ static ReCodeData *WinCodeNew(uint32_t len)
 // Shift the recoded data. If the shift fails, release the code data.
 static int32_t RecodeKMove(ReCodeData *code, uint32_t len, uint32_t offset)
 {
+    (void)len;
     // Data shift. The value assignment starts from the tail and moves the data to the left to start position.
-    if (memmove_s(code->num, len * sizeof(int8_t), &(code->num[offset]), code->size * sizeof(int8_t)) != EOK ||
-        memmove_s(code->wide, len * sizeof(uint32_t), &(code->wide[offset]), code->size * sizeof(uint32_t)) != EOK) {
-        ECC_ReCodeFree(code);
-        BSL_ERR_PUSH_ERROR(CRYPT_SECUREC_FAIL);
-        return CRYPT_SECUREC_FAIL;
-    }
+    memmove(code->num, &(code->num[offset]), code->size * sizeof(int8_t));
+    memmove(code->wide, &(code->wide[offset]), code->size * sizeof(uint32_t));
     return CRYPT_SUCCESS;
 }
 

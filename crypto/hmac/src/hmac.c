@@ -17,7 +17,7 @@
 #ifdef HITLS_CRYPTO_HMAC
 
 #include <stdlib.h>
-#include "securec.h"
+#include <string.h>
 #include "bsl_sal.h"
 #include "crypt_errno.h"
 #include "bsl_err_internal.h"

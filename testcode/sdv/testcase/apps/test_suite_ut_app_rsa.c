@@ -16,7 +16,6 @@
 /* BEGIN_HEADER */
 #include <termios.h>
 #include <unistd.h>
-#include "securec.h"
 #include "app_opt.h"
 #include "app_print.h"
 #include "app_utils.h"
@@ -446,7 +445,7 @@ int32_t STUB_HITLS_APP_Passwd(char *buf, int32_t bufMaxLen, int32_t flag, void *
 {
     (void)userdata;
     (void)flag;
-    (void)memcpy_s(buf, bufMaxLen, "123456", 6);
+    memcpy(buf, "123456", 6);
     return 6;
 }
 

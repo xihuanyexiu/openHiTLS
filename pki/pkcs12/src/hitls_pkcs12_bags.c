@@ -15,8 +15,8 @@
 
 #include "hitls_build.h"
 #ifdef HITLS_PKI_PKCS12
+#include <string.h>
 #include "bsl_sal.h"
-#include "securec.h"
 #include "hitls_pki_errno.h"
 #include "hitls_x509_local.h"
 #include "hitls_cms_local.h"
@@ -47,7 +47,7 @@ int32_t BagGetAttr(HITLS_PKCS12_Bag *bag, uint32_t valType, BSL_Buffer *attrValu
                 BSL_ERR_PUSH_ERROR(HITLS_PKCS12_ERR_BUFFLEN_NOT_ENOUGH);
                 return HITLS_PKCS12_ERR_BUFFLEN_NOT_ENOUGH;
             }
-            (void)memcpy_s(attrValue->data, attrValue->dataLen, node->attrValue.data, node->attrValue.dataLen);
+            memcpy(attrValue->data, node->attrValue.data, node->attrValue.dataLen);
             attrValue->dataLen = node->attrValue.dataLen;
             return HITLS_PKI_SUCCESS;
         }
@@ -123,7 +123,7 @@ static int32_t GetSecretBagValue(HITLS_PKCS12_Bag *bag, void *value)
         BSL_ERR_PUSH_ERROR(HITLS_PKCS12_ERR_BUFFLEN_NOT_ENOUGH);
         return HITLS_PKCS12_ERR_BUFFLEN_NOT_ENOUGH;
     }
-    (void)memcpy_s(tmp->data, tmp->dataLen, bag->value.secret.data, bag->value.secret.dataLen);
+    memcpy(tmp->data, bag->value.secret.data, bag->value.secret.dataLen);
     tmp->dataLen = bag->value.secret.dataLen;
     return HITLS_PKI_SUCCESS;
 }

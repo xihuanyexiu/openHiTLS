@@ -18,7 +18,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "securec.h"
 #include "bsl_errno.h"
 #include "bsl_sal.h"
 #include "crypt_utils.h"
@@ -476,7 +475,7 @@ static int32_t GenMatrix(const CRYPT_ML_KEM_Ctx *ctx, const uint8_t *digest,
     uint8_t p[MLKEM_SEED_LEN + 2];  // Reserved lengths of i and j is 2 byte.
     uint8_t xofOut[MLKEM_XOF_OUTPUT_LENGTH];
 
-    (void)memcpy_s(p, MLKEM_SEED_LEN, digest, MLKEM_SEED_LEN);
+    memcpy(p, digest, MLKEM_SEED_LEN);
     for (uint8_t i = 0; i < k; i++) {
         for (uint8_t j = 0; j < k; j++) {
             if (isEnc) {
@@ -499,7 +498,7 @@ static int32_t SampleEta1(const CRYPT_ML_KEM_Ctx *ctx, uint8_t *digest, int16_t 
 {
     uint8_t q[MLKEM_SEED_LEN + 1] = { 0 };  // Reserved lengths of nonce is 1 byte.
     uint8_t prfOut[MLKEM_PRF_BLOCKSIZE * MLKEM_ETA1_MAX] = { 0 };
-    (void)memcpy_s(q, MLKEM_SEED_LEN, digest, MLKEM_SEED_LEN);
+    memcpy(q, digest, MLKEM_SEED_LEN);
 
     for (uint8_t i = 0; i < ctx->info->k; i++) {
         q[MLKEM_SEED_LEN] = *nonce;
@@ -516,7 +515,7 @@ static int32_t SampleEta2(const CRYPT_ML_KEM_Ctx *ctx, uint8_t *digest, int16_t 
 {
     uint8_t q[MLKEM_SEED_LEN + 1] = { 0 };  // Reserved lengths of nonce is 1 byte.
     uint8_t prfOut[MLKEM_PRF_BLOCKSIZE * MLKEM_ETA2_MAX] = { 0 };
-    (void)memcpy_s(q, MLKEM_SEED_LEN, digest, MLKEM_SEED_LEN);
+    memcpy(q, digest, MLKEM_SEED_LEN);
 
     for (uint8_t i = 0; i < ctx->info->k; i++) {
         q[MLKEM_SEED_LEN] = *nonce;
@@ -537,7 +536,7 @@ static int32_t PkeKeyGen(const CRYPT_ML_KEM_Ctx *ctx, uint8_t *pk, uint8_t *dk, 
     uint8_t digest[CRYPT_SHA3_512_DIGESTSIZE] = { 0 };
 
     // (p,q) = G(d || k)
-    (void)memcpy_s(seed, MLKEM_SEED_LEN + 1, d, MLKEM_SEED_LEN);
+    memcpy(seed, d, MLKEM_SEED_LEN);
     seed[MLKEM_SEED_LEN] = k;
     int32_t ret = HashFuncG(ctx->libCtx, seed, MLKEM_SEED_LEN + 1, digest, CRYPT_SHA3_512_DIGESTSIZE);  // Step 1
     RETURN_RET_IF(ret != CRYPT_SUCCESS, ret);
@@ -564,7 +563,7 @@ static int32_t PkeKeyGen(const CRYPT_ML_KEM_Ctx *ctx, uint8_t *pk, uint8_t *dk, 
         ByteEncode(dk + MLKEM_SEED_LEN * MLKEM_BITS_OF_Q * i, st.vectorS[i], MLKEM_BITS_OF_Q);
     }
     // The buffer of pk is sufficient, check it before calling this function.
-    (void)memcpy_s(pk + MLKEM_SEED_LEN * MLKEM_BITS_OF_Q * k, MLKEM_SEED_LEN, p, MLKEM_SEED_LEN);
+    memcpy(pk + MLKEM_SEED_LEN * MLKEM_BITS_OF_Q * k, p, MLKEM_SEED_LEN);
 
 ERR:
     MatrixBufFree(k, &st);
@@ -593,7 +592,7 @@ static int32_t PkeEncrypt(const CRYPT_ML_KEM_Ctx *ctx, uint8_t *ct, const uint8_
     GOTO_ERR_IF(SampleEta2(ctx, r, st.vectorE, &nonce), ret);  // Step 13 - 16
 
     // Step 17
-    (void)memcpy_s(seedE, MLKEM_SEED_LEN, r, MLKEM_SEED_LEN);
+    memcpy(seedE, r, MLKEM_SEED_LEN);
     seedE[MLKEM_SEED_LEN] = nonce;
     GOTO_ERR_IF(PRF(ctx->libCtx, seedE, MLKEM_SEED_LEN + 1, bufEncE, MLKEM_PRF_BLOCKSIZE * ctx->info->eta2), ret);
     MLKEM_SamplePolyCBD(polyVectorE2, bufEncE, ctx->info->eta2);
@@ -691,19 +690,13 @@ int32_t MLKEM_KeyGenInternal(CRYPT_ML_KEM_Ctx *ctx, uint8_t *d, uint8_t *z)
     RETURN_RET_IF(ret != CRYPT_SUCCESS, ret);
 
     // dk ← (dkPKE‖ek‖H(ek)‖𝑧)
-    if (memcpy_s(ctx->dk + dkPkeLen, ctx->dkLen - dkPkeLen, ctx->ek, ctx->ekLen) != EOK) {
-        BSL_ERR_PUSH_ERROR(CRYPT_SECUREC_FAIL);
-        return CRYPT_SECUREC_FAIL;
-    }
+    memcpy(ctx->dk + dkPkeLen, ctx->ek, ctx->ekLen);
+
 
     ret = HashFuncH(ctx->libCtx, ctx->ek, ctx->ekLen, ctx->dk + dkPkeLen + ctx->ekLen, CRYPT_SHA3_256_DIGESTSIZE);
     RETURN_RET_IF(ret != CRYPT_SUCCESS, ret);
 
-    if (memcpy_s(ctx->dk + dkPkeLen + ctx->ekLen + CRYPT_SHA3_256_DIGESTSIZE,
-        ctx->dkLen - (dkPkeLen + ctx->ekLen + CRYPT_SHA3_256_DIGESTSIZE), z, MLKEM_SEED_LEN) != EOK) {
-        BSL_ERR_PUSH_ERROR(CRYPT_SECUREC_FAIL);
-        return CRYPT_SECUREC_FAIL;
-    }
+    memcpy(ctx->dk + dkPkeLen + ctx->ekLen + CRYPT_SHA3_256_DIGESTSIZE, z, MLKEM_SEED_LEN);
     return CRYPT_SUCCESS;
 }
 
@@ -715,14 +708,14 @@ int32_t MLKEM_EncapsInternal(const CRYPT_ML_KEM_Ctx *ctx, uint8_t *ct, uint32_t 
     uint8_t kr[CRYPT_SHA3_512_DIGESTSIZE];    // K and r
 
     //  (K,r) = G(m || H(ek))
-    (void)memcpy_s(mhek, MLKEM_SEED_LEN, m, MLKEM_SEED_LEN);
+    memcpy(mhek, m, MLKEM_SEED_LEN);
     int32_t ret = HashFuncH(ctx->libCtx, ctx->ek, ctx->ekLen, mhek + MLKEM_SEED_LEN, CRYPT_SHA3_256_DIGESTSIZE);
     RETURN_RET_IF(ret != CRYPT_SUCCESS, ret);
 
     ret = HashFuncG(ctx->libCtx, mhek, MLKEM_SEED_LEN + CRYPT_SHA3_256_DIGESTSIZE, kr, CRYPT_SHA3_512_DIGESTSIZE);
     RETURN_RET_IF(ret != CRYPT_SUCCESS, ret);
 
-    (void)memcpy_s(sk, *skLen, kr, MLKEM_SHARED_KEY_LEN);
+    memcpy(sk, kr, MLKEM_SHARED_KEY_LEN);
 
     // 𝑐 ← K-PKE.Encrypt(ek,𝑚,𝑟)
     ret = PkeEncrypt(ctx, ct, ctx->ek, m, kr + MLKEM_SHARED_KEY_LEN);
@@ -757,7 +750,7 @@ int32_t MLKEM_DecapsInternal(const CRYPT_ML_KEM_Ctx *ctx, uint8_t *ct, uint32_t 
     ret = PkeDecrypt(algInfo, mh, dk, ct);  // Step 5: 𝑚′ ← K-PKE.Decrypt(dkPKE, 𝑐)
     RETURN_RET_IF(ret != CRYPT_SUCCESS, ret);
     // Step 6: (K′,r′) ← G(m′ || h)
-    (void)memcpy_s(mh + MLKEM_SEED_LEN, CRYPT_SHA3_256_DIGESTSIZE, h, CRYPT_SHA3_256_DIGESTSIZE);
+    memcpy(mh + MLKEM_SEED_LEN, h, CRYPT_SHA3_256_DIGESTSIZE);
     ret = HashFuncG(ctx->libCtx, mh, MLKEM_SEED_LEN + CRYPT_SHA3_256_DIGESTSIZE, kr, CRYPT_SHA3_512_DIGESTSIZE);
     RETURN_RET_IF(ret != CRYPT_SUCCESS, ret);
     // Step 8: 𝑐′ ← K-PKE.Encrypt(ekPKE,𝑚′,𝑟′)
@@ -768,11 +761,11 @@ int32_t MLKEM_DecapsInternal(const CRYPT_ML_KEM_Ctx *ctx, uint8_t *ct, uint32_t 
 
     // Step 9: if c != c′
     if (memcmp(ct, newCt, ctLen) == 0) {
-        (void)memcpy_s(sk, *skLen, kr, MLKEM_SHARED_KEY_LEN);
+        memcpy(sk, kr, MLKEM_SHARED_KEY_LEN);
     } else {
         // Step 7: K = J(z || c)
-        (void)memcpy_s(newCt, ctLen + MLKEM_SEED_LEN, z, MLKEM_SEED_LEN);
-        (void)memcpy_s(newCt + MLKEM_SEED_LEN, ctLen, ct, ctLen);
+        memcpy(newCt, z, MLKEM_SEED_LEN);
+        memcpy(newCt + MLKEM_SEED_LEN, ct, ctLen);
         GOTO_ERR_IF(HashFuncJ(ctx->libCtx, newCt, ctLen + MLKEM_SEED_LEN, sk, MLKEM_SHARED_KEY_LEN), ret);
     }
     *skLen = MLKEM_SHARED_KEY_LEN;

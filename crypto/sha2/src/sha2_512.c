@@ -17,7 +17,7 @@
 #ifdef HITLS_CRYPTO_SHA512
 #include "crypt_sha2.h"
 #include <stdlib.h>
-#include "securec.h"
+#include <string.h>
 #include "crypt_utils.h"
 #include "crypt_errno.h"
 #include "bsl_err_internal.h"
@@ -98,7 +98,7 @@ int32_t CRYPT_SHA2_512_Init(CRYPT_SHA2_512_Ctx *ctx, BSL_Param *param)
     }
     (void) param;
 
-    (void)memset_s(ctx, sizeof(CRYPT_SHA2_512_Ctx), 0, sizeof(CRYPT_SHA2_512_Ctx));
+    memset(ctx, 0, sizeof(CRYPT_SHA2_512_Ctx));
 
     // see RFC6234 chapter 6.3
     ctx->h[0] = U64(0x6a09e667f3bcc908);
@@ -131,7 +131,7 @@ int32_t CRYPT_SHA2_512_CopyCtx(CRYPT_SHA2_512_Ctx *dst, const CRYPT_SHA2_512_Ctx
         return CRYPT_NULL_INPUT;
     }
 
-    (void)memcpy_s(dst, sizeof(CRYPT_SHA2_512_Ctx), src, sizeof(CRYPT_SHA2_512_Ctx));
+    memcpy(dst, src, sizeof(CRYPT_SHA2_512_Ctx));
     return CRYPT_SUCCESS;
 }
 
@@ -146,7 +146,7 @@ CRYPT_SHA2_512_Ctx *CRYPT_SHA2_512_DupCtx(const CRYPT_SHA2_512_Ctx *src)
         BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
         return NULL;
     }
-    (void)memcpy_s(newCtx, sizeof(CRYPT_SHA2_512_Ctx), src, sizeof(CRYPT_SHA2_512_Ctx));
+    memcpy(newCtx, src, sizeof(CRYPT_SHA2_512_Ctx));
     return newCtx;
 }
 
@@ -179,7 +179,7 @@ int32_t CRYPT_SHA2_512_Update(CRYPT_SHA2_512_Ctx *ctx, const uint8_t *data, uint
     const uint32_t n = CRYPT_SHA2_512_BLOCKSIZE - ctx->num;
     if (nbytes < n) {
         // if the data can't fill block, just copy data to block
-        (void)memcpy_s(ctx->block + ctx->num, n, data, nbytes);
+        memcpy(ctx->block + ctx->num, data, nbytes);
         ctx->num += (uint32_t)nbytes;
         return CRYPT_SUCCESS;
     }
@@ -188,7 +188,7 @@ int32_t CRYPT_SHA2_512_Update(CRYPT_SHA2_512_Ctx *ctx, const uint8_t *data, uint
     uint32_t dataLen = nbytes;
     if (ctx->num != 0) {
         // fill the block first and compute
-        (void)memcpy_s(ctx->block + ctx->num, n, data, n);
+        memcpy(ctx->block + ctx->num, data, n);
         ctx->num = 0;
         dataLen -= n;
         d += n;
@@ -202,10 +202,8 @@ int32_t CRYPT_SHA2_512_Update(CRYPT_SHA2_512_Ctx *ctx, const uint8_t *data, uint
 
     if (dataLen != 0) {
         // copy rest data to blcok
-        if (memcpy_s(ctx->block, CRYPT_SHA2_512_BLOCKSIZE, d, dataLen) != EOK) {
-            BSL_ERR_PUSH_ERROR(CRYPT_SECUREC_FAIL);
-            return CRYPT_SECUREC_FAIL;
-        }
+        memcpy(ctx->block, d, dataLen);
+
         ctx->num = (uint32_t)dataLen;
     }
 
@@ -247,7 +245,7 @@ int32_t CRYPT_SHA2_512_Final(CRYPT_SHA2_512_Ctx *ctx, uint8_t *digest, uint32_t 
 
     if (n > SHA2_512_PADSIZE) {
         pad = CRYPT_SHA2_512_BLOCKSIZE - n;
-        (void)memset_s(block + n, pad, 0, pad);
+        memset(block + n, 0, pad);
         SHA512CompressMultiBlocks(ctx->h, block, 1);
         n = 0;
         pad = SHA2_512_PADSIZE;
@@ -255,7 +253,7 @@ int32_t CRYPT_SHA2_512_Final(CRYPT_SHA2_512_Ctx *ctx, uint8_t *digest, uint32_t 
         pad = SHA2_512_PADSIZE - n;
     }
 
-    (void)memset_s(block + n, pad, 0, pad);
+    memset(block + n, 0, pad);
     Uint64ToBeBytes(ctx->hNum, block + SHA2_512_PADSIZE);
     Uint64ToBeBytes(ctx->lNum, block + SHA2_512_PADSIZE + sizeof(uint64_t));
     SHA512CompressMultiBlocks(ctx->h, block, 1);
@@ -287,7 +285,7 @@ int32_t CRYPT_SHA2_384_Init(CRYPT_SHA2_384_Ctx *ctx, BSL_Param *param)
         return CRYPT_NULL_INPUT;
     }
     (void) param;
-    (void)memset_s(ctx, sizeof(CRYPT_SHA2_384_Ctx), 0, sizeof(CRYPT_SHA2_384_Ctx));
+    memset(ctx, 0, sizeof(CRYPT_SHA2_384_Ctx));
     ctx->h[0] = U64(0xcbbb9d5dc1059ed8);
     ctx->h[1] = U64(0x629a292a367cd507);
     ctx->h[2] = U64(0x9159015a3070dd17);

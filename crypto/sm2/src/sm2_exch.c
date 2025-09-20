@@ -17,10 +17,10 @@
 #if defined(HITLS_CRYPTO_SM2_EXCH) || defined(HITLS_CRYPTO_SM2_CRYPT)
 
 #include <stdbool.h>
+#include <string.h>
 #include "crypt_errno.h"
 #include "crypt_types.h"
 #include "crypt_utils.h"
-#include "securec.h"
 #include "bsl_sal.h"
 #include "bsl_err_internal.h"
 #include "crypt_bn.h"
@@ -60,12 +60,12 @@ int32_t KdfGmt0032012(uint8_t *out, const uint32_t *outlen, const uint8_t *z, ui
         GOTO_ERR_IF(hashMethod->update(mdCtx, ctr, sizeof(ctr)), ret);
         GOTO_ERR_IF(hashMethod->final(mdCtx, dgst, &len), ret);
         if (tmplen > mdlen) {
-            (void)memcpy_s(tmp, tmplen, dgst, mdlen);
+            memcpy(tmp, dgst, mdlen);
             tmp += mdlen;
             tmplen -= mdlen;
         } else {
-            (void)memcpy_s(tmp, tmplen, dgst, tmplen);
-            (void)memset_s(dgst, mdlen, 0, mdlen);
+            memcpy(tmp, dgst, tmplen);
+            memset(dgst, 0, mdlen);
             break;
         }
     }
@@ -219,8 +219,8 @@ int32_t Sm2KapFinalCheck(CRYPT_SM2_Ctx *sCtx, CRYPT_SM2_Ctx *pCtx, ECC_Point *uo
     uint8_t tag2 = 0x02;
     // Xv
     GOTO_ERR_IF(ECC_EncodePoint(sCtx->pkey->para, uorv, r1Buf, &buflen, CRYPT_POINT_UNCOMPRESSED), ret);
-    (void)memcpy_s(xBuf, SM2_X_LEN, r1Buf + 1, SM2_X_LEN);
-    (void)memcpy_s(yBuf, SM2_X_LEN, r1Buf + 1 + SM2_X_LEN, SM2_X_LEN);
+    memcpy(xBuf, r1Buf + 1, SM2_X_LEN);
+    memcpy(yBuf, r1Buf + 1 + SM2_X_LEN, SM2_X_LEN);
     // Calculate ZA || ZB
     if (sCtx->server == 1) {
         /* SIDE A, Z_A || Z_B, server is initiator(Z_A), client is responder(Z_B) */
@@ -241,9 +241,8 @@ int32_t Sm2KapFinalCheck(CRYPT_SM2_Ctx *sCtx, CRYPT_SM2_Ctx *pCtx, ECC_Point *uo
         tag1 = 0x02;
         tag2 = 0x03;
     }
-    (void)memcpy_s(rBuf, SM2_TWO_POINT_COORDINATE_LEN, r1Buf + 1, SM2_POINT_COORDINATE_LEN - 1);
-    (void)memcpy_s(rBuf + SM2_POINT_COORDINATE_LEN - 1, SM2_TWO_POINT_COORDINATE_LEN - SM2_POINT_COORDINATE_LEN + 1,
-        r2Buf + 1, SM2_POINT_COORDINATE_LEN - 1);
+    memcpy(rBuf, r1Buf + 1, SM2_POINT_COORDINATE_LEN - 1);
+    memcpy(rBuf + SM2_POINT_COORDINATE_LEN - 1, r2Buf + 1, SM2_POINT_COORDINATE_LEN - 1);
     // Calculate the hash value.
     GOTO_ERR_IF_EX(Sm3InnerHash(sCtx->hashMethod, xBuf, zBuf, zlen, rBuf, stmpBuf, &len), ret);
     // Calculate the hash value sent to the peer end.
@@ -273,11 +272,8 @@ static int SM2_PKG_Kdf(const CRYPT_SM2_Ctx *ctx, uint8_t *in, const uint32_t inL
     GOTO_ERR_IF(hashMethod->init(mdCtx, NULL), ret);
     GOTO_ERR_IF(hashMethod->update(mdCtx, in, inLen), ret);
     GOTO_ERR_IF(hashMethod->final(mdCtx, tmp, &tmpLen), ret);
-    if (memcpy_s(out, *outLen, tmp, shareKeyLen) != EOK) {
-        ret = CRYPT_SECUREC_FAIL;
-        BSL_ERR_PUSH_ERROR(ret);
-        goto ERR;
-    }
+    memcpy(out, tmp, shareKeyLen);
+
     *outLen = shareKeyLen;
 ERR:
     hashMethod->freeCtx(mdCtx);
@@ -295,6 +291,10 @@ static int32_t SM2_PKGComputeKey(const CRYPT_SM2_Ctx *selfCtx, const CRYPT_SM2_C
     if (selfCtx->hashMethod == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_SM2_ERR_NO_HASH_METHOD);
         return CRYPT_SM2_ERR_NO_HASH_METHOD;
+    }
+    if (*outlen < 16) {
+        BSL_ERR_PUSH_ERROR(CRYPT_SM2_BUFF_LEN_NOT_ENOUGH);
+        return CRYPT_SM2_BUFF_LEN_NOT_ENOUGH;
     }
     int32_t ret;
     uint8_t sharePointCode[65] = {0};

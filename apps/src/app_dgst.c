@@ -15,7 +15,6 @@
 #include "app_dgst.h"
 #include <linux/limits.h>
 #include "string.h"
-#include "securec.h"
 #include "bsl_sal.h"
 #include "crypt_errno.h"
 #include "crypt_eal_md.h"
@@ -579,27 +578,19 @@ static int32_t HashValToFinal(
         return HITLS_APP_MEM_ALLOC_FAIL;
     }
     if (g_argc == 0) {  // standard input
-        outRet = snprintf_s(outBuf, outBufLen, outBufLen - 1, "(%s)= %s\n", "stdin", (char *)hexBuf);
+        outRet = snprintf(outBuf, outBufLen, "(%s)= %s\n", "stdin", (char *)hexBuf);
     } else {
-        outRet = snprintf_s(
-            outBuf, outBufLen, outBufLen - 1, "%s(%s)= %s\n", g_dgstInfo.algName, filename, (char *)hexBuf);
+        outRet = snprintf(outBuf, outBufLen, "%s(%s)= %s\n", g_dgstInfo.algName, filename, (char *)hexBuf);
     }
-    uint32_t len = strlen(outBuf);
     BSL_SAL_FREE(hexBuf);
-    if (outRet == -1) {
+    if (outRet < 0) {
         BSL_SAL_FREE(outBuf);
         (void)AppPrintError("dgst: Failed to combine the output content\n");
         return HITLS_APP_SECUREC_FAIL;
     }
-    char *finalOutBuf = (char *)BSL_SAL_Calloc(len, sizeof(char));
-    if (memcpy_s(finalOutBuf, len, outBuf, strlen(outBuf)) != EOK) {
-        BSL_SAL_FREE(outBuf);
-        BSL_SAL_FREE(finalOutBuf);
-        return HITLS_APP_SECUREC_FAIL;
-    }
     BSL_SAL_FREE(outBuf);
-    *buf = (uint8_t *)finalOutBuf;
-    *bufLen = len;
+    *buf = (uint8_t *)outBuf;
+    *bufLen = outBufLen;
     return HITLS_APP_SUCCESS;
 }
 

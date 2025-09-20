@@ -35,7 +35,6 @@
 #include "parser_frame_msg.h"
 #include "cert.h"
 #include "process.h"
-#include "securec.h"
 #include "session_type.h"
 #include "rec_wrapper.h"
 #include "common_func.h"
@@ -87,7 +86,7 @@ void SetConfig(HLT_Ctx_Config *clientconfig, HLT_Ctx_Config *serverconfig, SetIn
         if (setInfo.ServerGroup != NULL) {
             HLT_SetGroups(serverconfig, setInfo.ServerGroup);
         }
-        memcpy_s(serverconfig->psk, PSK_MAX_LEN, setInfo.psk, sizeof(setInfo.psk));
+        memcpy(serverconfig->psk, setInfo.psk, sizeof(setInfo.psk));
 
         if ( (setInfo.ClientKeyExchangeMode & (TLS13_KE_MODE_PSK_WITH_DHE | TLS13_KE_MODE_PSK_ONLY)) != 0) {
             clientconfig->keyExchMode = setInfo.ClientKeyExchangeMode;
@@ -100,7 +99,7 @@ void SetConfig(HLT_Ctx_Config *clientconfig, HLT_Ctx_Config *serverconfig, SetIn
         if (setInfo.ClientGroup != NULL) {
             HLT_SetGroups(clientconfig, setInfo.ClientGroup);
         }
-        memcpy_s(clientconfig->psk, PSK_MAX_LEN, setInfo.psk, sizeof(setInfo.psk));
+        memcpy(clientconfig->psk, setInfo.psk, sizeof(setInfo.psk));
         if ( (setInfo.ServerKeyExchangeMode & (TLS13_KE_MODE_PSK_WITH_DHE | TLS13_KE_MODE_PSK_ONLY)) != 0) {
             serverconfig->keyExchMode = setInfo.ServerKeyExchangeMode;
         }
@@ -312,7 +311,7 @@ void ResumeConnectWithPara(HLT_FrameHandle *handle, SetInfo setInfo)
             ASSERT_TRUE(HLT_TlsConnect(clientSsl) == 0);
             // Data read/write
             ASSERT_TRUE(HLT_RpcTlsWrite(remoteProcess, serverSslId, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
-            ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+            memset(readBuf, 0, READ_BUF_SIZE);
             ASSERT_TRUE(HLT_TlsRead(clientSsl, readBuf, READ_BUF_SIZE, &readLen) == 0);
             ASSERT_TRUE(readLen == strlen(writeBuf));
             ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
@@ -363,7 +362,7 @@ static void Test_ServerAddKeyExchangeMode(HITLS_Ctx *ctx, uint8_t *data, uint32_
     frameMsg.body.hsMsg.body.serverHello.extensionLen.data = frameMsg.body.hsMsg.body.serverHello.extensionLen.data + sizeof(pskMode);
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
 
-    ASSERT_EQ(memcpy_s(&data[*len], bufSize - *len, &pskMode, sizeof(pskMode)), EOK);
+    memcpy(&data[*len], &pskMode, sizeof(pskMode));
     *len += sizeof(pskMode);
 EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
@@ -496,7 +495,7 @@ static void Test_Client_Binder_Unnormal(HITLS_Ctx *ctx, uint8_t *data, uint32_t 
 
     uint8_t binder[] = {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,};
     frameMsg.body.hsMsg.body.clientHello.psks.binders.data->binder.state = ASSIGNED_FIELD;
-    memcpy_s(frameMsg.body.hsMsg.body.clientHello.psks.binders.data->binder.data, PSK_MAX_LEN, binder, sizeof(binder));
+    memcpy(frameMsg.body.hsMsg.body.clientHello.psks.binders.data->binder.data, binder, sizeof(binder));
 
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
 EXIT:
@@ -709,7 +708,7 @@ void UT_TLS_TLS13_CONSISTENCY_RFC8446_REQUEST_CLIENT_HELLO_FUNC_TC002()
     ioUserData->recMsg.len = 0;
     ASSERT_TRUE(FRAME_TransportRecMsg(client->io, sendBuf, sendLen) == HITLS_SUCCESS);
     FRAME_CleanMsg(&frameType, &frameMsg);
-    memset_s(&frameMsg, sizeof(frameMsg), 0, sizeof(frameMsg));
+    memset(&frameMsg, 0, sizeof(frameMsg));
 
     ASSERT_EQ(HITLS_Connect(client->ssl) , HITLS_REC_NORMAL_IO_BUSY);
     ASSERT_TRUE(FRAME_TrasferMsgBetweenLink(client, server) == HITLS_SUCCESS);
@@ -806,7 +805,7 @@ void UT_TLS_TLS13_CONSISTENCY_RFC8446_REQUEST_CLIENT_HELLO_FUNC_TC003()
     ioUserData->recMsg.len = 0;
     ASSERT_TRUE(FRAME_TransportRecMsg(client->io, sendBuf, sendLen) == HITLS_SUCCESS);
     FRAME_CleanMsg(&frameType, &frameMsg);
-    memset_s(&frameMsg, sizeof(frameMsg), 0, sizeof(frameMsg));
+    memset(&frameMsg, 0, sizeof(frameMsg));
 
     ASSERT_EQ(HITLS_Connect(client->ssl) , HITLS_MSG_HANDLE_ILLEGAL_SELECTED_GROUP);
 EXIT:
@@ -894,7 +893,7 @@ void UT_TLS_TLS13_CONSISTENCY_RFC8446_REQUEST_CLIENT_HELLO_FUNC_TC004()
     ioUserData->recMsg.len = 0;
     ASSERT_TRUE(FRAME_TransportRecMsg(client->io, sendBuf, sendLen) == HITLS_SUCCESS);
     FRAME_CleanMsg(&frameType, &frameMsg);
-    memset_s(&frameMsg, sizeof(frameMsg), 0, sizeof(frameMsg));
+    memset(&frameMsg, 0, sizeof(frameMsg));
 
     // Continue connection establishment and observe the connection establishment result.
     ASSERT_EQ(HITLS_Connect(client->ssl) , HITLS_MSG_HANDLE_ILLEGAL_SELECTED_GROUP);
@@ -997,7 +996,7 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_PSK_EXCHANGE_MODES_MISS_FUNC_TC001()
     // Preset the psk, modify the client hello message sent by the client to make the psk_key_exchange_modes extension
     // lost, and observe the server behavior.
     SetInfo setInfo = {0};
-    memcpy_s(setInfo.psk, PSK_MAX_LEN, "12121212121212", sizeof("12121212121212"));
+    memcpy(setInfo.psk, "12121212121212", sizeof("12121212121212"));
     setInfo.ClientCipherSuite = "HITLS_AES_128_GCM_SHA256";
     setInfo.ClientCipherSuite = "HITLS_AES_128_GCM_SHA256";
     setInfo.SuccessOrFail = 0;
@@ -1125,7 +1124,7 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_KEY_SHARE_ADD_FUNC_TC001()
 {
     // Preset PSK
     SetInfo setInfo = {0};
-    memcpy_s(setInfo.psk, PSK_MAX_LEN, "12121212121212", sizeof("12121212121212"));
+    memcpy(setInfo.psk, "12121212121212", sizeof("12121212121212"));
     setInfo.ClientCipherSuite = "HITLS_AES_128_GCM_SHA256";
     setInfo.ClientCipherSuite = "HITLS_AES_128_GCM_SHA256";
     // Set psk_key_exchange_mode to psk_ke on the client and server
@@ -2253,7 +2252,7 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_RECODE_VERSION_FUNC_TC001(int value, int e
     ioUserData->recMsg.len = 0;
     ASSERT_TRUE(FRAME_TransportRecMsg(testInfo.server->io, sendBuf, sendLen) == HITLS_SUCCESS);
     FRAME_CleanMsg(&frameType, &frameMsg);
-    memset_s(&frameMsg, sizeof(frameMsg), 0, sizeof(frameMsg));
+    memset(&frameMsg, 0, sizeof(frameMsg));
 
     /* Observe the server behavior. */
     ASSERT_TRUE(testInfo.server->ssl != NULL);
@@ -2325,7 +2324,7 @@ void UT_TLS_TLS13_RFC8446_CONSISTENCY_RECODE_VERSION_FUNC_TC002(int value, int e
     ioUserData->recMsg.len = 0;
     ASSERT_TRUE(FRAME_TransportRecMsg(testInfo.client->io, sendBuf, sendLen) == HITLS_SUCCESS);
     FRAME_CleanMsg(&frameType, &frameMsg);
-    memset_s(&frameMsg, sizeof(frameMsg), 0, sizeof(frameMsg));
+    memset(&frameMsg, 0, sizeof(frameMsg));
 
     /* Observe client behavior. */
     ASSERT_TRUE(testInfo.server->ssl != NULL);

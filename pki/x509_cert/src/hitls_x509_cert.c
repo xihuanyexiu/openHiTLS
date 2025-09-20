@@ -8,11 +8,11 @@
 #include "hitls_build.h"
 #ifdef HITLS_PKI_X509_CRT
 #include <stdio.h>
-#include "securec.h"
 #include "bsl_sal.h"
 #ifdef HITLS_BSL_SAL_FILE
 #include "sal_file.h"
 #endif
+#include <string.h>
 #include "sal_time.h"
 #include "bsl_log_internal.h"
 #include "bsl_log.h"
@@ -466,6 +466,7 @@ int32_t HITLS_X509_CertParseBundleFile(int32_t format, const char *path, HITLS_X
 /* RFC2253 https://www.rfc-editor.org/rfc/rfc2253 */
 static int32_t X509GetPrintSNStr(const BSL_ASN1_Buffer *nameType, char *buff, uint32_t buffLen, uint32_t *usedLen)
 {
+    (void)buffLen;
     if (nameType == NULL || nameType->buff == NULL || nameType->len == 0) {
         BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_INVALID_PARAM);
         return HITLS_X509_ERR_INVALID_PARAM;
@@ -480,10 +481,7 @@ static int32_t X509GetPrintSNStr(const BSL_ASN1_Buffer *nameType, char *buff, ui
         BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_CERT_INVALID_DN);
         return HITLS_X509_ERR_CERT_INVALID_DN;
     }
-    if (strcpy_s(buff, buffLen, oidName) != EOK) {
-        BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_CERT_INVALID_DN);
-        return HITLS_X509_ERR_CERT_INVALID_DN;
-    }
+    strcpy(buff, oidName);
 
     *usedLen = (uint32_t)strlen(oidName);
     return HITLS_PKI_SUCCESS;
@@ -513,10 +511,8 @@ static int32_t X509PrintNameNode(const HITLS_X509_NameNode *nameNode, char *buff
         BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_INVALID_PARAM);
         return HITLS_X509_ERR_INVALID_PARAM;
     }
-    if (memcpy_s(buff + offset, buffLen - offset, nameNode->nameValue.buff, nameNode->nameValue.len) != EOK) {
-        BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_CERT_INVALID_DN);
-        return HITLS_X509_ERR_CERT_INVALID_DN;
-    }
+    memcpy(buff + offset, nameNode->nameValue.buff, nameNode->nameValue.len);
+
     offset += nameNode->nameValue.len;
     *usedLen = offset;
     return HITLS_PKI_SUCCESS;
@@ -560,7 +556,7 @@ static int32_t GetDistinguishNameStrFromList(BSL_ASN1_List *nameList, BSL_Buffer
         BSL_ERR_PUSH_ERROR(BSL_MALLOC_FAIL);
         return BSL_MALLOC_FAIL;
     }
-    (void)memcpy_s(buff->data, offset + 1, tmpBuffStr, offset);
+    memcpy(buff->data, tmpBuffStr, offset);
     buff->dataLen = offset;
     return HITLS_PKI_SUCCESS;
 }
@@ -591,13 +587,13 @@ static int32_t GetAsn1SerialNumStr(const BSL_ASN1_Buffer *number, BSL_Buffer *va
     }
 
     for (size_t i = 0; i < number->len - 1; i++) {
-        if (sprintf_s((char *)&val->data[3 * i], val->dataLen - 3 * i, "%02x:", number->buff[i]) == -1) { // 3: "xx:"
+        if (snprintf((char *)&val->data[3 * i], val->dataLen - 3 * i, "%02x:", number->buff[i])  < 0) { // 3: "xx:"
             BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_CERT_INVALID_SERIAL_NUM);
             return HITLS_X509_ERR_CERT_INVALID_SERIAL_NUM;
         }
     }
     size_t index = 3 * (number->len - 1);  // 3: "xx:"
-    if (sprintf_s((char *)&val->data[index], val->dataLen - index, "%02x", number->buff[number->len - 1]) == -1) {
+    if (snprintf((char *)&val->data[index], val->dataLen - index, "%02x", number->buff[number->len - 1])  < 0) {
         BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_CERT_INVALID_SERIAL_NUM);
         return HITLS_X509_ERR_CERT_INVALID_SERIAL_NUM;
     }
@@ -642,8 +638,8 @@ static int32_t GetAsn1BslTimeStr(const BSL_TIME *time, BSL_Buffer *val)
         BSL_ERR_PUSH_ERROR(BSL_MALLOC_FAIL);
         return BSL_MALLOC_FAIL;
     }
-    if (sprintf_s((char *)val->data, PRINT_TIME_MAX_SIZE, "%s %u %02u:%02u:%02u %u%s",
-        g_monAsn1Str[time->month - 1], time->day, time->hour, time->minute, time->second, time->year, " GMT") == -1) {
+    if (snprintf((char *)val->data, PRINT_TIME_MAX_SIZE, "%s %u %02u:%02u:%02u %u%s",
+        g_monAsn1Str[time->month - 1], time->day, time->hour, time->minute, time->second, time->year, " GMT") < 0) {
         BSL_SAL_FREE(val->data);
         val->dataLen = 0;
         BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_CERT_INVALID_TIME);
@@ -734,7 +730,7 @@ static int32_t CertSet(void *dest, uint32_t size, void *val, uint32_t valLen, Se
         BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_INVALID_PARAM);
         return HITLS_X509_ERR_INVALID_PARAM;
     }
-    (void)memcpy_s(dest, size, val, size);
+    memcpy(dest, val, size);
     return HITLS_PKI_SUCCESS;
 }
 

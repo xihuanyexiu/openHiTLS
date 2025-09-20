@@ -15,14 +15,13 @@
 
 #include "hitls_build.h"
 #ifdef HITLS_CRYPTO_RSA
-
+#include <string.h>
 #include "crypt_types.h"
 #include "crypt_rsa.h"
 #include "crypt_utils.h"
 #include "bsl_err_internal.h"
 #include "rsa_local.h"
 #include "crypt_errno.h"
-#include "securec.h"
 #include "bsl_sal.h"
 #include "crypt_params_key.h"
 
@@ -193,7 +192,7 @@ int32_t CRYPT_RSA_SetPubKey(CRYPT_RSA_Ctx *ctx, const CRYPT_RsaPub *pub)
     }
     uint32_t bnBits;
     CRYPT_RSA_PubKey *newPub = NULL;
-    (void)memset_s(&(ctx->pad), sizeof(RSAPad), 0, sizeof(RSAPad));
+    memset(&(ctx->pad), 0, sizeof(RSAPad));
     /* Bit length is obtained by multiplying byte length by 8. */
     newPub = RSA_NewPubKey(pub->nLen * 8);
     if (newPub == NULL) {

@@ -13,10 +13,11 @@
  * See the Mulan PSL v2 for more details.
  */
 
-#include <stdlib.h>
-#include <stdint.h>
 #include "hitls_build.h"
 #ifdef HITLS_TLS_FEATURE_CUSTOM_EXTENSION
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
 #include "tls_binlog_id.h"
 #include "bsl_log_internal.h"
 #include "bsl_log.h"
@@ -28,7 +29,6 @@
 #include "hs_msg.h"
 #include "hs_ctx.h"
 #include "hs.h"
-#include "securec.h"
 #include "bsl_sal.h"
 #include "custom_extensions.h"
 #include "alert.h"
@@ -159,7 +159,7 @@ uint32_t HITLS_CFG_AddCustomExtension(HITLS_Config *config, const HITLS_CustomEx
     exts->meths = tmp;
     meth = exts->meths + exts->methsCount;
 
-    (void)memset_s(meth, sizeof(*meth), 0, sizeof(*meth));
+    memset(meth, 0, sizeof(*meth));
     meth->extType = params->extType;
     meth->context = params->context;
     meth->addCb = params->addCb;

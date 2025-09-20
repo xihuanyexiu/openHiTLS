@@ -15,12 +15,11 @@
 
 #include "hitls_build.h"
 #ifdef HITLS_CRYPTO_RSA
-
+#include <string.h>
 #include "crypt_rsa.h"
 #include "rsa_local.h"
 #include "crypt_errno.h"
 #include "crypt_utils.h"
-#include "securec.h"
 #include "bsl_sal.h"
 #include "bsl_err_internal.h"
 
@@ -32,7 +31,7 @@ CRYPT_RSA_Ctx *CRYPT_RSA_NewCtx(void)
         BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
         return NULL;
     }
-    (void)memset_s(keyCtx, sizeof(CRYPT_RSA_Ctx), 0, sizeof(CRYPT_RSA_Ctx));
+    memset(keyCtx, 0, sizeof(CRYPT_RSA_Ctx));
     BSL_SAL_ReferencesInit(&(keyCtx->references));
     return keyCtx;
 }
@@ -55,7 +54,7 @@ static CRYPT_RSA_PubKey *RSAPubKeyDupCtx(CRYPT_RSA_PubKey *pubKey)
         return NULL;
     }
 
-    (void)memset_s(newPubKey, sizeof(CRYPT_RSA_PubKey), 0, sizeof(CRYPT_RSA_PubKey));
+    memset(newPubKey, 0, sizeof(CRYPT_RSA_PubKey));
 
     GOTO_ERR_IF_SRC_NOT_NULL(newPubKey->e, pubKey->e, BN_Dup(pubKey->e), CRYPT_MEM_ALLOC_FAIL);
     GOTO_ERR_IF_SRC_NOT_NULL(newPubKey->n, pubKey->n, BN_Dup(pubKey->n), CRYPT_MEM_ALLOC_FAIL);
@@ -81,7 +80,7 @@ static CRYPT_RSA_PrvKey *RSAPriKeyDupCtx(CRYPT_RSA_PrvKey *prvKey)
         return NULL;
     }
 
-    (void)memset_s(newPriKey, sizeof(CRYPT_RSA_PrvKey), 0, sizeof(CRYPT_RSA_PrvKey));
+    memset(newPriKey, 0, sizeof(CRYPT_RSA_PrvKey));
 
     GOTO_ERR_IF_SRC_NOT_NULL(newPriKey->n, prvKey->n, BN_Dup(prvKey->n), CRYPT_MEM_ALLOC_FAIL);
     GOTO_ERR_IF_SRC_NOT_NULL(newPriKey->d, prvKey->d, BN_Dup(prvKey->d), CRYPT_MEM_ALLOC_FAIL);
@@ -106,7 +105,7 @@ static CRYPT_RSA_Para *RSAParaDupCtx(CRYPT_RSA_Para *para)
         return NULL;
     }
 
-    (void)memset_s(newPara, sizeof(CRYPT_RSA_Para), 0, sizeof(CRYPT_RSA_Para));
+    memset(newPara, 0, sizeof(CRYPT_RSA_Para));
 
     newPara->bits = para->bits;
     GOTO_ERR_IF_SRC_NOT_NULL(newPara->e, para->e, BN_Dup(para->e), CRYPT_MEM_ALLOC_FAIL);
@@ -128,7 +127,7 @@ static RSA_Blind *RSABlindDupCtx(RSA_Blind *blind)
         return NULL;
     }
 
-    (void)memset_s(newBlind, sizeof(RSA_Blind), 0, sizeof(RSA_Blind));
+    memset(newBlind, 0, sizeof(RSA_Blind));
 
     GOTO_ERR_IF_SRC_NOT_NULL(newBlind->r, blind->r, BN_Dup(blind->r), CRYPT_MEM_ALLOC_FAIL);
     GOTO_ERR_IF_SRC_NOT_NULL(newBlind->rInv, blind->rInv, BN_Dup(blind->rInv), CRYPT_MEM_ALLOC_FAIL);
@@ -173,10 +172,10 @@ CRYPT_RSA_Ctx *CRYPT_RSA_DupCtx(CRYPT_RSA_Ctx *keyCtx)
         return NULL;
     }
 
-    (void)memset_s(newKeyCtx, sizeof(CRYPT_RSA_Ctx), 0, sizeof(CRYPT_RSA_Ctx));
+    memset(newKeyCtx, 0, sizeof(CRYPT_RSA_Ctx));
 
     newKeyCtx->flags = keyCtx->flags;
-    (void)memcpy_s(&(newKeyCtx->pad), sizeof(RSAPad), &(keyCtx->pad), sizeof(RSAPad));
+    memcpy(&(newKeyCtx->pad), &(keyCtx->pad), sizeof(RSAPad));
 
     GOTO_ERR_IF_SRC_NOT_NULL(newKeyCtx->prvKey, keyCtx->prvKey, RSAPriKeyDupCtx(keyCtx->prvKey), CRYPT_MEM_ALLOC_FAIL);
     GOTO_ERR_IF_SRC_NOT_NULL(newKeyCtx->pubKey, keyCtx->pubKey, RSAPubKeyDupCtx(keyCtx->pubKey), CRYPT_MEM_ALLOC_FAIL);
@@ -533,7 +532,7 @@ int32_t CRYPT_RSA_SetPara(CRYPT_RSA_Ctx *ctx, const CRYPT_RsaPara *para)
         RSA_FREE_PARA(rsaPara);
         return ret;
     }
-    (void)memset_s(&(ctx->pad), sizeof(RSAPad), 0, sizeof(RSAPad));
+    memset(&(ctx->pad), 0, sizeof(RSAPad));
     RSA_FREE_PARA(ctx->para);
     RSA_FREE_PRV_KEY(ctx->prvKey);
     RSA_FREE_PUB_KEY(ctx->pubKey);
@@ -643,7 +642,7 @@ int32_t CRYPT_RSA_SetParaEx(CRYPT_RSA_Ctx *ctx, const BSL_Param *para)
         RSA_FREE_PARA(rsaPara);
         return ret;
     }
-    (void)memset_s(&(ctx->pad), sizeof(RSAPad), 0, sizeof(RSAPad));
+    memset(&(ctx->pad), 0, sizeof(RSAPad));
     RSA_FREE_PARA(ctx->para);
     RSA_FREE_PRV_KEY(ctx->prvKey);
     RSA_FREE_PUB_KEY(ctx->pubKey);

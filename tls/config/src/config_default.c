@@ -14,7 +14,7 @@
  */
 
 #include "hitls_build.h"
-#include "securec.h"
+#include <string.h>
 #include "bsl_sal.h"
 #include "tls_binlog_id.h"
 #include "hitls_type.h"
@@ -375,10 +375,9 @@ static int32_t SetDefaultTlsAllCipherSuites(HITLS_Config *config)
         return HITLS_MEMALLOC_FAIL;
     }
 #ifdef HITLS_TLS_PROTO_TLCP11
-    (void)memcpy_s(cipherSuites, cipherSuitesLen * sizeof(uint16_t), g_tlcpCipherSuites, sizeof(g_tlcpCipherSuites));
+    memcpy(cipherSuites, g_tlcpCipherSuites, sizeof(g_tlcpCipherSuites));
 #endif
-    (void)memcpy_s(cipherSuites + tlcpCipherSuitesLen, (cipherSuitesLen - tlcpCipherSuitesLen) * sizeof(uint16_t),
-                   g_tls12CipherSuites, sizeof(g_tls12CipherSuites));
+    memcpy(cipherSuites + tlcpCipherSuitesLen, g_tls12CipherSuites, sizeof(g_tls12CipherSuites));
     ret = SetDefaultCipherSuite(config, cipherSuites, cipherSuitesLen * sizeof(uint16_t));
     BSL_SAL_FREE(cipherSuites);
     return ret;

@@ -14,6 +14,7 @@
  */
 
 #include <stddef.h>
+#include <string.h>
 #include "hitls_build.h"
 #include "config_type.h"
 #include "hitls_crypt_type.h"
@@ -22,7 +23,6 @@
 #include "crypt_algid.h"
 #include "config.h"
 #ifdef HITLS_TLS_FEATURE_PROVIDER
-#include "securec.h"
 #include "crypt_eal_provider.h"
 #include "crypt_params_key.h"
 #include "crypt_eal_implprovider.h"
@@ -255,8 +255,7 @@ static int32_t ProviderAddGroupInfo(const BSL_Param *params, void *args)
             return HITLS_MEMALLOC_FAIL;
         }
         config->groupInfo = ptr;
-        (void)memset_s(config->groupInfo + config->groupInfoSize,
-            TLS_CAPABILITY_LIST_MALLOC_SIZE * sizeof(TLS_GroupInfo),
+        memset(config->groupInfo + config->groupInfoSize,
             0,
             TLS_CAPABILITY_LIST_MALLOC_SIZE * sizeof(TLS_GroupInfo));
         config->groupInfoSize += TLS_CAPABILITY_LIST_MALLOC_SIZE;
@@ -286,7 +285,7 @@ static int32_t ProviderAddGroupInfo(const BSL_Param *params, void *args)
 ERR:
     if (group != NULL) {
         BSL_SAL_Free(group->name);
-        (void)memset_s(group, sizeof(TLS_GroupInfo), 0, sizeof(TLS_GroupInfo));
+        memset(group, 0, sizeof(TLS_GroupInfo));
     }
     return ret;
 }

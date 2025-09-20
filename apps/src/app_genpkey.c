@@ -19,7 +19,6 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stddef.h>
-#include <securec.h>
 #include <linux/limits.h>
 #include "app_errno.h"
 #include "app_help.h"
@@ -328,7 +327,7 @@ static void InitGenPkeyOptCtx(GenPkeyOptCtx *optCtx)
     optCtx->cipherAlgCid = CRYPT_CIPHER_MAX;
 
     optCtx->inPara.algorithm = NULL;
-    memset_s(optCtx->inPara.pkeyOptArg, MAX_PKEY_OPT_ARG, 0, MAX_PKEY_OPT_ARG);
+    memset(optCtx->inPara.pkeyOptArg, 0, MAX_PKEY_OPT_ARG * sizeof(optCtx->inPara.pkeyOptArg[0]));
     optCtx->inPara.pkeyOptArgNum = 0;
 
     optCtx->outPara.outFilePath = NULL;

@@ -267,7 +267,6 @@ class FeatureConfigParser:
         "asmType":{"require": True, "type": str, "choices": [], "default": "no_asm"},
         "libs":{"require": True, "type": dict, "choices": [], "default": {}},
         "bundleLibs":{"require": False, "type": bool, "choices": [True, False], "default": False},
-        "securecLib":{"require": False, "type": str, "choices": ["boundscheck", "securec", "sec_shared.z", ""], "default": "boundscheck"},
         "executes":{"require": False, "type": dict, "default": {}}
     }
 
@@ -309,12 +308,6 @@ class FeatureConfigParser:
         if 'bundleLibs' in self._cfg:
             return self._cfg['bundleLibs']
         return self.key_value['bundleLibs']['default']
-
-    @property
-    def securec_lib(self):
-        if 'securecLib' in self._cfg:
-            return self._cfg['securecLib']
-        return self.key_value['securecLib']['default']
 
     @staticmethod
     def _get_fea_and_inc(asm_fea):

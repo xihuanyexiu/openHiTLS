@@ -13,8 +13,8 @@
  * See the Mulan PSL v2 for more details.
  */
 #include <stdint.h>
+#include <string.h>
 #include "hitls_build.h"
-#include "securec.h"
 #include "bsl_err_internal.h"
 #include "tls_binlog_id.h"
 #include "bsl_log_internal.h"
@@ -215,7 +215,7 @@ int32_t PackAppendDataToBuf(PackPacket *pkt, const uint8_t *data, uint32_t size)
         return ret;
     }
 
-    (void)memcpy_s(&(*pkt->buf)[*pkt->bufOffset], *pkt->bufLen - *pkt->bufOffset, data, size);
+    memcpy(&(*pkt->buf)[*pkt->bufOffset], data, size);
     *pkt->bufOffset += size;
     return HITLS_SUCCESS;
 }

@@ -44,6 +44,3 @@ target_link_directories(${GEN_TESTCASE}
     PRIVATE
         ${HITLS_SRC}/platform/Secure_C/lib
 )
-target_link_libraries(${GEN_TESTCASE}
-    boundscheck
-)

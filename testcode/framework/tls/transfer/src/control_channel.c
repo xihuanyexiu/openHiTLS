@@ -13,10 +13,10 @@
  * See the Mulan PSL v2 for more details.
  */
 
+#include <string.h>
 #include <sys/time.h>
 #include "channel_res.h"
 #include "logger.h"
-#include "securec.h"
 
 #define SUCCESS 0
 #define ERROR (-1)
@@ -65,17 +65,12 @@ int ControlChannelConnect(ControlChannelRes *channelInfo)
 
 int ControlChannelWrite(int32_t sockFd, char *peerDomainPath, ControlChannelBuf *dataBuf)
 {
-    int ret;
     uint32_t dataLen;
     uint32_t addrLen;
     struct sockaddr_un peerAddr;
 
     peerAddr.sun_family = AF_UNIX;
-    ret = strcpy_s(peerAddr.sun_path, strlen(peerDomainPath) + 1, peerDomainPath);
-    if (ret != EOK) {
-        LOG_ERROR("strcpy_s Error");
-        return ERROR;
-    }
+    strcpy(peerAddr.sun_path, peerDomainPath);
     addrLen = offsetof(struct sockaddr_un, sun_path) + strlen(peerDomainPath) + 1;
     dataLen = sendto(sockFd, dataBuf->data, dataBuf->dataLen, 0, (struct sockaddr *)&peerAddr, addrLen);
     if (dataLen != dataBuf->dataLen) {
@@ -90,7 +85,7 @@ int ControlChannelRead(int32_t sockFd, ControlChannelBuf *dataBuf)
     struct sockaddr_un peerAddr;
     int dataLen;
     socklen_t addrLen = sizeof(struct sockaddr_un);
-    (void)memset_s(dataBuf->data, CONTROL_CHANNEL_MAX_MSG_LEN, 0, CONTROL_CHANNEL_MAX_MSG_LEN);
+    memset(dataBuf->data, 0, CONTROL_CHANNEL_MAX_MSG_LEN);
 
     dataLen = recvfrom(sockFd, dataBuf->data, CONTROL_CHANNEL_MAX_MSG_LEN, 0,
                        (struct sockaddr *)(&peerAddr), &(addrLen));

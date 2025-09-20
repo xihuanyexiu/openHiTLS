@@ -31,7 +31,6 @@
 #include "crypt_paillier.h"
 #include "paillier_local.h"
 #include "bn_basic.h"
-#include "securec.h"
 
 #include "crypt_encode_decode_key.h"
 /* END_HEADER */
@@ -1105,7 +1104,7 @@ void SDV_CRYPTO_PAILLIER_ADD_API_TC001(Hex *Lambda, Hex *mu, Hex *n, Hex *g, Hex
     ASSERT_EQ(
         BSL_PARAM_InitValue(&items[IDX_C2], CRYPT_PARAM_PKEY_HE_CIPHERTEXT2, BSL_PARAM_TYPE_OCTETS, c2->x, c2->len),
         BSL_SUCCESS);
-    (void)memset_s(&items[IDX_END], sizeof(items[IDX_END]), 0, sizeof(items[IDX_END]));
+    memset(&items[IDX_END], 0, sizeof(items[IDX_END]));
 
     /* Test invalid inputs */
     ASSERT_EQ(CRYPT_EAL_PkeyHEAdd(NULL, items, addResult, &addLen), CRYPT_NULL_INPUT);

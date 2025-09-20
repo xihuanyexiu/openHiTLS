@@ -21,7 +21,6 @@
 #include "crypt_eal_mac.h"
 #include "crypt_errno.h"
 #include "bsl_err.h"
-#include "securec.h"
 #include "bsl_err_internal.h"
 #include "crypt_utils.h"
 #include "bsl_sal.h"
@@ -80,9 +79,9 @@ static uint8_t *GetExpectHmac(const char *hmacPath, uint32_t *hmacLen)
     // HMAC-SHA256(libhitls_crypto.so)= 76a90d73cb68585837a2ebdf009e9e485acba4fd718bae898bdc354537f8a72a\n
     // The format of the generated .hmac file is as shown in the preceding figure.
     // The content between spaces and newline characters is truncated.
-    tmp = strtok_s(buf, seps, &nextTmp);
+    tmp = strtok(buf, seps);
     GOTO_ERR_IF_TRUE(tmp == NULL, CRYPT_CMVP_COMMON_ERR);
-    tmp = strtok_s(NULL, seps, &nextTmp);
+    tmp = strtok(NULL, seps);
     GOTO_ERR_IF_TRUE(tmp == NULL, CRYPT_CMVP_COMMON_ERR);
     hmac = CMVP_StringsToBins(tmp, hmacLen);
     GOTO_ERR_IF_TRUE(hmac == NULL, CRYPT_CMVP_COMMON_ERR);
@@ -105,7 +104,7 @@ bool CMVP_IntegrityHmac(void *libCtx, const char *attrName, const char *libPath,
 
     hmacPath = BSL_SAL_Malloc((uint32_t)strlen(libPath) + (uint32_t)strlen(".hmac") + 1);
     GOTO_ERR_IF_TRUE(hmacPath == NULL, CRYPT_MEM_ALLOC_FAIL);
-    (void)sprintf_s(hmacPath, strlen(libPath) + strlen(".hmac") + 1, "%s%s", libPath, ".hmac");
+    (void)sprintf(hmacPath, "%s%s", libPath, ".hmac");
     hmacPath[strlen(libPath) + strlen(".hmac")] = '\0';
 
     hmac = GetLibHmac(libCtx, attrName, id, libPath, &hmacLen);

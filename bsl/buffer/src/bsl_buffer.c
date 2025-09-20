@@ -14,7 +14,7 @@
  */
 #include "hitls_build.h"
 #ifdef HITLS_BSL_BUFFER
-#include "securec.h"
+#include <string.h>
 #include "bsl_sal.h"
 #include "bsl_buffer.h"
 
@@ -51,16 +51,12 @@ size_t BSL_BufMemGrowClean(BSL_BufMem *str, size_t len)
 {
     char *ret = NULL;
     if (str->length >= len) {
-        if (memset_s(&(str->data[len]), str->max - len, 0, str->length - len) != EOK) {
-            return 0;
-        }
+        memset(&(str->data[len]), 0, str->length - len);
         str->length = len;
         return len;
     }
     if (str->max >= len) {
-        if (memset_s(&(str->data[str->length]), str->max - str->length, 0, len - str->length) != EOK) {
-            return 0;
-        }
+        memset(&(str->data[str->length]), 0, len - str->length);
         str->length = len;
         return len;
     }
@@ -72,14 +68,10 @@ size_t BSL_BufMemGrowClean(BSL_BufMem *str, size_t len)
     if (ret == NULL) {
         return 0;
     }
-    if (str->data != NULL && memcpy_s(ret, n, str->data, str->max) != EOK) {
-        BSL_SAL_FREE(ret);
-        return 0;
+    if (str->data != NULL) {
+        memcpy(ret, str->data, str->max);
     }
-    if (memset_s(&ret[str->length], n - str->length, 0, len - str->length) != EOK) {
-        BSL_SAL_FREE(ret);
-        return 0;
-    }
+    memset(&ret[str->length], 0, len - str->length);
     BSL_SAL_CleanseData(str->data, (uint32_t)str->max);
     BSL_SAL_FREE(str->data);
     str->data = ret;

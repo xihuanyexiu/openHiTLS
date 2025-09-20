@@ -15,7 +15,7 @@
 #include "hitls_build.h"
 #if defined(HITLS_TLS_CALLBACK_CERT) || defined(HITLS_TLS_FEATURE_PROVIDER)
 #include <stdint.h>
-#include "securec.h"
+#include <string.h>
 #include "bsl_sal.h"
 #include "bsl_types.h"
 #include "bsl_err_internal.h"
@@ -52,7 +52,7 @@ static int32_t GetPassByCb(HITLS_PasswordCb passWordCb, void *passWordCbUserData
                 BSL_ERR_PUSH_ERROR(HITLS_CERT_SELF_ADAPT_ERR);
                 return HITLS_CERT_SELF_ADAPT_ERR;
             }
-            (void)memcpy_s(pass, *passLen, (char *)passWordCbUserData, userDataLen + 1);
+            memcpy(pass, (char *)passWordCbUserData, userDataLen + 1);
             len = userDataLen;
         }
     }
@@ -69,7 +69,7 @@ static int32_t GetPrivKeyPassword(HITLS_Config *config, uint8_t *pwd, int32_t *p
     int32_t ret = GetPassByCb(pwCb, userData, (char *)pwd, pwdLen);
     if (ret != HITLS_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
-        (void)memset_s(pwd, len, 0, len);
+        memset(pwd, 0, len);
     }
     return ret;
 }
@@ -99,13 +99,13 @@ HITLS_CERT_Key *HITLS_X509_Adapt_ProviderKeyParse(HITLS_Config *config, const ui
             break;
         default:
             BSL_ERR_PUSH_ERROR(HITLS_CERT_SELF_ADAPT_UNSUPPORT_FORMAT);
-            (void)memset_s(pwd, MAX_PASS_LEN, 0, MAX_PASS_LEN);
+            memset(pwd, 0, MAX_PASS_LEN);
             return NULL;
     }
     if (ret != HITLS_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
     }
-    (void)memset_s(pwd, MAX_PASS_LEN, 0, MAX_PASS_LEN);
+    memset(pwd, 0, MAX_PASS_LEN);
     return ealPriKey;
 }
 
@@ -133,13 +133,13 @@ HITLS_CERT_Key *HITLS_X509_Adapt_KeyParse(HITLS_Config *config, const uint8_t *b
             break;
         default:
             BSL_ERR_PUSH_ERROR(HITLS_CERT_SELF_ADAPT_UNSUPPORT_FORMAT);
-            (void)memset_s(pwd, MAX_PASS_LEN, 0, MAX_PASS_LEN);
+            memset(pwd, 0, MAX_PASS_LEN);
             return NULL;
     }
     if (ret != HITLS_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
     }
-    (void)memset_s(pwd, MAX_PASS_LEN, 0, MAX_PASS_LEN);
+    memset(pwd, 0, MAX_PASS_LEN);
     return ealPriKey;
 }
 #endif

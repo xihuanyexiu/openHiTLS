@@ -15,7 +15,6 @@
 
 /* BEGIN_HEADER */
 #include "bsl_sal.h"
-#include "securec.h"
 #include "hitls_error.h"
 #include "hitls_pki_cert.h"
 #include "hitls_pki_utils.h"

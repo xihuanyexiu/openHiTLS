@@ -41,7 +41,7 @@ target_compile_options(DEMO_INTF INTERFACE -g)
 target_link_directories(DEMO_INTF INTERFACE ${HITLS_ROOT}/build
                                             ${HITLS_ROOT}/platform/Secure_C/lib/)
 
-target_link_libraries(DEMO_INTF INTERFACE hitls_tls hitls_pki hitls_auth hitls_crypto hitls_bsl boundscheck pthread dl)
+target_link_libraries(DEMO_INTF INTERFACE hitls_tls hitls_pki hitls_auth hitls_crypto hitls_bsl pthread dl)
 target_include_directories(DEMO_INTF INTERFACE ${HITLS_INCLUDE})
 
 file(GLOB TESTS "*.c")

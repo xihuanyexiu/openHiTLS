@@ -32,7 +32,6 @@
 #include "simulate_io.h"
 #include "parser_frame_msg.h"
 #include "cert.h"
-#include "securec.h"
 #include "conn_init.h"
 /* END_HEADER */
 

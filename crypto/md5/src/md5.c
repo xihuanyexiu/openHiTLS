@@ -15,8 +15,7 @@
 
 #include "hitls_build.h"
 #ifdef HITLS_CRYPTO_MD5
-
-#include "securec.h"
+#include <string.h>
 #include "bsl_err_internal.h"
 #include "crypt_errno.h"
 #include "crypt_utils.h"
@@ -65,7 +64,7 @@ int32_t CRYPT_MD5_Init(CRYPT_MD5_Ctx *ctx, BSL_Param *param)
         return CRYPT_NULL_INPUT;
     }
     (void) param;
-    (void)memset_s(ctx, sizeof(CRYPT_MD5_Ctx), 0, sizeof(CRYPT_MD5_Ctx));
+    memset(ctx, 0, sizeof(CRYPT_MD5_Ctx));
     /* Set the initial values of A, B, C, and D according to step 3 in section 3.3 of RFC1321. */
     ctx->h[0] = 0x67452301;
     ctx->h[1] = 0xefcdab89;
@@ -80,7 +79,7 @@ int32_t CRYPT_MD5_Deinit(CRYPT_MD5_Ctx *ctx)
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-    (void)memset_s(ctx, sizeof(CRYPT_MD5_Ctx), 0, sizeof(CRYPT_MD5_Ctx));
+    memset(ctx, 0, sizeof(CRYPT_MD5_Ctx));
     return CRYPT_SUCCESS;
 }
 
@@ -136,13 +135,13 @@ int32_t CRYPT_MD5_Update(CRYPT_MD5_Ctx *ctx, const uint8_t *in, uint32_t len)
 
     if (ctx->num != 0) {
         if (dataLen < left) {
-            (void)memcpy_s(ctx->block + ctx->num, left, data, dataLen);
+            memcpy(ctx->block + ctx->num, data, dataLen);
             ctx->num += dataLen;
             return CRYPT_SUCCESS;
         }
         // When the external input data is greater than the remaining space of the block,
         // copy the data which is the same length as the remaining space.
-        (void)memcpy_s(ctx->block + ctx->num, left, data, left);
+        memcpy(ctx->block + ctx->num, data, left);
         MD5_Compress(ctx->h, ctx->block, 1);
         dataLen -= left;
         data += left;
@@ -159,7 +158,7 @@ int32_t CRYPT_MD5_Update(CRYPT_MD5_Ctx *ctx, const uint8_t *in, uint32_t len)
 
     if (dataLen != 0) {
         // Copy the remaining data to the cache array.
-        (void)memcpy_s(ctx->block, CRYPT_MD5_BLOCKSIZE, data, dataLen);
+        memcpy(ctx->block, data, dataLen);
         ctx->num = dataLen;
     }
 
@@ -195,12 +194,12 @@ int32_t CRYPT_MD5_Final(CRYPT_MD5_Ctx *ctx, uint8_t *out, uint32_t *outLen)
     uint32_t num = ctx->num;
     uint32_t left = CRYPT_MD5_BLOCKSIZE - num;
     if (left < 8) { /* Less than 8 bytes, insufficient for storing data of the accumulated data length(lNum&hNum). */
-        (void)memset_s(block + num, left, 0, left);
+        memset(block + num, 0, left);
         MD5_Compress(ctx->h, ctx->block, 1);
         num = 0;
         left = CRYPT_MD5_BLOCKSIZE;
     }
-    (void)memset_s(block + num, left - 8, 0, left - 8); /* 8 byte is used to store data of accumulated data length. */
+    memset(block + num, 0, left - 8); /* 8 byte is used to store data of accumulated data length. */
     block += CRYPT_MD5_BLOCKSIZE - 8; /* 8 byte is used to store data of the accumulated data length(lNum&hNum). */
     PUT_UINT32_LE(ctx->lNum, block, 0);
     block += sizeof(uint32_t);
@@ -224,7 +223,7 @@ int32_t CRYPT_MD5_CopyCtx(CRYPT_MD5_Ctx *dst, const CRYPT_MD5_Ctx *src)
         return CRYPT_NULL_INPUT;
     }
 
-    (void)memcpy_s(dst, sizeof(CRYPT_MD5_Ctx), src, sizeof(CRYPT_MD5_Ctx));
+    memcpy(dst, src, sizeof(CRYPT_MD5_Ctx));
     return CRYPT_SUCCESS;
 }
 
@@ -239,7 +238,7 @@ CRYPT_MD5_Ctx *CRYPT_MD5_DupCtx(const CRYPT_MD5_Ctx *src)
         BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
         return NULL;
     }
-    (void)memcpy_s(newCtx, sizeof(CRYPT_MD5_Ctx), src, sizeof(CRYPT_MD5_Ctx));
+    memcpy(newCtx, src, sizeof(CRYPT_MD5_Ctx));
     return newCtx;
 }
 

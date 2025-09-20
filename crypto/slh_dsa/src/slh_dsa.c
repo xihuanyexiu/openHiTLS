@@ -16,7 +16,7 @@
 #ifdef HITLS_CRYPTO_SLH_DSA
 
 #include <stddef.h>
-#include "securec.h"
+#include <string.h>
 #include "bsl_err_internal.h"
 #include "bsl_sal.h"
 #include "bsl_obj_internal.h"
@@ -80,7 +80,7 @@ static void UCAdrsSetTreeAddr(SlhDsaAdrs *adrs, uint64_t tree)
 static void UCAdrsSetType(SlhDsaAdrs *adrs, AdrsType type)
 {
     PUT_UINT32_BE(type, adrs->uc.type, 0);
-    (void)memset_s(adrs->uc.padding, sizeof(adrs->uc.padding), 0, sizeof(adrs->uc.padding));
+    memset(adrs->uc.padding, 0, sizeof(adrs->uc.padding));
 }
 
 static void UCAdrsSetKeyPairAddr(SlhDsaAdrs *adrs, uint32_t keyPair)
@@ -120,8 +120,7 @@ static uint32_t UCAdrsGetTreeIndex(const SlhDsaAdrs *adrs)
 
 static void UCAdrsCopyKeyPairAddr(SlhDsaAdrs *adrs, const SlhDsaAdrs *adrs2)
 {
-    (void)memcpy_s(adrs->uc.padding, sizeof(adrs->uc.padding), adrs2->uc.padding,
-                   4); // key pair address is 4 bytes, start from 4-th byte
+    (void)memcpy(adrs->uc.padding, adrs2->uc.padding, 4); // key pair address is 4 bytes, start from 4-th byte
 }
 
 static uint32_t UCAdrsGetAdrsLen(void)
@@ -144,7 +143,7 @@ static void CAdrsSetTreeAddr(SlhDsaAdrs *adrs, uint64_t tree)
 static void CAdrsSetType(SlhDsaAdrs *adrs, AdrsType type)
 {
     adrs->c.type = type;
-    (void)memset_s(adrs->c.padding, sizeof(adrs->c.padding), 0, sizeof(adrs->c.padding));
+    memset(adrs->c.padding, 0, sizeof(adrs->c.padding));
 }
 
 static void CAdrsSetKeyPairAddr(SlhDsaAdrs *adrs, uint32_t keyPair)
@@ -184,8 +183,7 @@ static uint32_t CAdrsGetTreeIndex(const SlhDsaAdrs *adrs)
 
 static void CAdrsCopyKeyPairAddr(SlhDsaAdrs *adrs, const SlhDsaAdrs *adrs2)
 {
-    (void)memcpy_s(adrs->c.padding, sizeof(adrs->c.padding), adrs2->c.padding,
-                   4); // key pair address is 4 bytes, start from 4-th byte
+    (void)memcpy(adrs->c.padding, adrs2->c.padding, 4); // key pair address is 4 bytes, start from 4-th byte
 }
 
 static uint32_t CAdrsGetAdrsLen(void)
@@ -333,7 +331,7 @@ int32_t CRYPT_SLH_DSA_Gen(CryptSlhDsaCtx *ctx)
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
-    (void)memcpy_s(ctx->prvKey.pub.root, n, node, n);
+    memcpy(ctx->prvKey.pub.root, node, n);
     ctx->keyType = SLH_DSA_PRVKEY | SLH_DSA_PUBKEY;
     return CRYPT_SUCCESS;
 }
@@ -362,7 +360,7 @@ static int32_t GetAddRand(CryptSlhDsaCtx *ctx)
             BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
             return CRYPT_MEM_ALLOC_FAIL;
         }
-        (void)memcpy_s(rand, ctx->para.n, ctx->prvKey.pub.seed, ctx->para.n);
+        memcpy(rand, ctx->prvKey.pub.seed, ctx->para.n);
         ctx->addrand = rand;
     }
     ctx->addrandLen = ctx->para.n;
@@ -540,7 +538,7 @@ static int32_t MsgEncode(const CryptSlhDsaCtx *ctx, int32_t algId, const uint8_t
     }
     mp[0] = ctx->isPrehash ? 1 : 0;
     mp[1] = (uint8_t)ctx->contextLen;
-    (void)memcpy_s(mp + SLH_DSA_PREFIX_LEN, mpLen - SLH_DSA_PREFIX_LEN, ctx->context, ctx->contextLen);
+    memcpy(mp + SLH_DSA_PREFIX_LEN, ctx->context, ctx->contextLen);
     offset += SLH_DSA_PREFIX_LEN + ctx->contextLen;
 
     if (ctx->isPrehash) {
@@ -548,11 +546,11 @@ static int32_t MsgEncode(const CryptSlhDsaCtx *ctx, int32_t algId, const uint8_t
         (mp + offset)[0] = BSL_ASN1_TAG_OBJECT_ID;
         (mp + offset)[1] = (uint8_t)oid->octetLen;
         offset += 2; // asn1 header length is 2
-        (void)memcpy_s(mp + offset, mpLen - offset, oid->octs, oid->octetLen);
+        memcpy(mp + offset, oid->octs, oid->octetLen);
         offset += oid->octetLen;
-        (void)memcpy_s(mp + offset, mpLen - offset, prehash, prehashLen);
+        memcpy(mp + offset, prehash, prehashLen);
     } else {
-        (void)memcpy_s(mp + offset, mpLen - offset, data, dataLen);
+        memcpy(mp + offset, data, dataLen);
     }
     *mpOut = mp;
     *mpLenOut = mpLen;
@@ -655,7 +653,7 @@ static int32_t SetContextInfo(CryptSlhDsaCtx *ctx, void *val, uint32_t len)
         BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
         return CRYPT_MEM_ALLOC_FAIL;
     }
-    (void)memcpy_s(ctx->context, len, val, len);
+    memcpy(ctx->context, val, len);
     return CRYPT_SUCCESS;
 }
 
@@ -671,7 +669,7 @@ static int32_t SetAddrand(CryptSlhDsaCtx *ctx, void *val, uint32_t len)
         BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
         return CRYPT_MEM_ALLOC_FAIL;
     }
-    (void)memcpy_s(rand, len, val, len);
+    memcpy(rand, val, len);
     ctx->addrand = rand;
     ctx->addrandLen = len;
     return CRYPT_SUCCESS;
@@ -763,8 +761,8 @@ int32_t CRYPT_SLH_DSA_GetPubKey(const CryptSlhDsaCtx *ctx, CRYPT_SlhDsaPub *pub)
         return ret;
     }
     pub->len = ctx->para.n;
-    (void)memcpy_s(pub->seed, pub->len, ctx->prvKey.pub.seed, ctx->para.n);
-    (void)memcpy_s(pub->root, pub->len, ctx->prvKey.pub.root, ctx->para.n);
+    memcpy(pub->seed, ctx->prvKey.pub.seed, ctx->para.n);
+    memcpy(pub->root, ctx->prvKey.pub.root, ctx->para.n);
 
     return CRYPT_SUCCESS;
 }
@@ -778,10 +776,10 @@ int32_t CRYPT_SLH_DSA_GetPrvKey(const CryptSlhDsaCtx *ctx, CRYPT_SlhDsaPrv *prv)
     }
 
     prv->pub.len = ctx->para.n;
-    (void)memcpy_s(prv->seed, prv->pub.len, ctx->prvKey.seed, ctx->para.n);
-    (void)memcpy_s(prv->prf, prv->pub.len, ctx->prvKey.prf, ctx->para.n);
-    (void)memcpy_s(prv->pub.seed, prv->pub.len, ctx->prvKey.pub.seed, ctx->para.n);
-    (void)memcpy_s(prv->pub.root, prv->pub.len, ctx->prvKey.pub.root, ctx->para.n);
+    memcpy(prv->seed, ctx->prvKey.seed, ctx->para.n);
+    memcpy(prv->prf, ctx->prvKey.prf, ctx->para.n);
+    memcpy(prv->pub.seed, ctx->prvKey.pub.seed, ctx->para.n);
+    memcpy(prv->pub.root, ctx->prvKey.pub.root, ctx->para.n);
 
     return CRYPT_SUCCESS;
 }
@@ -793,8 +791,8 @@ int32_t CRYPT_SLH_DSA_SetPubKey(CryptSlhDsaCtx *ctx, const CRYPT_SlhDsaPub *pub)
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
-    (void)memcpy_s(ctx->prvKey.pub.seed, ctx->para.n, pub->seed, ctx->para.n);
-    (void)memcpy_s(ctx->prvKey.pub.root, ctx->para.n, pub->root, ctx->para.n);
+    memcpy(ctx->prvKey.pub.seed, pub->seed, ctx->para.n);
+    memcpy(ctx->prvKey.pub.root, pub->root, ctx->para.n);
 
     return CRYPT_SUCCESS;
 }
@@ -807,10 +805,10 @@ int32_t CRYPT_SLH_DSA_SetPrvKey(CryptSlhDsaCtx *ctx, const CRYPT_SlhDsaPrv *prv)
         return ret;
     }
 
-    (void)memcpy_s(ctx->prvKey.seed, sizeof(ctx->prvKey.seed), prv->seed, ctx->para.n);
-    (void)memcpy_s(ctx->prvKey.prf, sizeof(ctx->prvKey.prf), prv->prf, ctx->para.n);
-    (void)memcpy_s(ctx->prvKey.pub.seed, sizeof(ctx->prvKey.pub.seed), prv->pub.seed, ctx->para.n);
-    (void)memcpy_s(ctx->prvKey.pub.root, sizeof(ctx->prvKey.pub.root), prv->pub.root, ctx->para.n);
+    memcpy(ctx->prvKey.seed, prv->seed, ctx->para.n);
+    memcpy(ctx->prvKey.prf, prv->prf, ctx->para.n);
+    memcpy(ctx->prvKey.pub.seed, prv->pub.seed, ctx->para.n);
+    memcpy(ctx->prvKey.pub.root, prv->pub.root, ctx->para.n);
 
     return CRYPT_SUCCESS;
 }
@@ -871,8 +869,8 @@ int32_t CRYPT_SLH_DSA_GetPubKeyEx(const CryptSlhDsaCtx *ctx, BSL_Param *para)
         return CRYPT_SLHDSA_ERR_NO_PUBKEY;
     }
     pub.pubSeed->useLen = pub.pubRoot->useLen = ctx->para.n;
-    (void)memcpy_s(pub.pubSeed->value, pub.pubSeed->valueLen, ctx->prvKey.pub.seed, ctx->para.n);
-    (void)memcpy_s(pub.pubRoot->value, pub.pubRoot->valueLen, ctx->prvKey.pub.root, ctx->para.n);
+    memcpy(pub.pubSeed->value, ctx->prvKey.pub.seed, ctx->para.n);
+    memcpy(pub.pubRoot->value, ctx->prvKey.pub.root, ctx->para.n);
 
     return CRYPT_SUCCESS;
 }
@@ -893,10 +891,10 @@ int32_t CRYPT_SLH_DSA_GetPrvKeyEx(const CryptSlhDsaCtx *ctx, BSL_Param *para)
     prv.prvPrf->useLen = ctx->para.n;
     prv.pubSeed->useLen = ctx->para.n;
     prv.pubRoot->useLen = ctx->para.n;
-    (void)memcpy_s(prv.prvSeed->value, prv.prvSeed->valueLen, ctx->prvKey.seed, ctx->para.n);
-    (void)memcpy_s(prv.prvPrf->value, prv.prvPrf->valueLen, ctx->prvKey.prf, ctx->para.n);
-    (void)memcpy_s(prv.pubSeed->value, prv.pubSeed->valueLen, ctx->prvKey.pub.seed, ctx->para.n);
-    (void)memcpy_s(prv.pubRoot->value, prv.pubRoot->valueLen, ctx->prvKey.pub.root, ctx->para.n);
+    memcpy(prv.prvSeed->value, ctx->prvKey.seed, ctx->para.n);
+    memcpy(prv.prvPrf->value, ctx->prvKey.prf, ctx->para.n);
+    memcpy(prv.pubSeed->value, ctx->prvKey.pub.seed, ctx->para.n);
+    memcpy(prv.pubRoot->value, ctx->prvKey.pub.root, ctx->para.n);
 
     return CRYPT_SUCCESS;
 }
@@ -909,8 +907,8 @@ int32_t CRYPT_SLH_DSA_SetPubKeyEx(CryptSlhDsaCtx *ctx, const BSL_Param *para)
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
-    (void)memcpy_s(ctx->prvKey.pub.seed, ctx->para.n, pub.pubSeed->value, ctx->para.n);
-    (void)memcpy_s(ctx->prvKey.pub.root, ctx->para.n, pub.pubRoot->value, ctx->para.n);
+    memcpy(ctx->prvKey.pub.seed, pub.pubSeed->value, ctx->para.n);
+    memcpy(ctx->prvKey.pub.root, pub.pubRoot->value, ctx->para.n);
     ctx->keyType |= SLH_DSA_PUBKEY;
     return CRYPT_SUCCESS;
 }
@@ -924,10 +922,10 @@ int32_t CRYPT_SLH_DSA_SetPrvKeyEx(CryptSlhDsaCtx *ctx, const BSL_Param *para)
         return ret;
     }
 
-    (void)memcpy_s(ctx->prvKey.seed, sizeof(ctx->prvKey.seed), prv.prvSeed->value, ctx->para.n);
-    (void)memcpy_s(ctx->prvKey.prf, sizeof(ctx->prvKey.prf), prv.prvPrf->value, ctx->para.n);
-    (void)memcpy_s(ctx->prvKey.pub.seed, sizeof(ctx->prvKey.pub.seed), prv.pubSeed->value, ctx->para.n);
-    (void)memcpy_s(ctx->prvKey.pub.root, sizeof(ctx->prvKey.pub.root), prv.pubRoot->value, ctx->para.n);
+    memcpy(ctx->prvKey.seed, prv.prvSeed->value, ctx->para.n);
+    memcpy(ctx->prvKey.prf, prv.prvPrf->value, ctx->para.n);
+    memcpy(ctx->prvKey.pub.seed, prv.pubSeed->value, ctx->para.n);
+    memcpy(ctx->prvKey.pub.root, prv.pubRoot->value, ctx->para.n);
     ctx->keyType |= SLH_DSA_PRVKEY;
     return CRYPT_SUCCESS;
 }

@@ -14,7 +14,7 @@
  */
 #include "hitls_build.h"
 #ifdef HITLS_TLS_SUITE_CIPHER_CBC
-#include "securec.h"
+#include <string.h>
 #include "hitls_error.h"
 #include "bsl_err_internal.h"
 #include "bsl_log_internal.h"
@@ -164,7 +164,7 @@ static int32_t ConstTimeHmac(RecConnSuitInfo *suiteInfo, HITLS_HASH_Ctx **hashCt
     uint8_t key[HMAC_MAX_BLEN] = {0};
     uint8_t ihash[MAX_DIGEST_SIZE] = {0};
     uint32_t ihashLen = sizeof(ihash);
-    (void)memcpy_s(key, sizeof(key), suiteInfo->macKey, suiteInfo->macKeyLen);
+    memcpy(key, suiteInfo->macKey, suiteInfo->macKeyLen);
     for (uint32_t i = 0; i < blen; i++) {
         ipad[i] = key[i] ^ 0x36;
         opad[i] = key[i] ^ 0x5c;
@@ -181,7 +181,7 @@ static int32_t ConstTimeHmac(RecConnSuitInfo *suiteInfo, HITLS_HASH_Ctx **hashCt
      */
     uint8_t header[13] = {0}; // seq + record type
     uint32_t pos = 0;
-    (void)memcpy_s(header, sizeof(header), cryptMsg->seq, REC_CONN_SEQ_SIZE);
+    memcpy(header, cryptMsg->seq, REC_CONN_SEQ_SIZE);
     pos += REC_CONN_SEQ_SIZE;
     header[pos++] = cryptMsg->type;
     BSL_Uint16ToByte(cryptMsg->version, header + pos);
@@ -206,7 +206,7 @@ static int32_t ConstTimeHmac(RecConnSuitInfo *suiteInfo, HITLS_HASH_Ctx **hashCt
         }
     }
     (void)SAL_CRYPT_DigestFinal(hashCtx[0], ihash, &ihashLen);
-    (void)memcpy_s(opad + blen, MAX_DIGEST_SIZE, ihash, ihashLen);
+    memcpy(opad + blen, ihash, ihashLen);
 
     // update (K xor opad) + ihash
     (void)SAL_CRYPT_DigestUpdate(hashCtx[1], opad, blen + ihashLen);
@@ -389,17 +389,14 @@ static int32_t CbcDecrypt(TLS_Ctx *ctx, RecConnState *state, const REC_TextInput
 
 static int32_t RecConnCopyIV(TLS_Ctx *ctx, const RecConnState *state, uint8_t *cipherText, uint32_t cipherTextLen)
 {
+    (void)cipherTextLen;
     if (!state->suiteInfo->isExportIV) {
         SAL_CRYPT_Rand(LIBCTX_FROM_CTX(ctx), state->suiteInfo->iv, state->suiteInfo->fixedIvLength);
     }
     /* The IV set by the user can only be used once */
     state->suiteInfo->isExportIV = 0;
-    if (memcpy_s(cipherText, cipherTextLen, state->suiteInfo->iv, state->suiteInfo->fixedIvLength) != EOK) {
-        BSL_ERR_PUSH_ERROR(HITLS_MEMCPY_FAIL);
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15847, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
-            "Record CBC encrypt error: copy iv fail.", 0, 0, 0, 0);
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(cipherText, state->suiteInfo->iv, state->suiteInfo->fixedIvLength);
+
     return HITLS_SUCCESS;
 }
 
@@ -407,24 +404,16 @@ static int32_t RecConnCopyIV(TLS_Ctx *ctx, const RecConnState *state, uint8_t *c
 static int32_t GenerateCbcPlainTextBeforeMac(const RecConnState *state, const REC_TextInput *plainMsg,
     uint32_t cipherTextLen, uint8_t *plainText, uint32_t *textLen)
 {
+    (void)cipherTextLen;
     /* fill content */
-    if (memcpy_s(plainText, cipherTextLen, plainMsg->text, plainMsg->textLen) != EOK) {
-        BSL_ERR_PUSH_ERROR(HITLS_MEMCPY_FAIL);
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15392, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
-            "Record CBC encrypt error: memcpy plainMsg fail.", 0, 0, 0, 0);
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(plainText, plainMsg->text, plainMsg->textLen);
+
     uint32_t plainTextLen = plainMsg->textLen;
 
     /* fill padding and padding length */
     uint8_t paddingLen = RecConnGetCbcPaddingLen(state->suiteInfo->blockLength, plainTextLen);
     uint32_t count = paddingLen + CBC_PADDING_LEN_TAG_SIZE;
-    if (memset_s(&plainText[plainTextLen], cipherTextLen - plainTextLen, paddingLen, count) != EOK) {
-        BSL_ERR_PUSH_ERROR(HITLS_REC_ERR_ENCRYPT);
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15904, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
-            "Record CBC encrypt error: memset padding fail.", 0, 0, 0, 0);
-        return HITLS_REC_ERR_ENCRYPT;
-    }
+    memset(&plainText[plainTextLen], paddingLen, count);
     plainTextLen += count;
     *textLen = plainTextLen;
     return HITLS_SUCCESS;
@@ -452,13 +441,10 @@ static int32_t GenerateCbcPlainTextAfterMac(HITLS_Lib_Ctx *libCtx, const char *a
     const RecConnState *state, const REC_TextInput *plainMsg,
     uint32_t cipherTextLen, uint8_t *plainText, uint32_t *textLen)
 {
+    (void)cipherTextLen;
     /* Fill content */
-    if (memcpy_s(plainText, cipherTextLen, plainMsg->text, plainMsg->textLen) != EOK) {
-        BSL_ERR_PUSH_ERROR(HITLS_MEMCPY_FAIL);
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15898, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
-            "Record CBC encrypt error: memcpy plainMsg fail.", 0, 0, 0, 0);
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(plainText, plainMsg->text, plainMsg->textLen);
+
     uint32_t plainTextLen = plainMsg->textLen;
 
     /* Fill MAC */
@@ -477,12 +463,7 @@ static int32_t GenerateCbcPlainTextAfterMac(HITLS_Lib_Ctx *libCtx, const char *a
     /* Fill padding and padding length */
     uint8_t paddingLen = RecConnGetCbcPaddingLen(state->suiteInfo->blockLength, plainTextLen);
     uint32_t count = paddingLen + CBC_PADDING_LEN_TAG_SIZE;
-    if (memset_s(&plainText[plainTextLen], cipherTextLen - plainTextLen, paddingLen, count) != EOK) {
-        BSL_ERR_PUSH_ERROR(HITLS_REC_ERR_ENCRYPT);
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15393, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
-            "Record CBC encrypt error: memset padding fail.", 0, 0, 0, 0);
-        return HITLS_REC_ERR_ENCRYPT;
-    }
+    memset(&plainText[plainTextLen], paddingLen, count);
     plainTextLen += count;
     *textLen = plainTextLen;
     return HITLS_SUCCESS;

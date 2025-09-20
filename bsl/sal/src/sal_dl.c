@@ -18,7 +18,6 @@
 #if defined(HITLS_BSL_SAL_DL)
 #include <stdio.h>
 #include <stdint.h>
-#include "securec.h"
 #include "bsl_sal.h"
 #include "bsl_errno.h"
 #include "bsl_err_internal.h"
@@ -54,19 +53,19 @@ int32_t BSL_SAL_LibNameFormat(BSL_SAL_LibFmtCmd cmd, const char *fileName, char 
     }
     switch (cmd) {
         case BSL_SAL_LIB_FMT_SO:
-            ret = snprintf_s(tempName, dlPathLen, dlPathLen, "%s.so", fileName);
+            ret = snprintf(tempName, dlPathLen, "%s.so", fileName);
             break;
         case BSL_SAL_LIB_FMT_LIBSO:
-            ret = snprintf_s(tempName, dlPathLen, dlPathLen, "lib%s.so", fileName);
+            ret = snprintf(tempName, dlPathLen, "lib%s.so", fileName);
             break;
         case BSL_SAL_LIB_FMT_LIBDLL:
-            ret = snprintf_s(tempName, dlPathLen, dlPathLen, "lib%s.dll", fileName);
+            ret = snprintf(tempName, dlPathLen, "lib%s.dll", fileName);
             break;
         case BSL_SAL_LIB_FMT_DLL:
-            ret = snprintf_s(tempName, dlPathLen, dlPathLen, "%s.dll", fileName);
+            ret = snprintf(tempName, dlPathLen, "%s.dll", fileName);
             break;
         case BSL_SAL_LIB_FMT_OFF:
-            ret = snprintf_s(tempName, dlPathLen, dlPathLen, "%s", fileName);
+            ret = snprintf(tempName, dlPathLen, "%s", fileName);
             break;
         default:
             // Default to the first(BSL_SAL_LIB_FMT_SO) conversion

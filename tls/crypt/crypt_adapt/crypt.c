@@ -13,7 +13,7 @@
  * See the Mulan PSL v2 for more details.
  */
 #include <stddef.h>
-#include "securec.h"
+#include <string.h>
 #include "tls_binlog_id.h"
 #include "bsl_log_internal.h"
 #include "bsl_log.h"
@@ -319,8 +319,8 @@ static int32_t IteratorInit(CRYPT_KeyDeriveParameters *input, uint32_t hmacSize,
         return HITLS_MEMALLOC_FAIL;
     }
 
-    (void)memcpy_s(&seed[hmacSize], input->labelLen, input->label, input->labelLen);
-    (void)memcpy_s(&seed[hmacSize + input->labelLen], input->seedLen, input->seed, input->seedLen);
+    memcpy(&seed[hmacSize], input->label, input->labelLen);
+    memcpy(&seed[hmacSize + input->labelLen], input->seed, input->seedLen);
 
     int32_t ret = SAL_CRYPT_Hmac(input->libCtx, input->attrName,
         input->hashAlgo, input->secret, input->secretLen,
@@ -404,10 +404,8 @@ int32_t P_Hash(CRYPT_KeyDeriveParameters *input, uint8_t *out, uint32_t outLen)
         }
     }
 
-    if (memcpy_s(out, outLen, data, srcLen) != EOK) {
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16614, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "memcpy fail", 0, 0, 0, 0);
-        ret = HITLS_MEMCPY_FAIL;
-    }
+    memcpy(out, data, srcLen);
+
 EXIT:
     BSL_SAL_FREE(iterator);
     BSL_SAL_FREE(data);
@@ -873,6 +871,7 @@ int32_t SAL_CRYPT_HkdfExpand(HITLS_Lib_Ctx *libCtx,
  */
 static int32_t SAL_CRYPT_EncodeHkdfLabel(HkdfLabel *hkdfLabel, uint8_t *buf, uint32_t bufLen, uint32_t *usedLen)
 {
+    (void)bufLen;
     char labelPrefix[] = "tls13 ";
     size_t labelPrefixLen = strlen(labelPrefix);
     uint32_t offset = 0;
@@ -887,31 +886,19 @@ static int32_t SAL_CRYPT_EncodeHkdfLabel(HkdfLabel *hkdfLabel, uint8_t *buf, uin
     buf[offset] = (uint8_t)(hkdfLabel->labelLen + labelPrefixLen);
     offset += sizeof(uint8_t);
 
-    if (memcpy_s(&buf[offset], bufLen - offset, labelPrefix, labelPrefixLen) != EOK) {
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15117, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
-            "Encode HkdfLabel error: memcpy fail", 0, 0, 0, 0);
-        BSL_ERR_PUSH_ERROR(HITLS_MEMCPY_FAIL);
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(&buf[offset], labelPrefix, labelPrefixLen);
+
     offset += (uint32_t)labelPrefixLen;
-    if (hkdfLabel->labelLen != 0 &&
-        memcpy_s(&buf[offset], bufLen - offset, hkdfLabel->label, hkdfLabel->labelLen) != EOK) {
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15118, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
-            "Encode HkdfLabel error: memcpy fail", 0, 0, 0, 0);
-        BSL_ERR_PUSH_ERROR(HITLS_MEMCPY_FAIL);
-        return HITLS_MEMCPY_FAIL;
+    if (hkdfLabel->labelLen != 0) {
+        memcpy(&buf[offset], hkdfLabel->label, hkdfLabel->labelLen);
     }
     offset += hkdfLabel->labelLen;
 
     buf[offset] = hkdfLabel->ctxLen;
     offset += sizeof(uint8_t);
     if (hkdfLabel->ctxLen != 0) {
-        if (memcpy_s(&buf[offset], bufLen - offset, hkdfLabel->ctx, hkdfLabel->ctxLen) != EOK) {
-            BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15119, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
-                "Encode HkdfLabel error: memcpy fail", 0, 0, 0, 0);
-            BSL_ERR_PUSH_ERROR(HITLS_MEMCPY_FAIL);
-            return HITLS_MEMCPY_FAIL;
-        }
+        memcpy(&buf[offset], hkdfLabel->ctx, hkdfLabel->ctxLen);
+
         offset += hkdfLabel->ctxLen;
     }
     *usedLen = offset;

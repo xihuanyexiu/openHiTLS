@@ -15,7 +15,7 @@
 #include "hitls_build.h"
 #ifdef HITLS_CRYPTO_XMSS
 
-#include "securec.h"
+#include <string.h>
 #include "bsl_sal.h"
 #include "crypt_errno.h"
 #include "crypt_algid.h"
@@ -150,7 +150,7 @@ static void XAdrsSetTreeAddr(XmssAdrs *adrs, uint64_t tree)
 static void XAdrsSetType(XmssAdrs *adrs, AdrsType type)
 {
     PUT_UINT32_BE(type, adrs->x.type, 0);
-    (void)memset_s(adrs->x.padding, sizeof(adrs->x.padding), 0, sizeof(adrs->x.padding));
+    memset(adrs->x.padding, 0, sizeof(adrs->x.padding));
 }
 
 static void XAdrsSetKeyPairAddr(XmssAdrs *adrs, uint32_t keyPair)
@@ -195,8 +195,7 @@ static uint32_t XAdrsGetTreeIndex(const XmssAdrs *adrs)
 
 static void XAdrsCopyKeyPairAddr(XmssAdrs *adrs, const XmssAdrs *adrs2)
 {
-    (void)memcpy_s(adrs->x.padding, sizeof(adrs->x.padding), adrs2->x.padding,
-                   4); // key pair address is 4 bytes, start from 4-th byte
+    (void)memcpy(adrs->x.padding, adrs2->x.padding, 4); // key pair address is 4 bytes, start from 4-th byte
 }
 
 static uint32_t XAdrsGetAdrsLen()
@@ -276,7 +275,7 @@ int32_t CRYPT_XMSS_Gen(CryptXmssCtx *ctx)
         return ret;
     }
     XmssAdrs adrs;
-    (void)memset_s(&adrs, sizeof(XmssAdrs), 0, sizeof(XmssAdrs));
+    memset(&adrs, 0, sizeof(XmssAdrs));
     ctx->adrsOps.setLayerAddr(&adrs, d - 1);
     uint8_t node[MAX_MDSIZE] = {0};
     ret = XmssNode(node, 0, hp, &adrs, ctx, NULL, 0);
@@ -284,7 +283,7 @@ int32_t CRYPT_XMSS_Gen(CryptXmssCtx *ctx)
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
-    (void)memcpy_s(ctx->prvKey.pub.root, n, node, n);
+    memcpy(ctx->prvKey.pub.root, node, n);
 
     /* init the private key index to 0 */
     ctx->prvKey.index = 0;
@@ -581,8 +580,8 @@ int32_t CRYPT_XMSS_GetPubKey(const CryptXmssCtx *ctx, BSL_Param *para)
         return ret;
     }
     pub.pubSeed->useLen = pub.pubRoot->useLen = ctx->para.n;
-    (void)memcpy_s(pub.pubSeed->value, pub.pubSeed->valueLen, ctx->prvKey.pub.seed, ctx->para.n);
-    (void)memcpy_s(pub.pubRoot->value, pub.pubRoot->valueLen, ctx->prvKey.pub.root, ctx->para.n);
+    memcpy(pub.pubSeed->value, ctx->prvKey.pub.seed, ctx->para.n);
+    memcpy(pub.pubRoot->value, ctx->prvKey.pub.root, ctx->para.n);
 
     return CRYPT_SUCCESS;
 }
@@ -627,10 +626,10 @@ int32_t CRYPT_XMSS_GetPrvKey(const CryptXmssCtx *ctx, BSL_Param *para)
     prv.prvPrf->useLen = ctx->para.n;
     prv.pubSeed->useLen = ctx->para.n;
     prv.pubRoot->useLen = ctx->para.n;
-    (void)memcpy_s(prv.prvSeed->value, prv.prvSeed->valueLen, ctx->prvKey.seed, ctx->para.n);
-    (void)memcpy_s(prv.prvPrf->value, prv.prvPrf->valueLen, ctx->prvKey.prf, ctx->para.n);
-    (void)memcpy_s(prv.pubSeed->value, prv.pubSeed->valueLen, ctx->prvKey.pub.seed, ctx->para.n);
-    (void)memcpy_s(prv.pubRoot->value, prv.pubRoot->valueLen, ctx->prvKey.pub.root, ctx->para.n);
+    memcpy(prv.prvSeed->value, ctx->prvKey.seed, ctx->para.n);
+    memcpy(prv.prvPrf->value, ctx->prvKey.prf, ctx->para.n);
+    memcpy(prv.pubSeed->value, ctx->prvKey.pub.seed, ctx->para.n);
+    memcpy(prv.pubRoot->value, ctx->prvKey.pub.root, ctx->para.n);
 
     return BSL_PARAM_SetValue(prv.prvIndex, CRYPT_PARAM_XMSS_PRV_INDEX, BSL_PARAM_TYPE_UINT64,
             &index, sizeof(index));
@@ -644,8 +643,8 @@ int32_t CRYPT_XMSS_SetPubKey(CryptXmssCtx *ctx, const BSL_Param *para)
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
-    (void)memcpy_s(ctx->prvKey.pub.seed, ctx->para.n, pub.pubSeed->value, ctx->para.n);
-    (void)memcpy_s(ctx->prvKey.pub.root, ctx->para.n, pub.pubRoot->value, ctx->para.n);
+    memcpy(ctx->prvKey.pub.seed, pub.pubSeed->value, ctx->para.n);
+    memcpy(ctx->prvKey.pub.root, pub.pubRoot->value, ctx->para.n);
 
     return CRYPT_SUCCESS;
 }
@@ -660,10 +659,10 @@ int32_t CRYPT_XMSS_SetPrvKey(CryptXmssCtx *ctx, const BSL_Param *para)
         return ret;
     }
 
-    (void)memcpy_s(ctx->prvKey.seed, sizeof(ctx->prvKey.seed), prv.prvSeed->value, ctx->para.n);
-    (void)memcpy_s(ctx->prvKey.prf, sizeof(ctx->prvKey.prf), prv.prvPrf->value, ctx->para.n);
-    (void)memcpy_s(ctx->prvKey.pub.seed, sizeof(ctx->prvKey.pub.seed), prv.pubSeed->value, ctx->para.n);
-    (void)memcpy_s(ctx->prvKey.pub.root, sizeof(ctx->prvKey.pub.root), prv.pubRoot->value, ctx->para.n);
+    memcpy(ctx->prvKey.seed, prv.prvSeed->value, ctx->para.n);
+    memcpy(ctx->prvKey.prf, prv.prvPrf->value, ctx->para.n);
+    memcpy(ctx->prvKey.pub.seed, prv.pubSeed->value, ctx->para.n);
+    memcpy(ctx->prvKey.pub.root, prv.pubRoot->value, ctx->para.n);
 
     return BSL_PARAM_GetValue(prv.prvIndex, CRYPT_PARAM_XMSS_PRV_INDEX, BSL_PARAM_TYPE_UINT64,
             &ctx->prvKey.index, &tmplen);

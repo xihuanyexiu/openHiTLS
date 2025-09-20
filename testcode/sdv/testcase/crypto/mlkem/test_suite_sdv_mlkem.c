@@ -20,7 +20,6 @@
 #include "crypt_eal_pkey.h"
 #include "crypt_util_rand.h"
 #include "eal_pkey_local.h"
-#include "securec.h"
 #include "crypt_mlkem.h"
 #include "ml_kem_local.h"
 /* END_HEADER */
@@ -29,7 +28,8 @@ static uint8_t gKyberRandBuf[3][32] = { 0 };
 uint32_t gKyberRandNum = 0;
 static int32_t TEST_KyberRandom(uint8_t *randNum, uint32_t randLen)
 {
-    memcpy_s(randNum, randLen, gKyberRandBuf[gKyberRandNum], 32);
+    (void)randLen;
+    memcpy(randNum, gKyberRandBuf[gKyberRandNum], 32);
     gKyberRandNum++;
     return 0;
 }
@@ -352,7 +352,7 @@ void SDV_CRYPTO_MLKEM_SETPUB_API_TC002(int bits, Hex *testEK)
     ASSERT_EQ(CRYPT_EAL_PkeySetPub(ctx, &ek), CRYPT_NULL_INPUT);
 
     ek.key.kemEk.data =  BSL_SAL_Malloc(encapsKeyLen);
-    (void)memcpy_s(ek.key.kemEk.data, encapsKeyLen, testEK->x, testEK->len);
+    memcpy(ek.key.kemEk.data, testEK->x, testEK->len);
     ek.key.kemEk.len = encapsKeyLen - 1;
     ASSERT_EQ(CRYPT_EAL_PkeySetPub(ctx, &ek), CRYPT_MLKEM_KEYLEN_ERROR);
 
@@ -360,7 +360,7 @@ void SDV_CRYPTO_MLKEM_SETPUB_API_TC002(int bits, Hex *testEK)
     ASSERT_EQ(CRYPT_EAL_PkeyGetPub(ctx, &ek), CRYPT_MLKEM_KEY_NOT_SET);
 
     ASSERT_EQ(CRYPT_EAL_PkeySetPub(ctx, &ek), CRYPT_SUCCESS);
-    (void)memset_s(ek.key.kemEk.data, encapsKeyLen, 0, encapsKeyLen);
+    memset(ek.key.kemEk.data, 0, encapsKeyLen);
 
     ek.key.kemEk.len = encapsKeyLen - 1;
     ASSERT_EQ(CRYPT_EAL_PkeyGetPub(ctx, &ek), CRYPT_MLKEM_KEYLEN_ERROR);
@@ -411,7 +411,7 @@ void SDV_CRYPTO_MLKEM_SETPRV_API_TC002(int bits, Hex *testDK)
     ASSERT_EQ(CRYPT_EAL_PkeySetPrv(ctx, &dk), CRYPT_NULL_INPUT);
 
     dk.key.kemDk.data =  BSL_SAL_Malloc(decapsKeyLen);
-    (void)memcpy_s(dk.key.kemDk.data, decapsKeyLen, testDK->x, testDK->len);
+    memcpy(dk.key.kemDk.data, testDK->x, testDK->len);
     dk.key.kemDk.len = decapsKeyLen - 1;
     ASSERT_EQ(CRYPT_EAL_PkeySetPrv(ctx, &dk), CRYPT_MLKEM_KEYLEN_ERROR);
 
@@ -419,7 +419,7 @@ void SDV_CRYPTO_MLKEM_SETPRV_API_TC002(int bits, Hex *testDK)
     ASSERT_EQ(CRYPT_EAL_PkeyGetPrv(ctx, &dk), CRYPT_MLKEM_KEY_NOT_SET);
 
     ASSERT_EQ(CRYPT_EAL_PkeySetPrv(ctx, &dk), CRYPT_SUCCESS);
-    (void)memset_s(dk.key.kemDk.data, decapsKeyLen, 0, decapsKeyLen);
+    memset(dk.key.kemDk.data, 0, decapsKeyLen);
 
     dk.key.kemDk.len = decapsKeyLen - 1;
     ASSERT_EQ(CRYPT_EAL_PkeyGetPrv(ctx, &dk), CRYPT_MLKEM_KEYLEN_ERROR);
@@ -454,9 +454,9 @@ void SDV_CRYPTO_MLKEM_KEYCMP_FUNC_TC001(int bits, Hex *r0, Hex *r1, Hex *r2, int
 {
     TestMemInit();
     gKyberRandNum = 0;
-    memcpy_s(gKyberRandBuf[0], 32, r0->x, r0->len);
-    memcpy_s(gKyberRandBuf[1], 32, r1->x, r1->len);
-    memcpy_s(gKyberRandBuf[2], 32, r2->x, r2->len);
+    memcpy(gKyberRandBuf[0], r0->x, r0->len);
+    memcpy(gKyberRandBuf[1], r1->x, r1->len);
+    memcpy(gKyberRandBuf[2], r2->x, r2->len);
     CRYPT_RandRegist(TEST_KyberRandom);
     CRYPT_RandRegistEx(TEST_KyberRandomEx);
 
@@ -533,8 +533,8 @@ void SDV_CRYPTO_MLKEM_KEYGEN_FUNC_TC001(int bits, Hex *z, Hex *d, Hex *testEK, H
 {
     TestMemInit();
     gKyberRandNum = 0;
-    memcpy_s(gKyberRandBuf[0], 32, d->x, d->len);
-    memcpy_s(gKyberRandBuf[1], 32, z->x, z->len);
+    memcpy(gKyberRandBuf[0], d->x, d->len);
+    memcpy(gKyberRandBuf[1], z->x, z->len);
     CRYPT_RandRegist(TEST_KyberRandom);
     CRYPT_RandRegistEx(TEST_KyberRandomEx);
 
@@ -598,7 +598,7 @@ void SDV_CRYPTO_MLKEM_ENCAPS_DECAPS_FUNC_TC001(int bits, Hex *m, Hex *testEK, He
 {
     TestMemInit();
     gKyberRandNum = 0;
-    memcpy_s(gKyberRandBuf[0], 32, m->x, m->len);
+    memcpy(gKyberRandBuf[0], m->x, m->len);
     CRYPT_RandRegist(TEST_KyberRandom);
     CRYPT_RandRegistEx(TEST_KyberRandomEx);
 
@@ -623,13 +623,13 @@ void SDV_CRYPTO_MLKEM_ENCAPS_DECAPS_FUNC_TC001(int bits, Hex *m, Hex *testEK, He
     ek.id = CRYPT_PKEY_ML_KEM;
     ek.key.kemEk.len = encapsKeyLen;
     ek.key.kemEk.data =  BSL_SAL_Malloc(encapsKeyLen);
-    (void)memcpy_s(ek.key.kemEk.data, ek.key.kemEk.len, testEK->x, testEK->len);
+    memcpy(ek.key.kemEk.data, testEK->x, testEK->len);
 
     CRYPT_EAL_PkeyPrv dk = { 0 };
     dk.id = CRYPT_PKEY_ML_KEM;
     dk.key.kemDk.len = decapsKeyLen;
     dk.key.kemDk.data =  BSL_SAL_Malloc(decapsKeyLen);
-    (void)memcpy_s(dk.key.kemDk.data, dk.key.kemDk.len, testDK->x, testDK->len);
+    memcpy(dk.key.kemDk.data, testDK->x, testDK->len);
 
     uint8_t *ciphertext = BSL_SAL_Malloc(cipherLen);
     uint32_t sharedLen = 32;
@@ -694,7 +694,7 @@ void SDV_CRYPTO_MLKEM_DECAPS_FUNC_TC001(int bits, Hex *testDK, Hex *testCT, Hex 
     dk.id = CRYPT_PKEY_ML_KEM;
     dk.key.kemDk.len = decapsKeyLen;
     dk.key.kemDk.data =  BSL_SAL_Malloc(decapsKeyLen);
-    (void)memcpy_s(dk.key.kemDk.data, dk.key.kemDk.len, testDK->x, testDK->len);
+    memcpy(dk.key.kemDk.data, testDK->x, testDK->len);
 
     uint32_t sharedLen = 32;
     uint8_t *sharedKey = BSL_SAL_Malloc(sharedLen);
@@ -764,7 +764,7 @@ void SDV_CRYPTO_MLKEM_ABNORMAL_DECAPS_FUNC_TC001(int bits, Hex *m, Hex *testEK, 
 {
     TestMemInit();
     gKyberRandNum = 0;
-    memcpy_s(gKyberRandBuf[0], 32, m->x, m->len);
+    memcpy(gKyberRandBuf[0], m->x, m->len);
     CRYPT_RandRegist(TEST_KyberRandom);
     CRYPT_RandRegistEx(TEST_KyberRandomEx);
 
@@ -791,13 +791,13 @@ void SDV_CRYPTO_MLKEM_ABNORMAL_DECAPS_FUNC_TC001(int bits, Hex *m, Hex *testEK, 
     ek.id = CRYPT_PKEY_ML_KEM;
     ek.key.kemEk.len = encapsKeyLen;
     ek.key.kemEk.data =  BSL_SAL_Malloc(encapsKeyLen);
-    (void)memcpy_s(ek.key.kemEk.data, ek.key.kemEk.len, testEK->x, testEK->len);
+    memcpy(ek.key.kemEk.data, testEK->x, testEK->len);
 
     CRYPT_EAL_PkeyPrv dk = { 0 };
     dk.id = CRYPT_PKEY_ML_KEM;
     dk.key.kemDk.len = decapsKeyLen;
     dk.key.kemDk.data =  BSL_SAL_Malloc(decapsKeyLen);
-    (void)memcpy_s(dk.key.kemDk.data, dk.key.kemDk.len, testDK->x, testDK->len);
+    memcpy(dk.key.kemDk.data, testDK->x, testDK->len);
 
     uint8_t *ciphertext = BSL_SAL_Malloc(cipherLen);
     uint32_t sharedLen = 32;
@@ -847,7 +847,7 @@ void SDV_CRYPTO_MLKEM_ABNORMAL_DECAPS_FUNC_TC002(int bits, Hex *m, Hex *testEK, 
 {
     TestMemInit();
     gKyberRandNum = 0;
-    memcpy_s(gKyberRandBuf[0], 32, m->x, m->len);
+    memcpy(gKyberRandBuf[0], m->x, m->len);
     CRYPT_RandRegist(TEST_KyberRandom);
     CRYPT_RandRegistEx(TEST_KyberRandomEx);
 
@@ -874,13 +874,13 @@ void SDV_CRYPTO_MLKEM_ABNORMAL_DECAPS_FUNC_TC002(int bits, Hex *m, Hex *testEK, 
     ek.id = CRYPT_PKEY_ML_KEM;
     ek.key.kemEk.len = encapsKeyLen;
     ek.key.kemEk.data =  BSL_SAL_Malloc(encapsKeyLen);
-    (void)memcpy_s(ek.key.kemEk.data, ek.key.kemEk.len, testEK->x, testEK->len);
+    memcpy(ek.key.kemEk.data, testEK->x, testEK->len);
 
     CRYPT_EAL_PkeyPrv dk = { 0 };
     dk.id = CRYPT_PKEY_ML_KEM;
     dk.key.kemDk.len = decapsKeyLen;
     dk.key.kemDk.data =  BSL_SAL_Calloc(1u, decapsKeyLen);
-    (void)memcpy_s(dk.key.kemDk.data, dk.key.kemDk.len, changeDK->x, changeDK->len);
+    memcpy(dk.key.kemDk.data, changeDK->x, changeDK->len);
 
     uint8_t *ciphertext = BSL_SAL_Malloc(cipherLen);
     uint32_t sharedLen = 32;
@@ -930,7 +930,7 @@ void SDV_CRYPTO_MLKEM_ABNORMAL_DECAPS_FUNC_TC003(int bits, Hex *m, Hex *testDK, 
 {
     TestMemInit();
     gKyberRandNum = 0;
-    memcpy_s(gKyberRandBuf[0], 32, m->x, m->len);
+    memcpy(gKyberRandBuf[0], m->x, m->len);
     CRYPT_RandRegist(TEST_KyberRandom);
     CRYPT_RandRegistEx(TEST_KyberRandomEx);
 
@@ -957,13 +957,13 @@ void SDV_CRYPTO_MLKEM_ABNORMAL_DECAPS_FUNC_TC003(int bits, Hex *m, Hex *testDK, 
     ek.id = CRYPT_PKEY_ML_KEM;
     ek.key.kemEk.len = encapsKeyLen;
     ek.key.kemEk.data =  BSL_SAL_Malloc(encapsKeyLen);
-    (void)memcpy_s(ek.key.kemEk.data, ek.key.kemEk.len, changeEK->x, changeEK->len);
+    memcpy(ek.key.kemEk.data, changeEK->x, changeEK->len);
 
     CRYPT_EAL_PkeyPrv dk = { 0 };
     dk.id = CRYPT_PKEY_ML_KEM;
     dk.key.kemDk.len = decapsKeyLen;
     dk.key.kemDk.data =  BSL_SAL_Malloc(decapsKeyLen);
-    (void)memcpy_s(dk.key.kemDk.data, dk.key.kemDk.len, testDK->x, testDK->len);
+    memcpy(dk.key.kemDk.data, testDK->x, testDK->len);
 
     uint8_t *ciphertext = BSL_SAL_Malloc(cipherLen);
     uint32_t sharedLen = 32;

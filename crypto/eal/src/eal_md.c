@@ -18,7 +18,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "securec.h"
+#include <string.h>
 #include "bsl_err_internal.h"
 #include "bsl_sal.h"
 #include "crypt_local_types.h"
@@ -43,7 +43,7 @@ static CRYPT_EAL_MdCTX *MdNewCtxInner(CRYPT_MD_AlgId id, CRYPT_EAL_LibCtx *libCt
     }
     void *provCtx = NULL;
     // The ctx->method will be overwritten if the method is found.
-    (void)memset_s(&ctx->method, sizeof(ctx->method), 0, sizeof(ctx->method));
+    memset(&ctx->method, 0, sizeof(ctx->method));
     if (!isProvider) {
         method = EAL_MdFindMethod(id, &ctx->method);
     } else {

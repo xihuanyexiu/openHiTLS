@@ -18,13 +18,16 @@
 
 #include <ctype.h>
 #include <limits.h>
-#include "securec.h"
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "bsl_uio.h"
 #include "bsl_sal.h"
 #include "bsl_list.h"
 #include "bsl_errno.h"
 #include "bsl_err_internal.h"
 #include "bsl_conf_def.h"
+#include <errno.h>
 
 #define BREAK_FLAG      1
 #define CONTINUE_FLAG   2
@@ -93,7 +96,7 @@ static int32_t RemoveSpace(char *str)
     }
     int32_t realLen = tail - head + 1;
     if (realLen > 0) {
-        (void)memmove_s(str, strLen, str + head, realLen);
+        (void)memmove(str, str + head, realLen);
     }
     str[realLen] = '\0';
     return realLen;
@@ -210,7 +213,7 @@ char **DefaultGetSectionNames(BslList *sectionList, uint32_t *namesSize)
             BSL_ERR_PUSH_ERROR(BSL_MALLOC_FAIL);
             return NULL;
         }
-        (void)memcpy_s(names[cnt], secData->sectionLen, secData->section, secData->sectionLen);
+        memcpy(names[cnt], secData->section, secData->sectionLen);
         cnt++;
         node = BSL_LIST_GetNextNode(sectionList, node);
     }
@@ -277,7 +280,7 @@ static int32_t UpdateKeyValue(BSL_CONF_KeyValue *keyValue, const char *value)
         BSL_ERR_PUSH_ERROR(BSL_CONF_MEM_ALLOC_FAIL);
         return BSL_CONF_MEM_ALLOC_FAIL;
     }
-    (void)memcpy_s(newValue, newValueLen, value, newValueLen);
+    memcpy(newValue, value, newValueLen);
     BSL_SAL_FREE(keyValue->value);
     keyValue->value = newValue;
     keyValue->valueLen = newValueLen;
@@ -310,8 +313,8 @@ static int32_t AddKeyValue(BslList *keyValueList, const char * key, const char *
         ret = BSL_CONF_MEM_ALLOC_FAIL;
         goto EXIT;
     }
-    (void)memcpy_s(keyValue->key, keyValue->keyLen, key, keyValue->keyLen);
-    (void)memcpy_s(keyValue->value, keyValue->valueLen, value, keyValue->valueLen);
+    memcpy(keyValue->key, key, keyValue->keyLen);
+    memcpy(keyValue->value, value, keyValue->valueLen);
     ret = BSL_LIST_AddElement(keyValueList, keyValue, BSL_LIST_POS_END);
     if (ret != BSL_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
@@ -342,7 +345,7 @@ static int32_t AddSection(BslList *sectionList, const char *section, const char 
         ret = BSL_CONF_MEM_ALLOC_FAIL;
         goto EXIT;
     }
-    (void)memcpy_s(sectionNode->section, sectionNode->sectionLen, section, sectionNode->sectionLen);
+    memcpy(sectionNode->section, section, sectionNode->sectionLen);
     sectionNode->keyValueList = BSL_LIST_New(sizeof(BslList));
     if (sectionNode->keyValueList == NULL) {
         BSL_ERR_PUSH_ERROR(BSL_CONF_MEM_ALLOC_FAIL);
@@ -400,7 +403,7 @@ int32_t DefaultGetString(BslList *sectionList, const char *section, const char *
         BSL_ERR_PUSH_ERROR(BSL_CONF_GET_FAIL);
         return BSL_CONF_GET_FAIL;
     }
-    (void)memcpy_s(str, *strLen, keyValue->value, keyValue->valueLen);
+    memcpy(str, keyValue->value, keyValue->valueLen);
     str[keyValue->valueLen] = '\0';
     *strLen = keyValue->valueLen;
     return BSL_SUCCESS;
@@ -550,28 +553,26 @@ static int32_t ConfParseLine(BslList *sectionList, char *buff, char *section, ch
 {
     int32_t ret = BSL_SUCCESS;
     size_t len = strlen(buff);
-    int32_t n = 2; // sscanf_s is expected to return 2.
+    int32_t n = 2; // sscanf is expected to return 2.
     if (len < 1 || buff[0] == '#' || buff[0] == ';') { // empty or comments
         return BSL_SUCCESS;
     } else if (buff[0] == '[' && buff[len - 1] == ']') {
         len -= 2; // remove '[' and ']' len - 2.
-        if (memcpy_s(section, BSL_CONF_SEC_SIZE, &buff[1], len) != 0) {
-            BSL_ERR_PUSH_ERROR(BSL_CONF_BUFF_OVERFLOW);
-            return BSL_CONF_BUFF_OVERFLOW;
-        }
+        memcpy(section, &buff[1], len);
+
         section[len] = '\0';
-    } else if (sscanf_s(buff, "%[^=] = \"%[^\n]", key, BSL_CONF_LINE_SIZE, value, BSL_CONF_LINE_SIZE) == n) {
+    } else if (sscanf(buff, "%512[^=] = \"%512[^\n]", key, value) == n) {
         ret = ParseQuote(value, '\"');
-    } else if (sscanf_s(buff, "%[^=] = \'%[^\n]", key, BSL_CONF_LINE_SIZE, value, BSL_CONF_LINE_SIZE) == n) {
+    } else if (sscanf(buff, "%512[^=] = \'%512[^\n]", key, value) == n) {
         ret = ParseQuote(value, '\'');
     } else if (RemoveEscapeAndComments(buff) < 0) {
         BSL_ERR_PUSH_ERROR(BSL_CONF_CONTEXT_ERR);
         return BSL_CONF_CONTEXT_ERR;
-    } else if (sscanf_s(buff, "%[^=]%[=]", key, BSL_CONF_LINE_SIZE, value, BSL_CONF_LINE_SIZE) == n) {
+    } else if (sscanf(buff, "%512[^=]%512[=]", key, value) == n) {
         char *valPtr = strchr(buff, '=');
         valPtr++;
         len = strlen(valPtr);
-        (void)memcpy_s(value, len, valPtr, len);
+        memcpy(value, valPtr, len);
         value[len] = '\0';
     } else {
         BSL_ERR_PUSH_ERROR(BSL_CONF_CONTEXT_ERR);
@@ -621,9 +622,9 @@ int32_t DefaultLoadUio(BslList *sectionList, BSL_UIO *uio)
             break;
         }
         // Clear buff, key, value, do not clear section.
-        (void)memset_s(buff, BSL_CONF_LINE_SIZE + 1, 0, BSL_CONF_LINE_SIZE + 1);
-        (void)memset_s(key, BSL_CONF_LINE_SIZE + 1, 0, BSL_CONF_LINE_SIZE + 1);
-        (void)memset_s(value, BSL_CONF_LINE_SIZE + 1, 0, BSL_CONF_LINE_SIZE + 1);
+        memset(buff, 0, BSL_CONF_LINE_SIZE + 1);
+        memset(key, 0, BSL_CONF_LINE_SIZE + 1);
+        memset(value, 0, BSL_CONF_LINE_SIZE + 1);
         offset = 0; // Reset offset.
     }
     BSL_SAL_FREE(buff);
@@ -660,7 +661,7 @@ static int32_t DumpSection(BSL_UIO *uio, const BSL_CONF_Section *secData)
         BSL_ERR_PUSH_ERROR(BSL_MALLOC_FAIL);
         return BSL_MALLOC_FAIL;
     }
-    int32_t usedLen = sprintf_s(str, strLen, "[%s]\n", secData->section);
+    int32_t usedLen = snprintf(str, strLen + 1, "[%s]\n", secData->section);
     if (usedLen < 0) {
         BSL_SAL_FREE(str);
         BSL_ERR_PUSH_ERROR(BSL_CONF_DUMP_FAIL);
@@ -687,7 +688,7 @@ static int32_t DumpKeyValue(BSL_UIO *uio, const BSL_CONF_KeyValue *keyValue)
         BSL_ERR_PUSH_ERROR(BSL_MALLOC_FAIL);
         return BSL_MALLOC_FAIL;
     }
-    int32_t usedLen = sprintf_s(str, strLen, "%s=", keyValue->key);
+    int32_t usedLen = snprintf(str, strLen + 1, "%s=", keyValue->key);
     if (usedLen < 0) {
         BSL_SAL_FREE(str);
         BSL_ERR_PUSH_ERROR(BSL_CONF_DUMP_FAIL);

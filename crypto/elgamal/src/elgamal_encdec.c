@@ -15,29 +15,23 @@
 
 #include "hitls_build.h"
 #ifdef HITLS_CRYPTO_ELGAMAL
-
+#include <string.h>
 #include "crypt_utils.h"
 #include "crypt_elgamal.h"
 #include "elgamal_local.h"
 #include "crypt_errno.h"
 #include "bsl_sal.h"
-#include "securec.h"
 #include "bsl_err_internal.h"
 
 static int32_t AddZero(uint32_t bits, uint8_t *out, uint32_t *outLen)
 {
-    int32_t ret;
     uint32_t i;
     uint32_t zeros = 0;
     /* Divide bits by 8 to obtain the byte length. If it is smaller than the key length, pad it with 0. */
     if ((*outLen) < BN_BITS_TO_BYTES(bits)) {
         /* Divide bits by 8 to obtain the byte length. If it is smaller than the key length, pad it with 0. */
         zeros = BN_BITS_TO_BYTES(bits) - (*outLen);
-        ret = memmove_s(out + zeros, BN_BITS_TO_BYTES(bits) - zeros, out, (*outLen));
-        if (ret != EOK) {
-            BSL_ERR_PUSH_ERROR(CRYPT_SECUREC_FAIL);
-            return CRYPT_SECUREC_FAIL;
-        }
+        memmove(out + zeros, out, (*outLen));
         for (i = 0; i < zeros; i++) {
             out[i] = 0x0;
         }
@@ -288,8 +282,8 @@ int32_t CRYPT_ELGAMAL_Encrypt(CRYPT_ELGAMAL_Ctx *ctx, const uint8_t *data, uint3
         goto EXIT;
     }
 
-    (void)memcpy_s(out3, out3Len, out1, out1Len); // c1
-    (void)memcpy_s(out3 + out1Len, out3Len - out1Len, out2, out2Len); // c2
+    memcpy(out3, out1, out1Len); // c1
+    memcpy(out3 + out1Len, out2, out2Len); // c2
 
     ret = BN_Bin2Bn(c,out3,out3Len);
     if (ret != CRYPT_SUCCESS) {
@@ -404,8 +398,8 @@ int32_t CRYPT_ELGAMAL_Decrypt(CRYPT_ELGAMAL_Ctx *ctx, const uint8_t *data, uint3
         goto EXIT;
     }
 
-    (void)memcpy_s(data1, data1Len, data, data1Len); // c1
-    (void)memcpy_s(data2, data2Len, data + data1Len, data2Len); // c2
+    memcpy(data1, data, data1Len); // c1
+    memcpy(data2, data + data1Len, data2Len); // c2
 
     ret = BN_Bin2Bn(c1, data1, data1Len);
     if (ret != CRYPT_SUCCESS) {

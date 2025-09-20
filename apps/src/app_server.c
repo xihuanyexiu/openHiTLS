@@ -22,7 +22,6 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <unistd.h>
-#include "securec.h"
 #include "app_errno.h"
 #include "app_print.h"
 #include "app_opt.h"
@@ -168,7 +167,7 @@ static void InitServerParams(HITLS_ServerParams *params, AppProvider *provider)
     if (params == NULL || provider == NULL) {
         return;
     }
-    
+
     /* Set default values */
     params->port = 4433;
     params->backlog = 5;

@@ -13,22 +13,9 @@ Check whether the build tools have been installed in the system and can be used 
 
 ## 2. Preparing the Source Code
 
-Method 1
-
-1. Download the openHiTLS code, including the service code, build script, and test code.
+Download the openHiTLS code, including the service code, build script, and test code.
 
    Repository address: https://gitcode.com/openhitls/openhitls.git
-2. openHiTLS depends on the libboundscheck library. Before building openHiTLS, download the library to **openHiTLS/platform/Secure\_C**.
-
-   Repository address: https://gitee.com/openeuler/libboundscheck.git
-
-Method 2
-
-Run the **git submodule** command to download the source code and dependent SecureC library:
-
-```
-git clone --recurse-submodules https://gitcode.com/openhitls/openhitls.git
-```
 
 ## 3. Building and Installing openHiTLS
 

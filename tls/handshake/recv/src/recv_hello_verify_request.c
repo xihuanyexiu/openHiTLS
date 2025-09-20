@@ -15,7 +15,7 @@
 #include "hitls_build.h"
 #ifdef HITLS_TLS_HOST_CLIENT
 #ifdef HITLS_TLS_PROTO_DTLS12
-#include "securec.h"
+#include <string.h>
 #include "bsl_log_internal.h"
 #include "bsl_log.h"
 #include "tls_binlog_id.h"

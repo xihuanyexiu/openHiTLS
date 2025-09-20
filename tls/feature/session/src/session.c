@@ -15,9 +15,9 @@
 #include "hitls_build.h"
 #ifdef HITLS_TLS_FEATURE_SESSION
 #include <stdbool.h>
+#include <string.h>
 #include <time.h>
 #include <stdarg.h>
-#include "securec.h"
 #include "bsl_sal.h"
 #include "hitls_error.h"
 #include "bsl_list.h"
@@ -117,7 +117,7 @@ void HITLS_SESS_Free(HITLS_Session *sess)
 #ifdef HITLS_TLS_FEATURE_SNI
         BSL_SAL_FREE(sess->hostName);
 #endif
-        memset_s(sess->masterKey, MAX_MASTER_KEY_SIZE, 0, MAX_MASTER_KEY_SIZE);
+        memset(sess->masterKey, 0, MAX_MASTER_KEY_SIZE);
         SAL_CERT_MgrCtxFree(sess->certMgrCtx);
         BSL_SAL_ThreadLockFree(sess->lock);
         BSL_SAL_FREE(sess);
@@ -228,14 +228,13 @@ int32_t HITLS_SESS_GetSessionId(const HITLS_Session *sess, uint8_t *sessionId, u
         BSL_ERR_PUSH_ERROR(HITLS_NULL_INPUT);
         return HITLS_NULL_INPUT;
     }
+    if (*sessionIdSize < sess->sessionIdSize) {
+        BSL_ERR_PUSH_ERROR(HITLS_INVALID_INPUT);
+        return HITLS_INVALID_INPUT;
+    }
 
     BSL_SAL_ThreadReadLock(sess->lock);
-    if (memcpy_s(sessionId, *sessionIdSize, sess->sessionId, sess->sessionIdSize) != EOK) {
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16727, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "memcpy fail", 0, 0, 0, 0);
-        BSL_SAL_ThreadUnlock(sess->lock);
-        BSL_ERR_PUSH_ERROR(HITLS_MEMCPY_FAIL);
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(sessionId, sess->sessionId, sess->sessionIdSize);
 
     *sessionIdSize = sess->sessionIdSize;
     BSL_SAL_ThreadUnlock(sess->lock);
@@ -250,13 +249,14 @@ int32_t HITLS_SESS_SetSessionIdCtx(HITLS_Session *sess, uint8_t *sessionIdCtx, u
         return HITLS_NULL_INPUT;
     }
 
+    if (sessionIdCtxSize > sizeof(sess->sessionIdCtx)) {
+        BSL_ERR_PUSH_ERROR(HITLS_INVALID_INPUT);
+        return HITLS_INVALID_INPUT;
+    }
+
     BSL_SAL_ThreadWriteLock(sess->lock);
-    if (sessionIdCtxSize != 0 &&
-        memcpy_s(sess->sessionIdCtx, sizeof(sess->sessionIdCtx), sessionIdCtx, sessionIdCtxSize) != EOK) {
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16729, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "memcpy fail", 0, 0, 0, 0);
-        BSL_SAL_ThreadUnlock(sess->lock);
-        BSL_ERR_PUSH_ERROR(HITLS_MEMCPY_FAIL);
-        return HITLS_MEMCPY_FAIL;
+    if (sessionIdCtxSize != 0) {
+        memcpy(sess->sessionIdCtx, sessionIdCtx, sessionIdCtxSize);
     }
 
     /* The allowed value for sessionIdCtxSize is 0 */
@@ -274,13 +274,14 @@ int32_t HITLS_SESS_GetSessionIdCtx(const HITLS_Session *sess, uint8_t *sessionId
         return HITLS_NULL_INPUT;
     }
 
-    BSL_SAL_ThreadReadLock(sess->lock);
-    if (memcpy_s(sessionIdCtx, *sessionIdCtxSize, sess->sessionIdCtx, sess->sessionIdCtxSize) != EOK) {
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16731, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "memcpy fail", 0, 0, 0, 0);
-        BSL_SAL_ThreadUnlock(sess->lock);
-        BSL_ERR_PUSH_ERROR(HITLS_MEMCPY_FAIL);
-        return HITLS_MEMCPY_FAIL;
+    if (*sessionIdCtxSize < sess->sessionIdCtxSize) {
+        BSL_ERR_PUSH_ERROR(HITLS_INVALID_INPUT);
+        return HITLS_INVALID_INPUT;
     }
+
+    BSL_SAL_ThreadReadLock(sess->lock);
+    memcpy(sessionIdCtx, sess->sessionIdCtx, sess->sessionIdCtxSize);
+
 
     *sessionIdCtxSize = sess->sessionIdCtxSize;
     BSL_SAL_ThreadUnlock(sess->lock);
@@ -296,13 +297,13 @@ int32_t HITLS_SESS_SetSessionId(HITLS_Session *sess, uint8_t *sessionId, uint32_
         return HITLS_NULL_INPUT;
     }
 
-    BSL_SAL_ThreadWriteLock(sess->lock);
-    if (memcpy_s(sess->sessionId, sizeof(sess->sessionId), sessionId, sessionIdSize) != EOK) {
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16733, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "memcpy fail", 0, 0, 0, 0);
-        BSL_SAL_ThreadUnlock(sess->lock);
-        BSL_ERR_PUSH_ERROR(HITLS_MEMCPY_FAIL);
-        return HITLS_MEMCPY_FAIL;
+    if (sessionIdSize > sizeof(sess->sessionId)) {
+        BSL_ERR_PUSH_ERROR(HITLS_INVALID_INPUT);
+        return HITLS_INVALID_INPUT;
     }
+
+    BSL_SAL_ThreadWriteLock(sess->lock);
+    memcpy(sess->sessionId, sessionId, sessionIdSize);
 
     sess->sessionIdSize = sessionIdSize;
 
@@ -547,13 +548,13 @@ int32_t HITLS_SESS_SetMasterKey(HITLS_Session *sess, const uint8_t *masterKey, u
         return HITLS_NULL_INPUT;
     }
 
-    BSL_SAL_ThreadWriteLock(sess->lock);
-    if (memcpy_s(sess->masterKey, sizeof(sess->masterKey), masterKey, masterKeySize) != EOK) {
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16748, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "memcpy fail", 0, 0, 0, 0);
-        BSL_SAL_ThreadUnlock(sess->lock);
-        BSL_ERR_PUSH_ERROR(HITLS_MEMCPY_FAIL);
-        return HITLS_MEMCPY_FAIL;
+    if (masterKeySize > sizeof(sess->masterKey)) {
+        BSL_ERR_PUSH_ERROR(HITLS_INVALID_INPUT);
+        return HITLS_INVALID_INPUT;
     }
+
+    BSL_SAL_ThreadWriteLock(sess->lock);
+    memcpy(sess->masterKey, masterKey, masterKeySize);
 
     sess->masterKeySize = masterKeySize;
 
@@ -584,13 +585,13 @@ int32_t HITLS_SESS_GetMasterKey(const HITLS_Session *sess, uint8_t *masterKey, u
         return HITLS_NULL_INPUT;
     }
 
-    BSL_SAL_ThreadReadLock(sess->lock);
-    if (memcpy_s(masterKey, *masterKeySize, sess->masterKey, sess->masterKeySize) != EOK) {
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16750, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "memcpy fail", 0, 0, 0, 0);
-        BSL_SAL_ThreadUnlock(sess->lock);
-        BSL_ERR_PUSH_ERROR(HITLS_MEMCPY_FAIL);
-        return HITLS_MEMCPY_FAIL;
+    if (*masterKeySize < sess->masterKeySize) {
+        BSL_ERR_PUSH_ERROR(HITLS_INVALID_INPUT);
+        return HITLS_INVALID_INPUT;
     }
+
+    BSL_SAL_ThreadReadLock(sess->lock);
+    memcpy(masterKey, sess->masterKey, sess->masterKeySize);
 
     *masterKeySize = sess->masterKeySize;
     BSL_SAL_ThreadUnlock(sess->lock);

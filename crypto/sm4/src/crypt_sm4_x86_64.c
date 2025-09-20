@@ -15,13 +15,12 @@
 
 #include "hitls_build.h"
 #ifdef HITLS_CRYPTO_SM4
-
+#include <string.h>
 #include "crypt_sm4_x86_64.h"
 #include "crypt_sm4.h"
 #include "bsl_err_internal.h"
 #include "crypt_utils.h"
 #include "crypt_errno.h"
-#include "securec.h"
 
 #define XTS_KEY_LEN 32
 #define SM4_KEY_LEN 16
@@ -108,7 +107,7 @@ int32_t SM4_XTS_En(uint8_t* cipher, const uint8_t* plain, const uint32_t* dataRk
     left = dataLen % CRYPT_SM4_BLOCKSIZE_16;
 
     // MODES_XTS_Ctrl has TW = Enc_K2(iv) done
-    memcpy_s(t, CRYPT_SM4_BLOCKSIZE_16, tweak, CRYPT_SM4_BLOCKSIZE);
+    memcpy(t, tweak, CRYPT_SM4_BLOCKSIZE);
 
     if (dataLen >= CRYPT_SM4_BLOCKSIZE_16) {
         SM4_XTS_Encrypt_Blocks(plain, cipher, dataLen, dataRk, t);
@@ -202,7 +201,7 @@ int32_t SM4_XTS_De(uint8_t* plain, const uint8_t* cipher, const uint32_t* dataRk
     left = dataLen % CRYPT_SM4_BLOCKSIZE_16;
 
     // MODES_XTS_Ctrl has TW = Enc_K2(iv) done
-    (void)memcpy_s(t, CRYPT_SM4_BLOCKSIZE_16, tweak, CRYPT_SM4_BLOCKSIZE);
+    memcpy(t, tweak, CRYPT_SM4_BLOCKSIZE);
 
     if (dataLen >= CRYPT_SM4_BLOCKSIZE_16) {
         SM4_XTS_Encrypt_Blocks(cipher, plain, dataLen, dataRk, t);

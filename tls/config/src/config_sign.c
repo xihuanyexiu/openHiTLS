@@ -14,6 +14,7 @@
  */
 
 #include <stddef.h>
+#include <string.h>
 #include "hitls_build.h"
 #include "config_type.h"
 #include "hitls_cert_type.h"
@@ -24,7 +25,6 @@
 #include "config.h"
 
 #ifdef HITLS_TLS_FEATURE_PROVIDER
-#include "securec.h"
 #include "crypt_eal_provider.h"
 #include "crypt_params_key.h"
 #include "crypt_eal_implprovider.h"
@@ -400,8 +400,7 @@ static int32_t PrepareSignSchemeStorage(TLS_Config *config, TLS_SigSchemeInfo **
             return HITLS_MEMALLOC_FAIL;
         }
         config->sigSchemeInfo = ptr;
-        (void)memset_s(config->sigSchemeInfo + config->sigSchemeInfoSize,
-            TLS_CAPABILITY_LIST_MALLOC_SIZE * sizeof(TLS_SigSchemeInfo),
+        memset(config->sigSchemeInfo + config->sigSchemeInfoSize,
             0,
             TLS_CAPABILITY_LIST_MALLOC_SIZE * sizeof(TLS_SigSchemeInfo));
         config->sigSchemeInfoSize += TLS_CAPABILITY_LIST_MALLOC_SIZE;
@@ -518,7 +517,7 @@ ERR:
     }
     if (scheme != NULL) {
         BSL_SAL_Free(scheme->name);
-        (void)memset_s(scheme, sizeof(TLS_SigSchemeInfo), 0, sizeof(TLS_SigSchemeInfo));
+        memset(scheme, 0, sizeof(TLS_SigSchemeInfo));
     }
     return ret != HITLS_SUCCESS ? ret : HITLS_CONFIG_ERR_LOAD_SIGN_SCHEME_INFO;
 }

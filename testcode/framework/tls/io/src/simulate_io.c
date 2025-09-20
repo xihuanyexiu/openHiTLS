@@ -13,6 +13,7 @@
  * See the Mulan PSL v2 for more details.
  */
 
+#include <string.h>
 #include "simulate_io.h"
 #include "hitls_error.h"
 #include "bsl_sal.h"
@@ -20,7 +21,6 @@
 #include "bsl_log.h"
 #include "bsl_errno.h"
 #include "bsl_uio.h"
-#include "securec.h"
 
 #define FAKE_BSL_UIO_FD 666
 
@@ -57,7 +57,7 @@ int32_t FRAME_Write(BSL_UIO *uio, const void *buf, uint32_t len, uint32_t *write
         return BSL_SUCCESS;
     }
 
-    memcpy_s(ioUserData->sndMsg.msg, MAX_RECORD_LENTH, buf, len);
+    memcpy(ioUserData->sndMsg.msg, buf, len);
     ioUserData->sndMsg.len = len;
     *writeLen = len;
 
@@ -77,17 +77,16 @@ int32_t FRAME_Read(BSL_UIO *uio, void *buf, uint32_t len, uint32_t *readLen)
             return BSL_UIO_FAIL;
         }
 
-        memcpy_s(buf, len, ioUserData->userInsertMsg.msg, ioUserData->userInsertMsg.len);
+        memcpy(buf, ioUserData->userInsertMsg.msg, ioUserData->userInsertMsg.len);
         *readLen = ioUserData->userInsertMsg.len;
         ioUserData->userInsertMsg.len = 0;
         return BSL_SUCCESS;
     } else if (ioUserData->recMsg.len != 0) {
         uint32_t copyLen = len < ioUserData->recMsg.len ? len : ioUserData->recMsg.len;
-        memcpy_s(buf, len, ioUserData->recMsg.msg, copyLen);
+        memcpy(buf, ioUserData->recMsg.msg, copyLen);
         *readLen = copyLen;
         if (copyLen < ioUserData->recMsg.len) {
-            memmove_s(ioUserData->recMsg.msg, ioUserData->recMsg.len,
-                &ioUserData->recMsg.msg[copyLen], ioUserData->recMsg.len - copyLen);
+            memmove(ioUserData->recMsg.msg, &ioUserData->recMsg.msg[copyLen], ioUserData->recMsg.len - copyLen);
         }
         ioUserData->recMsg.len -= copyLen;
         return BSL_SUCCESS;
@@ -129,7 +128,7 @@ int32_t FRAME_TransportSendMsg(BSL_UIO *uio, void *buf, uint32_t len, uint32_t *
             return HITLS_UIO_FAIL;
         }
 
-        memcpy_s(buf, len, ioUserData->sndMsg.msg, ioUserData->sndMsg.len);
+        memcpy(buf, ioUserData->sndMsg.msg, ioUserData->sndMsg.len);
         *readLen = ioUserData->sndMsg.len;
         ioUserData->sndMsg.len = 0;
     }  // If there is no data in the receive buffer, a success message is returned and *readLen is set to 0.
@@ -152,7 +151,7 @@ int32_t FRAME_TransportRecMsg(BSL_UIO *uio, void *buf, uint32_t len)
         return HITLS_UIO_FAIL;
     }
 
-    memcpy_s(ioUserData->recMsg.msg, MAX_RECORD_LENTH, buf, len);
+    memcpy(ioUserData->recMsg.msg, buf, len);
     ioUserData->recMsg.len = len;
 
     return HITLS_SUCCESS;

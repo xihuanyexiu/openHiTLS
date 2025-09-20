@@ -18,7 +18,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "securec.h"
 #include "bsl_errno.h"
 #include "bsl_list.h"
 #include "bsl_list_internal.h"
@@ -115,12 +114,10 @@ static void *UserDataCopy(const void *a)
     if (dest == NULL) {
         return NULL;
     }
-    (void)memset_s(dest, sizeof(UserData), 0, sizeof(UserData));
+    memset(dest, 0, sizeof(UserData));
     dest->id = src->id;
-    if (memcpy_s(dest->name, MAX_NAME_LEN, src->name, strlen(src->name)) != EOK) {
-        BSL_SAL_FREE(dest);
-        return NULL;
-    }
+    memcpy(dest->name, src->name, strlen(src->name));
+
     return dest;
 }
 
@@ -755,7 +752,7 @@ void SDV_BSL_LIST_DELETE_NODE_FUNC_TC001(void)
 
     UserData *data1 = BSL_SAL_Malloc(sizeof(UserData) * 3);
     ASSERT_TRUE(data1 != NULL);
-    memcpy_s(data1, sizeof(UserData) * 3, data, sizeof(UserData) *3);
+    memcpy(data1, data, sizeof(UserData) *3);
 
     for (int i = 0; i < 3; i++) {
         ASSERT_TRUE(BSL_LIST_AddElement(testList, &data1[i], BSL_LIST_POS_AFTER) == BSL_SUCCESS);
@@ -792,7 +789,7 @@ void SDV_BSL_LIST_DELETE_NODE_FUNC_TC002(void)
 
     UserData *data1 = BSL_SAL_Malloc(sizeof(UserData) * 3);
     ASSERT_TRUE(data1 != NULL);
-    memcpy_s(data1, sizeof(UserData) * 3, data, sizeof(UserData) *3);
+    memcpy(data1, data, sizeof(UserData) *3);
 
     for (int i = 0; i < 3; i++) {
         ASSERT_TRUE(BSL_LIST_AddElement(testList, &data1[i], BSL_LIST_POS_AFTER) == BSL_SUCCESS);

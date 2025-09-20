@@ -21,7 +21,6 @@
 #include <termios.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <securec.h>
 #include "bsl_uio.h"
 #include "app_utils.h"
 #include "app_errno.h"
@@ -455,7 +454,7 @@ static int32_t HandlePasswd(EncCmdOpt *encOpt)
 
         bool parsingMode = 0; // close the parsing mode
         if (GetPasswd(buf, parsingMode, encOpt->keySet->pass) != HITLS_APP_SUCCESS) {
-            (void)memset_s(buf, APP_MAX_PASS_LENGTH, 0, APP_MAX_PASS_LENGTH);
+            memset(buf, 0, APP_MAX_PASS_LENGTH);
             AppPrintError("The password cannot be recognized.Enter '-pass file:filePath' or '-pass pass:passwd'.\n");
             return HITLS_APP_PASSWD_FAIL;
         }
@@ -642,7 +641,7 @@ static int32_t GetKeyFromP12(EncCmdOpt *encOpt)
         BSL_SAL_CleanseData(keyInfo.key, keyInfo.keyLen);
         return HITLS_APP_INVALID_ARG;
     }
-    (void)memcpy_s(encOpt->keySet->dKey, encOpt->keySet->dKeyLen, keyInfo.key, keyInfo.keyLen);
+    memcpy(encOpt->keySet->dKey, keyInfo.key, keyInfo.keyLen);
     BSL_SAL_CleanseData(keyInfo.key, keyInfo.keyLen);
     return HITLS_APP_SUCCESS;
 }
@@ -816,9 +815,8 @@ static int32_t UpdateEncStdin(EncCmdOpt *encOpt)
             AppPrintError("Failed to read the input content\n");
             return HITLS_APP_STDIN_FAIL;
         }
-        if (memcpy_s(cacheArea + cacheLen, MAX_BUFSIZE + BUF_READABLE_BLOCK - cacheLen, readBuf, readLen) != EOK) {
-            return HITLS_APP_COPY_ARGS_FAILED;
-        }
+        memcpy(cacheArea + cacheLen, readBuf, readLen);
+
         cacheLen += readLen;
         if (cacheLen < BUF_READABLE_BLOCK) {
             continue;
@@ -833,9 +831,7 @@ static int32_t UpdateEncStdin(EncCmdOpt *encOpt)
             return ret;
         }
         // Place the secure block data in the cacheArea at the top and reset cacheLen.
-        if (memcpy_s(cacheArea, sizeof(cacheArea) - BUF_SAFE_BLOCK, cacheArea + readableLen, BUF_SAFE_BLOCK) != EOK) {
-            return HITLS_APP_COPY_ARGS_FAILED;
-        }
+        memcpy(cacheArea, cacheArea + readableLen, BUF_SAFE_BLOCK);
         cacheLen = BUF_SAFE_BLOCK;
     }
     return HITLS_APP_SUCCESS;
@@ -1003,10 +999,10 @@ static int32_t EncOrDecProc(EncCmdOpt *encOpt)
     if (CRYPT_EAL_CipherInit(encOpt->keySet->ctx, encOpt->keySet->dKey, encOpt->keySet->dKeyLen, encOpt->keySet->iv,
         encOpt->keySet->ivLen, encOpt->encTag) != CRYPT_SUCCESS) {
         AppPrintError("Failed to init the cipher.\n");
-        (void)memset_s(encOpt->keySet->dKey, encOpt->keySet->dKeyLen, 0, encOpt->keySet->dKeyLen);
+        memset(encOpt->keySet->dKey, 0, encOpt->keySet->dKeyLen);
         return HITLS_APP_CRYPTO_FAIL;
     }
-    (void)memset_s(encOpt->keySet->dKey, encOpt->keySet->dKeyLen, 0, encOpt->keySet->dKeyLen);
+    memset(encOpt->keySet->dKey, 0, encOpt->keySet->dKeyLen);
     if (IsBlockCipher(encOpt->cipherId)) {
         if (CRYPT_EAL_CipherSetPadding(encOpt->keySet->ctx, CRYPT_PADDING_PKCS7) != CRYPT_SUCCESS) {
             return HITLS_APP_CRYPTO_FAIL;
@@ -1160,9 +1156,8 @@ static int32_t GetPasswd(const char *arg, bool mode, char *resPass)
         // Other parameters cannot be parsed and an error is returned.
         // Apply for a new memory and copy the unprocessed character string.
         char tmpPassArg[APP_MAX_PASS_LENGTH * REC_DOUBLE] = {0};
-        if (strlen(arg) < APP_MIN_PASS_LENGTH ||
-            strcpy_s(tmpPassArg, sizeof(tmpPassArg) - 1, arg) != EOK) {
-            return HITLS_APP_SECUREC_FAIL;
+        if (strlen(arg) < APP_MIN_PASS_LENGTH) {
+            strcpy(tmpPassArg, arg);
         }
         if (strncmp(tmpPassArg, filePrefix, REC_MIN_PRE_LENGTH - 1) == 0) {
             // In this case, the password mode is read from the file.
@@ -1174,9 +1169,8 @@ static int32_t GetPasswd(const char *arg, bool mode, char *resPass)
         } else if (strncmp(tmpPassArg, passPrefix, REC_MIN_PRE_LENGTH - 1) == 0) {
             // In this case, the password mode is read from the user input.
             // Obtain the password after the ':'.
-            char *context = NULL;
-            char *tmpPass = strtok_s(tmpPassArg, ":", &context);
-            tmpPass = strtok_s(NULL, ":", &context);
+            char *tmpPass = strtok(tmpPassArg, ":");
+            tmpPass = strtok(NULL, ":");
             if (tmpPass == NULL) {
                 return HITLS_APP_SECUREC_FAIL;
             }
@@ -1184,9 +1178,8 @@ static int32_t GetPasswd(const char *arg, bool mode, char *resPass)
             if (CheckPasswd(tmpPass) != HITLS_APP_SUCCESS) {
                 return HITLS_APP_PASSWD_FAIL;
             }
-            if (memcpy_s(resPass, APP_MAX_PASS_LENGTH, tmpPass, strlen(tmpPass)) != EOK) {
-                return HITLS_APP_COPY_ARGS_FAILED;
-            }
+            memcpy(resPass, tmpPass, strlen(tmpPass));
+
         } else {
             // The prefix format is invalid. An error is returned.
             AppPrintError("Invalid prefix format.\n");
@@ -1199,9 +1192,7 @@ static int32_t GetPasswd(const char *arg, bool mode, char *resPass)
         if (CheckPasswd(arg) != HITLS_APP_SUCCESS) {
             return HITLS_APP_PASSWD_FAIL;
         }
-        if (memcpy_s(resPass, APP_MAX_PASS_LENGTH, arg, strlen(arg)) != EOK) {
-            return HITLS_APP_COPY_ARGS_FAILED;
-        }
+        memcpy(resPass, arg, strlen(arg));
     }
     return HITLS_APP_SUCCESS;
 }
@@ -1210,14 +1201,11 @@ static int32_t GetPwdFromFile(const char *fileArg, char *tmpPass)
 {
     // Apply for a new memory and copy the unprocessed character string.
     char tmpFileArg[REC_MAX_FILENAME_LENGTH + REC_MIN_PRE_LENGTH + 1] = {0};
-    if (strcpy_s(tmpFileArg, REC_MAX_FILENAME_LENGTH + REC_MIN_PRE_LENGTH, fileArg) != EOK) {
-        return HITLS_APP_SECUREC_FAIL;
-    }
+    strcpy(tmpFileArg, fileArg);
     // Obtain the file path after the ':'.
     char *filePath = NULL;
-    char *context = NULL;
-    filePath = strtok_s(tmpFileArg, ":", &context);
-    filePath = strtok_s(NULL, ":", &context);
+    filePath = strtok(tmpFileArg, ":");
+    filePath = strtok(NULL, ":");
     if (filePath == NULL) {
         return HITLS_APP_SECUREC_FAIL;
     }
@@ -1251,9 +1239,8 @@ static int32_t GetPwdFromFile(const char *fileArg, char *tmpPass)
     if (HITLS_APP_CheckPasswd((uint8_t *)tmpPassBuf, rPassLen) != HITLS_APP_SUCCESS) {
         return HITLS_APP_PASSWD_FAIL;
     }
-    if (memcpy_s(tmpPass, APP_MAX_PASS_LENGTH, tmpPassBuf, strlen(tmpPassBuf)) != EOK) {
-        return HITLS_APP_COPY_ARGS_FAILED;
-    }
+    memcpy(tmpPass, tmpPassBuf, strlen(tmpPassBuf));
+
     return HITLS_APP_SUCCESS;
 }
 
@@ -1275,7 +1262,7 @@ static int32_t Str2HexStr(const unsigned char *buf, uint32_t bufLen, char *hexBu
         return HITLS_APP_INVALID_ARG;
     }
     for (uint32_t i = 0; i < bufLen; i++) {
-        if (sprintf_s(hexBuf + i * REC_DOUBLE, bufLen * REC_DOUBLE + 1, "%02x", buf[i]) == -1) {
+        if (sprintf(hexBuf + i * REC_DOUBLE, "%02x", buf[i])  < 0) {
             AppPrintError("BSL_SAL_Calloc Failed.\n");
             return HITLS_APP_ENCODE_FAIL;
         }
@@ -1290,7 +1277,7 @@ static int32_t HexToStr(const char *hexBuf, unsigned char *buf)
     int len = strlen(hexBuf) / 2;
     for (int i = 0; i < len; i++) {
         uint32_t val;
-        if (sscanf_s(hexBuf + i * REC_DOUBLE, "%2x", &val) == -1) {
+        if (sscanf(hexBuf + i * REC_DOUBLE, "%2x", &val) != 1) {
             AppPrintError("error in converting hex str to str.\n");
             return HITLS_APP_ENCODE_FAIL;
         }
@@ -1301,8 +1288,8 @@ static int32_t HexToStr(const char *hexBuf, unsigned char *buf)
 
 static int32_t Int2Hex(uint32_t num, char *hexBuf)
 {
-    int ret = snprintf_s(hexBuf, REC_HEX_BUF_LENGTH + 1, REC_HEX_BUF_LENGTH, "%08X", num);
-    if (strlen(hexBuf) != REC_HEX_BUF_LENGTH || ret == -1) {
+    int ret = snprintf(hexBuf, REC_HEX_BUF_LENGTH + 1, "%08X", num);
+    if (strlen(hexBuf) != REC_HEX_BUF_LENGTH || ret < 0) {
         AppPrintError("error in uint to hex.\n");
         return HITLS_APP_ENCODE_FAIL;
     }

@@ -16,7 +16,6 @@
 /* BEGIN_HEADER */
 
 #include "bsl_sal.h"
-#include "securec.h"
 #include "stub_replace.h"
 #include "hitls_pki_cert.h"
 #include "hitls_pki_csr.h"
@@ -943,7 +942,7 @@ void SDV_X509_CERT_SETANDGEN_TC001(char *derCertPath, char *privPath, int keyTyp
     BslList *tmp = NULL;
     HITLS_X509_SignAlgParam algParam = {0};
     HITLS_X509_SignAlgParam *algParamPtr = NULL;
-    memset_s(&algParam, sizeof(HITLS_X509_SignAlgParam), 0, sizeof(HITLS_X509_SignAlgParam));
+    memset(&algParam, 0, sizeof(HITLS_X509_SignAlgParam));
     if (pad == 0) {
         algParamPtr = NULL;
     } else if (pad == CRYPT_EMSA_PSS) {

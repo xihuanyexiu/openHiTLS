@@ -16,7 +16,7 @@
 #include "hitls_build.h"
 #if defined(HITLS_PKI_X509_CSR) || defined(HITLS_PKI_PKCS12)
 #include <stdint.h>
-#include "securec.h"
+#include <string.h>
 #include "hitls_x509_local.h"
 #include "bsl_obj.h"
 #include "bsl_sal.h"

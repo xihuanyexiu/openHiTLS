@@ -16,7 +16,7 @@
 #include "hitls_build.h"
 #if defined(HITLS_PKI_X509_VFY_DEFAULT) || defined(HITLS_PKI_X509_VFY_CB) || defined(HITLS_PKI_X509_VFY_LOCATION)
 #include <string.h>
-#include "securec.h"
+#include <stdio.h>
 #include "hitls_pki_x509.h"
 #include "hitls_pki_cert.h"
 #include "bsl_types.h"
@@ -185,7 +185,7 @@ HITLS_X509_StoreCtx *HITLS_X509_StoreCtxNew(void)
         return NULL;
     }
 
-    (void)memset_s(ctx, sizeof(HITLS_X509_StoreCtx), 0, sizeof(HITLS_X509_StoreCtx));
+    memset(ctx, 0, sizeof(HITLS_X509_StoreCtx));
     ctx->store = BSL_LIST_New(sizeof(HITLS_X509_Cert *));
     if (ctx->store == NULL) {
         BSL_SAL_Free(ctx);
@@ -401,11 +401,8 @@ static int32_t X509_AddCAPath(HITLS_X509_StoreCtx *storeCtx, const void *val, ui
         return BSL_MALLOC_FAIL;
     }
 
-    if (memcpy_s(pathCopy, valLen, caPath, valLen) != EOK) {
-        BSL_SAL_Free(pathCopy);
-        BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_INVALID_PARAM);
-        return HITLS_X509_ERR_INVALID_PARAM;
-    }
+    memcpy(pathCopy, caPath, valLen);
+
     // Add to paths list
     int32_t ret = BSL_LIST_AddElement(storeCtx->caPaths, pathCopy, BSL_LIST_POS_END);
     if (ret != BSL_SUCCESS) {
@@ -785,7 +782,7 @@ static int32_t HITLS_X509_GetCertBySubjectDer(HITLS_X509_StoreCtx *storeCtx, con
         int32_t seq = 0;
         while (1) {
             char filename[MAX_PATH_LEN] = {0};
-            if (snprintf_s(filename, sizeof(filename), sizeof(filename) - 1,
+            if (snprintf(filename, sizeof(filename),
                           "%s/%08x.%d", caPath, hash, seq) < 0) {
                 break;
             }

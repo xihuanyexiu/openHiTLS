@@ -15,8 +15,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include "hitls_build.h"
-#include "securec.h"
 #include "cipher_suite.h"
 #include "bsl_err_internal.h"
 #include "tls_binlog_id.h"
@@ -700,6 +700,7 @@ static uint32_t GetPreSharedKeyExtLen(const PskInfo13 *pskInfo)
 
 static void PackClientPreSharedKeyIdentity(const TLS_Ctx *ctx, uint8_t *buf, uint32_t bufLen)
 {
+    (void)bufLen;
     PskInfo13 *pskInfo = &ctx->hsCtx->kxCtx->pskInfo13;
     uint32_t offset = 0;
     uint32_t offsetStamp = offset;
@@ -711,7 +712,7 @@ static void PackClientPreSharedKeyIdentity(const TLS_Ctx *ctx, uint8_t *buf, uin
         BSL_Uint16ToByte((uint16_t)ticketSize, &buf[offset]);
         offset += sizeof(uint16_t);
         // has passed the verification above, and it must be successful here.
-        (void)memcpy_s(&buf[offset], bufLen - offset, ticket, ticketSize);
+        memcpy(&buf[offset], ticket, ticketSize);
         offset += ticketSize;
         uint32_t ageSec = (uint32_t)((uint64_t)BSL_SAL_CurrentSysTimeGet() - SESS_GetStartTime(pskInfo->resumeSession));
 
@@ -723,9 +724,7 @@ static void PackClientPreSharedKeyIdentity(const TLS_Ctx *ctx, uint8_t *buf, uin
     if (pskInfo->userPskSess != NULL) {
         BSL_Uint16ToByte((uint16_t)pskInfo->userPskSess->identityLen, &buf[offset]);
         offset += sizeof(uint16_t);
-        (void)memcpy_s(&buf[offset], bufLen - offset,
-            // has passed the verification above, and it must be successful here
-            pskInfo->userPskSess->identity, pskInfo->userPskSess->identityLen);
+        memcpy(&buf[offset], pskInfo->userPskSess->identity, pskInfo->userPskSess->identityLen);
         offset += pskInfo->userPskSess->identityLen;
         BSL_Uint32ToByte(0, &buf[offset]);
         offset += sizeof(uint32_t);

@@ -34,25 +34,6 @@ openHiTLS架构高度模块化，可通过模块和特性配置。RAM/ROM尺寸�
 
 ### 依赖准备
 
-openHiTLS依赖于Secure C，因此需将Secure C下载到${openHiTLS_dir}/platform/Secure_C，Secure C的一个官方Git库是 <https://gitee.com/openeuler/libboundscheck>。
-
-* 下载安全函数库
-```bash
-# 方式1 与openHiTLS代码仓一起拉取
-git clone --recurse-submodules https://gitcode.com/openhitls/openhitls.git
-
-# 方式2 单独拉取安全函数库
-git clone https://gitcode.com/openhitls/openhitls.git
-cd ${openHiTLS_dir} 
-git clone https://gitee.com/openeuler/libboundscheck platform/Secure_C
-```
-
-* 构建安全函数库
-```bash
-cd ${openHiTLS_dir}/platform/Secure_C
-make -j
-```
-
 ### 致应用开发人员
 
 正式版本的源码镜像尚未正式开放、还在规划当中。

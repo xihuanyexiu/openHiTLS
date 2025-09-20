@@ -13,8 +13,9 @@
  * See the Mulan PSL v2 for more details.
  */
 
+#include <stdio.h>
+#include <string.h>
 #include "hitls_build.h"
-#include "securec.h"
 #include "tls_binlog_id.h"
 #include "bsl_log_internal.h"
 #include "bsl_log.h"
@@ -1580,13 +1581,7 @@ int32_t CFG_GetCipherSuiteInfo(uint16_t cipherSuite, CipherSuiteInfo *cipherInfo
             if (g_cipherSuiteList[i].enable == false) {
                 break;
             }
-            int32_t ret = memcpy_s(cipherInfo, sizeof(CipherSuiteInfo), &g_cipherSuiteList[i], sizeof(CipherSuiteInfo));
-            if (ret != EOK) {
-                BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15859, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
-                    "CFG:memcpy failed.", 0, 0, 0, 0);
-                BSL_ERR_PUSH_ERROR(HITLS_MEMCPY_FAIL);
-                return HITLS_MEMCPY_FAIL;
-            }
+            memcpy(cipherInfo, &g_cipherSuiteList[i], sizeof(CipherSuiteInfo));
             return HITLS_SUCCESS;
         }
     }
@@ -1909,7 +1904,6 @@ static int32_t GetCipherSuiteDescription(const CipherSuiteInfo *cipherSuiteInfo,
     }
 
     const uint8_t *ver, *kx, *au, *hash, *mac;
-    static const char *format = "%-30s %-7s Kx=%-8s Au=%-5s Hash=%-22s Mac=%-4s\n";
 
     ver = ProtocolToString(cipherSuiteInfo->minVersion);
     kx = KeyExchAlgToString(cipherSuiteInfo->kxAlg);
@@ -1917,8 +1911,8 @@ static int32_t GetCipherSuiteDescription(const CipherSuiteInfo *cipherSuiteInfo,
     mac = MacAlgToString(cipherSuiteInfo->macAlg);
     hash = HashAlgToString(cipherSuiteInfo->hashAlg);
 
-    int32_t ret = snprintf_s((char *)buf, CIPHERSUITE_DESCRIPTION_MAXLEN, CIPHERSUITE_DESCRIPTION_MAXLEN,
-        format, cipherSuiteInfo->name, ver, kx, au, hash, mac);
+    int32_t ret = snprintf((char *)buf, CIPHERSUITE_DESCRIPTION_MAXLEN,
+        "%-30s %-7s Kx=%-8s Au=%-5s Hash=%-22s Mac=%-4s\n", cipherSuiteInfo->name, ver, kx, au, hash, mac);
     if (ret < 0 || ret > CIPHERSUITE_DESCRIPTION_MAXLEN - 1) {
         BSL_ERR_PUSH_ERROR(HITLS_CONFIG_INVALID_LENGTH);
         return HITLS_CONFIG_INVALID_LENGTH;

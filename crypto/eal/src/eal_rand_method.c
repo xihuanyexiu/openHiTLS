@@ -18,7 +18,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <securec.h>
+#include <string.h>
 #include "crypt_eal_rand.h"
 #include "crypt_errno.h"
 #include "bsl_errno.h"

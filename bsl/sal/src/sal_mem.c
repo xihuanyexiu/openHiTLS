@@ -14,7 +14,7 @@
  */
 
 #include <stdlib.h>
-#include "securec.h"
+#include <string.h>
 #include "hitls_build.h"
 #include "bsl_log_internal.h"
 #include "bsl_errno.h"
@@ -65,21 +65,7 @@ void *BSL_SAL_Calloc(uint32_t num, uint32_t size)
     if (ptr == NULL) {
         return NULL;
     }
-    // If the value is greater than SECUREC_MEM_MAX_LEN, segment processing is required.
-    // This is because memset_s can process only the value which the size is SECUREC_MEM_MAX_LEN.
-    uint32_t offset = 0;
-    while (blockSize > SECUREC_MEM_MAX_LEN) {
-        if (memset_s(&ptr[offset], SECUREC_MEM_MAX_LEN, 0, SECUREC_MEM_MAX_LEN) != EOK) {
-            BSL_SAL_FREE(ptr);
-            return NULL;
-        }
-        offset += SECUREC_MEM_MAX_LEN;
-        blockSize -= SECUREC_MEM_MAX_LEN;
-    }
-    if (memset_s(&ptr[offset], blockSize, 0, blockSize) != EOK) {
-        BSL_SAL_FREE(ptr);
-        return NULL;
-    }
+    memset(ptr, 0, blockSize);
     return ptr;
 }
 
@@ -95,11 +81,7 @@ void *BSL_SAL_Realloc(void *addr, uint32_t newSize, uint32_t oldSize)
         return NULL;
     }
 
-    if (memcpy_s(ptr, newSize, addr, minSize) != EOK) {
-        BSL_SAL_FREE(ptr);
-    } else {
-        BSL_SAL_FREE(addr);
-    }
+    memcpy(ptr, addr, minSize);
 
     return ptr;
 }
@@ -114,10 +96,8 @@ void *BSL_SAL_Dump(const void *src, uint32_t size)
         return NULL;
     }
 
-    if (memcpy_s(ptr, size, src, size) != EOK) {
-        BSL_SAL_FREE(ptr);
-        return NULL;
-    }
+    memcpy(ptr, src, size);
+
 
     return ptr;
 }

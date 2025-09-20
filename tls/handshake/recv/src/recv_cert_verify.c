@@ -15,7 +15,7 @@
 #include "hitls_build.h"
 #if defined(HITLS_TLS_HOST_SERVER) || defined(HITLS_TLS_PROTO_TLS13)
 #include <stdint.h>
-#include "securec.h"
+#include <string.h>
 #include "tls_binlog_id.h"
 #include "bsl_log_internal.h"
 #include "bsl_log.h"
@@ -36,7 +36,7 @@ int32_t ServerRecvClientCertVerifyProcess(TLS_Ctx *ctx)
     if (ret != HITLS_SUCCESS) {
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15871, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "server Calculate client finished data error.", 0, 0, 0, 0);
-        (void)memset_s(ctx->hsCtx->masterKey, sizeof(ctx->hsCtx->masterKey), 0, sizeof(ctx->hsCtx->masterKey));
+        memset(ctx->hsCtx->masterKey, 0, sizeof(ctx->hsCtx->masterKey));
         ctx->method.sendAlert(ctx, ALERT_LEVEL_FATAL, ALERT_INTERNAL_ERROR);
         return ret;
     }

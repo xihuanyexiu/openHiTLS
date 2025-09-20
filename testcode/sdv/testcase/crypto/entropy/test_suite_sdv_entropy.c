@@ -25,7 +25,6 @@
 #include "crypt_entropy.h"
 #include "crypt_eal_rand.h"
 #include "eal_entropy.h"
-#include "securec.h"
 #include "crypt_eal_entropy.h"
 #include "crypt_algid.h"
 
@@ -111,7 +110,7 @@ static int32_t EntropyReadNormal(void *ctx, uint32_t timeout, uint8_t *buf, uint
 {
     (void)ctx;
     (void)timeout;
-    memset_s(buf, bufLen, 0xff, bufLen);
+    memset(buf, 0xff, bufLen);
     return CRYPT_SUCCESS;
 }
 
@@ -131,7 +130,7 @@ static int32_t EntropyReadError(void *ctx, uint32_t timeout, uint8_t *buf, uint3
 {
     (void)ctx;
     (void)timeout;
-    memset_s(buf, bufLen, 0xff, bufLen);
+    memset(buf, 0xff, bufLen);
     return -1;
 }
 
@@ -233,7 +232,7 @@ static uint32_t EntropyGetNormal(void *ctx, uint8_t *buf, uint32_t bufLen)
     (void)ctx;
     (void)buf;
     (void)bufLen;
-    memset_s(buf, bufLen, 'a', bufLen);
+    memset(buf, 'a', bufLen);
     return 32 > bufLen ? bufLen : 32;
 }
 
@@ -242,7 +241,7 @@ static uint32_t EntropyGet0Normal(void *ctx, uint8_t *buf, uint32_t bufLen)
     (void)ctx;
     (void)buf;
     (void)bufLen;
-    memset_s(buf, bufLen, 'a', bufLen);
+    memset(buf, 'a', bufLen);
     return 0;
 }
 
@@ -618,9 +617,11 @@ void SDV_CRYPTO_ENTROPY_EsNsNumberTest(int number, int minEn, int expLen)
     ASSERT_TRUE(errPara.name != NULL);
     for(int32_t iter = 0; iter < number; iter++) {
         char str[3] = {0};
-        strncpy_s((char *)(intptr_t)errPara.name, strlen(name) + 3, name, strlen(name));
-        sprintf_s(str, 3, "%d", iter);
-        strcat_s((char *)(intptr_t)errPara.name, strlen(name) + 3, str);
+        strncpy((char *)(intptr_t)errPara.name, name, strlen(name));
+        if (snprintf(str, sizeof(str), "%d", iter) < 0) {
+            ASSERT_TRUE(false);
+        }
+        strcat((char *)(intptr_t)errPara.name, str);
         if (iter >= 16) {
             ASSERT_TRUE(CRYPT_EAL_EsCtrl(es, CRYPT_ENTROPY_ADD_NS, (void *)&errPara, sizeof(CRYPT_EAL_NsPara)) != CRYPT_SUCCESS);
         } else {

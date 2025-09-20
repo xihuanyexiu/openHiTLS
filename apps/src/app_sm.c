@@ -20,7 +20,6 @@
 #ifdef HITLS_APP_SM_MODE
 #include <unistd.h>
 #endif
-#include <securec.h>
 #include "bsl_bytes.h"
 #include "bsl_ui.h"
 #include "bsl_sal.h"
@@ -429,7 +428,7 @@ static char *GetUserFilePath(const char *workPath)
         AppPrintError("Failed to allocate memory.\n");
         return NULL;
     }
-    int32_t ret = sprintf_s(path, APP_MAX_PATH_LEN, "%s/%s", workPath, HITLS_APP_SM_USER_FILE_NAME);
+    int32_t ret = snprintf(path, APP_MAX_PATH_LEN, "%s/%s", workPath, HITLS_APP_SM_USER_FILE_NAME);
     if (ret < 0) {
         AppPrintError("WorkPath is invalid.\n");
         BSL_SAL_Free(path);
@@ -514,7 +513,7 @@ static int32_t GetAppExpectHmac(const char *appPath, uint8_t *hmac, uint32_t *hm
         AppPrintError("Failed to allocate memory.\n");
         return HITLS_APP_MEM_ALLOC_FAIL;
     }
-    int32_t ret = sprintf_s(hmacPath, APP_MAX_PATH_LEN, "%s.hmac", appPath);
+    int32_t ret = sprintf(hmacPath, "%s.hmac", appPath);
     if (ret < 0) {
         AppPrintError("AppPath is too long, ret: %d.\n", ret);
         BSL_SAL_Free(hmacPath);
@@ -534,13 +533,13 @@ static int32_t GetAppExpectHmac(const char *appPath, uint8_t *hmac, uint32_t *hm
     char *tmp = NULL;
     char *nextTmp = NULL;
     do {
-        tmp = strtok_s((char *)data.data, seps, &nextTmp);
+        tmp = strtok((char *)data.data, seps);
         if (tmp == NULL) {
             AppPrintError("Invalid hmac.\n");
             ret = HITLS_APP_INVALID_ARG;
             break;
         }
-        tmp = strtok_s(NULL, seps, &nextTmp);
+        tmp = strtok(NULL, seps);
         if (tmp == NULL) {
             AppPrintError("Invalid hmac.\n");
             ret = HITLS_APP_INVALID_ARG;

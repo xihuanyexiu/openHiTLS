@@ -14,7 +14,7 @@
  */
 
 #include <stdio.h>
-#include "securec.h"
+#include <string.h>
 #include "app_errno.h"
 #include "bsl_sal.h"
 #include "bsl_errno.h"
@@ -62,10 +62,7 @@ static char **CopyArgs(int argc, char **argv, int *newArgc)
             AppPrintError("SAL malloc failed.\n");
             goto EXIT;
         }
-        if (strcpy_s(newargv[i], strlen(argv[i]) + 1, argv[i]) != EOK) {
-            AppPrintError("Failed to copy argv.\n");
-            goto EXIT;
-        }
+        strcpy(newargv[i], argv[i]);
     }
     newargv[i] = NULL;
     *newArgc = i;

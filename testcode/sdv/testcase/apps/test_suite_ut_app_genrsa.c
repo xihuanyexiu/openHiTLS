@@ -17,7 +17,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "securec.h"
 #include <stddef.h>
 #include "app_genrsa.h"
 #include "app_rsa.h"
@@ -44,7 +43,7 @@ int32_t STUB_HITLS_APP_Passwd(char *buf, int32_t bufMaxLen, int32_t flag, void *
 {
     (void)flag;
     (void)userdata;
-    (void)memcpy_s(buf, bufMaxLen, "12345678", 8);
+    memcpy(buf, "12345678", 8);
     return 8;
 }
 

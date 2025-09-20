@@ -16,10 +16,10 @@
 #include "hitls_build.h"
 #ifdef HITLS_BSL_SAL_STR
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include "securec.h"
 
 #include "bsl_errno.h"
 
@@ -70,7 +70,7 @@ int32_t BSL_SAL_Atoi(const char *str)
     if (str == NULL) {
         return 0;
     }
-    if (sscanf_s(str, "%d", &val) != -1) {
+    if (sscanf(str, "%d", &val) == 1) {
         return (int32_t)val;
     }
     return 0;

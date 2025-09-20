@@ -16,7 +16,6 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <unistd.h>
-#include "securec.h"
 #include "bsl_sal.h"
 #include "hitls.h"
 #include "hitls_config.h"
@@ -226,9 +225,8 @@ static int32_t GetDisorderClientFinished1(FRAME_LinkObj *client, uint8_t *data, 
         return HITLS_INTERNAL_EXCEPTION;
     }
     offset += readLen;
-    if (memcpy_s(&data[offset], len - offset, tmpData, tmpLen) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(&data[offset], tmpData, tmpLen);
+
     offset += tmpLen;
     *usedLen = offset;
     return HITLS_SUCCESS;
@@ -253,9 +251,8 @@ static int32_t GetDisorderServerFinished(FRAME_LinkObj *server, uint8_t *data, u
         return HITLS_INTERNAL_EXCEPTION;
     }
     offset += readLen;
-    if (memcpy_s(&data[offset], len - offset, tmpData, tmpLen) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(&data[offset], tmpData, tmpLen);
+
     offset += tmpLen;
     *usedLen = offset;
     return HITLS_SUCCESS;
@@ -275,6 +272,7 @@ static int32_t AppWrite(HITLS_Ctx *ctx)
 
 static int32_t GetDisorderServerFinish_AppData(FRAME_LinkObj *server, uint8_t *data, uint32_t len, uint32_t *usedLen)
 {
+    (void)len;
     int32_t ret;
     uint32_t readLen = 0;
     uint32_t offset = 0;
@@ -305,17 +303,14 @@ static int32_t GetDisorderServerFinish_AppData(FRAME_LinkObj *server, uint8_t *d
         return HITLS_INTERNAL_EXCEPTION;
     }
     appLen = readLen;
-    if (memcpy_s(&data[offset], len - offset, ccs, ccsLen) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(&data[offset], ccs, ccsLen);
+
     offset += ccsLen;
-    if (memcpy_s(&data[offset], len - offset, app, appLen) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(&data[offset], app, appLen);
+
     offset += appLen;
-    if (memcpy_s(&data[offset], len - offset, finished, finishedLen) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(&data[offset], finished, finishedLen);
+
     offset += finishedLen;
     *usedLen = offset;
     return HITLS_SUCCESS;
@@ -356,13 +351,11 @@ static int32_t GetRepeatsApp(FRAME_LinkObj *obj, uint8_t *data, uint32_t *usedLe
         return HITLS_INTERNAL_EXCEPTION;
     }
     appLen = readLen;
-    if (memcpy_s(&data[offset], TEMP_DATA_LEN, app, appLen) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(&data[offset], app, appLen);
+
     offset += appLen;
-    if (memcpy_s(&data[offset], TEMP_DATA_LEN - offset, app, appLen) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(&data[offset], app, appLen);
+
     offset += appLen;
     *usedLen = offset;
     return HITLS_SUCCESS;
@@ -395,13 +388,11 @@ static int32_t GetDisorderApp(FRAME_LinkObj *obj, uint8_t *data, uint32_t *usedL
         return HITLS_INTERNAL_EXCEPTION;
     }
     app2Len = readLen;
-    if (memcpy_s(&data[offset], TEMP_DATA_LEN, app2, app2Len) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(&data[offset], app2, app2Len);
+
     offset += app2Len;
-    if (memcpy_s(&data[offset], TEMP_DATA_LEN - offset, app1, app1Len) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(&data[offset], app1, app1Len);
+
     offset += app1Len;
     *usedLen = offset;
     return HITLS_SUCCESS;

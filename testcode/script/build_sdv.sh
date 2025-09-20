@@ -69,14 +69,6 @@ export_env()
     fi
 }
 
-down_depend_code()
-{
-    if [ ! -d "${HITLS_ROOT_DIR}/platform/Secure_C/lib" ]; then
-        cd ${HITLS_ROOT_DIR}/platform/Secure_C
-        make -j
-    fi
-}
-
 find_test_suite()
 {
     if [[ ${ENABLE_CRYPTO} == "ON" ]]; then
@@ -259,7 +251,6 @@ options()
 export_env
 options "$@"
 clean
-down_depend_code
 find_test_suite
 process_custom_cases
 build_test_suite

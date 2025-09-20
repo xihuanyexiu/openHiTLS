@@ -13,8 +13,8 @@
  * See the Mulan PSL v2 for more details.
  */
 
+#include <string.h>
 #include "hitls_build.h"
-#include "securec.h"
 #include "tls_binlog_id.h"
 #include "bsl_log_internal.h"
 #include "bsl_log.h"
@@ -377,9 +377,9 @@ int32_t HITLS_GetHsRandom(const HITLS_Ctx *ctx, uint8_t *out, uint32_t *outlen, 
     }
 
     if (isClient) {
-        (void)memcpy_s(out, resLen, ctx->negotiatedInfo.clientRandom, resLen);
+        memcpy(out, ctx->negotiatedInfo.clientRandom, resLen);
     } else {
-        (void)memcpy_s(out, resLen, ctx->negotiatedInfo.serverRandom, resLen);
+        memcpy(out, ctx->negotiatedInfo.serverRandom, resLen);
     }
 
     *outlen = resLen;
@@ -491,7 +491,7 @@ int32_t HITLS_GetPeerFinishVerifyData(const HITLS_Ctx *ctx, void *buf, uint32_t 
         bufSize = bufLen;
     }
 
-    (void)memcpy_s(buf, bufLen, verifyData, bufSize);
+    memcpy(buf, verifyData, bufSize);
     *dataLen = verifyDataSize;
     return HITLS_SUCCESS;
 }
@@ -519,7 +519,7 @@ int32_t HITLS_GetFinishVerifyData(const HITLS_Ctx *ctx, void *buf, uint32_t bufL
         bufSize = bufLen;
     }
 
-    (void)memcpy_s(buf, bufLen, verifyData, bufSize);
+    memcpy(buf, verifyData, bufSize);
     *dataLen = verifyDataSize;
     return HITLS_SUCCESS;
 }

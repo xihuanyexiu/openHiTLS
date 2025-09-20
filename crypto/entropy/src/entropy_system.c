@@ -17,6 +17,7 @@
 #ifdef HITLS_CRYPTO_ENTROPY
 
 #include <stdint.h>
+#include <string.h>
 #include <unistd.h>
 #ifdef HITLS_CRYPTO_ENTROPY_GETENTROPY
 #include <sys/random.h>
@@ -25,7 +26,6 @@
 #include <fcntl.h>
 #include <errno.h>
 #endif
-#include "securec.h"
 #include "bsl_err_internal.h"
 #include "crypt_errno.h"
 #include "entropy_seed_pool.h"

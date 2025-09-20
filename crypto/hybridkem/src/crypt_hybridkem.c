@@ -16,7 +16,7 @@
 #include "hitls_build.h"
 #ifdef HITLS_CRYPTO_HYBRIDKEM
 
-#include "securec.h"
+#include <string.h>
 #include "bsl_sal.h"
 #include "sal_atomic.h"
 #include "eal_pkey_local.h"

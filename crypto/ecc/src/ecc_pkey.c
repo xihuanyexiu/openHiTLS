@@ -17,10 +17,10 @@
 #ifdef HITLS_CRYPTO_ECC
 
 #include <stdbool.h>
+#include <string.h>
 #include "crypt_errno.h"
 #include "crypt_types.h"
 #include "crypt_utils.h"
-#include "securec.h"
 #include "bsl_sal.h"
 #include "bsl_err_internal.h"
 #include "crypt_bn.h"
@@ -527,14 +527,16 @@ static uint32_t ECC_GetPubKeyLen(const ECC_Pkey *ctx)
 
 static int32_t GetEccName(ECC_Pkey *ctx, void *val, uint32_t len)
 {
+    const char *name = EcCurveId2nist(ctx->para->id);
     if (ctx->para == NULL) {
         BSL_ERR_PUSH_ERROR(CRYPT_NULL_INPUT);
         return CRYPT_NULL_INPUT;
     }
-    if (memcpy_s(val, len, EcCurveId2nist(ctx->para->id), strlen("P-521") + 1) != EOK) {
-        BSL_ERR_PUSH_ERROR(CRYPT_SECUREC_FAIL);
-        return CRYPT_SECUREC_FAIL;
+    if (len < strlen(name) + 1) {
+        BSL_ERR_PUSH_ERROR(CRYPT_ECC_PKEY_ERR_CTRL_LEN);
+        return CRYPT_ECC_BUFF_LEN_NOT_ENOUGH;
     }
+    memcpy(val, name, strlen(name) + 1);
     return CRYPT_SUCCESS;
 }
 

@@ -17,7 +17,6 @@
 #include <ctype.h>
 #include <stdint.h>
 #include <string.h>
-#include "securec.h"
 #include "hitls_error.h"
 #include "hitls_config.h"
 #include "hitls_sni.h"

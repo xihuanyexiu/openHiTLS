@@ -16,8 +16,8 @@
 #include "hitls_build.h"
 #ifdef HITLS_PKI_X509
 
+#include <string.h>
 #include "hitls_x509_local.h"
-#include "securec.h"
 #include "bsl_sal.h"
 #include "bsl_log_internal.h"
 #include "hitls_pki_errno.h"
@@ -42,7 +42,7 @@ int32_t HITLS_X509_AddListItemDefault(void *item, uint32_t len, BSL_ASN1_List *l
         BSL_ERR_PUSH_ERROR(BSL_MALLOC_FAIL);
         return BSL_MALLOC_FAIL;
     }
-    (void)memcpy_s(node, len, item, len);
+    memcpy(node, item, len);
     int32_t ret = BSL_LIST_AddElement(list, node, BSL_LIST_POS_AFTER);
     if (ret != BSL_SUCCESS) {
         BSL_ERR_PUSH_ERROR(ret);
@@ -354,13 +354,13 @@ static HITLS_X509_NameNode *NameNodeDup(HITLS_X509_NameNode *node)
         res->nameType.tag = node->nameType.tag;
         res->nameType.len = node->nameType.len;
         res->nameType.buff = tmp + sizeof(HITLS_X509_NameNode);
-        (void)memcpy_s(res->nameType.buff, res->nameType.len, node->nameType.buff, node->nameType.len);
+        memcpy(res->nameType.buff, node->nameType.buff, node->nameType.len);
     }
     if (node->nameValue.len != 0) {
         res->nameValue.tag = node->nameValue.tag;
         res->nameValue.len = node->nameValue.len;
         res->nameValue.buff = tmp + sizeof(HITLS_X509_NameNode) + node->nameType.len;
-        (void)memcpy_s(res->nameValue.buff, res->nameValue.len, node->nameValue.buff, node->nameValue.len);
+        memcpy(res->nameValue.buff, node->nameValue.buff, node->nameValue.len);
     }
     return res;
 }

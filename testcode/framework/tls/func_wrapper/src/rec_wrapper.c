@@ -12,7 +12,8 @@
  * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
  * See the Mulan PSL v2 for more details.
  */
-#include "securec.h"
+
+#include <string.h>
 #include "hitls_build.h"
 #include "rec_crypto.h"
 #include "hs_ctx.h"
@@ -42,7 +43,7 @@ extern int32_t __wrap_REC_Write(TLS_Ctx *ctx, REC_Type recordType, const uint8_t
     if (g_recWrapper.recordType == REC_TYPE_HANDSHAKE && ctx->hsCtx->state != g_recWrapper.ctrlState) {
         return __real_REC_Write(ctx, recordType, data, manipulateLen);
     }
-    (void)memcpy_s(g_locBuffer, MAX_BUF, data, num);
+    memcpy(g_locBuffer, data, num);
     // The value of manipulateLen can be greater than or smaller than num
     g_recWrapper.func(ctx, g_locBuffer, &manipulateLen, MAX_BUF, g_recWrapper.userData);
     if (ctx->hsCtx->bufferLen < manipulateLen) {
@@ -55,7 +56,7 @@ extern int32_t __wrap_REC_Write(TLS_Ctx *ctx, REC_Type recordType, const uint8_t
     }
 
     if (recordType == REC_TYPE_HANDSHAKE) {
-        (void)memcpy_s(ctx->hsCtx->msgBuf, ctx->hsCtx->bufferLen, g_locBuffer, manipulateLen);
+        memcpy(ctx->hsCtx->msgBuf, g_locBuffer, manipulateLen);
         ctx->hsCtx->msgLen = manipulateLen;
     }
     int32_t ret = __real_REC_Write(ctx, recordType, g_locBuffer, manipulateLen);

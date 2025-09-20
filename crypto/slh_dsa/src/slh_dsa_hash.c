@@ -16,7 +16,7 @@
 #include "hitls_build.h"
 #ifdef HITLS_CRYPTO_SLH_DSA
 
-#include "securec.h"
+#include <string.h>
 #include "bsl_err_internal.h"
 #include "crypt_errno.h"
 #include "crypt_algid.h"
@@ -40,7 +40,7 @@ static int32_t CalcMultiMsgHash(CRYPT_MD_AlgId mdId, const CRYPT_ConstData *hash
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
-    (void)memcpy_s(out, outLen, tmp, outLen);
+    memcpy(out, tmp, outLen);
     return CRYPT_SUCCESS;
 }
 
@@ -107,7 +107,7 @@ static int32_t Prfmsg(const CryptSlhDsaCtx *ctx, const uint8_t *rand, const uint
     GOTO_ERR_IF_EX(CRYPT_EAL_MacUpdate(mdCtx, rand, n), ret);
     GOTO_ERR_IF_EX(CRYPT_EAL_MacUpdate(mdCtx, msg, msgLen), ret);
     GOTO_ERR_IF_EX(CRYPT_EAL_MacFinal(mdCtx, tmp, &tmpLen), ret);
-    (void)memcpy_s(out, n, tmp, n);
+    memcpy(out, tmp, n);
 ERR:
     CRYPT_EAL_MacFreeCtx(mdCtx);
     return ret;
@@ -134,8 +134,8 @@ static int32_t HmsgSha(const CryptSlhDsaCtx *ctx, const uint8_t *r, const uint8_
 
     uint8_t tmpSeed[2 * SLH_DSA_MAX_N + MAX_MDSIZE] = {0}; // 2 is for double
     uint32_t tmpSeedLen = 0;
-    (void)memcpy_s(tmpSeed, sizeof(tmpSeed), r, n);
-    (void)memcpy_s(tmpSeed + n, sizeof(tmpSeed) - n, seed, n);
+    memcpy(tmpSeed, r, n);
+    memcpy(tmpSeed + n, seed, n);
     tmpSeedLen = n + n;
     tmpLen = CRYPT_EAL_MdGetDigestSize(mdId);
 

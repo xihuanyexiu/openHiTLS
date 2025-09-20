@@ -16,7 +16,6 @@
 /* BEGIN_HEADER */
 
 #include <pthread.h>
-#include "securec.h"
 #include "crypt_eal_kdf.h"
 #include "crypt_errno.h"
 #include "bsl_sal.h"

@@ -14,6 +14,7 @@
  */
 #include "app_opt.h"
 #include <stdint.h>
+#include <string.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,7 +23,6 @@
 #include <libgen.h>
 #include <sys/stat.h>
 #include <stdbool.h>
-#include "securec.h"
 #include "app_errno.h"
 #include "bsl_sal.h"
 #include "app_print.h"
@@ -62,8 +62,7 @@ static void GetProgName(const char *filePath)
 
     // Avoid consistency between source and destination addresses.
     if (p != g_cmdOptState.progName) {
-        (void)strncpy_s(
-            g_cmdOptState.progName, sizeof(g_cmdOptState.progName) - 1, p, sizeof(g_cmdOptState.progName) - 1);
+        (void)strncpy(g_cmdOptState.progName, p, sizeof(g_cmdOptState.progName) - 1);
     }
     g_cmdOptState.progName[sizeof(g_cmdOptState.progName) - 1] = '\0';
 }
@@ -74,7 +73,7 @@ static void CmdOptStateInit(int32_t index, int32_t argc, char **argv, const HITL
     g_cmdOptState.argc = argc;
     g_cmdOptState.argv = argv;
     g_cmdOptState.opts = opts;
-    (void)memset_s(g_cmdOptState.progName, sizeof(g_cmdOptState.progName), 0, sizeof(g_cmdOptState.progName));
+    memset(g_cmdOptState.progName, 0, sizeof(g_cmdOptState.progName));
 }
 
 static void CmdOptStateClear(void)
@@ -83,7 +82,7 @@ static void CmdOptStateClear(void)
     g_cmdOptState.argc = 0;
     g_cmdOptState.argv = NULL;
     g_cmdOptState.opts = NULL;
-    (void)memset_s(g_cmdOptState.progName, sizeof(g_cmdOptState.progName), 0, sizeof(g_cmdOptState.progName));
+    memset(g_cmdOptState.progName, 0, sizeof(g_cmdOptState.progName));
 }
 
 char *HITLS_APP_GetProgName(void)
@@ -390,7 +389,7 @@ static void OptPrint(const HITLS_CmdOption *opt, int width)
 {
     const char *help = opt->help ? opt->help : "";
     char start[MAX_HITLS_APP_OPT_LINE_WIDTH + 1] = {0};
-    (void)memset_s(start, sizeof(start) - 1, ' ', sizeof(start) - 1);
+    memset(start, ' ', sizeof(start) - 1);
     start[sizeof(start) - 1] = '\0';
     int pos = 0;
     start[pos++] = ' ';
@@ -401,10 +400,9 @@ static void OptPrint(const HITLS_CmdOption *opt, int width)
         start[pos++] = '[';
     }
     if (strlen(opt->name) > 0) {
-        if (EOK == strncpy_s(&start[pos], sizeof(start) - pos - 1, opt->name, strlen(opt->name))) {
-            pos += strlen(opt->name);
-        }
-        (void)memset_s(&start[pos + 1], sizeof(start) - 1 - pos - 1, ' ', sizeof(start) - 1 - pos - 1);
+        strcpy(&start[pos], opt->name);
+        pos += strlen(opt->name);
+        memset(&start[pos + 1], ' ', sizeof(start) - 1 - pos - 1);
     } else {
         start[pos++] = '*';
     }
@@ -416,16 +414,15 @@ static void OptPrint(const HITLS_CmdOption *opt, int width)
     if (opt->valueType != HITLS_APP_OPT_VALUETYPE_NO_VALUE) {
         start[pos++] = ' ';
         const char *param = ValueType2Param(opt->valueType);
-        if (strncpy_s(&start[pos], sizeof(start) - pos - 1, param, strlen(param)) == EOK) {
-            pos += strlen(param);
-        }
-        (void)memset_s(&start[pos + 1], sizeof(start) - 1 - pos - 1, ' ', sizeof(start) - 1 - pos - 1);
+        strcpy(&start[pos], param);
+        pos += strlen(param);
+        memset(&start[pos + 1], ' ', sizeof(start) - 1 - pos - 1);
     }
     start[pos++] = ' ';
     if (pos >= MAX_HITLS_APP_OPT_NAME_WIDTH) {
         start[pos] = '\0';
         (void)AppPrintError("%s\n", start);
-        (void)memset_s(start, sizeof(start) - 1, ' ', sizeof(start) - 1);
+        memset(start, ' ', sizeof(start) - 1);
     }
     start[width] = '\0';
     (void)AppPrintError("%s  %s\n", start, help);
@@ -579,7 +576,7 @@ int32_t HITLS_APP_OptWriteUio(BSL_UIO *uio, uint8_t *buf, uint32_t bufLen, int32
             outBufLen = strlen(outBuf);
             break;
         default:
-            outRet = memcpy_s(outBuf, outBufLen, buf, bufLen);
+            memcpy(outBuf, buf, bufLen);
     }
     if (outRet != HITLS_APP_SUCCESS) {
         BSL_SAL_FREE(outBuf);

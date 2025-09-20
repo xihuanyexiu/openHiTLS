@@ -21,7 +21,6 @@
 #include <sys/socket.h>
 #include <signal.h>
 #include <unistd.h>
-#include "securec.h"
 #include "app_errno.h"
 #include "app_print.h"
 #include "app_opt.h"
@@ -142,7 +141,8 @@ static void InitClientParams(HITLS_ClientParams *params, AppProvider *provider)
     if (params == NULL || provider == NULL) {
         return;
     }
-
+    
+    memset(params, 0, sizeof(HITLS_ClientParams));
     /* Set default values */
     params->port = 4433;
     params->connectTimeout = 10;

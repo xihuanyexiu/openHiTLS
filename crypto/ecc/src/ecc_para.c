@@ -15,8 +15,7 @@
 
 #include "hitls_build.h"
 #ifdef HITLS_CRYPTO_ECC
-
-#include "securec.h"
+#include <string.h>
 #include "bsl_sal.h"
 #include "bsl_err_internal.h"
 #include "crypt_utils.h"
@@ -499,7 +498,7 @@ ECC_Para *ECC_NewPara(CRYPT_PKEY_ParaId id)
         BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
         return NULL;
     }
-    (void)memset_s(para, sizeof(ECC_Para), 0, sizeof(ECC_Para));
+    memset(para, 0, sizeof(ECC_Para));
     para->method = method;
     uint32_t bits = curve->p.dataLen * 8; // bits = bytes * 8
     para->id = id;

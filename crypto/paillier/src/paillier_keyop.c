@@ -15,14 +15,13 @@
 
 #include "hitls_build.h"
 #ifdef HITLS_CRYPTO_PAILLIER
-
+#include <string.h>
 #include "crypt_types.h"
 #include "crypt_paillier.h"
 #include "crypt_utils.h"
 #include "bsl_err_internal.h"
 #include "paillier_local.h"
 #include "crypt_errno.h"
-#include "securec.h"
 #include "bsl_sal.h"
 #include "crypt_params_key.h"
 

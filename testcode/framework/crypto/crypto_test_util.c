@@ -17,6 +17,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include "hitls_build.h"
 #include "bsl_sal.h"
@@ -33,7 +34,6 @@
 #include "helper.h"
 #include "crypto_test_util.h"
 
-#include "securec.h"
 #include "crypt_util_rand.h"
 
 #ifndef HITLS_BSL_SAL_MEM
@@ -225,7 +225,7 @@ void TestMacSameAddr(int algId, Hex *key, Hex *data, Hex *mac)
     CRYPT_EAL_MacCtx *ctx = NULL;
     int padType = CRYPT_PADDING_ZEROS;
 
-    ASSERT_EQ(memcpy_s(out, outLen, data->x, data->len), 0);
+    ASSERT_EQ(memcpy(out, data->x, data->len), 0);
     TestMemInit();
 
     ASSERT_TRUE((ctx = CRYPT_EAL_MacNewCtx(algId)) != NULL);
@@ -252,8 +252,8 @@ void TestMacAddrNotAlign(int algId, Hex *key, Hex *data, Hex *mac)
     uint8_t *pKey = keyTmp + 1;
     uint8_t *pData = dataTmp + 1;
 
-    ASSERT_TRUE(memcpy_s(pKey, key->len, key->x, key->len) == EOK);
-    ASSERT_TRUE(memcpy_s(pData, data->len, data->x, data->len) == EOK);
+    memcpy(pKey, key->x, key->len);
+    memcpy(pData, data->x, data->len);
     TestMemInit();
 
     ASSERT_TRUE((ctx = CRYPT_EAL_MacNewCtx(algId)) != NULL);

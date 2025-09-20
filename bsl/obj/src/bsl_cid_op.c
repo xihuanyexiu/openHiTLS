@@ -16,7 +16,6 @@
 #include "hitls_build.h"
 #ifdef HITLS_BSL_OBJ
 #include <stddef.h>
-#include "securec.h"
 #include "bsl_obj.h"
 #include "bsl_sal.h"
 #include "bsl_obj_internal.h"

@@ -17,7 +17,7 @@
 #ifdef HITLS_CRYPTO_KDFTLS12
 
 #include <stdint.h>
-#include "securec.h"
+#include <string.h>
 #include "bsl_err_internal.h"
 #include "bsl_sal.h"
 #include "crypt_local_types.h"
@@ -97,7 +97,7 @@ int32_t KDF_PHASH(CRYPT_KDFTLS12_Ctx *ctx, uint8_t *out, uint32_t len)
         GOTO_ERR_IF(macMeth->final(ctx->macCtx, outTmp, &outTmpLen), ret);
 
         uint32_t cpyLen = outTmpLen > (len - totalLen) ? (len - totalLen) : outTmpLen;
-        (void)memcpy_s(out + totalLen, len - totalLen, outTmp, cpyLen);
+        memcpy(out + totalLen, outTmp, cpyLen);
         totalLen += cpyLen;
     }
 
@@ -145,7 +145,7 @@ int32_t CRYPT_KDFTLS12_SetMacMethod(CRYPT_KDFTLS12_Ctx *ctx, const CRYPT_MAC_Alg
         }
         ctx->macMeth.freeCtx(ctx->macCtx);
         ctx->macCtx = NULL;
-        (void)memset_s(&ctx->macMeth, sizeof(EAL_MacMethod), 0, sizeof(EAL_MacMethod));
+        memset(&ctx->macMeth, 0, sizeof(EAL_MacMethod));
     }
     EAL_MacMethod *macMeth = EAL_MacFindMethod(id, &ctx->macMeth);
     if (macMeth == NULL) {
@@ -329,7 +329,7 @@ int32_t CRYPT_KDFTLS12_Deinit(CRYPT_KDFTLS12_Ctx *ctx)
     BSL_SAL_ClearFree((void *)ctx->key, ctx->keyLen);
     BSL_SAL_ClearFree((void *)ctx->label, ctx->labelLen);
     BSL_SAL_ClearFree((void *)ctx->seed, ctx->seedLen);
-    (void)memset_s(ctx, sizeof(CRYPT_KDFTLS12_Ctx), 0, sizeof(CRYPT_KDFTLS12_Ctx));
+    memset(ctx, 0, sizeof(CRYPT_KDFTLS12_Ctx));
     return CRYPT_SUCCESS;
 }
 

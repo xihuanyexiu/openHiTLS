@@ -16,7 +16,6 @@
 /* BEGIN_HEADER */
 
 #include "bsl_sal.h"
-#include "securec.h"
 #include "hitls_pki_pkcs12.h"
 #include "hitls_pki_errno.h"
 #include "bsl_types.h"
@@ -599,7 +598,7 @@ void SDV_PKCS12_PARSE_P12_WRONG_P12FILE_TC001(Hex *encode)
     ASSERT_EQ(ret, HITLS_PKCS12_ERR_VERIFY_FAIL);
 
     encode->x[encode->len - 2] = 0x08; // recover the iteration = 2048;
-    (void)memset_s(encode->x + 96, 16, 0, 16); // modify the contentInfo
+    memset(encode->x + 96, 0, 16); // modify the contentInfo
     ret = HITLS_PKCS12_ParseBuff(BSL_FORMAT_ASN1, (BSL_Buffer *)encode, &param, &p12_2, true);
     ASSERT_EQ(ret, HITLS_PKCS12_ERR_VERIFY_FAIL);
 
@@ -1989,11 +1988,11 @@ void SDV_PKCS12_BAG_CTRL_TC001(void)
 
     uint8_t secretData1[20];
     uint32_t secretDataLen1 = 20;
-    (void)memset_s(secretData1, secretDataLen1, 'F', secretDataLen1);
+    memset(secretData1, 'F', secretDataLen1);
     BSL_Buffer secret1 = {.data = (uint8_t *)secretData1, .dataLen = secretDataLen1};
     uint8_t secretData2[30];
     uint32_t secretDataLen2 = 30;
-    (void)memset_s(secretData2, secretDataLen2, 'A', secretDataLen2);
+    memset(secretData2, 'A', secretDataLen2);
     BSL_Buffer secret2 = {.data = (uint8_t *)secretData2, .dataLen = secretDataLen2};
 
     uint8_t outputSecret[30] = {2};
@@ -2154,7 +2153,7 @@ void SDV_PKCS12_BAG_CUSTOM_OID_TC001(void)
 
     uint8_t secretData1[20];
     uint32_t secretDataLen1 = 20;
-    (void)memset_s(secretData1, secretDataLen1, 'F', secretDataLen1);
+    memset(secretData1, 'F', secretDataLen1);
     BSL_Buffer secret = {.data = (uint8_t *)secretData1, .dataLen = secretDataLen1};
 
     char *name = "secret";
@@ -2220,7 +2219,7 @@ static int32_t STUB_HITLS_X509_AddListItemDefault2(void *item, uint32_t len, BSL
         if (node == NULL) {
             return BSL_MALLOC_FAIL;
         }
-        (void)memcpy_s(node, len, item, len);
+        memcpy(node, item, len);
         return BSL_LIST_AddElement(list, node, BSL_LIST_POS_AFTER);
     }
     return BSL_MALLOC_FAIL;

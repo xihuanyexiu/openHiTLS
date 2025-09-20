@@ -15,7 +15,6 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
-#include "securec.h"
 #include "bsl_uio.h"
 #include "bsl_errno.h"
 #include "bsl_sal.h"
@@ -39,8 +38,8 @@ int32_t AppUioVPrint(BSL_UIO *uio, const char *format, va_list args)
         return HITLS_APP_MEM_ALLOC_FAIL;
     }
 
-    ret = vsnprintf_s(buf, LOG_BUFFER_LEN + 1, LOG_BUFFER_LEN, format, args);
-    if (ret < EOK) {
+    ret = vsnprintf(buf, LOG_BUFFER_LEN + 1, format, args);
+    if (ret < 0) {
         BSL_SAL_FREE(buf);
         return HITLS_APP_SECUREC_FAIL;
     }

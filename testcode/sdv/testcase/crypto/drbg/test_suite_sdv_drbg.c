@@ -20,7 +20,6 @@
 #include <stdbool.h>
 #include <pthread.h>
 #include "crypt_eal_init.h"
-#include "securec.h"
 #include "bsl_errno.h"
 #include "bsl_sal.h"
 #include "crypt_errno.h"
@@ -359,7 +358,7 @@ static void drbgDataInit(CRYPT_Data *data, uint32_t size)
         if (dataTmp == NULL) {
             return;
         }
-        (void)memset_s(dataTmp, size, 0, size);
+        memset(dataTmp, 0, size);
     }
     data->data = dataTmp;
     data->len = size;
@@ -447,7 +446,7 @@ static int sdvCryptEalRandSeedAdinApiTest(uint8_t *addin, uint32_t addinLen)
 
     output = malloc(sizeof(uint8_t) * DRBG_OUTPUT_SIZE);
     ASSERT_TRUE(output != NULL);
-    (void)memset_s(output, sizeof(uint8_t) * DRBG_OUTPUT_SIZE, 0, sizeof(uint8_t) * DRBG_OUTPUT_SIZE);
+    memset(output, 0, sizeof(uint8_t) * DRBG_OUTPUT_SIZE);
     ret = CRYPT_EAL_RandbytesWithAdin(output, DRBG_OUTPUT_SIZE, NULL, 0);
     ASSERT_EQ(ret, CRYPT_SUCCESS);
 
@@ -486,7 +485,7 @@ static int sdvCryptEalDrbgSeedAdinApiTest(uint8_t *addin, uint32_t addinLen)
 
     output = malloc(sizeof(uint8_t) * DRBG_OUTPUT_SIZE);
     ASSERT_TRUE(output != NULL);
-    (void)memset_s(output, sizeof(uint8_t) * DRBG_OUTPUT_SIZE, 0, sizeof(uint8_t) * DRBG_OUTPUT_SIZE);
+    memset(output, 0, sizeof(uint8_t) * DRBG_OUTPUT_SIZE);
     ret = CRYPT_EAL_DrbgbytesWithAdin(drbgCtx, output, DRBG_OUTPUT_SIZE, NULL, 0);
     ASSERT_EQ(ret, CRYPT_SUCCESS);
 
@@ -608,7 +607,7 @@ void SDV_CRYPT_DRBG_RAND_INIT_API_TC002(int agId, int value, int size)
 {
     uint8_t *pers = malloc(size);
     ASSERT_TRUE(pers != NULL);
-    ASSERT_EQ(memset_s(pers, size, value, size), 0);
+    ASSERT_EQ(memset(pers, value, size), 0);
     void *drbg = NULL;
     CRYPT_RandSeedMethod seedMeth = { 0 };
     CRYPT_Data data = { 0 };
@@ -916,18 +915,18 @@ void SDV_CRYPT_DRBG_RAND_BYTES_ADIN_ERR_PARA_API_TC001(int algId)
     ASSERT_TRUE(drbgCtx != NULL);
     ASSERT_TRUE(CRYPT_EAL_DrbgInstantiate(drbgCtx, NULL, 0) == CRYPT_SUCCESS);
 
-    memset_s(addin, DRBG_MAX_ADIN_SIZE, 0, DRBG_MAX_ADIN_SIZE);
+    memset(addin, 0, DRBG_MAX_ADIN_SIZE);
     ASSERT_EQ(CRYPT_EAL_DrbgbytesWithAdin(drbgCtx, output, DRBG_MAX_OUTPUT_SIZE, addin, DRBG_MAX_ADIN_SIZE),
         CRYPT_SUCCESS);
 
-    memset_s(addin, DRBG_MAX_ADIN_SIZE, 'F', DRBG_MAX_ADIN_SIZE);
+    memset(addin, 'F', DRBG_MAX_ADIN_SIZE);
     ASSERT_EQ(CRYPT_EAL_DrbgbytesWithAdin(drbgCtx, output, DRBG_MAX_OUTPUT_SIZE, addin, DRBG_MAX_ADIN_SIZE),
         CRYPT_SUCCESS);
 
     ASSERT_EQ(CRYPT_EAL_DrbgbytesWithAdin(drbgCtx, output, DRBG_MAX_OUTPUT_SIZE, NULL, 0), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_DrbgbytesWithAdin(drbgCtx, output, DRBG_MAX_OUTPUT_SIZE, addin, 0), CRYPT_SUCCESS);
 
-    memset_s(addin, DRBG_MAX_ADIN_SIZE, 0, DRBG_MAX_ADIN_SIZE);
+    memset(addin, 0, DRBG_MAX_ADIN_SIZE);
     ASSERT_NE(CRYPT_EAL_DrbgbytesWithAdin(drbgCtx, output, 0, addin, DRBG_MAX_ADIN_SIZE), CRYPT_SUCCESS);
     ASSERT_EQ(CRYPT_EAL_DrbgbytesWithAdin(drbgCtx, output, DRBG_MAX_OUTPUT_SIZE + 1, addin, DRBG_MAX_ADIN_SIZE),
         CRYPT_SUCCESS);
@@ -1053,7 +1052,7 @@ void SDV_CRYPT_DRBG_RAND_SEED_ADIN_ERR_PARA_API_TC001(void)
     uint32_t addinLen = sizeof(uint8_t) * DRBG_MAX_ADIN_SIZE;
     uint8_t *addin = malloc(addinLen);
     ASSERT_TRUE(addin != NULL);
-    memset_s(addin, addinLen, 0, addinLen);
+    memset(addin, 0, addinLen);
 
     TestMemInit();
     ASSERT_NE(CRYPT_EAL_RandSeedWithAdin(addin, 0), CRYPT_SUCCESS);
@@ -1095,7 +1094,7 @@ void SDV_CRYPT_DRBG_SEED_ADIN_ERR_PARA_API_TC001(void)
 
     addin = malloc(addinLen);
     ASSERT_TRUE(addin != NULL);
-    memset_s(addin, addinLen, 0, addinLen);
+    memset(addin, 0, addinLen);
 
     TestMemInit();
     regSeedMeth(&seedMeth);
@@ -2145,7 +2144,7 @@ void SDV_CRYPTO_DRBG_SET_PREDICTION_RESISTANCE_API_TC001()
 
     output = malloc(sizeof(uint8_t) * DRBG_OUTPUT_SIZE);
     ASSERT_TRUE(output != NULL);
-    (void)memset_s(output, sizeof(uint8_t) * DRBG_OUTPUT_SIZE, 0, sizeof(uint8_t) * DRBG_OUTPUT_SIZE);
+    memset(output, 0, sizeof(uint8_t) * DRBG_OUTPUT_SIZE);
     ASSERT_EQ(CRYPT_EAL_DrbgbytesWithAdin(drbgCtx, output, DRBG_OUTPUT_SIZE, NULL, 0), CRYPT_SUCCESS);
 
     CRYPT_EAL_DrbgDeinit(drbgCtx);

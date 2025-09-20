@@ -376,12 +376,6 @@ test_feature()
 
 parse_option
 
-# build securec
-if [ ! -d "${HITLS_ROOT_DIR}/platform/Secure_C/lib" ]; then
-    cd ${HITLS_ROOT_DIR}/platform/Secure_C
-    make -j
-fi
-
 if [ "${BUILD_HITLS}" = "on" ]; then
     build_hitls
 fi

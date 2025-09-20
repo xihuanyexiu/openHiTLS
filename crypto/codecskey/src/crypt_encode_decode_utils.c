@@ -16,7 +16,7 @@
 #include "hitls_build.h"
 #ifdef HITLS_CRYPTO_CODECSKEY
 #include <stdint.h>
-#include "securec.h"
+#include <string.h>
 #include "bsl_types.h"
 #include "bsl_asn1_internal.h"
 #include "bsl_obj_internal.h"
@@ -694,7 +694,7 @@ int32_t CRYPT_DECODE_ParseEncDataAsn1(CRYPT_EAL_LibCtx *libctx, const char *attr
     if (encPara->enData->dataLen != 0) {
         uint8_t *output = BSL_SAL_Malloc(encPara->enData->dataLen);
         if (output == NULL) {
-            (void)memset_s(key, sizeof(key), 0, sizeof(key));
+            memset(key, 0, sizeof(key));
             BSL_ERR_PUSH_ERROR(BSL_MALLOC_FAIL);
             return BSL_MALLOC_FAIL;
         }
@@ -702,7 +702,7 @@ int32_t CRYPT_DECODE_ParseEncDataAsn1(CRYPT_EAL_LibCtx *libctx, const char *attr
         ret = CRYPT_ENCODE_DECODE_DecryptEncData(libctx, attrName, encPara->ivData, encPara->enData, symAlg, false,
             &keyBuff, output, &dataLen);
         if (ret != CRYPT_SUCCESS) {
-            (void)memset_s(key, sizeof(key), 0, sizeof(key));
+            memset(key, 0, sizeof(key));
             BSL_SAL_Free(output);
             BSL_ERR_PUSH_ERROR(ret);
             return ret;
@@ -710,7 +710,7 @@ int32_t CRYPT_DECODE_ParseEncDataAsn1(CRYPT_EAL_LibCtx *libctx, const char *attr
         decode->data = output;
         decode->dataLen = dataLen;
     }
-    (void)memset_s(key, sizeof(key), 0, sizeof(key));
+    memset(key, 0, sizeof(key));
     return CRYPT_SUCCESS;
 }
 

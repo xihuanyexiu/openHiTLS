@@ -18,7 +18,6 @@
 #include <stdbool.h>
 #include <string.h>
 #include <linux/limits.h>
-#include "securec.h"
 #include "bsl_sal.h"
 #include "bsl_types.h"
 #include "bsl_errno.h"
@@ -165,11 +164,8 @@ static int32_t GetCrlInfoByStd(uint8_t **infileBuf, uint64_t *infileBufLen)
             crlData = ExpandingMem(crlData, newCrlDataCapacity, crlDataCapacity);
             crlDataCapacity = newCrlDataCapacity;
         }
-        if (memcpy_s(crlData + crlDataSize, crlDataCapacity - crlDataSize, buf, readLen) != 0) {
-            BSL_SAL_FREE(buf);
-            BSL_SAL_FREE(crlData);
-            return HITLS_APP_SECUREC_FAIL;
-        }
+        memcpy(crlData + crlDataSize, buf, readLen);
+
         crlDataSize += readLen;
         if (strcmp(buf, "-----BEGIN X509 CRL-----\n") == 0) {
             isMatchCrlData = true;

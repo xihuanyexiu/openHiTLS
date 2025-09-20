@@ -14,7 +14,6 @@
  */
 
 #include <semaphore.h>
-#include "securec.h"
 #include "hitls_error.h"
 #include "frame_tls.h"
 #include "frame_link.h"
@@ -490,9 +489,7 @@ int32_t STUB_MethodWrite(BSL_UIO *uio, const void *buf, uint32_t len, uint32_t *
 {
     (void)uio;
 
-    if (memcpy_s(g_writeBuf, sizeof(g_writeBuf), buf, len) != EOK) {
-        return BSL_MEMCPY_FAIL;
-    }
+    memcpy(g_writeBuf, buf, len);
 
     *writeLen = len;
     if (g_isUseWriteLen) {
@@ -506,10 +503,11 @@ uint32_t g_readLen;
 uint8_t g_readBuf[REC_DTLS_RECORD_HEADER_LEN + REC_MAX_CIPHER_TEXT_LEN];
 int32_t STUB_MethodRead(BSL_UIO *uio, void *buf, uint32_t len, uint32_t *readLen)
 {
+    (void)len;
     (void)uio;
 
-    if (g_readLen != 0 && memcpy_s(buf, len, g_readBuf, g_readLen) != EOK) {
-        return BSL_MEMCPY_FAIL;
+    if (g_readLen != 0) {
+        memcpy(buf, g_readBuf, g_readLen);
     }
 
     *readLen = g_readLen;
@@ -711,9 +709,7 @@ void TEST_SendUnexpectClientKeyExchangeMsg(void *msg, void *data)
     frameType->recordType = REC_TYPE_HANDSHAKE;
     frameType->handshakeType = CLIENT_KEY_EXCHANGE;
     frameType->keyExType = HITLS_KEY_EXCH_ECDHE;
-    if (memcpy_s(msg, sizeof(FRAME_Msg), &newFrameMsg, sizeof(newFrameMsg)) != EOK) {
-        Print("TEST_SendUnexpectClientKeyExchangeMsg memcpy_s Error!");
-    }
+    memcpy(msg, &newFrameMsg, sizeof(newFrameMsg));
 }
 
 // Replace the message to be sent with the certificate.
@@ -736,7 +732,5 @@ void TEST_SendUnexpectCertificateMsg(void *msg, void *data)
     frameType->recordType = REC_TYPE_HANDSHAKE;
     frameType->handshakeType = CERTIFICATE;
     frameType->keyExType = HITLS_KEY_EXCH_ECDHE;
-    if (memcpy_s(msg, sizeof(FRAME_Msg), &newFrameMsg, sizeof(newFrameMsg)) != EOK) {
-        Print("TEST_SendUnexpectCertificateMsg memcpy_s Error!");
-    }
+    memcpy(msg, &newFrameMsg, sizeof(newFrameMsg));
 }

@@ -12,8 +12,7 @@
  * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
  * See the Mulan PSL v2 for more details.
  */
-
-#include "securec.h"
+#include <string.h>
 #include "bsl_bytes.h"
 #include "bsl_sal.h"
 #include "hitls_error.h"
@@ -1215,7 +1214,7 @@ void FRAME_CleanMsg(FRAME_Type *frameType, FRAME_Msg *msg)
         default:
             break;
     }
-    memset_s(msg, sizeof(FRAME_Msg), 0, sizeof(FRAME_Msg));
+    memset(msg, 0, sizeof(FRAME_Msg));
     return;
 }
 
@@ -1237,5 +1236,5 @@ void FRAME_CleanNonHsRecord(REC_Type recType, FRAME_Msg *msg)
         default:
             break;
     }
-    memset_s(msg, sizeof(FRAME_Msg), 0, sizeof(FRAME_Msg));
+    memset(msg, 0, sizeof(FRAME_Msg));
 }

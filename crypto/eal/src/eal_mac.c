@@ -18,8 +18,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "crypt_eal_mac.h"
-#include "securec.h"
 #include "bsl_err_internal.h"
 #include "bsl_sal.h"
 #include "crypt_local_types.h"
@@ -44,7 +44,7 @@ static CRYPT_EAL_MacCtx *MacNewCtxInner(int32_t algId, CRYPT_EAL_LibCtx *libCtx,
         EAL_ERR_REPORT(CRYPT_EVENT_ERR, CRYPT_ALGO_MAC, algId, CRYPT_MEM_ALLOC_FAIL);
         return NULL;
     }
-    (void)memset_s(macCtx, sizeof(CRYPT_EAL_MacCtx), 0, sizeof(CRYPT_EAL_MacCtx));
+    memset(macCtx, 0, sizeof(CRYPT_EAL_MacCtx));
     void *provCtx = NULL;
     if (!isProvider) {
         method = EAL_MacFindMethod(algId, &macCtx->macMeth);

@@ -15,7 +15,7 @@
 #include "hitls_build.h"
 #ifdef HITLS_TLS_FEATURE_ALPN
 #include <stdint.h>
-#include "securec.h"
+#include <string.h>
 #include "hitls_error.h"
 #include "bsl_err_internal.h"
 #include "bsl_sal.h"
@@ -85,15 +85,7 @@ static int32_t SelectProtocol(TLS_Ctx *ctx, uint8_t *alpnSelected, uint16_t alpn
         return HITLS_MEMALLOC_FAIL;
     }
 
-    if (memcpy_s(alpnSelectedTmp, protoMatchLen + 1, protoMatch,
-        protoMatchLen) != EOK) {
-        BSL_SAL_FREE(alpnSelectedTmp);
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15261, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
-            "client copy selected alpn failed.", 0, 0, 0, 0);
-        ctx->method.sendAlert(ctx, ALERT_LEVEL_FATAL, ALERT_INTERNAL_ERROR);
-        BSL_ERR_PUSH_ERROR(HITLS_MEMCPY_FAIL);
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(alpnSelectedTmp, protoMatch, protoMatchLen);
 
     BSL_SAL_FREE(ctx->negotiatedInfo.alpnSelected);
     ctx->negotiatedInfo.alpnSelected = alpnSelectedTmp;

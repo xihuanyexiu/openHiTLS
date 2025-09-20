@@ -15,8 +15,8 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <string.h>
 #include "hitls_build.h"
-#include "securec.h"
 #include "bsl_sal.h"
 #include "hitls_crypt_reg.h"
 #include "hitls_error.h"
@@ -76,18 +76,14 @@ typedef struct {
  */
 int32_t STUB_CRYPT_RandBytesCallback(uint8_t *buf, uint32_t len)
 {
-    if (memset_s(buf, len, 1, len) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memset(buf, 1, len);
     return HITLS_SUCCESS;
 }
 
 int32_t STUB_CRYPT_RandBytesCallbackLibCtx(void *libCtx, uint8_t *buf, uint32_t len)
 {
     (void)libCtx;
-    if (memset_s(buf, len, 1, len) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memset(buf, 1, len);
     return HITLS_SUCCESS;
 }
 
@@ -129,7 +125,7 @@ HITLS_CRYPT_Key *STUB_CRYPT_GenerateEcdhKeyPairCallback(const HITLS_ECParameters
         BSL_SAL_FREE(ecdhKey);
         return NULL;
     }
-    memset_s(pubKey, keyLen, 1u, keyLen);
+    memset(pubKey, 1u, keyLen);
 
     uint8_t *privateKey = (uint8_t *)BSL_SAL_Malloc(keyLen);
     if (privateKey == NULL) {
@@ -137,7 +133,7 @@ HITLS_CRYPT_Key *STUB_CRYPT_GenerateEcdhKeyPairCallback(const HITLS_ECParameters
         BSL_SAL_FREE(ecdhKey);
         return NULL;
     }
-    memset_s(privateKey, keyLen, 2u, keyLen);
+    memset(privateKey, 2u, keyLen);
 
     ecdhKey->pubKey = pubKey;
     ecdhKey->pubKeyLen = keyLen;
@@ -194,9 +190,8 @@ int32_t STUB_CRYPT_GetEcdhEncodedPubKeyCallback(HITLS_CRYPT_Key *key, uint8_t *p
         return HITLS_INTERNAL_EXCEPTION;
     }
 
-    if (memcpy_s(pubKeyBuf, bufLen, ecdhKey->pubKey, ecdhKey->pubKeyLen) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(pubKeyBuf, ecdhKey->pubKey, ecdhKey->pubKeyLen);
+
     *pubKeyLen = ecdhKey->pubKeyLen;
     return HITLS_SUCCESS;
 }
@@ -227,9 +222,7 @@ int32_t STUB_CRYPT_CalcEcdhSharedSecretCallback(HITLS_CRYPT_Key *key, uint8_t *p
         return HITLS_INTERNAL_EXCEPTION;
     }
 
-    if (memset_s(sharedSecret, *sharedSecretLen, 3u, pubKeyLen) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memset(sharedSecret, 3u, pubKeyLen);
     *sharedSecretLen = pubKeyLen;
     return HITLS_SUCCESS;
 }
@@ -281,7 +274,7 @@ HITLS_CRYPT_Key *STUB_CRYPT_GenerateDhKeyBySecbitsCallback(int32_t secbits)
         BSL_SAL_FREE(dhKey);
         return NULL;
     }
-    memset_s(dhKey->p, plen, 1u, plen);
+    memset(dhKey->p, 1u, plen);
     dhKey->plen = plen;
 
     dhKey->g = BSL_SAL_Calloc(1u, plen);
@@ -289,7 +282,7 @@ HITLS_CRYPT_Key *STUB_CRYPT_GenerateDhKeyBySecbitsCallback(int32_t secbits)
         STUB_CRYPT_FreeDhKeyCallback(dhKey);
         return NULL;
     }
-    memset_s(dhKey->g, plen, 2u, plen);
+    memset(dhKey->g, 2u, plen);
     dhKey->glen = plen;
 
     dhKey->pubKey = BSL_SAL_Calloc(1u, plen);
@@ -297,7 +290,7 @@ HITLS_CRYPT_Key *STUB_CRYPT_GenerateDhKeyBySecbitsCallback(int32_t secbits)
         STUB_CRYPT_FreeDhKeyCallback(dhKey);
         return NULL;
     }
-    memset_s(dhKey->pubKey, plen, 3u, plen);
+    memset(dhKey->pubKey, 3u, plen);
     dhKey->pubKeyLen = plen;
 
     dhKey->privateKey = BSL_SAL_Calloc(1u, plen);
@@ -305,7 +298,7 @@ HITLS_CRYPT_Key *STUB_CRYPT_GenerateDhKeyBySecbitsCallback(int32_t secbits)
         STUB_CRYPT_FreeDhKeyCallback(dhKey);
         return NULL;
     }
-    memset_s(dhKey->privateKey, plen, 4u, plen);
+    memset(dhKey->privateKey, 4u, plen);
     dhKey->privateKeyLen = plen;
 
     return dhKey;
@@ -348,10 +341,7 @@ HITLS_CRYPT_Key *STUB_CRYPT_GenerateDhKeyByParamsCallback(uint8_t *p, uint16_t p
         STUB_CRYPT_FreeDhKeyCallback(dhKey);
         return NULL;
     }
-    if (memset_s(dhKey->pubKey, plen, 3u, plen) != EOK) {
-        STUB_CRYPT_FreeDhKeyCallback(dhKey);
-        return NULL;
-    }
+    memset(dhKey->pubKey, 3u, plen);
     dhKey->pubKeyLen = plen;
 
     dhKey->privateKey = BSL_SAL_Calloc(1u, plen);
@@ -359,10 +349,7 @@ HITLS_CRYPT_Key *STUB_CRYPT_GenerateDhKeyByParamsCallback(uint8_t *p, uint16_t p
         STUB_CRYPT_FreeDhKeyCallback(dhKey);
         return NULL;
     }
-    if (memset_s(dhKey->privateKey, plen, 4u, plen) != EOK) {
-        STUB_CRYPT_FreeDhKeyCallback(dhKey);
-        return NULL;
-    }
+    memset(dhKey->privateKey, 4u, plen);
     dhKey->privateKeyLen = plen;
 
     return dhKey;
@@ -385,15 +372,13 @@ int32_t STUB_CRYPT_DHGetParametersCallback(HITLS_CRYPT_Key *key, uint8_t *p, uin
     FRAME_DhKey *dhKey = (FRAME_DhKey *)key;
 
     if (p != NULL) {
-        if (memcpy_s(p, *plen, dhKey->p, dhKey->plen) != EOK) {
-            return HITLS_MEMCPY_FAIL;
-        }
+        memcpy(p, dhKey->p, dhKey->plen);
+
     }
 
     if (g != NULL) {
-        if (memcpy_s(g, *glen, dhKey->g, dhKey->glen) != EOK) {
-            return HITLS_MEMCPY_FAIL;
-        }
+        memcpy(g, dhKey->g, dhKey->glen);
+
     }
 
     *plen = dhKey->plen;
@@ -404,15 +389,15 @@ int32_t STUB_CRYPT_DHGetParametersCallback(HITLS_CRYPT_Key *key, uint8_t *p, uin
 int32_t STUB_CRYPT_GetDhEncodedPubKeyCallback(HITLS_CRYPT_Key *key, uint8_t *pubKeyBuf, uint32_t bufLen,
     uint32_t *pubKeyLen)
 {
+    (void)bufLen;
     if ((key == NULL) || (pubKeyBuf == NULL) || (pubKeyLen == NULL)) {
         return HITLS_INTERNAL_EXCEPTION;
     }
 
     FRAME_DhKey *dhKey = (FRAME_DhKey *)key;
 
-    if (memcpy_s(pubKeyBuf, bufLen, dhKey->pubKey, dhKey->pubKeyLen) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(pubKeyBuf, dhKey->pubKey, dhKey->pubKeyLen);
+
 
     *pubKeyLen = dhKey->pubKeyLen;
     return HITLS_SUCCESS;
@@ -431,9 +416,7 @@ int32_t STUB_CRYPT_CalcDhSharedSecretCallback(HITLS_CRYPT_Key *key, uint8_t *pee
         return HITLS_INTERNAL_EXCEPTION;
     }
 
-    if (memset_s(sharedSecret, *sharedSecretLen, 1u, dhKey->plen) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memset(sharedSecret, 1u, dhKey->plen);
     *sharedSecretLen = dhKey->plen;
     return HITLS_SUCCESS;
 }
@@ -555,9 +538,7 @@ int32_t STUB_CRYPT_HmacFinalCallback(HITLS_HMAC_Ctx *ctx, uint8_t *out, uint32_t
         return HITLS_INTERNAL_EXCEPTION;
     }
 
-    if (memset_s(out, *len, 4u, hmacSize) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memset(out, 4u, hmacSize);
     *len = hmacSize;
     return HITLS_SUCCESS;
 }
@@ -589,9 +570,7 @@ int32_t STUB_CRYPT_HmacCallback(HITLS_HashAlgo hashAlgo, const uint8_t *key, uin
         return HITLS_INTERNAL_EXCEPTION;
     }
 
-    if (memset_s(out, *outLen, 4u, hmacSize) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memset(out, 4u, hmacSize);
     *outLen = hmacSize;
     return HITLS_SUCCESS;
 }
@@ -718,9 +697,7 @@ int32_t STUB_CRYPT_DigestFinalCallback(HITLS_HASH_Ctx *ctx, uint8_t *out, uint32
         return HITLS_INTERNAL_EXCEPTION;
     }
 
-    if (memset_s(out, *len, 5u, digestSize) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memset(out, 5u, digestSize);
     *len = digestSize;
     return HITLS_SUCCESS;
 }
@@ -752,9 +729,7 @@ int32_t STUB_CRYPT_DigestCallback(HITLS_HashAlgo hashAlgo, const uint8_t *in, ui
         return HITLS_INTERNAL_EXCEPTION;
     }
 
-    if (memset_s(out, *outLen, 5u, digestSize) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memset(out, 5u, digestSize);
     *outLen = digestSize;
     return HITLS_SUCCESS;
 }
@@ -787,8 +762,9 @@ int32_t STUB_CRYPT_EncryptCallback(const HITLS_CipherParameters *cipher, const u
         if (*outLen < inLen + AEAD_TAG_LENGTH) {
             return HITLS_INTERNAL_EXCEPTION;
         }
-        (void)memset_s(out, *outLen, 0, *outLen);
-        if (inLen != 0 && memcpy_s(out, *outLen, in, inLen) != EOK) {
+        memset(out, 0, *outLen);
+        if (inLen != 0) {
+            memcpy(out, in, inLen);
             return HITLS_MEMCPY_FAIL;
         }
         *outLen = inLen + AEAD_TAG_LENGTH;
@@ -828,10 +804,9 @@ int32_t STUB_CRYPT_DecryptCallback(const HITLS_CipherParameters *cipher, const u
         if (inLen < AEAD_TAG_LENGTH) {
             return HITLS_INTERNAL_EXCEPTION;
         }
-        (void)memset_s(out, *outLen, 0, *outLen);
-        if (memcpy_s(out, *outLen, in, inLen - AEAD_TAG_LENGTH) != EOK) {
-            return HITLS_MEMCPY_FAIL;
-        }
+        memset(out, 0, *outLen);
+        memcpy(out, in, inLen - AEAD_TAG_LENGTH);
+
         *outLen = inLen - AEAD_TAG_LENGTH;
     } else {
         *outLen = 0;

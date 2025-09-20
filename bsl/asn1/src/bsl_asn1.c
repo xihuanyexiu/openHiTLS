@@ -13,7 +13,7 @@
  * See the Mulan PSL v2 for more details.
  */
 #include <stdbool.h>
-#include "securec.h"
+#include <string.h>
 #include "bsl_err.h"
 #include "bsl_bytes.h"
 #include "bsl_log_internal.h"
@@ -1018,10 +1018,10 @@ static void EncodeInt(BSL_ASN1_Buffer *asn, uint32_t encodeLen, uint8_t *encode,
 {
     if (encodeLen < asn->len) {
         /* Skip the copying of high-order octets with all zeros. */
-        (void)memcpy_s(encode + *offset, encodeLen, asn->buff + (asn->len - encodeLen), encodeLen);
+        memcpy(encode + *offset, asn->buff + (asn->len - encodeLen), encodeLen);
     } else {
         /* the high bit of positive number octet is 1 */
-        (void)memcpy_s(encode + *offset + (encodeLen - asn->len), asn->len, asn->buff, asn->len);
+        memcpy(encode + *offset + (encodeLen - asn->len), asn->buff, asn->len);
     }
     *offset += encodeLen;
 }
@@ -1047,7 +1047,7 @@ static void EncodeContent(BSL_ASN1_Buffer *asn, uint32_t encodeLen, uint8_t *enc
             EncodeBMPString(asn->buff, asn->len, encode, offset);
             return;
         default:
-            (void)memcpy_s(encode + *offset, encodeLen, asn->buff, encodeLen);
+            memcpy(encode + *offset, asn->buff, encodeLen);
             *offset += encodeLen;
             return;
     }

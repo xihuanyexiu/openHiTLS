@@ -17,7 +17,6 @@
 #ifdef HITLS_CRYPTO_PROVIDER
 
 #include <string.h>
-#include "securec.h"
 #include "bsl_list.h"
 #include "bsl_err_internal.h"
 #include "bsl_hash.h"
@@ -235,13 +234,9 @@ static int32_t ParseAttributeValue(const char *attribute, int32_t *startPos, cha
     }
 
     // Copy the string corresponding to the key and value
-    if (memcpy_s(tempKey, keyLen + 1, attribute + keyStart, keyLen) != EOK ||
-        memcpy_s(tempValue->judgeStr, judgeLen + 1, attribute + judgeStart, judgeLen) != EOK ||
-        memcpy_s(tempValue->valueStr, valueLen + 1, attribute + valueStart, valueLen) != EOK) {
-        ret = CRYPT_SECUREC_FAIL;
-        BSL_ERR_PUSH_ERROR(ret);
-        goto ERR;
-    }
+    memcpy(tempKey, attribute + keyStart, keyLen);
+    memcpy(tempValue->judgeStr, attribute + judgeStart, judgeLen);
+    memcpy(tempValue->valueStr, attribute + valueStart, valueLen);
 
     *startPos = attribute[valueEnd] == '\0' ? valueEnd : valueEnd + 1;
     *key = tempKey;

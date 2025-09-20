@@ -19,7 +19,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
-#include "securec.h"
 #include "bsl_errno.h"
 #include "bsl_obj.h"
 #include "bsl_obj_internal.h"

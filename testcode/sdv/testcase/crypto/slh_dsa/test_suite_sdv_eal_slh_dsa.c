@@ -17,7 +17,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "securec.h"
 #include "bsl_err.h"
 #include "bsl_sal.h"
 #include "crypt_errno.h"
@@ -49,7 +48,7 @@ void RandInjectionSet(uint8_t **rand, uint32_t *len)
 
 int32_t RandInjection(uint8_t *rand, uint32_t randLen)
 {
-    (void)memcpy_s(rand, randLen, g_stubRand[g_stubRandCounter], randLen);
+    memcpy(rand, g_stubRand[g_stubRandCounter], randLen);
     g_stubRandCounter++;
     return CRYPT_SUCCESS;
 }
@@ -137,7 +136,7 @@ void SDV_CRYPTO_SLH_DSA_GETSET_KEY_TC001(void)
     CRYPT_EAL_PkeyPub pub;
     uint8_t pubSeed[32] = {0};
     uint8_t pubRoot[32] = {0};
-    (void)memset_s(&pub, sizeof(CRYPT_EAL_PkeyPub), 0, sizeof(CRYPT_EAL_PkeyPub));
+    memset(&pub, 0, sizeof(CRYPT_EAL_PkeyPub));
     pub.id = CRYPT_PKEY_SLH_DSA;
     ASSERT_EQ(CRYPT_EAL_PkeyGetPub(pkey, &pub), CRYPT_NULL_INPUT);
     ASSERT_EQ(CRYPT_EAL_PkeySetPub(pkey, &pub), CRYPT_NULL_INPUT);
@@ -150,7 +149,7 @@ void SDV_CRYPTO_SLH_DSA_GETSET_KEY_TC001(void)
     CRYPT_EAL_PkeyPrv prv;
     uint8_t prvSeed[32] = {0};
     uint8_t prvPrf[32] = {0};
-    (void)memset_s(&prv, sizeof(CRYPT_EAL_PkeyPrv), 0, sizeof(CRYPT_EAL_PkeyPrv));
+    memset(&prv, 0, sizeof(CRYPT_EAL_PkeyPrv));
     prv.id = CRYPT_PKEY_SLH_DSA;
     ASSERT_EQ(CRYPT_EAL_PkeyGetPrv(pkey, &prv), CRYPT_NULL_INPUT);
     ASSERT_EQ(CRYPT_EAL_PkeySetPrv(pkey, &prv), CRYPT_NULL_INPUT);
@@ -183,7 +182,7 @@ void SDV_CRYPTO_SLH_DSA_GETSET_KEY_TC002(void)
     CRYPT_EAL_PkeyPub pub;
     uint8_t pubSeed[32] = {0};
     uint8_t pubRoot[32] = {0};
-    (void)memset_s(&pub, sizeof(CRYPT_EAL_PkeyPub), 0, sizeof(CRYPT_EAL_PkeyPub));
+    memset(&pub, 0, sizeof(CRYPT_EAL_PkeyPub));
     pub.id = CRYPT_PKEY_SLH_DSA;
     pub.key.slhDsaPub.seed = pubSeed;
     pub.key.slhDsaPub.root = pubRoot;
@@ -194,7 +193,7 @@ void SDV_CRYPTO_SLH_DSA_GETSET_KEY_TC002(void)
     CRYPT_EAL_PkeyPrv prv;
     uint8_t prvSeed[32] = {0};
     uint8_t prvPrf[32] = {0};
-    (void)memset_s(&prv, sizeof(CRYPT_EAL_PkeyPrv), 0, sizeof(CRYPT_EAL_PkeyPrv));
+    memset(&prv, 0, sizeof(CRYPT_EAL_PkeyPrv));
     prv.id = CRYPT_PKEY_SLH_DSA;
     prv.key.slhDsaPrv.seed = prvSeed;
     prv.key.slhDsaPrv.prf = prvPrf;
@@ -233,7 +232,7 @@ void SDV_CRYPTO_SLH_DSA_GENKEY_KAT_TC001(int id, Hex *key, Hex *root)
     uint8_t pubSeed[32] = {0};
     uint8_t pubRoot[32] = {0};
     CRYPT_EAL_PkeyPub pubOut;
-    (void)memset_s(&pubOut, sizeof(CRYPT_EAL_PkeyPub), 0, sizeof(CRYPT_EAL_PkeyPub));
+    memset(&pubOut, 0, sizeof(CRYPT_EAL_PkeyPub));
     pubOut.id = CRYPT_PKEY_SLH_DSA;
     pubOut.key.slhDsaPub.seed = pubSeed;
     pubOut.key.slhDsaPub.root = pubRoot;
@@ -278,7 +277,7 @@ void SDV_CRYPTO_SLH_DSA_SIGN_KAT_TC001(int id, Hex *key, Hex *addrand, Hex *msg,
     }
 
     CRYPT_EAL_PkeyPrv prv;
-    (void)memset_s(&prv, sizeof(CRYPT_EAL_PkeyPrv), 0, sizeof(CRYPT_EAL_PkeyPrv));
+    memset(&prv, 0, sizeof(CRYPT_EAL_PkeyPrv));
     prv.id = CRYPT_PKEY_SLH_DSA;
     prv.key.slhDsaPrv.seed = key->x;
     prv.key.slhDsaPrv.prf = key->x + keyLen;
@@ -326,7 +325,7 @@ void SDV_CRYPTO_SLH_DSA_SIGN_KAT_TC002(int id, Hex *key, Hex *addrand, Hex *msg,
     ASSERT_EQ(CRYPT_EAL_PkeyCtrl(pkey, CRYPT_CTRL_SET_PREHASH_FLAG, (void *)&prehash, sizeof(prehash)),
               CRYPT_SUCCESS);
     CRYPT_EAL_PkeyPrv prv;
-    (void)memset_s(&prv, sizeof(CRYPT_EAL_PkeyPrv), 0, sizeof(CRYPT_EAL_PkeyPrv));
+    memset(&prv, 0, sizeof(CRYPT_EAL_PkeyPrv));
     prv.id = CRYPT_PKEY_SLH_DSA;
     prv.key.slhDsaPrv.seed = key->x;
     prv.key.slhDsaPrv.prf = key->x + keyLen;
@@ -399,7 +398,7 @@ void SDV_CRYPTO_SLH_DSA_CHECK_KEYPAIR_TC001(int algId)
     CRYPT_EAL_PkeyPrv prv;
     uint8_t prvSeed[32] = {0};
     uint8_t prvPrf[32] = {0};
-    (void)memset_s(&prv, sizeof(CRYPT_EAL_PkeyPrv), 0, sizeof(CRYPT_EAL_PkeyPrv));
+    memset(&prv, 0, sizeof(CRYPT_EAL_PkeyPrv));
     prv.id = CRYPT_PKEY_SLH_DSA;
     prv.key.slhDsaPrv.seed = prvSeed;
     prv.key.slhDsaPrv.prf = prvPrf;
@@ -516,7 +515,7 @@ void SDV_CRYPTO_SLH_DSA_CHECK_PRVKEY_TC001(int type)
     uint8_t prvPrf[32] = {0};
     uint8_t pubSeed[32] = {0};
     uint8_t pubRoot[32] = {0};
-    (void)memset_s(&prv, sizeof(CRYPT_EAL_PkeyPrv), 0, sizeof(CRYPT_EAL_PkeyPrv));
+    memset(&prv, 0, sizeof(CRYPT_EAL_PkeyPrv));
     prv.id = CRYPT_PKEY_SLH_DSA;
     prv.key.slhDsaPrv.seed = prvSeed;
     prv.key.slhDsaPrv.prf = prvPrf;

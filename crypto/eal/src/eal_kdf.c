@@ -17,8 +17,8 @@
 #if defined(HITLS_CRYPTO_EAL) && defined(HITLS_CRYPTO_KDF)
 
 #include <stdint.h>
+#include <string.h>
 #include "crypt_eal_kdf.h"
-#include "securec.h"
 #include "bsl_err_internal.h"
 #include "crypt_local_types.h"
 #include "crypt_eal_mac.h"

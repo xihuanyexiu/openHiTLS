@@ -16,8 +16,9 @@
 #include "hitls_build.h"
 #ifdef HITLS_CRYPTO_PROVIDER
 
+#include <string.h>
 #include <stdlib.h>
-#include "securec.h"
+#include <stdio.h>
 #include "crypt_utils.h"
 #include "crypt_errno.h"
 #include "bsl_sal.h"
@@ -158,7 +159,7 @@ static int32_t FindProviderInitFunc(CRYPT_EAL_LibCtx *libCtx, char *providerName
             BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
             return CRYPT_MEM_ALLOC_FAIL;
         }
-        ret = snprintf_s(providerPath, pathLen + 1, pathLen, "%s/%s", libCtx->searchProviderPath, providerName);
+        ret = snprintf(providerPath, pathLen + 1, "%s/%s", libCtx->searchProviderPath, providerName);
         if (ret < 0) {
             BSL_SAL_Free(providerPath);
             BSL_ERR_PUSH_ERROR(ret);

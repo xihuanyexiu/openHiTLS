@@ -15,7 +15,7 @@
 #include "hitls_build.h"
 #ifdef HITLS_TLS_HOST_CLIENT
 #include <stdint.h>
-#include "securec.h"
+#include <string.h>
 #include "bsl_log_internal.h"
 #include "bsl_log.h"
 #include "bsl_err_internal.h"
@@ -194,7 +194,7 @@ static int32_t PackSessionAndCookie(const TLS_Ctx *ctx, PackPacket *pkt)
     HS_Ctx *hsCtx = (HS_Ctx *)ctx->hsCtx;
     ret = PackSessionId(pkt, hsCtx->sessionId, hsCtx->sessionIdSize);
     if (ret != HITLS_SUCCESS) {
-        (void)memset_s(hsCtx->sessionId, hsCtx->sessionIdSize, 0, hsCtx->sessionIdSize);
+        memset(hsCtx->sessionId, 0, hsCtx->sessionIdSize);
         return ret;
     }
 #else // Session recovery is not supported.
@@ -210,8 +210,7 @@ static int32_t PackSessionAndCookie(const TLS_Ctx *ctx, PackPacket *pkt)
     if (IS_SUPPORT_DATAGRAM(tlsConfig->originVersionMask)) {
         ret = PackClientCookie(pkt, ctx->negotiatedInfo.cookie, (uint8_t)ctx->negotiatedInfo.cookieSize);
         if (ret != HITLS_SUCCESS) {
-            (void)memset_s(ctx->negotiatedInfo.cookie, ctx->negotiatedInfo.cookieSize,
-                           0, ctx->negotiatedInfo.cookieSize);
+            memset(ctx->negotiatedInfo.cookie, 0, ctx->negotiatedInfo.cookieSize);
             return ret;
         }
     }

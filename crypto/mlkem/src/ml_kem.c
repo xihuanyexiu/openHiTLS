@@ -15,7 +15,7 @@
 
 #include "hitls_build.h"
 #ifdef HITLS_CRYPTO_MLKEM
-#include "securec.h"
+#include <string.h>
 #include "crypt_errno.h"
 #include "crypt_algid.h"
 #include "bsl_sal.h"
@@ -48,7 +48,7 @@ CRYPT_ML_KEM_Ctx *CRYPT_ML_KEM_NewCtx(void)
         BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
         return NULL;
     }
-    (void)memset_s(keyCtx, sizeof(CRYPT_ML_KEM_Ctx), 0, sizeof(CRYPT_ML_KEM_Ctx));
+    memset(keyCtx, 0, sizeof(CRYPT_ML_KEM_Ctx));
     BSL_SAL_ReferencesInit(&(keyCtx->references));
     return keyCtx;
 }
@@ -233,10 +233,12 @@ int32_t CRYPT_ML_KEM_GetEncapsKey(const CRYPT_ML_KEM_Ctx *ctx, CRYPT_KemEncapsKe
         return CRYPT_MLKEM_KEY_NOT_SET;
     }
 
-    if (memcpy_s(ek->data, ek->len, ctx->ek, ctx->ekLen) != EOK) {
+    if (ek->len < ctx->ekLen) {
         BSL_ERR_PUSH_ERROR(CRYPT_MLKEM_KEYLEN_ERROR);
         return CRYPT_MLKEM_KEYLEN_ERROR;
     }
+    memcpy(ek->data, ctx->ek, ctx->ekLen);
+
     ek->len = ctx->ekLen;
     return CRYPT_SUCCESS;
 }
@@ -278,10 +280,12 @@ int32_t CRYPT_ML_KEM_GetDecapsKey(const CRYPT_ML_KEM_Ctx *ctx, CRYPT_KemDecapsKe
         return CRYPT_MLKEM_KEY_NOT_SET;
     }
 
-    if (memcpy_s(dk->data, dk->len, ctx->dk, ctx->dkLen) != EOK) {
+    if (dk->len < ctx->dkLen) {
         BSL_ERR_PUSH_ERROR(CRYPT_MLKEM_KEYLEN_ERROR);
         return CRYPT_MLKEM_KEYLEN_ERROR;
     }
+    memcpy(dk->data, ctx->dk, ctx->dkLen);
+
     dk->len = ctx->dkLen;
     return CRYPT_SUCCESS;
 }

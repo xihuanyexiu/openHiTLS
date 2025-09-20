@@ -16,7 +16,7 @@
 #include "hitls_build.h"
 
 #if defined(HITLS_CRYPTO_CODECSKEY)
-#include "securec.h"
+#include <string.h>
 #include "bsl_sal.h"
 #include "bsl_list.h"
 #include "sal_file.h"

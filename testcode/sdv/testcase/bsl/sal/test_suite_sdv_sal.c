@@ -18,7 +18,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <pthread.h>
-#include "securec.h"
 #include "bsl_sal.h"
 #include "bsl_errno.h"
 #include "sal_atomic.h"
@@ -254,7 +253,7 @@ void SDV_BSL_SAL_MEM_API_TC001(void)
     void *obj = BSL_SAL_Malloc(100);
     ASSERT_TRUE(obj != NULL);
 
-    memset_s(obj, 100, 0x1, 100);
+    memset(obj, 0x1, 100);
 
     BSL_SAL_ClearFree(obj, 100);
 EXIT:
@@ -367,7 +366,7 @@ void SDV_BSL_SAL_REALLOC_API_TC001(void)
     // 2
     uint8_t *obj3 = (uint8_t *)BSL_SAL_Realloc(obj2, biggerSize, smallerSize);
     ASSERT_TRUE(obj3 != NULL);
-    ASSERT_TRUE(memset_s(obj3, biggerSize, 1, biggerSize) == EOK);
+    memset(obj3, 1, biggerSize);
     ASSERT_TRUE(obj3[biggerSize - 1] == 1);
 
     // The realloc releases the obj. Therefore, the obj does not need to be released.

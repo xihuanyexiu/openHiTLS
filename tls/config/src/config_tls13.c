@@ -14,7 +14,6 @@
  */
 #include "hitls_build.h"
 #ifdef HITLS_TLS_PROTO_TLS13
-#include "securec.h"
 #include "tls.h"
 #include "bsl_err_internal.h"
 #include "hitls_error.h"

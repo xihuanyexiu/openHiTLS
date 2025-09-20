@@ -14,9 +14,9 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <malloc.h>
 #include <stdatomic.h>
-#include "securec.h"
 #include "hitls_crypt_type.h"
 #include "hitls_session.h"
 #include "logger.h"
@@ -78,11 +78,8 @@ int32_t ExampleSetPsk(char *psk)
         LOG_DEBUG("input error.");
         return -1;
     }
-    (void)memset_s(g_localPsk, PSK_MAX_LEN, 0, PSK_MAX_LEN);
-    if (strcpy_s(g_localPsk, PSK_MAX_LEN, psk) != EOK) {
-        LOG_DEBUG("ExampleSetPsk failed.");
-        return -1;
-    }
+    memset(g_localPsk, 0, PSK_MAX_LEN);
+    strcpy(g_localPsk, psk);
     return 0;
 }
 
@@ -126,6 +123,8 @@ uint32_t ExampleClientCb(HITLS_Ctx *ctx, const uint8_t *hint, uint8_t *identity,
 {
     (void)ctx;
     (void)hint;
+    (void)maxIdentityLen;
+    (void)maxPskLen;
     int32_t ret;
     uint8_t pskTrans[PSK_MAX_LEN] = {0};
     uint32_t pskTransUsedLen = 0u;
@@ -136,19 +135,16 @@ uint32_t ExampleClientCb(HITLS_Ctx *ctx, const uint8_t *hint, uint8_t *identity,
     }
 
     /* strlen(g_localIdentity) + 1 copy terminator */
-    if (memcpy_s(identity, maxIdentityLen, g_localIdentity, strlen(g_localIdentity) + 1) != EOK) {
-        return 0;
-    }
-    if (memcpy_s(psk, maxPskLen, pskTrans, pskTransUsedLen) != EOK) {
-        return 0;
-    }
+    memcpy(identity, g_localIdentity, strlen(g_localIdentity));
+    memcpy(psk, pskTrans, pskTransUsedLen);
+
     return pskTransUsedLen;
 }
 
 uint32_t ExampleServerCb(HITLS_Ctx *ctx, const uint8_t *identity, uint8_t *psk, uint32_t maxPskLen)
 {
     (void)ctx;
-
+    (void)maxPskLen;
     if (identity == NULL || strcmp((const char *)identity, g_localIdentity) != 0) {
         return 0;
     }
@@ -162,9 +158,8 @@ uint32_t ExampleServerCb(HITLS_Ctx *ctx, const uint8_t *identity, uint8_t *psk, 
         return 0;
     }
 
-    if (memcpy_s(psk, maxPskLen, pskTrans, pskTransUsedLen) != EOK) {
-        return 0;
-    }
+    memcpy(psk, pskTrans, pskTransUsedLen);
+
 
     return pskTransUsedLen;
 }
@@ -185,10 +180,10 @@ static void SetCipherInfo(void *cipher)
 
 int32_t ExampleTicketKeySuccessCb(uint8_t *keyName, uint32_t keyNameSize, void *cipher, uint8_t isEncrypt)
 {
+    (void)keyNameSize;
     if (isEncrypt) {
-        if (memcpy_s(keyName, keyNameSize, g_keyName, KEY_NAME_SIZE) != EOK) {
-            return HITLS_TICKET_KEY_RET_FAIL;
-        }
+        memcpy(keyName, g_keyName, KEY_NAME_SIZE);
+
         SetCipherInfo(cipher);
         return HITLS_TICKET_KEY_RET_SUCCESS;
     }
@@ -202,10 +197,10 @@ int32_t ExampleTicketKeySuccessCb(uint8_t *keyName, uint32_t keyNameSize, void *
 
 int32_t ExampleTicketKeyRenewCb(uint8_t *keyName, uint32_t keyNameSize, void *cipher, uint8_t isEncrypt)
 {
+    (void)keyNameSize;
     if (isEncrypt) {
-        if (memcpy_s(keyName, keyNameSize, g_keyName, KEY_NAME_SIZE) != EOK) {
-            return HITLS_TICKET_KEY_RET_FAIL;
-        }
+        memcpy(keyName, g_keyName, KEY_NAME_SIZE);
+
         SetCipherInfo(cipher);
         return HITLS_TICKET_KEY_RET_SUCCESS_RENEW;
     }
@@ -220,8 +215,9 @@ int32_t ExampleTicketKeyRenewCb(uint8_t *keyName, uint32_t keyNameSize, void *ci
 int32_t ExampleTicketKeyAlertCb(uint8_t *keyName, uint32_t keyNameSize, HITLS_CipherParameters *cipher,
     uint8_t isEncrypt)
 {
+    (void)keyNameSize;
     if (isEncrypt) {
-        (void)memcpy_s(keyName, keyNameSize, g_keyName, KEY_NAME_SIZE);
+        memcpy(keyName, g_keyName, KEY_NAME_SIZE);
         SetCipherInfo(cipher);
         return HITLS_TICKET_KEY_RET_SUCCESS_RENEW;
     } else {
@@ -232,8 +228,9 @@ int32_t ExampleTicketKeyAlertCb(uint8_t *keyName, uint32_t keyNameSize, HITLS_Ci
 int32_t ExampleTicketKeyFailCb(uint8_t *keyName, uint32_t keyNameSize, HITLS_CipherParameters *cipher,
     uint8_t isEncrypt)
 {
+    (void)keyNameSize;
     if (isEncrypt) {
-        (void)memcpy_s(keyName, keyNameSize, g_keyName, KEY_NAME_SIZE);
+        memcpy(keyName, g_keyName, KEY_NAME_SIZE);
         SetCipherInfo(cipher);
         return HITLS_TICKET_KEY_RET_SUCCESS_RENEW;
     }
@@ -276,6 +273,7 @@ static char *g_alpnhttp = "http";
 
 int32_t ExampleAlpnParseProtocolList1(uint8_t *out, uint8_t *outLen, uint8_t *in, uint8_t inLen)
 {
+    (void)inLen;
     if (out == NULL || outLen == NULL || in == NULL) {
         return HITLS_NULL_INPUT;
     }

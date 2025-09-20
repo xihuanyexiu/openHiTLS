@@ -17,7 +17,7 @@
 #ifdef HITLS_PKI_X509
 
 #include <stdint.h>
-#include "securec.h"
+#include <string.h>
 #include "sal_atomic.h"
 #include "bsl_obj.h"
 #include "bsl_sal.h"
@@ -528,7 +528,7 @@ int32_t HITLS_X509_SetSm2UserId(BSL_Buffer *sm2UserId, void *val, uint32_t valLe
         BSL_ERR_PUSH_ERROR(BSL_MALLOC_FAIL);
         return BSL_MALLOC_FAIL;
     }
-    (void) memcpy_s(sm2UserId->data, valLen, (uint8_t *)val, valLen);
+    (void) memcpy(sm2UserId->data, (uint8_t *)val, valLen);
     sm2UserId->dataLen = (uint32_t)valLen;
     return HITLS_PKI_SUCCESS;
 }

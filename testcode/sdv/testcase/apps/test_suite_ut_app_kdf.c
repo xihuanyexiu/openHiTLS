@@ -16,7 +16,6 @@
 /* BEGIN_HEADER */
 #include <stdio.h>
 #include <linux/limits.h>
-#include "securec.h"
 #include "stub_replace.h"
 #include "test.h"
 #include "bsl_uio.h"
@@ -56,7 +55,7 @@ static int32_t STUB_BSL_UI_ReadPwdUtil(BSL_UI_ReadPwdParam *param, char *buff, u
     (void)checkDataCallBack;
     (void)callBackData;
     char result[] = PASSWORD;
-    (void)strcpy_s(buff, *buffLen, result);
+    (void)strcpy(buff, result);
     *buffLen = (uint32_t)strlen(buff) + 1;
     return BSL_SUCCESS;
 }

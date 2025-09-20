@@ -17,7 +17,7 @@
 #ifdef HITLS_BSL_OBJ
 #include <stddef.h>
 #include <string.h>
-#include "securec.h"
+#include <stdio.h>
 #include "bsl_sal.h"
 #include "bsl_obj.h"
 #include "bsl_obj_internal.h"
@@ -602,7 +602,7 @@ char *BSL_OBJ_GetOidNumericString(const uint8_t *oid, uint32_t len)
     }
 
     char buffer[256] = {0};
-    if (snprintf_s(buffer, sizeof(buffer), sizeof(buffer) - 1, "%d.%d", oid[0] / BSL_OBJ_ARCS_Y_MAX,
+    if (snprintf(buffer, sizeof(buffer), "%d.%d", oid[0] / BSL_OBJ_ARCS_Y_MAX,
         oid[0] % BSL_OBJ_ARCS_Y_MAX) < 0) {
         return NULL;
     }
@@ -625,7 +625,7 @@ char *BSL_OBJ_GetOidNumericString(const uint8_t *oid, uint32_t len)
         value = (value << 7) | (oid[i] & 0x7F);
         if (!(oid[i] & 0x80)) {
             char temp[20] = {0};
-            int32_t tempLen = snprintf_s(temp, sizeof(temp), sizeof(temp) - 1, ".%lu", value);
+            int32_t tempLen = snprintf(temp, sizeof(temp), ".%lu", value);
             if (tempLen < 0) {
                 BSL_ERR_PUSH_ERROR(BSL_INTERNAL_EXCEPTION);
                 return NULL;
@@ -634,10 +634,8 @@ char *BSL_OBJ_GetOidNumericString(const uint8_t *oid, uint32_t len)
                 BSL_ERR_PUSH_ERROR(BSL_INTERNAL_EXCEPTION);
                 return NULL;
             }
-            if (memcpy_s(buffer + currentPos, tempLen, temp, tempLen) != 0) {
-                BSL_ERR_PUSH_ERROR(BSL_INTERNAL_EXCEPTION);
-                return NULL;
-            }
+            memcpy(buffer + currentPos, temp, tempLen);
+
             currentPos += tempLen;
             value = 0;
         }

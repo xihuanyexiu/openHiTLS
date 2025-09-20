@@ -14,7 +14,6 @@
  */
 #include <string.h>
 #include "hitls_build.h"
-#include "securec.h"
 #include "tls_binlog_id.h"
 #include "bsl_log_internal.h"
 #include "bsl_log.h"
@@ -87,13 +86,8 @@ static int32_t SaveVerifyData(TLS_Ctx *ctx, bool isClient)
 {
     VerifyCtx *verifyCtx = ctx->hsCtx->verifyCtx;
     uint8_t *verifyData = isClient ? ctx->negotiatedInfo.clientVerifyData : ctx->negotiatedInfo.serverVerifyData;
-    if (memcpy_s(verifyData, MAX_DIGEST_SIZE, verifyCtx->verifyData, verifyCtx->verifyDataSize) != EOK) {
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15909, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
-            "copy verifyData fail.", 0, 0, 0, 0);
-        ctx->method.sendAlert(ctx, ALERT_LEVEL_FATAL, ALERT_INTERNAL_ERROR);
-        BSL_ERR_PUSH_ERROR(HITLS_MEMCPY_FAIL);
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(verifyData, verifyCtx->verifyData, verifyCtx->verifyDataSize);
+
     if (isClient) {
         ctx->negotiatedInfo.clientVerifyDataSize = verifyCtx->verifyDataSize;
     } else {
@@ -153,9 +147,10 @@ static uint32_t GetHsDataLen(const VerifyCtx *ctx)
 
 static void LoopBlocks(const HsMsgCache *block, uint8_t *data, uint32_t len)
 {
+    (void)len;
     uint32_t offset = 0;
     while ((block != NULL) && (block->dataSize > 0)) {
-        (void) memcpy_s(data + offset, len - offset, block->data, block->dataSize);
+        (void)memcpy(data + offset, block->data, block->dataSize);
         offset += block->dataSize;
         block = block->next;
     }
@@ -258,15 +253,11 @@ static uint8_t *Tls13GetUnsignData(TLS_Ctx *ctx, uint32_t *dataLen, bool isClien
 
     uint32_t offset = 0;
     /* Filled prefix: sixty-four 0x20 s */
-    (void)memset_s(unsignData, unsignDataLen, TLS13_CERT_VERIFY_PREFIX, TLS13_CERT_VERIFY_PREFIX_LEN);
+    memset(unsignData, TLS13_CERT_VERIFY_PREFIX, TLS13_CERT_VERIFY_PREFIX_LEN);
     offset += TLS13_CERT_VERIFY_PREFIX_LEN;
 
     /* Filled labels */
-    if (memcpy_s(&unsignData[offset], unsignDataLen - offset, label, labelLen) != EOK) {
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16870, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "memcpy fail", 0, 0, 0, 0);
-        BSL_SAL_FREE(unsignData);
-        return NULL;
-    }
+    memcpy(&unsignData[offset], label, labelLen);
     offset += labelLen;
 
     /* Filled with one 0 */
@@ -274,12 +265,7 @@ static uint8_t *Tls13GetUnsignData(TLS_Ctx *ctx, uint32_t *dataLen, bool isClien
     offset++;
 
     /*  Filled SessionHash */
-    if (memcpy_s(&unsignData[offset], unsignDataLen - offset, digest, digestLen) != EOK) {
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16871, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN, "memcpy fail", 0, 0, 0, 0);
-        BSL_SAL_FREE(unsignData);
-        return NULL;
-    }
-
+    memcpy(&unsignData[offset], digest, digestLen);
     *dataLen = unsignDataLen;
     return unsignData;
 }
@@ -433,12 +419,8 @@ int32_t VERIFY_GetVerifyData(const VerifyCtx *ctx, uint8_t *verifyData, uint32_t
         return HITLS_MSG_HANDLE_INCORRECT_DIGEST_LEN;
     }
 
-    if (memcpy_s(verifyData, *verifyDataLen, ctx->verifyData, ctx->verifyDataSize) != EOK) {
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15489, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
-            "Get verify data error: memcpy fail.", 0, 0, 0, 0);
-        BSL_ERR_PUSH_ERROR(HITLS_MEMCPY_FAIL);
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(verifyData, ctx->verifyData, ctx->verifyDataSize);
+
     *verifyDataLen = ctx->verifyDataSize;
     return HITLS_SUCCESS;
 }

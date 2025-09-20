@@ -16,7 +16,7 @@
 #ifdef HITLS_CRYPTO_SLH_DSA
 
 #include <stdint.h>
-#include "securec.h"
+#include <string.h>
 #include "bsl_err_internal.h"
 #include "bsl_sal.h"
 #include "crypt_errno.h"
@@ -46,7 +46,7 @@ int32_t HypertreeSign(const uint8_t *msg, uint32_t msgLen, uint64_t treeIdx, uin
     uint32_t tmpLen = *sigLen;
     uint8_t root[MAX_MDSIZE] = {0};
     // the msgLen is actually n.
-    (void)memcpy_s(root, sizeof(root), msg, msgLen);
+    memcpy(root, msg, msgLen);
 
     for (uint32_t j = 0; j < d; j++) {
         if (j != 0) {
@@ -87,7 +87,7 @@ int32_t HypertreeVerify(const uint8_t *msg, uint32_t msgLen, const uint8_t *sig,
 
     uint8_t node[MAX_MDSIZE] = {0};
     // the msgLen is actually n.
-    (void)memcpy_s(node, sizeof(node), msg, msgLen);
+    memcpy(node, msg, msgLen);
     for (uint32_t j = 0; j < d; j++) {
         if (j != 0) {
             leafIdxTmp = (uint32_t)(treeIdxTmp & ((1UL << hp) - 1));

@@ -20,7 +20,6 @@
 #include <stddef.h>
 #include <termios.h>
 #include <unistd.h>
-#include <securec.h>
 #include <linux/limits.h>
 #include "bsl_ui.h"
 #include "bsl_uio.h"
@@ -121,7 +120,7 @@ int32_t HITLS_PasswdMain(int argc, char *argv[])
 passwdEnd:
     BSL_SAL_FREE(opt.salt);
     if (opt.pass != NULL && opt.passwdLen > 0) {
-        (void)memset_s(opt.pass, opt.passwdLen, 0, opt.passwdLen);
+        memset(opt.pass, 0, opt.passwdLen);
     }
     BSL_SAL_FREE(opt.pass);
     if (opt.outFile != NULL) {
@@ -327,8 +326,7 @@ static bool ParseSalt(PasswdOpt *opt)
             return false;
         }
         restSalt = restSalt + REC_PRE_ITER_LEN - 1;
-        char *context = NULL;
-        char *iterStr = strtok_s((char *)restSalt, "$", &context);
+        char *iterStr = strtok((char *)restSalt, "$");
         if (iterStr == NULL || !IsDigit(iterStr)) {
             return false;
         }
@@ -345,15 +343,13 @@ static bool ParseSalt(PasswdOpt *opt)
             }
             opt->iter = tmpIter;
         }
-        char *cipherText = NULL;
-        char *tmpSalt = strtok_s(context, "$", &cipherText);
+        char *tmpSalt = strtok((char *)restSalt, "$");
         if (tmpSalt == NULL || !IsSaltValid(tmpSalt)) {
             return false;
         }
         opt->salt = (uint8_t *)tmpSalt;
     } else {
-        char *cipherText = NULL;
-        char *tmpSalt = strtok_s((char *)restSalt, "$", &cipherText);
+        char *tmpSalt = strtok((char *)restSalt, "$");
         if (tmpSalt == NULL || !IsSaltValid(tmpSalt)) {
             return false;
         }
@@ -458,7 +454,7 @@ static int32_t ResToBuf(PasswdOpt *opt, char *resBuf, uint32_t bufMaxLen, uint8_
     uint32_t bufLen = bufMaxLen; // Remaining buffer size
     uint32_t offset = 0; // Number of characters in the prefix
     // algorithm identifier
-    if (snprintf_s((char *)resBuf, bufLen, REC_PRE_TAG_LEN, "$%d$", opt->algTag) == -1) {
+    if (snprintf((char *)resBuf, bufLen, "$%d$", opt->algTag)  < 0) {
         return HITLS_APP_SECUREC_FAIL;
     }
     bufLen -= REC_PRE_TAG_LEN;
@@ -472,14 +468,14 @@ static int32_t ResToBuf(PasswdOpt *opt, char *resBuf, uint32_t bufMaxLen, uint8_
             iterBit++;
         }
         uint32_t totalLen = iterBit + REC_PRE_ITER_LEN;
-        if (snprintf_s(resBuf + offset, bufLen, totalLen, "rounds=%ld$", opt->algTag) == -1) {
+        if (snprintf(resBuf + offset, bufLen, "rounds=%d$", opt->algTag)  < 0) {
             return HITLS_APP_SECUREC_FAIL;
         }
         bufLen -= totalLen;
         offset += totalLen;
     }
     // Add Salt Value
-    if (snprintf_s(resBuf + offset, bufLen, opt->saltLen + 1, "%s$", opt->salt) == -1) {
+    if (snprintf(resBuf + offset, bufLen, "%s$", opt->salt)  < 0) {
         return HITLS_APP_SECUREC_FAIL;
     }
     bufLen -= (opt->saltLen + 1);
@@ -597,15 +593,12 @@ static int32_t Sha512GetMdPBuf(PasswdOpt *opt, uint8_t *mdPBuf, uint32_t mdPBufL
     CRYPT_EAL_MdFreeCtx(mdP);
     uint32_t cpyLen = 0;
     for (; mdPBufLen > REC_SHA512_BLOCKSIZE; mdPBufLen -= REC_SHA512_BLOCKSIZE) {
-        if (strncpy_s((char *)(mdPBuf + cpyLen), mdPBufMaxLen, (char *)mdP_hash_res, mdP_hash_len) != EOK) {
-            return HITLS_APP_SECUREC_FAIL;
-        }
+        strncpy((char *)(mdPBuf + cpyLen), (char *)mdP_hash_res, mdP_hash_len);
         cpyLen += mdP_hash_len;
         mdPBufMaxLen -= mdP_hash_len;
     }
-    if (strncpy_s((char *)(mdPBuf + cpyLen), mdPBufMaxLen, (char *)mdP_hash_res, mdPBufLen) != EOK) {
-        return HITLS_APP_SECUREC_FAIL;
-    }
+    strcpy((char *)(mdPBuf + cpyLen), (char *)mdP_hash_res);
+    mdPBuf[cpyLen + mdPBufLen] = '\0';
     return CRYPT_SUCCESS;
 }
 
@@ -625,15 +618,12 @@ static int32_t Sha512GetMdSBuf(PasswdOpt *opt, uint8_t *mdSBuf, uint32_t mdSBufL
     CRYPT_EAL_MdFreeCtx(mdS);
     uint32_t cpyLen = 0;
     for (; mdSBufLen > REC_SHA512_BLOCKSIZE; mdSBufLen -= REC_SHA512_BLOCKSIZE) {
-        if (strncpy_s((char *)(mdSBuf + cpyLen), mdSBufMaxLen, (char *)mdS_hash_res, mdS_hash_len) != EOK) {
-            return HITLS_APP_SECUREC_FAIL;
-        }
+        strncpy((char *)(mdSBuf + cpyLen), (char *)mdS_hash_res, mdS_hash_len);
         cpyLen += mdS_hash_len;
         mdSBufMaxLen -= mdS_hash_len;
     }
-    if (strncpy_s((char *)(mdSBuf + cpyLen), mdSBufMaxLen, (char *)mdS_hash_res, mdSBufLen) != EOK) {
-        return HITLS_APP_SECUREC_FAIL;
-    }
+    strcpy((char *)(mdSBuf + cpyLen), (char *)mdS_hash_res);
+    mdSBuf[cpyLen + mdSBufLen] = '\0';
     mdSBufLen = opt->saltLen;
     return CRYPT_SUCCESS;
 }

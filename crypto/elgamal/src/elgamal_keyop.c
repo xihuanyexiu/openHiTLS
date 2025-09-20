@@ -15,14 +15,13 @@
 
 #include "hitls_build.h"
 #ifdef HITLS_CRYPTO_ELGAMAL
-
+#include <string.h>
 #include "crypt_types.h"
 #include "crypt_elgamal.h"
 #include "crypt_utils.h"
 #include "bsl_err_internal.h"
 #include "elgamal_local.h"
 #include "crypt_errno.h"
-#include "securec.h"
 #include "bsl_sal.h"
 #include "crypt_params_key.h"
 

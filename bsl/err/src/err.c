@@ -17,7 +17,7 @@
 #ifdef HITLS_BSL_ERR
 
 #include <stdbool.h>
-#include "securec.h"
+#include <string.h>
 #include "bsl_log_internal.h"
 #include "bsl_log.h"
 #include "bsl_sal.h"
@@ -100,7 +100,7 @@ void BSL_ERR_DeInit(void)
 static void StackReset(ErrorCodeStack *stack)
 {
     if (stack != NULL) {
-        (void)memset_s(stack, sizeof(*stack), 0, sizeof(*stack));
+        memset(stack, 0, sizeof(*stack));
     }
 }
 

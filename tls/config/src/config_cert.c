@@ -15,7 +15,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "securec.h"
 #include "hitls_build.h"
 #include "bsl_err_internal.h"
 #include "bsl_list.h"
@@ -1218,9 +1217,7 @@ static int32_t LoadVerifyDirAddPath(HITLS_Config *config, HITLS_CERT_Store *stor
     }
 
     char buf[MAX_PATH_LEN + 1] = {0};
-    if (memcpy_s(buf, sizeof(buf), start, len) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(buf, start, len);
     buf[len] = '\0';
 
     return SAL_CERT_StoreCtrl(config, store, CERT_STORE_CTRL_ADD_CA_PATH, (void *)buf, NULL);

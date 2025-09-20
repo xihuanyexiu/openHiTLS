@@ -20,7 +20,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include "bsl_sal.h"
-#include "securec.h"
 #include "bsl_types.h"
 #include "bsl_log.h"
 #include "bsl_init.h"
@@ -78,7 +77,7 @@ HITLS_X509_StoreCtx *HITLS_X509_NewStoreCtxMock(void)
         return NULL;
     }
 
-    (void)memset_s(ctx, sizeof(HITLS_X509_StoreCtx), 0, sizeof(HITLS_X509_StoreCtx));
+    memset(ctx, 0, sizeof(HITLS_X509_StoreCtx));
     ctx->store = BSL_LIST_New(sizeof(HITLS_X509_Cert *));
     if (ctx->store == NULL) {
         BSL_SAL_Free(ctx);

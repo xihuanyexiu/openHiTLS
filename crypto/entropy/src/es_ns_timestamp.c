@@ -17,8 +17,8 @@
 #if defined(HITLS_CRYPTO_ENTROPY) && defined(HITLS_CRYPTO_ENTROPY_SYS)
 
 #include <stdint.h>
+#include <string.h>
 #include <time.h>
-#include "securec.h"
 #include "bsl_err_internal.h"
 #include "crypt_errno.h"
 #include "es_noise_source.h"
@@ -54,12 +54,11 @@ static int32_t ES_TimeStampRead(void *ctx, uint32_t timeout, uint8_t *buf, uint3
 
 ES_NoiseSource *ES_TimeStampGetCtx(void)
 {
-    ES_NoiseSource *ctx = BSL_SAL_Malloc(sizeof(ES_NoiseSource));
+    ES_NoiseSource *ctx = BSL_SAL_Calloc(sizeof(ES_NoiseSource), 1);
     if (ctx == NULL) {
         BSL_ERR_PUSH_ERROR(BSL_LIST_MALLOC_FAIL);
         return NULL;
     }
-    (void)memset_s(ctx, sizeof(ES_NoiseSource), 0, sizeof(ES_NoiseSource));
     uint32_t len = strlen("timestamp");
     ctx->name = BSL_SAL_Malloc(len + 1);
     if (ctx->name == NULL) {
@@ -67,7 +66,8 @@ ES_NoiseSource *ES_TimeStampGetCtx(void)
         BSL_ERR_PUSH_ERROR(BSL_LIST_MALLOC_FAIL);
         return NULL;
     }
-    (void)strncpy_s(ctx->name, len + 1, "timestamp", len);
+    strcpy(ctx->name, "timestamp");
+    ctx->name[len] = '\0';
 
     ctx->para = NULL;
     ctx->init = NULL;

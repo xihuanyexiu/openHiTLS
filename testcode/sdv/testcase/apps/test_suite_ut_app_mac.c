@@ -16,7 +16,6 @@
 /* BEGIN_HEADER */
 #include <stdio.h>
 #include <linux/limits.h>
-#include "securec.h"
 #include "stub_replace.h"
 #include "test.h"
 #include "bsl_uio.h"

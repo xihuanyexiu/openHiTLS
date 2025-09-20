@@ -16,7 +16,6 @@
 #include "hitls_build.h"
 #ifdef HITLS_BSL_LIST
 
-#include "securec.h"
 #include "bsl_sal.h"
 #include "bsl_list.h"
 

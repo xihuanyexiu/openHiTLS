@@ -17,7 +17,6 @@
 
 #include <stdlib.h>
 #include <unistd.h>
-#include "securec.h"
 #include "bsl_sal.h"
 #include "bsl_log.h"
 #include "bsl_err.h"
@@ -2309,7 +2308,7 @@ void UT_TLS_CM_HITLS_GetPeerFinishVerifyData_FUNC_TC001(int version)
     ASSERT_EQ(ret, HITLS_SUCCESS);
     ASSERT_NE(verifyDataOldSize, 0);
     ASSERT_TRUE(memcmp(verifyDataNew, verifyDataOld, verifyDataOldSize) != 0);
-    ASSERT_TRUE(memcpy_s(verifyDataOld, sizeof(verifyDataOld), verifyDataNew, verifyDataNewSize) == EOK);
+    memcpy(verifyDataOld, verifyDataNew, verifyDataNewSize);
 
     ASSERT_TRUE(HITLS_Renegotiate(serverTlsCtx) == HITLS_SUCCESS);
     ASSERT_TRUE(HITLS_Renegotiate(clientTlsCtx) == HITLS_SUCCESS);
@@ -2322,7 +2321,7 @@ void UT_TLS_CM_HITLS_GetPeerFinishVerifyData_FUNC_TC001(int version)
 
     ASSERT_EQ(verifyDataNewSize, verifyDataOldSize);
     ASSERT_TRUE(memcmp(verifyDataNew, verifyDataOld, verifyDataOldSize) != 0);
-    ASSERT_TRUE(memcpy_s(verifyDataOld, sizeof(verifyDataOld), verifyDataNew, verifyDataNewSize) == EOK);
+    memcpy(verifyDataOld, verifyDataNew, verifyDataNewSize);
 EXIT:
     HITLS_CFG_FreeConfig(config);
     FRAME_FreeLink(client);
@@ -2492,7 +2491,7 @@ void UT_TLS_CM_HITLS_GetFinishVerifyData_FUNC_TC003(int version)
 
     ASSERT_TRUE(verifyDataNewSize == verifyDataOldSize);
     ASSERT_TRUE(memcmp(verifyDataNew, verifyDataOld, verifyDataOldSize) != 0);
-    ASSERT_TRUE(memcpy_s(verifyDataOld, sizeof(verifyDataOld), verifyDataNew, verifyDataNewSize) == EOK);
+    memcpy(verifyDataOld, verifyDataNew, verifyDataNewSize);
 
 EXIT:
     HITLS_CFG_FreeConfig(config);
@@ -2962,7 +2961,7 @@ void UT_HITLS_CM_HITLS_ClearRenegotiationNum_FUNC_TC001(int version)
 
     ASSERT_TRUE(verifyDataNewSize == verifyDataOldSize);
     ASSERT_TRUE(memcmp(verifyDataNew, verifyDataOld, verifyDataOldSize) != 0);
-    ASSERT_TRUE(memcpy_s(verifyDataOld, sizeof(verifyDataOld), verifyDataNew, verifyDataNewSize) == EOK);
+    memcpy(verifyDataOld, verifyDataNew, verifyDataNewSize);
 
     ASSERT_TRUE(HITLS_ClearRenegotiationNum(clientTlsCtx, &renegotiationNum) == HITLS_SUCCESS);
     ASSERT_EQ(renegotiationNum, 1);
@@ -2980,7 +2979,7 @@ void UT_HITLS_CM_HITLS_ClearRenegotiationNum_FUNC_TC001(int version)
 
         ASSERT_TRUE(verifyDataNewSize == verifyDataOldSize);
         ASSERT_TRUE(memcmp(verifyDataNew, verifyDataOld, verifyDataOldSize) != 0);
-        ASSERT_TRUE(memcpy_s(verifyDataOld, sizeof(verifyDataOld), verifyDataNew, verifyDataNewSize) == EOK);
+        memcpy(verifyDataOld, verifyDataNew, verifyDataNewSize);
     }
 
     ASSERT_TRUE(HITLS_ClearRenegotiationNum(clientTlsCtx, &renegotiationNum) == HITLS_SUCCESS);
@@ -3006,7 +3005,7 @@ void UT_HITLS_CM_HITLS_ClearRenegotiationNum_FUNC_TC001(int version)
 
     ASSERT_TRUE(verifyDataNewSize == verifyDataOldSize);
     ASSERT_TRUE(memcmp(verifyDataNew, verifyDataOld, verifyDataOldSize) == 0);
-    ASSERT_TRUE(memcpy_s(verifyDataOld, sizeof(verifyDataOld), verifyDataNew, verifyDataNewSize) == EOK);
+    memcpy(verifyDataOld, verifyDataNew, verifyDataNewSize);
 
     ASSERT_TRUE(HITLS_ClearRenegotiationNum(clientTlsCtx, &renegotiationNum) == HITLS_SUCCESS);
     ASSERT_EQ(renegotiationNum, 1);

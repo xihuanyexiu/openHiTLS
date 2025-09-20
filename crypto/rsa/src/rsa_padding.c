@@ -15,14 +15,13 @@
 
 #include "hitls_build.h"
 #ifdef HITLS_CRYPTO_RSA
-
+#include <string.h>
 #include "crypt_rsa.h"
 #include "rsa_local.h"
 #include "crypt_errno.h"
 #include "crypt_types.h"
 #include "crypt_utils.h"
 #include "crypt_util_rand.h"
-#include "securec.h"
 #include "bsl_sal.h"
 #include "bsl_bytes.h"
 #include "bsl_err_internal.h"
@@ -217,7 +216,7 @@ static int32_t GetVerifySaltLen(const uint8_t *emData, const uint8_t *dbBuff, ui
         BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
         return CRYPT_MEM_ALLOC_FAIL;
     }
-    (void)memcpy_s(tmpBuff, maskedDBLen, dbBuff, maskedDBLen);
+    memcpy(tmpBuff, dbBuff, maskedDBLen);
     if (msBit != 0) {
         tmpBuff[0] &= ((uint8_t)(0xFF >> (8 - msBit)));  // Set the leftmost 8emLen - emBits bits to zero
     }
@@ -334,14 +333,14 @@ int32_t CRYPT_RSA_VerifyPss(CRYPT_RSA_Ctx *ctx, const EAL_MdMethod *hashMethod, 
     const CRYPT_Data hBuff = {&tmpBuff[maskedDBLen], hLen};
     ret = GetAndVerifyDB(ctx->pad.para.pss.mgfProvCtx, mgfMethod, &emData, &dbBuff, &saltLength, msBit);
     if (ret != CRYPT_SUCCESS) {
-        (void)memset_s(tmpBuff, emLen, 0, emLen);
+        memset(tmpBuff, 0, emLen);
         BSL_SAL_FREE(tmpBuff);
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
     const CRYPT_Data salt = {&tmpBuff[maskedDBLen - saltLength], saltLength};
     ret = VerifyH(ctx->pad.para.pss.mdProvCtx, hashMethod, &mHash, &salt, &h, &hBuff);
-    (void)memset_s(tmpBuff, emLen, 0, emLen);
+    memset(tmpBuff, 0, emLen);
     BSL_SAL_FREE(tmpBuff);
     return ret;
 }
@@ -440,10 +439,7 @@ int32_t CRYPT_RSA_SetPkcsV15Type1(CRYPT_MD_AlgId hashId, const uint8_t *data, ui
 
     // Considering that the data space and pad space may overlap,
     // move the data to the specified position(the end of the pad).
-    if (memmove_s(pad + (padLen - dataLen), dataLen, data, dataLen) != EOK) {
-        BSL_ERR_PUSH_ERROR(CRYPT_SECUREC_FAIL);
-        return CRYPT_SECUREC_FAIL;
-    }
+    memmove(pad + (padLen - dataLen), data, dataLen);
     *tmp = 0x0;
     tmp++;
     *tmp = 0x1;
@@ -452,10 +448,7 @@ int32_t CRYPT_RSA_SetPkcsV15Type1(CRYPT_MD_AlgId hashId, const uint8_t *data, ui
 
     // PS length: padSize = padLen - dataLen - algIdentifier.len - 3
     padSize = padLen - dataLen - algIdentifier.len - 3;
-    if (memset_s(tmp, tmpLen, 0xff, padSize) != EOK) { // 0xff padded in PS
-        BSL_ERR_PUSH_ERROR(CRYPT_SECUREC_FAIL);
-        return CRYPT_SECUREC_FAIL;
-    }
+    memset(tmp, 0xff, padSize);
     tmp += padSize;
     tmpLen -= padSize;
 
@@ -463,10 +456,8 @@ int32_t CRYPT_RSA_SetPkcsV15Type1(CRYPT_MD_AlgId hashId, const uint8_t *data, ui
     tmp++;
     tmpLen--;
 
-    if ((algIdentifier.len > 0) && memcpy_s(tmp, tmpLen, algIdentifier.data, algIdentifier.len) != EOK) {
-        // padding when identifier exit
-        BSL_ERR_PUSH_ERROR(CRYPT_SECUREC_FAIL);
-        return CRYPT_SECUREC_FAIL;
+    if (algIdentifier.len > 0) {
+        memcpy(tmp, algIdentifier.data, algIdentifier.len);
     }
     return CRYPT_SUCCESS;
 }
@@ -542,10 +533,8 @@ int32_t CRYPT_RSA_UnPackPkcsV15Type1(uint8_t *data, uint32_t dataLen, uint8_t *o
     index++;
     tmpLen--;
 
-    if (memcpy_s(out, *outLen, index, tmpLen) != EOK) {
-        BSL_ERR_PUSH_ERROR(CRYPT_SECUREC_FAIL);
-        return CRYPT_SECUREC_FAIL;
-    }
+    memcpy(out, index, tmpLen);
+
     *outLen = tmpLen;
     return CRYPT_SUCCESS;
 }
@@ -578,7 +567,7 @@ static int32_t OaepSetPs(const uint8_t *in, uint32_t inLen, uint8_t *db, uint32_
     // This operation cannot be reversed because the OaepSetLengthCheck has checked the validity of the data.
     uint32_t psLen = padLen - inLen - 2 * hashLen - 2;
     // padding 0x00
-    (void)memset_s(ps, psLen, 0, psLen);
+    memset(ps, 0, psLen);
     ps += psLen;
     *ps = 0x01;
     ps++;
@@ -586,9 +575,8 @@ static int32_t OaepSetPs(const uint8_t *in, uint32_t inLen, uint8_t *db, uint32_
      * padLen minus twice hashLen, then subtract 2 bytes of fixed data, and subtract the padding length.
      * The remaining length is the plaintext length.
      */
-    if (inLen != 0 && memcpy_s(ps, padLen - 2 * hashLen - 2 - psLen, in, inLen) != EOK) {
-        BSL_ERR_PUSH_ERROR(CRYPT_SECUREC_FAIL);
-        return CRYPT_SECUREC_FAIL;
+    if (inLen != 0) {
+        memcpy(ps, in, inLen);
     }
     return CRYPT_SUCCESS;
 }
@@ -859,11 +847,8 @@ int32_t CRYPT_RSA_VerifyPkcs1Oaep(RSA_PadingPara *pad, const uint8_t *in, uint32
 
     GOTO_ERR_IF_EX(OaepVerifyHashMaskDB(pad->mdProvCtx, &pad->mdMeth, &paramData, &dbMaskData, hashLen, &offset), ret);
 
-    if (memcpy_s(msg, *msgLen, maskDB + offset, maskedDBLen - offset) != EOK) {
-        ret = CRYPT_RSA_NOR_VERIFY_FAIL;
-        BSL_ERR_PUSH_ERROR(ret);
-        goto ERR;
-    }
+    memcpy(msg, maskDB + offset, maskedDBLen - offset);
+
     *msgLen = maskedDBLen - offset;
 ERR:
     BSL_SAL_CleanseData(maskDB, maskedDBLen);
@@ -895,9 +880,8 @@ int32_t CRYPT_RSA_SetPkcsV15Type2(void *libCtx, const uint8_t *in, uint32_t inLe
     *(out + 1) = 0x02;
     *(out + outLen - inLen - 2) = 0x00;
     // msg padding, outLen minus the 3-byte constant, ps length, and start padding.
-    if (inLen != 0 && memcpy_s(msg, outLen - (psLen + 3), in, inLen) != EOK) {
-        BSL_ERR_PUSH_ERROR(CRYPT_SECUREC_FAIL);
-        return CRYPT_SECUREC_FAIL;
+    if (inLen != 0) {
+        memcpy(msg, in, inLen);
     }
 
     // cal ps
@@ -954,7 +938,7 @@ int32_t CRYPT_RSA_VerifyPkcsV15Type2(const uint8_t *in, uint32_t inLen, uint8_t 
         return CRYPT_RSA_NOR_VERIFY_FAIL;
     }
 
-    (void)memcpy_s(out, *outLen, in + zeroIndex, inLen - zeroIndex);
+    memcpy(out, in + zeroIndex, inLen - zeroIndex);
     *outLen = inLen - zeroIndex;
 
     return CRYPT_SUCCESS;

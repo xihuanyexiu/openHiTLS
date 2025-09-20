@@ -33,7 +33,6 @@
 #include "parser_frame_msg.h"
 #include "rec_wrapper.h"
 #include "cert.h"
-#include "securec.h"
 #include "conn_init.h"
 #include "hitls_crypt_init.h"
 #include "hitls_psk.h"
@@ -49,7 +48,7 @@ int32_t STUB_RecConnDecrypt(
 {
     (void)ctx;
     (void)state;
-    memcpy_s(data, cryptMsg->textLen, cryptMsg->text, cryptMsg->textLen);
+    memcpy(data, cryptMsg->text, cryptMsg->textLen);
     (void)data;
     *dataLen = cryptMsg->textLen;
     return HITLS_SUCCESS;
@@ -82,7 +81,7 @@ static void Test_FinishToAPP(HITLS_Ctx *ctx, uint8_t *data, uint32_t *len, uint3
     ASSERT_EQ(frameMsg.body.hsMsg.type.data, FINISHED);
 
     STUB_Replace(user, __real_REC_Write, STUB_REC_Write);
-    memset_s(data, bufSize, 0, bufSize);
+    memset(data, 0, bufSize);
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
 
 EXIT:
@@ -115,7 +114,7 @@ static void Test_ServerHello_Add_PhaExtensions(
         frameMsg.body.hsMsg.body.serverHello.extensionLen.data + sizeof(posthandshake);
 
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
-    ASSERT_EQ(memcpy_s(&data[*len], bufSize - *len, &posthandshake, sizeof(posthandshake)), EOK);
+    memcpy(&data[*len], &posthandshake, sizeof(posthandshake));
     *len += sizeof(posthandshake);
 EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
@@ -262,7 +261,7 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_PHA_FUNC_TC001()
     ASSERT_EQ(HLT_ProcessTlsRead(remoteProcess, serverRes, dest, READ_BUF_SIZE, &readbytes), 0);
     ASSERT_TRUE(readbytes == sizeof(src));
     ASSERT_TRUE(memcmp(src, dest, readbytes) == 0);
-    memset_s(dest, READ_BUF_SIZE, 0, READ_BUF_SIZE);
+    memset(dest, 0, READ_BUF_SIZE);
 EXIT:
     HLT_FreeAllProcess();
     return;
@@ -458,7 +457,7 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC004(void)
     RegisterWrapper(wrapper);
 
     ASSERT_TRUE(HLT_TlsWrite(serverRes->ssl, (uint8_t *)writeBuf, strlen(writeBuf)) == HITLS_SUCCESS);
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
 
     // The client returns alert
     ASSERT_TRUE(HLT_RpcTlsRead(remoteProcess, clientRes->sslId, readBuf, READ_BUF_SIZE, &readLen) ==
@@ -533,13 +532,13 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC005(void)
     RegisterWrapper(wrapper);
 
     ASSERT_TRUE(HLT_RpcTlsWrite(remoteProcess, serverRes->sslId, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
     ASSERT_TRUE(HLT_TlsRead(clientRes->ssl, readBuf, READ_BUF_SIZE, &readLen) == 0);
     ASSERT_TRUE(readLen == strlen(writeBuf));
     ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
 
     ASSERT_TRUE(HLT_TlsWrite(clientRes->ssl, (uint8_t *)writeBuf, strlen(writeBuf)) == HITLS_SUCCESS);
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
 
     // The server returns alert
     ASSERT_EQ(HLT_RpcTlsRead(remoteProcess, serverRes->sslId, readBuf, READ_BUF_SIZE, &readLen),
@@ -615,13 +614,13 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC006(void)
     RegisterWrapper(wrapper);
 
     ASSERT_TRUE(HLT_RpcTlsWrite(remoteProcess, serverRes->sslId, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
     ASSERT_TRUE(HLT_TlsRead(clientRes->ssl, readBuf, READ_BUF_SIZE, &readLen) == 0);
     ASSERT_TRUE(readLen == strlen(writeBuf));
     ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
 
     ASSERT_TRUE(HLT_TlsWrite(clientRes->ssl, (uint8_t *)writeBuf, strlen(writeBuf)) == HITLS_SUCCESS);
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
 
     // The server returns alert
     ASSERT_EQ(HLT_RpcTlsRead(remoteProcess, serverRes->sslId, readBuf, READ_BUF_SIZE, &readLen),
@@ -677,8 +676,8 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC007(void)
     HLT_SetClientVerifySupport(clientConfig, true);
 
     // Setting the PSK on the Client and Server
-    memcpy_s(clientConfig->psk, PSK_MAX_LEN, "12121212121212", sizeof("12121212121212"));
-    memcpy_s(serverConfig->psk, PSK_MAX_LEN, "12121212121212", sizeof("12121212121212"));
+    memcpy(clientConfig->psk, "12121212121212", sizeof("12121212121212"));
+    memcpy(serverConfig->psk, "12121212121212", sizeof("12121212121212"));
     HLT_SetCipherSuites(clientConfig, "HITLS_AES_128_GCM_SHA256");
     HLT_SetCipherSuites(serverConfig, "HITLS_AES_128_GCM_SHA256");
 
@@ -697,13 +696,13 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC007(void)
     const char *writeBuf = "Hello world";
 
     ASSERT_TRUE(HLT_TlsWrite(serverRes->ssl, (uint8_t *)writeBuf, strlen(writeBuf)) == HITLS_SUCCESS);
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
     ASSERT_EQ(HLT_RpcTlsRead(remoteProcess, clientRes->sslId, readBuf, READ_BUF_SIZE, &readLen), HITLS_SUCCESS);
     ASSERT_TRUE(readLen == strlen(writeBuf));
     ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
 
     ASSERT_TRUE(HLT_RpcTlsWrite(remoteProcess, clientRes->sslId, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
     ASSERT_TRUE(HLT_TlsRead(serverRes->ssl, readBuf, READ_BUF_SIZE, &readLen) == 0);
     ASSERT_TRUE(readLen == strlen(writeBuf));
     ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
@@ -777,13 +776,13 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC008(void)
     RegisterWrapper(wrapper);
 
     ASSERT_TRUE(HLT_RpcTlsWrite(remoteProcess, serverRes->sslId, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
     ASSERT_TRUE(HLT_TlsRead(clientRes->ssl, readBuf, READ_BUF_SIZE, &readLen) == 0);
     ASSERT_TRUE(readLen == strlen(writeBuf));
     ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
 
     ASSERT_TRUE(HLT_TlsWrite(clientRes->ssl, (uint8_t *)writeBuf, strlen(writeBuf)) == HITLS_SUCCESS);
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
 
     // The server returns alert
     ASSERT_EQ(HLT_RpcTlsRead(remoteProcess, serverRes->sslId, readBuf, READ_BUF_SIZE, &readLen),
@@ -888,17 +887,17 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC009()
     uint32_t readLen;
     const char *writeBuf = "Hello world";
     ASSERT_TRUE(HLT_RpcTlsWrite(remoteProcess, serverSslId, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
     ASSERT_TRUE(HLT_TlsRead(clientSsl, readBuf, READ_BUF_SIZE, &readLen) == 0);
     ASSERT_TRUE(readLen == strlen(writeBuf));
     ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
 
     HITLS_Ctx *ctx = clientSsl;
     uint8_t ReqCtx1[1 * 1024] = {0};
-    memcpy_s(ReqCtx1, ctx->certificateReqCtxSize, ctx->certificateReqCtx, ctx->certificateReqCtxSize);
+    memcpy(ReqCtx1, ctx->certificateReqCtx, ctx->certificateReqCtxSize);
 
     HLT_TlsWrite(clientSsl, (uint8_t *)writeBuf, strlen(writeBuf));
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
     HLT_RpcTlsRead(remoteProcess, serverSslId, readBuf, READ_BUF_SIZE, &readLen);
     ASSERT_TRUE(readLen == strlen(writeBuf));
     ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
@@ -906,7 +905,7 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC009()
     // the server continuously sends certificate request messages
     ASSERT_TRUE(HLT_RpcTlsVerifyClientPostHandshake(remoteProcess, serverSslId) == HITLS_SUCCESS);
     ASSERT_TRUE(HLT_RpcTlsWrite(remoteProcess, serverSslId, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
     ASSERT_TRUE(HLT_TlsRead(clientSsl, readBuf, READ_BUF_SIZE, &readLen) == 0);
     ASSERT_TRUE(readLen == strlen(writeBuf));
     ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
@@ -1031,12 +1030,12 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC011()
     uint32_t readLen;
     const char *writeBuf = "Hello world";
     ASSERT_TRUE(HLT_RpcTlsWrite(remoteProcess, serverSslId, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
     ASSERT_TRUE(HLT_TlsRead(clientSsl, readBuf, READ_BUF_SIZE, &readLen) == 0);
     ASSERT_TRUE(readLen == strlen(writeBuf));
     ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
     HLT_TlsWrite(clientSsl, (uint8_t *)writeBuf, strlen(writeBuf));
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
     ret = HLT_RpcTlsRead(remoteProcess, serverSslId, readBuf, READ_BUF_SIZE, &readLen);
 
     // the server sends an alert message.
@@ -1159,13 +1158,13 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC012()
 
     // The connection is successfully set up, and the server initiates authentication.
     ASSERT_TRUE(HLT_RpcTlsWrite(remoteProcess, serverSslId, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
     ASSERT_TRUE(HLT_TlsRead(clientSsl, readBuf, READ_BUF_SIZE, &readLen) == 0);
     ASSERT_TRUE(readLen == strlen(writeBuf));
     ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
 
     HLT_TlsWrite(clientSsl, (uint8_t *)writeBuf, strlen(writeBuf));
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
     HLT_RpcTlsRead(remoteProcess, serverSslId, readBuf, READ_BUF_SIZE, &readLen);
     ASSERT_TRUE(readLen == strlen(writeBuf));
     ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
@@ -1290,13 +1289,13 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC013()
     uint32_t readLen;
     const char *writeBuf = "Hello world";
     ASSERT_TRUE(HLT_RpcTlsWrite(remoteProcess, serverSslId, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
     ASSERT_TRUE(HLT_TlsRead(clientSsl, readBuf, READ_BUF_SIZE, &readLen) == 0);
     ASSERT_TRUE(readLen == strlen(writeBuf));
     ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
 
     HLT_TlsWrite(clientSsl, (uint8_t *)writeBuf, strlen(writeBuf));
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
     ASSERT_EQ(
         HLT_RpcTlsRead(remoteProcess, serverSslId, readBuf, READ_BUF_SIZE, &readLen), HITLS_CERT_ERR_VERIFY_CERT_CHAIN);
 
@@ -1423,13 +1422,13 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC014()
     uint32_t readLen;
     const char *writeBuf = "Hello world";
     ASSERT_TRUE(HLT_RpcTlsWrite(remoteProcess, serverSslId, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
     ASSERT_TRUE(HLT_TlsRead(clientSsl, readBuf, READ_BUF_SIZE, &readLen) == 0);
     ASSERT_TRUE(readLen == strlen(writeBuf));
     ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
 
     HLT_TlsWrite(clientSsl, (uint8_t *)writeBuf, strlen(writeBuf));
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
     HLT_RpcTlsRead(remoteProcess, serverSslId, readBuf, READ_BUF_SIZE, &readLen);
     ASSERT_TRUE(readLen == strlen(writeBuf));
     ASSERT_EQ(memcmp(writeBuf, readBuf, readLen), 0);
@@ -1561,7 +1560,7 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC015()
     RegisterWrapper(wrapper);
 
     ASSERT_TRUE(HLT_RpcTlsWrite(remoteProcess, serverSslId, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
     ASSERT_TRUE(HLT_TlsRead(clientSsl, readBuf, READ_BUF_SIZE, &readLen) == 0);
     ASSERT_TRUE(readLen == strlen(writeBuf));
     ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
@@ -1570,7 +1569,7 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC015()
     STUB_Reset(&tmpStubInfo);
     HLT_TlsWrite(clientSsl, (uint8_t *)writeBuf, strlen(writeBuf));
 
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
     ASSERT_EQ(HLT_RpcTlsRead(remoteProcess, serverSslId, readBuf, READ_BUF_SIZE, &readLen),
         HITLS_REC_NORMAL_RECV_UNEXPECT_MSG);
 
@@ -1704,14 +1703,14 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC016()
     // Send an app message to the server
     HLT_TlsWrite(clientSsl, (uint8_t *)writeBuf, strlen(writeBuf));
 
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
     ASSERT_TRUE(HLT_TlsRead(clientSsl, readBuf, READ_BUF_SIZE, &readLen) == 0);
     ASSERT_TRUE(readLen == strlen(writeBuf));
     ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
 
     // The authentication is successful.
     HLT_TlsWrite(clientSsl, (uint8_t *)writeBuf, strlen(writeBuf));
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
     HLT_RpcTlsRead(remoteProcess, serverSslId, readBuf, READ_BUF_SIZE, &readLen);
     ASSERT_TRUE(readLen == strlen(writeBuf));
     ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
@@ -1842,14 +1841,14 @@ void SDV_TLS_TLS13_RFC8446_CONSISTENCY_POSTHANDSHAKE_FUNC_TC017()
     ASSERT_TRUE(HLT_RpcTlsWrite(remoteProcess, serverSslId, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
     // The server sends an app message
     ASSERT_TRUE(HLT_RpcTlsWrite(remoteProcess, serverSslId, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
     ASSERT_TRUE(HLT_TlsRead(clientSsl, readBuf, READ_BUF_SIZE, &readLen) == 0);
     ASSERT_TRUE(readLen == strlen(writeBuf));
     ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
 
     // Continue the authentication.
     HLT_TlsWrite(clientSsl, (uint8_t *)writeBuf, strlen(writeBuf));
-    ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+    memset(readBuf, 0, READ_BUF_SIZE);
     HLT_RpcTlsRead(remoteProcess, serverSslId, readBuf, READ_BUF_SIZE, &readLen);
     ASSERT_TRUE(readLen == strlen(writeBuf));
     ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);

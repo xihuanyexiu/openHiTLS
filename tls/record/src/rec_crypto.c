@@ -13,7 +13,6 @@
  * See the Mulan PSL v2 for more details.
  */
 #include <string.h>
-#include "securec.h"
 #include "hitls_build.h"
 #include "bsl_bytes.h"
 #include "bsl_log_internal.h"
@@ -137,11 +136,8 @@ static int32_t DefaultEncryptPreProcess(TLS_Ctx *ctx, uint8_t recordType, const 
         return RETURN_ERROR_NUMBER_PROCESS(HITLS_MEMALLOC_FAIL, BINLOG_ID17253, "Calloc fail");
     }
 
-    if (memcpy_s(tlsInnerPlaintext, tlsInnerPlaintextLen, data, plainLen) != EOK) {
-        BSL_SAL_FREE(tlsInnerPlaintext);
-        BSL_ERR_PUSH_ERROR(HITLS_MEMCPY_FAIL);
-        return RETURN_ERROR_NUMBER_PROCESS(HITLS_MEMCPY_FAIL, BINLOG_ID17254, "memcpy fail");
-    }
+    memcpy(tlsInnerPlaintext, data, plainLen);
+
 
     tlsInnerPlaintext[plainLen] = recordType;
 
@@ -180,11 +176,8 @@ static int32_t PlainDecrypt(TLS_Ctx *ctx, RecConnState *suiteInfo, const REC_Tex
 {
     (void)ctx;
     (void)suiteInfo;
-    if (memcpy_s(data, *dataLen, cryptMsg->text, cryptMsg->textLen) != EOK) {
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15404, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
-            "RecConnDecrypt Failed: memcpy fail.", 0, 0, 0, 0);
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(data, cryptMsg->text, cryptMsg->textLen);
+
     // For empty ciphersuite case, the plaintext length is equal to ciphertext length
     *dataLen = cryptMsg->textLen;
     return HITLS_SUCCESS;
@@ -195,12 +188,9 @@ static int32_t PlainEncrypt(TLS_Ctx *ctx, RecConnState *state, const REC_TextInp
 {
     (void)ctx;
     (void)state;
-    if (memcpy_s(cipherText, cipherTextLen, plainMsg->text, plainMsg->textLen) != EOK) {
-        BSL_ERR_PUSH_ERROR(HITLS_MEMCPY_FAIL);
-        BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15926, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
-            "Record:memcpy fail.", 0, 0, 0, 0);
-        return HITLS_MEMCPY_FAIL;
-    }
+    (void)cipherTextLen;
+    memcpy(cipherText, plainMsg->text, plainMsg->textLen);
+
     return HITLS_SUCCESS;
 }
 

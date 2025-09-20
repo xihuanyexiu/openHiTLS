@@ -15,8 +15,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <pthread.h>
-#include "securec.h"
 #include "hlt.h"
 #include "handle_cmd.h"
 #include "tls_res.h"
@@ -38,7 +38,7 @@
 #define ASSERT_RETURN(condition)          \
     do {                                  \
         if (!(condition)) {               \
-            LOG_ERROR("sprintf_s Error"); \
+            LOG_ERROR("sprintf Error"); \
             return ERROR;                 \
         }                                 \
     } while (0)
@@ -137,11 +137,7 @@ static int ParseProviderString(const char *providerStr, char (*providerNames)[MA
             return ERROR;
         }
 
-        if (strcpy_s(providerNames[i], MAX_PROVIDER_NAME_LEN, name) != EOK) {
-            LOG_ERROR("Failed to allocate memory for provider name");
-            free(tempStr);
-            return ERROR;
-        }
+        strcpy(providerNames[i], name);
 
         providerLibFmts[i] = atoi(fmt);
 
@@ -157,7 +153,7 @@ int RpcProviderTlsNewCtx(CmdData *cmdData)
 {
     int id;
     TLS_VERSION tlsVersion;
-    (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
+    memset(cmdData->result, 0, sizeof(cmdData->result));
 
     tlsVersion = atoi(cmdData->paras[0]);
     char *providerNames = strlen(cmdData->paras[2]) > 0 ? cmdData->paras[2] : NULL;
@@ -187,7 +183,7 @@ int RpcProviderTlsNewCtx(CmdData *cmdData)
 
 EXIT:
     // Return Result
-    if (sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, id) <= 0) {
+    if (sprintf(cmdData->result, "%s|%s|%d", cmdData->id, cmdData->funcId, id) <= 0) {
         return ERROR;
     }
     return SUCCESS;
@@ -198,7 +194,7 @@ int RpcTlsNewCtx(CmdData *cmdData)
 {
     int id;
     TLS_VERSION tlsVersion;
-    (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
+    memset(cmdData->result, 0, sizeof(cmdData->result));
 
     tlsVersion = atoi(cmdData->paras[0]);
     // Invoke the corresponding function.
@@ -214,7 +210,7 @@ int RpcTlsNewCtx(CmdData *cmdData)
 
 EXIT:
     // Return Result
-    if (sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, id) <= 0) {
+    if (sprintf(cmdData->result, "%s|%s|%d", cmdData->id, cmdData->funcId, id) <= 0) {
         return ERROR;
     }
     return SUCCESS;
@@ -223,7 +219,7 @@ EXIT:
 int RpcTlsSetCtx(CmdData *cmdData)
 {
     int ret;
-    (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
+    memset(cmdData->result, 0, sizeof(cmdData->result));
 
     // Find the corresponding CTX.
     ResList *ctxList = GetCtxList();
@@ -249,7 +245,7 @@ int RpcTlsSetCtx(CmdData *cmdData)
 
 EXIT:
     // Return the result
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
+    ret = sprintf(cmdData->result, "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
 }
@@ -257,7 +253,7 @@ EXIT:
 int RpcTlsNewSsl(CmdData *cmdData)
 {
     int id, ret;
-    (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
+    memset(cmdData->result, 0, sizeof(cmdData->result));
 
     // Invoke the corresponding function.
     ResList *ctxList = GetCtxList();
@@ -281,7 +277,7 @@ int RpcTlsNewSsl(CmdData *cmdData)
 
 EXIT:
     // Return the result.
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, id);
+    ret = sprintf(cmdData->result, "%s|%s|%d", cmdData->id, cmdData->funcId, id);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
 }
@@ -290,7 +286,7 @@ int RpcTlsSetSsl(CmdData *cmdData)
 {
     int ret;
 
-    (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
+    memset(cmdData->result, 0, sizeof(cmdData->result));
 
     ResList *sslList = GetSslList();
     int sslId = atoi(cmdData->paras[0]);
@@ -309,7 +305,7 @@ int RpcTlsSetSsl(CmdData *cmdData)
     ret = HLT_TlsSetSsl(ssl, &sslConfig);
 EXIT:
     // Return the result.
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
+    ret = sprintf(cmdData->result, "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
 }
@@ -318,7 +314,7 @@ int RpcTlsListen(CmdData *cmdData)
 {
     int ret;
     int sslId;
-    (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
+    memset(cmdData->result, 0, sizeof(cmdData->result));
     ResList *sslList = GetSslList();
     sslId = strtol(cmdData->paras[0], NULL, 10); // Convert to a decimal number
     void *ssl = GetTlsResFromId(sslList, sslId);
@@ -332,7 +328,7 @@ int RpcTlsListen(CmdData *cmdData)
 
 EXIT:
     // Return the result
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
+    ret = sprintf(cmdData->result, "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
 }
@@ -341,7 +337,7 @@ int RpcTlsAccept(CmdData *cmdData)
 {
     int ret;
 
-    (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
+    memset(cmdData->result, 0, sizeof(cmdData->result));
     ResList *sslList = GetSslList();
     int sslId = atoi(cmdData->paras[0]);
     void *ssl = GetTlsResFromId(sslList, sslId);
@@ -356,7 +352,7 @@ int RpcTlsAccept(CmdData *cmdData)
 
 EXIT:
     // Return the result
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
+    ret = sprintf(cmdData->result, "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
 }
@@ -365,7 +361,7 @@ int RpcTlsConnect(CmdData *cmdData)
 {
     int ret;
 
-    (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
+    memset(cmdData->result, 0, sizeof(cmdData->result));
 
     ResList *sslList = GetSslList();
     int sslId = atoi(cmdData->paras[0]);
@@ -380,7 +376,7 @@ int RpcTlsConnect(CmdData *cmdData)
 
 EXIT:
     // Return the result
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
+    ret = sprintf(cmdData->result, "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
 }
@@ -389,7 +385,7 @@ int RpcTlsRead(CmdData *cmdData)
 {
     int ret = SUCCESS;
 
-    (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
+    memset(cmdData->result, 0, sizeof(cmdData->result));
     ResList *sslList = GetSslList();
     int sslId = atoi(cmdData->paras[0]);
     void *ssl = GetTlsResFromId(sslList, sslId);
@@ -409,19 +405,19 @@ int RpcTlsRead(CmdData *cmdData)
     uint8_t *data = (uint8_t *)calloc(1u, dataLen);
     if (data == NULL) {
         LOG_ERROR("Calloc Error");
-        ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
+        ret = sprintf(cmdData->result, "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
         ASSERT_RETURN(ret > 0);
     }
-    (void)memset_s(data, dataLen, 0, dataLen);
+    memset(data, 0, dataLen);
     ret = HLT_TlsRead(ssl, data, dataLen, &readLen);
 
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d|%u|%s",
+    ret = sprintf(cmdData->result, "%s|%s|%d|%u|%s",
                     cmdData->id, cmdData->funcId, ret, readLen, data);
     free(data);
     return SUCCESS;
 ERR:
     // Return the result
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d|", cmdData->id, cmdData->funcId, ret);
+    ret = sprintf(cmdData->result, "%s|%s|%d|", cmdData->id, cmdData->funcId, ret);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
 }
@@ -429,7 +425,7 @@ ERR:
 int RpcTlsWrite(CmdData *cmdData)
 {
     int ret;
-    (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
+    memset(cmdData->result, 0, sizeof(cmdData->result));
 
     ResList *sslList = GetSslList();
     int sslId = atoi(cmdData->paras[0]);
@@ -457,20 +453,15 @@ int RpcTlsWrite(CmdData *cmdData)
         goto ERR;
     }
     // The second parameter of indicates the content of the write data.
-    ret = memcpy_s(data, dataLen, cmdData->paras[2], dataLen);
-    if (ret != EOK) {
-        LOG_ERROR("memcpy_s Error");
-        free(data);
-        goto ERR;
-    }
+    memcpy(data, cmdData->paras[2], dataLen);
     ret = HLT_TlsWrite(ssl, data, dataLen);
     free(data);
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
+    ret = sprintf(cmdData->result, "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
 ERR:
     // Return the result
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
+    ret = sprintf(cmdData->result, "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
 }
@@ -490,7 +481,7 @@ int RpcTlsRenegotiate(CmdData *cmdData)
 
 EXIT:
     // Return the result
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
+    ret = sprintf(cmdData->result, "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
 }
@@ -510,7 +501,7 @@ int RpcTlsVerifyClientPostHandshake(CmdData *cmdData)
 
 EXIT:
     // Return Result
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
+    ret = sprintf(cmdData->result, "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
 }
@@ -519,8 +510,8 @@ int RpcProcessExit(CmdData *cmdData)
 {
     int ret;
     // If 1 is returned, the process needs to exit
-    (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, getpid());
+    memset(cmdData->result, 0, sizeof(cmdData->result));
+    ret = sprintf(cmdData->result, "%s|%s|%d", cmdData->id, cmdData->funcId, getpid());
     ASSERT_RETURN(ret > 0);
     return 1;
 }
@@ -530,8 +521,8 @@ int RpcDataChannelAccept(CmdData *cmdData)
     int sockFd, ret;
     DataChannelParam channelParam;
 
-    (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
-    (void)memset_s(&channelParam, sizeof(DataChannelParam), 0, sizeof(DataChannelParam));
+    memset(cmdData->result, 0, sizeof(cmdData->result));
+    memset(&channelParam, 0, sizeof(DataChannelParam));
 
     channelParam.type = atoi(cmdData->paras[0]);
     channelParam.port = atoi(cmdData->paras[1]); // The first parameter of indicates the port number
@@ -542,7 +533,7 @@ int RpcDataChannelAccept(CmdData *cmdData)
     sockFd = RunDataChannelAccept(&channelParam);
 
     // Return the result.
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, sockFd);
+    ret = sprintf(cmdData->result, "%s|%s|%d", cmdData->id, cmdData->funcId, sockFd);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
 }
@@ -552,8 +543,8 @@ int RpcDataChannelBind(CmdData *cmdData)
     int sockFd, ret;
     DataChannelParam channelParam;
 
-    (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
-    (void)memset_s(&channelParam, sizeof(DataChannelParam), 0, sizeof(DataChannelParam));
+    memset(cmdData->result, 0, sizeof(cmdData->result));
+    memset(&channelParam, 0, sizeof(DataChannelParam));
 
     channelParam.type = atoi(cmdData->paras[0]);
     channelParam.port = atoi(cmdData->paras[1]); // The first parameter of  indicates the port number
@@ -564,7 +555,7 @@ int RpcDataChannelBind(CmdData *cmdData)
     sockFd = RunDataChannelBind(&channelParam);
 
     // Return the result.
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d|%d", cmdData->id, cmdData->funcId,
+    ret = sprintf(cmdData->result, "%s|%s|%d|%d", cmdData->id, cmdData->funcId,
         sockFd, channelParam.port);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
@@ -576,8 +567,8 @@ int RpcDataChannelConnect(CmdData *cmdData)
     int ret, sockFd;
     DataChannelParam channelParam;
 
-    (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
-    (void)memset_s(&channelParam, sizeof(DataChannelParam), 0, sizeof(DataChannelParam));
+    memset(cmdData->result, 0, sizeof(cmdData->result));
+    memset(&channelParam, 0, sizeof(DataChannelParam));
 
     channelParam.type = atoi(cmdData->paras[0]);
     channelParam.port = atoi(cmdData->paras[1]); // The first parameter of  indicates the port number.
@@ -586,7 +577,7 @@ int RpcDataChannelConnect(CmdData *cmdData)
     sockFd = HLT_DataChannelConnect(&channelParam);
 
     // Return the result.
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, sockFd);
+    ret = sprintf(cmdData->result, "%s|%s|%d", cmdData->id, cmdData->funcId, sockFd);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
 }
@@ -595,13 +586,13 @@ int RpcTlsRegCallback(CmdData *cmdData)
 {
     int ret;
     TlsCallbackType type;
-    (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
+    memset(cmdData->result, 0, sizeof(cmdData->result));
 
     type = atoi(cmdData->paras[0]);
     // Invoke the corresponding function
     ret = HLT_TlsRegCallback(type);
 
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
+    ret = sprintf(cmdData->result, "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
 }
@@ -610,7 +601,7 @@ int RpcTlsGetStatus(CmdData *cmdData)
 {
     int ret, sslId;
     uint32_t sslState = 0;
-    (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
+    memset(cmdData->result, 0, sizeof(cmdData->result));
 
     ResList *sslList = GetSslList();
     sslId = atoi(cmdData->paras[0]);
@@ -619,7 +610,7 @@ int RpcTlsGetStatus(CmdData *cmdData)
         sslState = ((HITLS_Ctx *)ssl)->state;
     }
 
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%u", cmdData->id, cmdData->funcId, sslState);
+    ret = sprintf(cmdData->result, "%s|%s|%u", cmdData->id, cmdData->funcId, sslState);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
 }
@@ -628,7 +619,7 @@ int RpcTlsGetAlertFlag(CmdData *cmdData)
 {
     int ret, sslId;
     ALERT_Info alertInfo = {0};
-    (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
+    memset(cmdData->result, 0, sizeof(cmdData->result));
 
     ResList *sslList = GetSslList();
     sslId = atoi(cmdData->paras[0]);
@@ -637,7 +628,7 @@ int RpcTlsGetAlertFlag(CmdData *cmdData)
         ALERT_GetInfo(ssl, &alertInfo);
     }
 
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d",
+    ret = sprintf(cmdData->result, "%s|%s|%d",
         cmdData->id, cmdData->funcId, alertInfo.flag);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
@@ -647,7 +638,7 @@ int RpcTlsGetAlertLevel(CmdData *cmdData)
 {
     int ret, sslId;
     ALERT_Info alertInfo = {0};
-    (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
+    memset(cmdData->result, 0, sizeof(cmdData->result));
 
     ResList *sslList = GetSslList();
     sslId = atoi(cmdData->paras[0]);
@@ -656,7 +647,7 @@ int RpcTlsGetAlertLevel(CmdData *cmdData)
         ALERT_GetInfo(ssl, &alertInfo);
     }
 
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d",
+    ret = sprintf(cmdData->result, "%s|%s|%d",
         cmdData->id, cmdData->funcId, alertInfo.level);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
@@ -666,7 +657,7 @@ int RpcTlsGetAlertDescription(CmdData *cmdData)
 {
     int ret, sslId;
     ALERT_Info alertInfo = {0};
-    (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
+    memset(cmdData->result, 0, sizeof(cmdData->result));
 
     ResList *sslList = GetSslList();
     sslId = atoi(cmdData->paras[0]);
@@ -675,7 +666,7 @@ int RpcTlsGetAlertDescription(CmdData *cmdData)
         ALERT_GetInfo(ssl, &alertInfo);
     }
 
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d",
+    ret = sprintf(cmdData->result, "%s|%s|%d",
         cmdData->id, cmdData->funcId, alertInfo.description);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
@@ -687,7 +678,7 @@ int RpcTlsClose(CmdData *cmdData)
     void *ssl = NULL;
     char *endPtr = NULL;
 
-    ASSERT_RETURN(memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result)) == EOK);
+    memset(cmdData->result, 0, sizeof(cmdData->result));
     ResList *sslList = GetSslList();
     sslId = (int)strtol(cmdData->paras[0], &endPtr, 0);
     ssl = GetTlsResFromId(sslList, sslId);
@@ -696,7 +687,7 @@ int RpcTlsClose(CmdData *cmdData)
     ret = HLT_TlsClose(ssl);
 
     // Return the result
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
+    ret = sprintf(cmdData->result, "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
 }
@@ -707,7 +698,7 @@ int RpcFreeResFormSsl(CmdData *cmdData)
     void *ssl = NULL;
     char *endPtr = NULL;
 
-    ASSERT_RETURN(memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result)) == EOK);
+    memset(cmdData->result, 0, sizeof(cmdData->result));
     ResList *sslList = GetSslList();
     sslId = (int)strtol(cmdData->paras[0], &endPtr, 0);
     ssl = GetTlsResFromId(sslList, sslId);
@@ -716,7 +707,7 @@ int RpcFreeResFormSsl(CmdData *cmdData)
     ret = HLT_FreeResFromSsl(ssl);
 
     // Return the result
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
+    ret = sprintf(cmdData->result, "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
 }
@@ -725,7 +716,7 @@ int RpcCloseFd(CmdData *cmdData)
 {
     int ret, fd, linkType;
     char *endPtr = NULL;
-    (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
+    memset(cmdData->result, 0, sizeof(cmdData->result));
 
     fd = (int)strtol(cmdData->paras[0], &endPtr, 0);
     linkType = (int)strtol(cmdData->paras[1], &endPtr, 0);
@@ -733,7 +724,7 @@ int RpcCloseFd(CmdData *cmdData)
     ret = SUCCESS;
     HLT_CloseFd(fd, linkType);
 
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
+    ret = sprintf(cmdData->result, "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
 }
@@ -744,7 +735,7 @@ int RpcTlsSetMtu(CmdData *cmdData)
     uint16_t mtu;
     void *ssl = NULL;
     char *endPtr = NULL;
-    (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
+    memset(cmdData->result, 0, sizeof(cmdData->result));
 
     ResList *sslList = GetSslList();
     sslId = (int)strtol(cmdData->paras[0], &endPtr, 0);
@@ -754,7 +745,7 @@ int RpcTlsSetMtu(CmdData *cmdData)
 
     ret = HLT_TlsSetMtu(ssl, mtu);
 
-    ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
+    ret = sprintf(cmdData->result, "%s|%s|%d", cmdData->id, cmdData->funcId, ret);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
 }
@@ -765,7 +756,7 @@ int RpcTlsGetErrorCode(CmdData *cmdData)
     int errorCode;
     void *ssl = NULL;
     char *endPtr = NULL;
-    (void)memset_s(cmdData->result, sizeof(cmdData->result), 0, sizeof(cmdData->result));
+    memset(cmdData->result, 0, sizeof(cmdData->result));
 
     ResList *sslList = GetSslList();
     sslId = (int)strtol(cmdData->paras[0], &endPtr, 0);
@@ -774,7 +765,7 @@ int RpcTlsGetErrorCode(CmdData *cmdData)
 
     errorCode = HLT_TlsGetErrorCode(ssl);
 
-    int ret = sprintf_s(cmdData->result, sizeof(cmdData->result), "%s|%s|%d", cmdData->id, cmdData->funcId, errorCode);
+    int ret = sprintf(cmdData->result, "%s|%s|%d", cmdData->id, cmdData->funcId, errorCode);
     ASSERT_RETURN(ret > 0);
     return SUCCESS;
 }

@@ -16,7 +16,6 @@
 /* BEGIN_HEADER */
 // #include <limits.h>
 #include <pthread.h>
-#include "securec.h"
 #include "crypt_eal_mac.h"
 #include "crypt_errno.h"
 #include "bsl_sal.h"

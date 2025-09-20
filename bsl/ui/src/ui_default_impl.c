@@ -17,8 +17,8 @@
 #ifdef HITLS_BSL_UI
 
 #include <stdio.h>
+#include <string.h>
 #include <termios.h>
-#include "securec.h"
 #include "bsl_sal.h"
 #include "sal_file.h"
 #include "ui_type.h"
@@ -117,7 +117,7 @@ static int32_t UI_ReadSetFlag(BSL_UI *ui, uint32_t flags, struct termios *origTe
 {
     struct termios newTerm;
     if (!BSL_UI_SUPPORT_ABILITY(flags, BSL_UI_DATA_FLAG_ECHO)) {
-        (void)memcpy_s(&newTerm, sizeof(newTerm), origTerm, sizeof(struct termios));
+        memcpy(&newTerm, origTerm, sizeof(struct termios));
         newTerm.c_lflag &= ~ECHO;
         return SAL_FSetAttr(ui->in, TCSANOW, (void *)&newTerm);
     }
@@ -198,10 +198,10 @@ int32_t UI_Read(BSL_UI *ui, BSL_UI_DataPack *data)
             ret = BSL_UI_VERIFY_BUFF_FAILED;
             break;
         }
-        (void)strcpy_s(data->data, data->dataLen, result);
+        (void)strcpy(data->data, result);
         data->dataLen = (uint32_t)strlen(result) + 1;
     } while (0);
-    (void)memset_s(result, sizeof(result), 0, sizeof(result));
+    memset(result, 0, sizeof(result));
     return ret;
 }
 

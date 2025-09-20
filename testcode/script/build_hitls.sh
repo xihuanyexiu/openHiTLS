@@ -60,28 +60,6 @@ clean()
     mkdir ${HITLS_ROOT_DIR}/build
 }
 
-down_depend_code()
-{
-    if [ ! -d "${HITLS_ROOT_DIR}/platform" ]; then
-        cd ${HITLS_ROOT_DIR}
-        mkdir platform
-    fi
-
-    if [ ! -d "${HITLS_ROOT_DIR}/platform/Secure_C/src" ]; then
-        cd ${HITLS_ROOT_DIR}/platform
-        git clone https://gitee.com/openeuler/libboundscheck.git  Secure_C
-    fi
-}
-
-build_depend_code()
-{
-    if [ ! -d "${HITLS_ROOT_DIR}/platform/Secure_C/lib" ]; then
-        mkdir -p ${HITLS_ROOT_DIR}/platform/Secure_C/lib
-        cd ${HITLS_ROOT_DIR}/platform/Secure_C
-        make -j
-    fi
-}
-
 build_hitls_code()
 {
     # Compile openHiTLS
@@ -233,8 +211,6 @@ parse_option()
 
 clean
 parse_option
-down_depend_code
-build_depend_code
 if [[ $libname != "" ]]; then
     build_hitls_provider
 else

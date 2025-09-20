@@ -17,7 +17,6 @@
 
 #include <stdint.h>
 #include <string.h>
-#include "securec.h"
 #include "bsl_errno.h"
 #include "crypt_errno.h"
 #include "bsl_sal.h"
@@ -52,7 +51,7 @@ int32_t WotsChain(const uint8_t *x, uint32_t xLen, uint32_t start, uint32_t end,
     (void)seed;
     int32_t ret;
     uint8_t tmp[MAX_MDSIZE];
-    (void)memcpy_s(tmp, sizeof(tmp), x, xLen);
+    memcpy(tmp, x, xLen);
     uint32_t tmpLen = xLen;
 
     for (uint32_t i = start; i < start + end; i++) {
@@ -63,7 +62,7 @@ int32_t WotsChain(const uint8_t *x, uint32_t xLen, uint32_t start, uint32_t end,
         }
     }
 
-    (void)memcpy_s(output, tmpLen, tmp, tmpLen);
+    memcpy(output, tmp, tmpLen);
     return 0;
 }
 

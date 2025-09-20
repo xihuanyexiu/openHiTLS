@@ -16,7 +16,6 @@
 #ifdef HITLS_TLS_HOST_SERVER
 #include <stdint.h>
 #include <stdbool.h>
-#include "securec.h"
 #include "bsl_sal.h"
 #include "tls_binlog_id.h"
 #include "bsl_log_internal.h"

@@ -20,7 +20,6 @@
 #include "crypt_errno.h"
 #include "crypt_eal_cipher.h"
 #include "bsl_sal.h"
-#include "securec.h"
 
 typedef struct {
     uint8_t *key;
@@ -777,7 +776,7 @@ void SDV_CRYPTO_AES_CCM_UPDATE_FUNC_TC002(int algId, Hex *key, Hex *iv, Hex *aad
     ASSERT_TRUE(out != NULL);
     outTag = (uint8_t *)malloc(sizeof(uint8_t) * tagLen);
     ASSERT_TRUE(outTag != NULL);
-    ASSERT_TRUE(memcpy_s(out, outLen, pt->x, pt->len) == EOK);
+    memcpy(out, pt->x, pt->len);
     ctx = CRYPT_EAL_CipherNewCtx(algId);
     ASSERT_TRUE(ctx != NULL);
     ASSERT_TRUE(CRYPT_EAL_CipherInit(ctx, key->x, key->len, iv->x, iv->len, true) == CRYPT_SUCCESS);
@@ -791,7 +790,7 @@ void SDV_CRYPTO_AES_CCM_UPDATE_FUNC_TC002(int algId, Hex *key, Hex *iv, Hex *aad
     ASSERT_COMPARE("Compare Enc Tag", outTag, tagLen, tag->x, tag->len);
 
     CRYPT_EAL_CipherDeinit(ctx);
-    ASSERT_TRUE(memcpy_s(out, outLen, ct->x, ct->len) == EOK);
+    memcpy(out, ct->x, ct->len);
     ASSERT_TRUE(CRYPT_EAL_CipherInit(ctx, key->x, key->len, iv->x, iv->len, false) == CRYPT_SUCCESS);
     ASSERT_TRUE(CRYPT_EAL_CipherCtrl(ctx, CRYPT_CTRL_SET_TAGLEN, &tagLen, sizeof(tagLen)) == CRYPT_SUCCESS);
     ASSERT_TRUE(CRYPT_EAL_CipherCtrl(ctx, CRYPT_CTRL_SET_MSGLEN, &msgLen, sizeof(msgLen)) == CRYPT_SUCCESS);

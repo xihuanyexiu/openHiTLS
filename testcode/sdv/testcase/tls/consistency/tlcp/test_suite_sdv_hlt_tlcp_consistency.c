@@ -38,7 +38,6 @@
 #include "app.h"
 #include "hlt.h"
 #include "alert.h"
-#include "securec.h"
 #include "record.h"
 #include "rec_wrapper.h"
 #include "conn_init.h"
@@ -159,7 +158,7 @@ void SDV_TLS_TLCP_CONSISTENCY_RESUME_FUNC_TC001(int version, int connType)
         }
         ASSERT_TRUE(HLT_TlsConnect(clientSsl) == 0);
         ASSERT_TRUE(HLT_RpcTlsWrite(remoteProcess, serverSslId, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
-        ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+        memset(readBuf, 0, READ_BUF_SIZE);
         ASSERT_TRUE(HLT_TlsRead(clientSsl, readBuf, READ_BUF_SIZE, &readLen) == 0);
         ASSERT_TRUE(readLen == strlen(writeBuf));
         ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
@@ -275,7 +274,7 @@ void SDV_TLS_TLCP_CONSISTENCY_RESUME_FUNC_TC002(int version, int connType)
         } else {
             ASSERT_TRUE(HLT_TlsConnect(clientSsl) == 0);
             ASSERT_TRUE(HLT_RpcTlsWrite(remoteProcess, serverSslId, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
-            ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+            memset(readBuf, 0, READ_BUF_SIZE);
             ASSERT_TRUE(HLT_TlsRead(clientSsl, readBuf, READ_BUF_SIZE, &readLen) == 0);
             ASSERT_TRUE(readLen == strlen(writeBuf));
             ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
@@ -385,7 +384,7 @@ void SDV_TLS_TLCP_CONSISTENCY_RESUME_FUNC_TC003(int version, int connType)
         } else {
             ASSERT_TRUE(HLT_TlsConnect(clientSsl) == 0);
             ASSERT_TRUE(HLT_RpcTlsWrite(remoteProcess, serverSslId, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
-            ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+            memset(readBuf, 0, READ_BUF_SIZE);
             ASSERT_TRUE(HLT_TlsRead(clientSsl, readBuf, READ_BUF_SIZE, &readLen) == 0);
             ASSERT_TRUE(readLen == strlen(writeBuf));
             ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
@@ -639,7 +638,7 @@ void SDV_TLS_TLCP_CONSISTENCY_RESUME_FUNC_TC005(int version, int connType)
         }
         ASSERT_TRUE(HLT_TlsConnect(clientSsl) == 0);
         ASSERT_TRUE(HLT_RpcTlsWrite(remoteProcess, serverSslId, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
-        ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+        memset(readBuf, 0, READ_BUF_SIZE);
         ASSERT_TRUE(HLT_TlsRead(clientSsl, readBuf, READ_BUF_SIZE, &readLen) == 0);
         ASSERT_TRUE(readLen == strlen(writeBuf));
         ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
@@ -754,7 +753,7 @@ void SDV_TLS_TLCP_CONSISTENCY_RESUME_FUNC_TC006(int version, int connType)
         }
         ASSERT_TRUE(HLT_TlsConnect(clientSsl) == 0);
         ASSERT_TRUE(HLT_RpcTlsWrite(remoteProcess, serverSslId, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
-        ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+        memset(readBuf, 0, READ_BUF_SIZE);
         ASSERT_TRUE(HLT_TlsRead(clientSsl, readBuf, READ_BUF_SIZE, &readLen) == 0);
         ASSERT_TRUE(readLen == strlen(writeBuf));
         ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
@@ -868,7 +867,7 @@ void SDV_TLS_TLCP_CONSISTENCY_RESUME_FUNC_TC007(int version, int connType)
         if (cnt == 1) {
             ASSERT_TRUE(HLT_TlsConnect(clientSsl) == 0);
             ASSERT_TRUE(HLT_RpcTlsWrite(remoteProcess, serverSslId, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
-            ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+            memset(readBuf, 0, READ_BUF_SIZE);
             ASSERT_TRUE(HLT_TlsRead(clientSsl, readBuf, READ_BUF_SIZE, &readLen) == 0);
             ASSERT_TRUE(readLen == strlen(writeBuf));
             ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
@@ -986,7 +985,7 @@ void SDV_TLS_TLCP_CONSISTENCY_RESUME_FUNC_TC008(int version, int connType)
         if (cnt == 1) {
             ASSERT_TRUE(HLT_TlsConnect(clientSsl) == 0);
             ASSERT_TRUE(HLT_RpcTlsWrite(remoteProcess, serverSslId, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
-            ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+            memset(readBuf, 0, READ_BUF_SIZE);
             ASSERT_TRUE(HLT_TlsRead(clientSsl, readBuf, READ_BUF_SIZE, &readLen) == 0);
             ASSERT_TRUE(readLen == strlen(writeBuf));
             ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
@@ -1130,7 +1129,7 @@ void SDV_TLS_TLCP_CONSISTENCY_RESUME_FUNC_TC009(int mode)
         ASSERT_EQ(HLT_TlsConnect(clientSsl) , 0);
 
         ASSERT_TRUE(HLT_RpcTlsWrite(remoteProcess, serverSslId, (uint8_t *)writeBuf, strlen(writeBuf)) == 0);
-        ASSERT_TRUE(memset_s(readBuf, READ_BUF_SIZE, 0, READ_BUF_SIZE) == EOK);
+        memset(readBuf, 0, READ_BUF_SIZE);
         ASSERT_TRUE(HLT_TlsRead(clientSsl, readBuf, READ_BUF_SIZE, &readLen) == 0);
         ASSERT_TRUE(readLen == strlen(writeBuf));
         ASSERT_TRUE(memcmp(writeBuf, readBuf, readLen) == 0);
@@ -1314,8 +1313,7 @@ static void TEST_Client_SessionidLength_TooLong(HITLS_Ctx *ctx, uint8_t *data, u
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
-    ASSERT_TRUE(memcpy_s(clientMsg->sessionId.data, sizeof(sessionId_temp) / sizeof(uint8_t),
-    sessionId_temp, sizeof(sessionId_temp) / sizeof(uint8_t)) == 0);
+    memcpy(clientMsg->sessionId.data, sessionId_temp, sizeof(sessionId_temp) / sizeof(uint8_t));
 
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
 EXIT:

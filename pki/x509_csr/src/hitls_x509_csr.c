@@ -15,7 +15,6 @@
 
 #include "hitls_build.h"
 #ifdef HITLS_PKI_X509_CSR
-#include "securec.h"
 #include "bsl_sal.h"
 #include "bsl_asn1_internal.h"
 #include "bsl_obj_internal.h"
@@ -30,6 +29,7 @@
 #ifdef HITLS_BSL_SAL_FILE
 #include "sal_file.h"
 #endif
+#include <string.h>
 #include "crypt_eal_codecs.h"
 #include "hitls_csr_local.h"
 #include "hitls_pki_utils.h"

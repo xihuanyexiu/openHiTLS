@@ -15,7 +15,7 @@
 
 #include "hitls_build.h"
 #ifdef HITLS_BSL_UIO_MEM
-#include "securec.h"
+#include <string.h>
 #include "bsl_buffer.h"
 #include "bsl_errno.h"
 #include "bsl_err_internal.h"
@@ -70,11 +70,7 @@ static int32_t MemNewBuf(BSL_UIO *uio, int32_t len, void *buf)
 static int32_t UioBufMemSync(UIO_BufMem *ubm)
 {
     if (ubm != NULL && ubm->readIndex != 0) {
-        if (memmove_s(ubm->buf->data, ubm->buf->length, ubm->buf->data + ubm->readIndex,
-            ubm->buf->length - ubm->readIndex) != EOK) {
-            BSL_ERR_PUSH_ERROR(BSL_UIO_FAIL);
-            return BSL_UIO_FAIL;
-        }
+        memmove(ubm->buf->data, ubm->buf->data + ubm->readIndex, ubm->buf->length - ubm->readIndex);
         ubm->buf->length -= ubm->readIndex;
         ubm->readIndex = 0;
     }
@@ -113,7 +109,7 @@ static int32_t MemWrite(BSL_UIO *uio, const void *buf, uint32_t len, uint32_t *w
     }
 
     // memory grow guarantee of success here
-    (void)memcpy_s(ubm->buf->data + origLen, len, buf, len);
+    memcpy(ubm->buf->data + origLen, buf, len);
 
     *writeLen = len;
     return BSL_SUCCESS;
@@ -137,7 +133,7 @@ static int32_t MemRead(BSL_UIO *uio, void *buf, uint32_t len, uint32_t *readLen)
         real = ubm->buf->length - ubm->readIndex;
     }
     if (buf != NULL && real > 0) {
-        (void)memcpy_s(buf, len, ubm->buf->data + ubm->readIndex, real);
+        memcpy(buf, ubm->buf->data + ubm->readIndex, real);
         ubm->readIndex += real;
         *readLen = (uint32_t)real;
     }
@@ -298,7 +294,7 @@ static int32_t MemReset(BSL_UIO *uio)
         ubm->readIndex = 0;
     } else {
         // Read/Write mode: Clear all data
-        (void)memset_s(ubm->buf->data, ubm->buf->max, 0, ubm->buf->max);
+        memset(ubm->buf->data, 0, ubm->buf->max);
         ubm->buf->length = 0;
         ubm->readIndex = 0;
     }

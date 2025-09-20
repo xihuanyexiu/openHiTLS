@@ -73,8 +73,8 @@ if(ENABLE_CRYPTO AND ${BUILD_CRYPTO} GREATER -1)
     list(APPEND TEST_INTF_SHARED_LIBS libhitls_crypto.so)
 endif()
 
-list(APPEND TEST_INTF_LIBS libhitls_bsl.a boundscheck pthread dl)
-list(APPEND TEST_INTF_SHARED_LIBS libhitls_bsl.so boundscheck pthread dl)
+list(APPEND TEST_INTF_LIBS libhitls_bsl.a pthread dl)
+list(APPEND TEST_INTF_SHARED_LIBS libhitls_bsl.so pthread dl)
 
 target_link_libraries(TEST_INTF INTERFACE ${TEST_INTF_LIBS})
 target_link_libraries(TEST_INTF_SHARED INTERFACE ${TEST_INTF_SHARED_LIBS})

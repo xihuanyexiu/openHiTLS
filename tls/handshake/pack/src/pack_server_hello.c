@@ -15,7 +15,7 @@
 #include "hitls_build.h"
 #ifdef HITLS_TLS_HOST_SERVER
 #include <stdint.h>
-#include "securec.h"
+#include <string.h>
 #include "tls_binlog_id.h"
 #include "bsl_log_internal.h"
 #include "bsl_log.h"
@@ -66,7 +66,7 @@ static int32_t PackServerHelloMandatoryField(const TLS_Ctx *ctx, PackPacket *pkt
     HS_Ctx *hsCtx = (HS_Ctx *)ctx->hsCtx;
     ret = PackSessionId(pkt, hsCtx->sessionId, hsCtx->sessionIdSize);
     if (ret != HITLS_SUCCESS) {
-        (void)memset_s(hsCtx->sessionId, hsCtx->sessionIdSize, 0, hsCtx->sessionIdSize);
+        memset(hsCtx->sessionId, 0, hsCtx->sessionIdSize);
         return ret;
     }
 #else // Session recovery is not supported.

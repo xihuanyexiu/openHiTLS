@@ -13,9 +13,9 @@
  * See the Mulan PSL v2 for more details.
  */
 
+#include <string.h>
 #include <sys/time.h>
 #include "logger.h"
-#include "securec.h"
 #include "lock.h"
 #include "channel_res.h"
 
@@ -26,64 +26,29 @@ static ControlChannelRes g_channelRes;
 
 static int SetControlChannelRes(ControlChannelRes *channelInfo, char *srcDomainPath, char *peerDomainPath)
 {
-    int ret;
-
     // Translate the source address.
-    ret = memset_s(&(channelInfo->srcAddr), sizeof(struct sockaddr_un), 0, sizeof(struct sockaddr_un));
-    if (ret != EOK) {
-        LOG_ERROR("memset_s Error\n");
-        return ERROR;
-    }
-
-    ret = memcpy_s(channelInfo->srcDomainPath, DOMAIN_PATH_LEN, srcDomainPath, strlen(srcDomainPath));
-    if (ret != EOK) {
-        LOG_ERROR("memcpy_s Error\n");
-        return ERROR;
-    }
+    memset(&(channelInfo->srcAddr), 0, sizeof(struct sockaddr_un));
+    memcpy(channelInfo->srcDomainPath, srcDomainPath, strlen(srcDomainPath));
 
     channelInfo->srcAddr.sun_family = AF_UNIX;
-    ret = strcpy_s(channelInfo->srcAddr.sun_path, strlen(srcDomainPath) + 1, srcDomainPath);
-    if (ret != EOK) {
-        LOG_ERROR("strcpy_s Error");
-        return ERROR;
-    }
+    strcpy(channelInfo->srcAddr.sun_path, srcDomainPath);
 
-    ret = memset_s(channelInfo->peerDomainPath, sizeof(channelInfo->peerDomainPath),
-                   0, sizeof(channelInfo->peerDomainPath));
-    if (ret != EOK) {
-        LOG_ERROR("memset_s Error\n");
-        return ERROR;
-    }
-
+    memset(channelInfo->peerDomainPath, 0, sizeof(channelInfo->peerDomainPath));
     if (peerDomainPath != NULL) {
-        ret = memcpy_s(channelInfo->peerDomainPath, DOMAIN_PATH_LEN, peerDomainPath, strlen(peerDomainPath));
-        if (ret != EOK) {
-            LOG_ERROR("memcpy_s Error\n");
-            return ERROR;
-        }
-
+        memcpy(channelInfo->peerDomainPath, peerDomainPath, strlen(peerDomainPath));
         channelInfo->peerAddr.sun_family = AF_UNIX;
-        ret = strcpy_s(channelInfo->peerAddr.sun_path, strlen(peerDomainPath) + 1, peerDomainPath);
-        if (ret != EOK) {
-            LOG_ERROR("strcpy_s Error");
-            return ERROR;
-        }
+        strcpy(channelInfo->peerAddr.sun_path, peerDomainPath);
     }
     return SUCCESS;
 }
 
 int InitControlChannelRes(char *srcDomainPath, int srcDomainPathLen, char *peerDomainPath, int peerDomainPathLen)
 {
-    int ret;
     if ((srcDomainPathLen <= 0) && (peerDomainPathLen <= 0)) {
         LOG_ERROR("srcDomainPathLen or peerDomainPathLen is 0");
         return ERROR;
     }
-    ret = memset_s(&g_channelRes, sizeof(ControlChannelRes), 0, sizeof(ControlChannelRes));
-    if (ret != EOK) {
-        return ERROR;
-    }
-
+     memset(&g_channelRes, 0, sizeof(ControlChannelRes));
     // Initializing the Send Buffer Lock
     g_channelRes.sendBufferLock = OsLockNew();
     if (g_channelRes.sendBufferLock == NULL) {
@@ -109,22 +74,14 @@ ControlChannelRes *GetControlChannelRes(void)
 
 int PushResultToChannelSendBuffer(ControlChannelRes *channelInfo, char *result)
 {
-    int ret;
     OsLock(channelInfo->sendBufferLock);
     if (channelInfo->sendBufferNum == MAX_SEND_BUFFER_NUM) {
         LOG_ERROR("Channel Send Buffer Is Full, Please Try Again");
         OsUnLock(channelInfo->sendBufferLock);
         return 1; // The value 1 indicates that the current buffer is full and needs to be retried.
     }
-    (void)memset_s(channelInfo->sendBuffer + channelInfo->sendBufferNum,
-                   CONTROL_CHANNEL_MAX_MSG_LEN, 0, CONTROL_CHANNEL_MAX_MSG_LEN);
-    ret = memcpy_s(channelInfo->sendBuffer + channelInfo->sendBufferNum,
-                   CONTROL_CHANNEL_MAX_MSG_LEN, result, strlen(result));
-    if (ret != EOK) {
-        LOG_ERROR("memcpy_s Error");
-        OsUnLock(channelInfo->sendBufferLock);
-        return ERROR;
-    }
+    memset(channelInfo->sendBuffer + channelInfo->sendBufferNum, 0, CONTROL_CHANNEL_MAX_MSG_LEN);
+    memcpy(channelInfo->sendBuffer + channelInfo->sendBufferNum, result, strlen(result));
     channelInfo->sendBufferNum++;
     channelInfo->sendBufferNum %= MAX_SEND_BUFFER_NUM;
     OsUnLock(channelInfo->sendBufferLock);
@@ -133,22 +90,14 @@ int PushResultToChannelSendBuffer(ControlChannelRes *channelInfo, char *result)
 
 int PushResultToChannelRcvBuffer(ControlChannelRes *channelInfo, char *result)
 {
-    int ret;
     OsLock(channelInfo->rcvBufferLock);
     if (channelInfo->rcvBufferNum == MAX_RCV_BUFFER_NUM) {
         LOG_ERROR("Channel Send Buffer Is Full, Please Try Again");
         OsUnLock(channelInfo->rcvBufferLock);
         return 1; // The value 1 indicates that the current buffer is full and needs to be retried.
     }
-    (void)memset_s(channelInfo->rcvBuffer + channelInfo->rcvBufferNum,
-                   CONTROL_CHANNEL_MAX_MSG_LEN, 0, CONTROL_CHANNEL_MAX_MSG_LEN);
-    ret = memcpy_s(channelInfo->rcvBuffer + channelInfo->rcvBufferNum,
-                   CONTROL_CHANNEL_MAX_MSG_LEN, result, strlen(result));
-    if (ret != EOK) {
-        LOG_ERROR("memcpy_s Error");
-        OsUnLock(channelInfo->rcvBufferLock);
-        return ERROR;
-    }
+    memset(channelInfo->rcvBuffer + channelInfo->rcvBufferNum, 0, CONTROL_CHANNEL_MAX_MSG_LEN);
+    memcpy(channelInfo->rcvBuffer + channelInfo->rcvBufferNum, result, strlen(result));
     channelInfo->rcvBufferNum++;
     channelInfo->rcvBufferNum %= MAX_RCV_BUFFER_NUM;
     OsUnLock(channelInfo->rcvBufferLock);
@@ -157,17 +106,9 @@ int PushResultToChannelRcvBuffer(ControlChannelRes *channelInfo, char *result)
 
 int PushResultToChannelIdBuffer(ControlChannelRes *channelInfo, char *result, int id)
 {
-    int ret;
     OsLock(channelInfo->rcvBufferLock);
-    (void)memset_s(channelInfo->rcvBuffer + (id % MAX_RCV_BUFFER_NUM),
-                   CONTROL_CHANNEL_MAX_MSG_LEN, 0, CONTROL_CHANNEL_MAX_MSG_LEN);
-    ret = memcpy_s(channelInfo->rcvBuffer + (id % MAX_RCV_BUFFER_NUM),
-                   CONTROL_CHANNEL_MAX_MSG_LEN, result, strlen(result));
-    if (ret != EOK) {
-        LOG_ERROR("memcpy_s Error");
-        OsUnLock(channelInfo->rcvBufferLock);
-        return ERROR;
-    }
+    memset(channelInfo->rcvBuffer + (id % MAX_RCV_BUFFER_NUM), 0, CONTROL_CHANNEL_MAX_MSG_LEN);
+    memcpy(channelInfo->rcvBuffer + (id % MAX_RCV_BUFFER_NUM), result, strlen(result));
     OsUnLock(channelInfo->rcvBufferLock);
     return SUCCESS;
 }
@@ -180,6 +121,6 @@ void FreeControlChannelRes(void)
     }
     OsLockDestroy(g_channelRes.sendBufferLock);
     OsLockDestroy(g_channelRes.rcvBufferLock);
-    memset_s(&g_channelRes, sizeof(g_channelRes), 0, sizeof(g_channelRes));
+    memset(&g_channelRes, 0, sizeof(g_channelRes));
     return;
 }

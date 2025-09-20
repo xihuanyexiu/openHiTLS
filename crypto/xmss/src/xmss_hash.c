@@ -16,7 +16,7 @@
 #include "hitls_build.h"
 #ifdef HITLS_CRYPTO_XMSS
 
-#include "securec.h"
+#include <string.h>
 #include "bsl_sal.h"
 #include "eal_md_local.h"
 #include "crypt_xmss.h"
@@ -40,7 +40,7 @@ static int32_t XCalcMultiMsgHash(CRYPT_MD_AlgId mdId, const CRYPT_ConstData *has
         BSL_ERR_PUSH_ERROR(ret);
         return ret;
     }
-    (void)memcpy_s(out, outLen, tmp, outLen);
+    memcpy(out, tmp, outLen);
     return CRYPT_SUCCESS;
 }
 
@@ -176,7 +176,7 @@ static int32_t XTl(const CryptXmssCtx *ctx, const XmssAdrs *adrs, const uint8_t 
         return BSL_MALLOC_FAIL;
     }
 
-    (void)memcpy_s(node, len * n, msg, msgLen);
+    memcpy(node, msg, msgLen);
 
     for (uint32_t h = 0; len > 1; h++) {
         ctx->adrsOps.setTreeHeight(&xadrs, h);
@@ -195,15 +195,14 @@ static int32_t XTl(const CryptXmssCtx *ctx, const XmssAdrs *adrs, const uint8_t 
         }
         /* An L-tree is an unbalanced binary hash tree */
         if (len & 1) {
-            (void)memcpy_s(node + (len/2 * n), (len * n) - (len/2 * n), 
-                           node + (len - 1) * n, n);
+            (void)memcpy(node + (len/2 * n), node + (len - 1) * n, n);
             len = len/2 + 1;
         } else {
             len = len/2;
         }
     }
 
-    (void)memcpy_s(out, n, node, n);
+    memcpy(out, node, n);
     ret = CRYPT_SUCCESS;
 ERR:
     BSL_SAL_Free(node);

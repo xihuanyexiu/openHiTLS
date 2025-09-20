@@ -19,7 +19,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include "securec.h"
 #include "bsl_err.h"
 #include "bsl_sal.h"
 #include "crypt_errno.h"
@@ -403,7 +402,7 @@ void SDV_CRYPTO_DSA_SIGN_VERIFY_FUNC_TC001(
     Set_DSA_Para(&para, &prv, &pub, P, Q, G, X, Y);
 
     FuncStubInfo tmpRpInfo;
-    ASSERT_EQ(memcpy_s(g_kRandBuf, sizeof(g_kRandBuf), K->x, K->len), 0);
+    ASSERT_EQ(memcpy(g_kRandBuf, K->x, K->len), 0);
     g_kRandBufLen = K->len;
     STUB_Init();
     STUB_Replace(&tmpRpInfo, BN_RandRangeEx, STUB_RandRangeK);
@@ -495,7 +494,7 @@ void SDV_CRYPTO_DSA_SIGN_VERIFY_DATA_FUNC_TC001(
     Hex mdOut = {0};
 
     FuncStubInfo tmpRpInfo;
-    ASSERT_EQ(memcpy_s(g_kRandBuf, sizeof(g_kRandBuf), K->x, K->len), 0);
+    ASSERT_EQ(memcpy(g_kRandBuf, K->x, K->len), 0);
     g_kRandBufLen = K->len;
     STUB_Init();
     STUB_Replace(&tmpRpInfo, BN_RandRangeEx, STUB_RandRangeK);
@@ -820,7 +819,7 @@ static int32_t ref = 0;
 int32_t STUB_CRYPT_EAL_Randbytes(uint8_t *byte, uint32_t len)
 {
     if (ref == 0) {
-        (void)memcpy_s(byte, len, g_dsa_seed, len);
+        memcpy(byte, g_dsa_seed, len);
         ref = 1;
     } else {
         for (uint32_t i = 0; i < len; i++) {

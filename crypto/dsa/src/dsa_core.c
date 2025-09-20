@@ -16,8 +16,8 @@
 #include "hitls_build.h"
 #ifdef HITLS_CRYPTO_DSA
 
+#include <string.h>
 #include "crypt_errno.h"
-#include "securec.h"
 #include "bsl_sal.h"
 #include "bsl_err_internal.h"
 #include "crypt_utils.h"
@@ -39,7 +39,7 @@ CRYPT_DSA_Ctx *CRYPT_DSA_NewCtx(void)
         BSL_ERR_PUSH_ERROR(CRYPT_MEM_ALLOC_FAIL);
         return NULL;
     }
-    (void)memset_s(ctx, sizeof(CRYPT_DSA_Ctx), 0, sizeof(CRYPT_DSA_Ctx));
+    memset(ctx, 0, sizeof(CRYPT_DSA_Ctx));
     BSL_SAL_ReferencesInit(&(ctx->references));
     return ctx;
 }
@@ -329,7 +329,7 @@ CRYPT_DSA_Ctx *CRYPT_DSA_DupCtx(CRYPT_DSA_Ctx *dsaCtx)
         return NULL;
     }
 
-    (void)memset_s(dsaNewCtx, sizeof(CRYPT_DSA_Ctx), 0, sizeof(CRYPT_DSA_Ctx));
+    memset(dsaNewCtx, 0, sizeof(CRYPT_DSA_Ctx));
 
     GOTO_ERR_IF_SRC_NOT_NULL(dsaNewCtx->x, dsaCtx->x, BN_Dup(dsaCtx->x), CRYPT_MEM_ALLOC_FAIL);
     GOTO_ERR_IF_SRC_NOT_NULL(dsaNewCtx->y, dsaCtx->y, BN_Dup(dsaCtx->y), CRYPT_MEM_ALLOC_FAIL);
@@ -1210,7 +1210,7 @@ static int32_t DSAFips1864GenP(DSA_FIPS186_4_Para *fipsPara, const BN_BigNum *po
             }
         }
         hashLen = sizeof(hash) / sizeof(hash[0]);
-        (void)memset_s(hash, hashLen, 0, hashLen);
+        memset(hash, 0, hashLen);
         ret = EAL_Md(fipsPara->algId, libCtx, mdAttr, seed->data, seed->dataLen, hash, &hashLen);
         GOTO_ERR_IF_TRUE(ret != CRYPT_SUCCESS, ret);
         ret = BN_Bin2Bn(V, hash, hashLen);
@@ -1300,7 +1300,7 @@ int32_t CryptDsaFips1864GenPq(CRYPT_DSA_Ctx *ctx, DSA_FIPS186_4_Para *fipsPara, 
     while (true) { // until valid p,q or error occurs.
         /* Generate Q */
         GOTO_ERR_IF(CRYPT_RandEx(ctx->libCtx, seed->data, seed->dataLen), ret);
-        (void)memcpy_s(msg.data, seed->dataLen, seed->data, seed->dataLen);
+        memcpy(msg.data, seed->data, seed->dataLen);
         GOTO_ERR_IF(DSAFips1864GenQ(fipsPara->algId, ctx->libCtx, ctx->mdAttr, fipsPara->n, seed->data, seed->dataLen,
             qTmp), ret);
         ret = BN_PrimeCheck(qTmp, 0, opt, NULL);
@@ -1409,14 +1409,14 @@ int32_t CryptDsaFips1864GenVerifiableG(DSA_FIPS186_4_Para *fipsPara, BSL_Buffer 
     }
     GOTO_ERR_IF(BN_SubLimb(e, dsaPara->p, 1), ret);
     GOTO_ERR_IF(BN_Div(e, NULL, e, dsaPara->q, opt), ret);
-    (void)memcpy_s(msg, msgLen, seed->data, seed->dataLen);
-    (void)memcpy_s(msg + seed->dataLen, msgLen - seed->dataLen, "ggen", 4); // 4 is the length of "ggen".
+    memcpy(msg, seed->data, seed->dataLen);
+    memcpy(msg + seed->dataLen, "ggen", 4); // 4 is the length of "ggen".
     msg[seed->dataLen + 4] = (uint8_t)(fipsPara->index & 0xff); // skip 4 bytes.
     for (int32_t cnt = 1; cnt <= 0xFFFF; cnt++) {
         msg[seed->dataLen + 5] = (uint8_t)((cnt >> 8) & 0xff); // skip 5 bytes, get high 8 bits in cnt.
         msg[seed->dataLen + 6] = (uint8_t)(cnt & 0xff); // skip 6 bytes.
         hashLen = sizeof(hash) / sizeof(hash[0]);
-        (void)memset_s(hash, hashLen, 0, hashLen);
+        memset(hash, 0, hashLen);
         GOTO_ERR_IF(EAL_Md(fipsPara->algId, NULL, NULL, msg, msgLen, hash, &hashLen), ret);
         GOTO_ERR_IF(BN_Bin2Bn(gTmp, hash, hashLen), ret);
         GOTO_ERR_IF(BN_ModExp(gTmp, gTmp, e, dsaPara->p, opt), ret);

@@ -33,7 +33,6 @@
 #include "simulate_io.h"
 #include "parser_frame_msg.h"
 #include "cert.h"
-#include "securec.h"
 #include "rec_wrapper.h"
 #include "conn_init.h"
 #include "rec.h"
@@ -119,7 +118,7 @@ static void Test_Cert_len0(HITLS_Ctx *ctx, uint8_t *data, uint32_t *len, uint32_
     certifiMsg->certsLen.data = 0;
     certifiMsg->certificateReqCtxSize.state = ASSIGNED_FIELD;
     certifiMsg->certificateReqCtxSize.data = 0;
-    memset_s(data, bufSize, 0, bufSize);
+    memset(data, 0, bufSize);
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
 EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
@@ -150,7 +149,7 @@ static void Test_CertPackAndParse(HITLS_Ctx *ctx, uint8_t *data, uint32_t *len,
         frameMsg.body.hsMsg.body.certificate.certificateReqCtx.size = 1;
         frameMsg.body.hsMsg.body.certificate.certificateReqCtx.state = INITIAL_FIELD;
     }
-    memset_s(data, bufSize, 0, bufSize);
+    memset(data, 0, bufSize);
     ASSERT_EQ(parseLen, *len);
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
 EXIT:
@@ -216,7 +215,7 @@ static void Test_EE_len0(HITLS_Ctx *ctx, uint8_t *data, uint32_t *len, uint32_t 
     uint32_t parseLen = 0;
     FRAME_ParseMsgBody(&frameType, data, *len, &frameMsg, &parseLen);
     ASSERT_EQ(frameMsg.body.hsMsg.type.data, ENCRYPTED_EXTENSIONS);
-    memset_s(data, bufSize, 0, bufSize);
+    memset(data, 0, bufSize);
     if (ctx->isClient) {
         data[0] = ENCRYPTED_EXTENSIONS;
         data[1] = 0X00;
@@ -335,7 +334,7 @@ static void Test_Cert_verify_len0(HITLS_Ctx *ctx, uint8_t *data, uint32_t *len, 
     FRAME_CertificateVerifyMsg *CertveriMsg = &frameMsg.body.hsMsg.body.certificateVerify;
     CertveriMsg->signSize.data = 0;
     CertveriMsg->signSize.state = ASSIGNED_FIELD;
-    memset_s(data, bufSize, 0, bufSize);
+    memset(data, 0, bufSize);
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
 EXIT:
     FRAME_CleanMsg(&frameType, &frameMsg);
@@ -400,7 +399,7 @@ static void Test_finished_len0(HITLS_Ctx *ctx, uint8_t *data, uint32_t *len, uin
     FRAME_FinishedMsg *FinishedMsg = &frameMsg.body.hsMsg.body.finished;
     FinishedMsg->verifyData.size = 0;
     FinishedMsg->verifyData.state = ASSIGNED_FIELD;
-    memset_s(data, bufSize, 0, bufSize);
+    memset(data, 0, bufSize);
     ASSERT_EQ(parseLen, *len);
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
 EXIT:
@@ -572,7 +571,7 @@ static void Test_CertReqAbCtxLen(HITLS_Ctx *ctx, uint8_t *data, uint32_t *len,
         frameMsg.body.hsMsg.body.certificateReq.certificateReqCtx.size = 1;
         frameMsg.body.hsMsg.body.certificateReq.certificateReqCtx.state = INITIAL_FIELD;
     }
-    memset_s(data, bufSize, 0, bufSize);
+    memset(data, 0, bufSize);
     ASSERT_EQ(parseLen, *len);
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
 EXIT:
@@ -941,7 +940,7 @@ static void Test_CertReqPackAndParseNoEx(HITLS_Ctx *ctx, uint8_t *data, uint32_t
     ASSERT_EQ(frameMsg.body.hsMsg.type.data, CERTIFICATE_REQUEST);
     frameMsg.body.hsMsg.body.certificateReq.signatureAlgorithmsSize.data = 0;
     frameMsg.body.hsMsg.body.certificateReq.signatureAlgorithmsSize.state = MISSING_FIELD;
-    memset_s(data, bufSize, 0, bufSize);
+    memset(data, 0, bufSize);
     ASSERT_EQ(parseLen, *len);
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
 EXIT:
@@ -1045,7 +1044,7 @@ static void Test_CertReqPackAndParseUnknownEx(HITLS_Ctx *ctx, uint8_t *data, uin
     FRAME_ParseMsgBody(&frameType, data, *len, &frameMsg, &parseLen);
     ASSERT_EQ(frameMsg.body.hsMsg.type.data, CERTIFICATE_REQUEST);
     frameMsg.body.hsMsg.body.certificateReq.signatureAlgorithms.state = DUPLICATE_FIELD;
-    memset_s(data, bufSize, 0, bufSize);
+    memset(data, 0, bufSize);
     ASSERT_EQ(parseLen, *len);
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
 
@@ -1158,7 +1157,7 @@ static void Test_EmptyCertMsg(HITLS_Ctx *ctx, uint8_t *data, uint32_t *len, uint
         BSL_SAL_FREE(certItem);
         certItem = temp;
     }
-    memset_s(data, bufSize, 0, bufSize);
+    memset(data, 0, bufSize);
     ASSERT_EQ(parseLen, *len);
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
 EXIT:
@@ -1242,7 +1241,7 @@ static void Test_CertReqPackAndParse(HITLS_Ctx *ctx, uint8_t *data, uint32_t *le
     uint32_t parseLen = 0;
     FRAME_ParseMsgBody(&frameType, data, *len, &frameMsg, &parseLen);
     ASSERT_EQ(frameMsg.body.hsMsg.type.data, CERTIFICATE_REQUEST);
-    memset_s(data, bufSize, 0, bufSize);
+    memset(data, 0, bufSize);
     ASSERT_EQ(parseLen, *len);
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
 EXIT:
@@ -1355,9 +1354,8 @@ static int32_t GetDisorderServerEEMsg(FRAME_LinkObj *server, uint8_t *data, uint
         return HITLS_INTERNAL_EXCEPTION;
     }
     offset += readLen;
-    if (memcpy_s(&data[offset], len - offset, serverHelloData, serverHelloLen) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(&data[offset], serverHelloData, serverHelloLen);
+
     offset += serverHelloLen;
     *usedLen = offset;
     return HITLS_SUCCESS;
@@ -1432,9 +1430,8 @@ static int32_t GetDisorderServerCertMsg(FRAME_LinkObj *server, uint8_t *data, ui
     }
     offset += readLen;
 
-    if (memcpy_s(&data[offset], len - offset, tmpData, tmpLen) != EOK) {
-        return HITLS_MEMCPY_FAIL;
-    }
+    memcpy(&data[offset], tmpData, tmpLen);
+
     offset += tmpLen;
     *usedLen = offset;
     return HITLS_SUCCESS;
@@ -1511,7 +1508,7 @@ static void Test_NoServerCertPackAndParse001(HITLS_Ctx *ctx, uint8_t *data, uint
         SetFrameType(&frameType, HITLS_VERSION_TLS13, REC_TYPE_HANDSHAKE, SERVER_HELLO, HITLS_KEY_EXCH_ECDHE);
         ASSERT_TRUE(FRAME_GetDefaultMsg(&frameType, &frameMsg) == HITLS_SUCCESS);
     }
-    memset_s(data, bufSize, 0, bufSize);
+    memset(data, 0, bufSize);
     ASSERT_EQ(parseLen, *len);
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
 EXIT:
@@ -1588,7 +1585,7 @@ static void Test_NoCertificateSignPackAndParse001(HITLS_Ctx *ctx, uint8_t *data,
         certVerify->signHashAlg.data = CERT_SIG_SCHEME_RSA_PSS_RSAE_SHA256;
         certVerify->signHashAlg.state = ASSIGNED_FIELD;
     }
-    memset_s(data, bufSize, 0, bufSize);
+    memset(data, 0, bufSize);
     ASSERT_EQ(parseLen, *len);
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
 EXIT:
@@ -1682,7 +1679,7 @@ static void Test_FinishedPackAndParse001(HITLS_Ctx *ctx, uint8_t *data, uint32_t
         finishMsg->verifyData.state = ASSIGNED_FIELD;
         finishMsg->verifyData.size = finishMsg->verifyData.size - 1;
     }
-    memset_s(data, bufSize, 0, bufSize);
+    memset(data, 0, bufSize);
     ASSERT_EQ(parseLen, *len);
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
 EXIT:
@@ -1805,7 +1802,7 @@ static void Test_AlertPackAndParse004(HITLS_Ctx *ctx, uint8_t *data, uint32_t *l
     ASSERT_EQ(alertMsg->alertLevel.data, ALERT_LEVEL_FATAL);
     ASSERT_EQ(alertMsg->alertDescription.data, ALERT_BAD_CERTIFICATE);
 
-    memset_s(data, bufSize, 0, bufSize);
+    memset(data, 0, bufSize);
     ASSERT_EQ(parseLen, *len);
     FRAME_PackRecordBody(&frameType, &frameMsg, data, bufSize, len);
 EXIT:

@@ -12,7 +12,8 @@
  * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
  * See the Mulan PSL v2 for more details.
  */
-#include "securec.h"
+#include <stdio.h>
+#include <string.h>
 #include "bsl_err_internal.h"
 #include "tls_binlog_id.h"
 #include "bsl_sal.h"
@@ -677,9 +678,9 @@ static int32_t Uint8ToHex(const uint8_t *srcBuf, size_t srcLen, size_t *offset,
     size_t offsetTemp = 0u;
     /* Converting an Array to a Hexadecimal Character String */
     for (size_t i = 0u; i < srcLen; i++) {
-        if (sprintf_s((char *)&destBuf[offsetTemp], (destMaxSize - offsetTemp), "%02x", srcBuf[i]) == -1) {
+        if (snprintf((char *)&destBuf[offsetTemp], destMaxSize - offsetTemp, "%02x", srcBuf[i])  < 0) {
             BSL_LOG_BINLOG_FIXLEN(BINLOG_ID16481, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
-                "sprintf_s fail", 0, 0, 0, 0);
+                "sprintf fail", 0, 0, 0, 0);
             return HITLS_INVALID_INPUT;
         }
         offsetTemp += sizeof(uint16_t);
@@ -718,7 +719,7 @@ int32_t HITLS_LogSecret(HITLS_Ctx *ctx, const char *label, const uint8_t *secret
     }
 
     // Combine label, random, and secret into a character string separated by spaces and end with '\0'.
-    (void)memcpy_s(outBuffer, outLen, label, labelLen);
+    memcpy(outBuffer, label, labelLen);
     offset += labelLen;
     outBuffer[offset++] = blankSpace;
     size_t index = 0;

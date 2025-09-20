@@ -15,7 +15,6 @@
 
 /* BEGIN_HEADER */
 #include <stdlib.h>
-#include "securec.h"
 #include "bsl_sal.h"
 #include "crypt_errno.h"
 #include "crypt_algid.h"
@@ -314,7 +313,7 @@ static void Iso19790_ProviderUnload(Iso19790_ProviderLoadCtx *ctx)
     CRYPT_EAL_LibCtxFree(ctx->libCtx);
     CRYPT_EAL_SeedPoolFree(ctx->pool);
     CRYPT_EAL_EsFree(ctx->es);
-    (void)memset_s(ctx, sizeof(Iso19790_ProviderLoadCtx), 0, sizeof(Iso19790_ProviderLoadCtx));
+    memset(ctx, 0, sizeof(Iso19790_ProviderLoadCtx));
 }
 #endif
 

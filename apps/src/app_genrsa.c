@@ -20,7 +20,6 @@
 #include <stddef.h>
 #include <termios.h>
 #include <unistd.h>
-#include <securec.h>
 #include <linux/limits.h>
 #include "bsl_ui.h"
 #include "bsl_uio.h"
@@ -117,19 +116,19 @@ int32_t HITLS_APP_Passwd(char *buf, int32_t bufMaxLen, int32_t flag, void *userd
     if (userdata == NULL) {
         cbRet = BSL_UI_ReadPwdUtil(&param, buf, &bufLen, HITLS_APP_DefaultPassCB, NULL);
         if (cbRet == BSL_UI_READ_BUFF_TOO_LONG || cbRet == BSL_UI_READ_LEN_TOO_SHORT) {
-            (void)memset_s(buf, bufMaxLen, 0, bufMaxLen);
+            memset(buf, 0, bufMaxLen);
             HITLS_APP_PrintPassErrlog();
             return errLen;
         }
         if (cbRet != BSL_SUCCESS) {
-            (void)memset_s(buf, bufMaxLen, 0, bufMaxLen);
+            memset(buf, 0, bufMaxLen);
             return errLen;
         }
         bufLen -= 1;
         buf[bufLen] = '\0';
         cbRet = HITLS_APP_CheckPasswd((uint8_t *)buf, bufLen);
         if (cbRet != HITLS_APP_SUCCESS) {
-            (void)memset_s(buf, bufMaxLen, 0, bufMaxLen);
+            memset(buf, 0, bufMaxLen);
             return errLen;
         }
     } else if (userdata != NULL) {
@@ -141,10 +140,7 @@ int32_t HITLS_APP_Passwd(char *buf, int32_t bufMaxLen, int32_t flag, void *userd
         if (cbRet != HITLS_APP_SUCCESS) {
             return errLen;
         }
-        if (strncpy_s(buf, bufMaxLen, (char *)userdata, strlen(userdata)) != EOK) {
-            (void)memset_s(buf, bufMaxLen, 0, bufMaxLen);
-            return errLen;
-        }
+        strcpy(buf, (char *)userdata);
         bufLen = strlen(buf);
     }
     return bufLen;
@@ -256,6 +252,7 @@ static CRYPT_EAL_PkeyPara *PkeyNewRsaPara(uint8_t *e, uint32_t eLen, uint32_t bi
 
 static int32_t HandlePkey(GenrsaInOpt *opt, char *resBuf, uint32_t bufLen)
 {
+    (void)bufLen;
     int32_t ret = HITLS_APP_SUCCESS;
     // Setting the Entropy Source
     (void)CRYPT_EAL_ProviderRandInitCtx(NULL, CRYPT_RAND_SHA256, "provider=default", NULL, 0, NULL);
@@ -289,15 +286,14 @@ static int32_t HandlePkey(GenrsaInOpt *opt, char *resBuf, uint32_t bufLen)
     CRYPT_EncodeParam encodeParam = {CRYPT_DERIVE_PBKDF2, &pbkdfParam};
     BSL_Buffer encode = {0};
     ret = CRYPT_EAL_EncodeBuffKey(pkey, &encodeParam, BSL_FORMAT_PEM, CRYPT_PRIKEY_PKCS8_ENCRYPT, &encode);
-    (void)memset_s(pwd, APP_MAX_PASS_LENGTH, 0, APP_MAX_PASS_LENGTH);
+    memset(pwd, 0, APP_MAX_PASS_LENGTH);
     if (ret != CRYPT_SUCCESS) {
         (void)AppPrintError("Encode failed.\n");
         ret = HITLS_APP_ENCODE_FAIL;
         goto hpEnd;
     }
-    if (memcpy_s(resBuf, bufLen, encode.data, encode.dataLen) != EOK) {
-        ret = HITLS_APP_SECUREC_FAIL;
-    }
+    memcpy(resBuf, encode.data, encode.dataLen);
+
     BSL_SAL_FREE(encode.data);
 hpEnd:
     CRYPT_EAL_RandDeinitEx(NULL);

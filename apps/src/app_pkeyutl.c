@@ -16,7 +16,6 @@
 #include "app_pkeyutl.h"
 #include <linux/limits.h>
 #include "string.h"
-#include "securec.h"
 #include "bsl_sal.h"
 #include "crypt_types.h"
 #include "crypt_errno.h"

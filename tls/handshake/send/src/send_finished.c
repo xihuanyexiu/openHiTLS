@@ -13,7 +13,7 @@
  * See the Mulan PSL v2 for more details.
  */
 #include "hitls_build.h"
-#include "securec.h"
+#include <string.h>
 #include "tls_binlog_id.h"
 #include "bsl_log_internal.h"
 #include "bsl_log.h"
@@ -39,7 +39,7 @@ int32_t PrepareClientFinishedMsg(TLS_Ctx *ctx)
         BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15357, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
             "client Calculate client finished data error.", 0, 0, 0, 0);
         ctx->method.sendAlert(ctx, ALERT_LEVEL_FATAL, ALERT_INTERNAL_ERROR);
-        (void)memset_s(ctx->hsCtx->masterKey, sizeof(ctx->hsCtx->masterKey), 0, sizeof(ctx->hsCtx->masterKey));
+        memset(ctx->hsCtx->masterKey, 0, sizeof(ctx->hsCtx->masterKey));
         return ret;
     }
 
@@ -332,7 +332,7 @@ int32_t Tls12ServerSendFinishedProcess(TLS_Ctx *ctx)
             BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15366, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
                 "server Calculate client finished data error.", 0, 0, 0, 0);
             ctx->method.sendAlert(ctx, ALERT_LEVEL_FATAL, ALERT_INTERNAL_ERROR);
-            (void)memset_s(ctx->hsCtx->masterKey, sizeof(ctx->hsCtx->masterKey), 0, sizeof(ctx->hsCtx->masterKey));
+            memset(ctx->hsCtx->masterKey, 0, sizeof(ctx->hsCtx->masterKey));
             return ret;
         }
         ctx->method.ctrlCCS(ctx, CCS_CMD_RECV_ACTIVE_CIPHER_SPEC);
@@ -362,7 +362,7 @@ static int32_t DtlsServerChangeStateAfterSendFinished(TLS_Ctx *ctx)
             BSL_LOG_BINLOG_FIXLEN(BINLOG_ID15371, BSL_LOG_LEVEL_ERR, BSL_LOG_BINLOG_TYPE_RUN,
                 "server Calculate client finished data error.", 0, 0, 0, 0);
             ctx->method.sendAlert(ctx, ALERT_LEVEL_FATAL, ALERT_INTERNAL_ERROR);
-            (void)memset_s(ctx->hsCtx->masterKey, sizeof(ctx->hsCtx->masterKey), 0, sizeof(ctx->hsCtx->masterKey));
+            memset(ctx->hsCtx->masterKey, 0, sizeof(ctx->hsCtx->masterKey));
             return ret;
         }
         ctx->method.ctrlCCS(ctx, CCS_CMD_RECV_READY);

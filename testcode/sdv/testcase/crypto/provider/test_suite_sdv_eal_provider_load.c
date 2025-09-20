@@ -15,7 +15,6 @@
 
 /* BEGIN_HEADER */
 #include <stdlib.h>
-#include "securec.h"
 #include "bsl_sal.h"
 #include "crypt_errno.h"
 #include "crypt_eal_init.h"
@@ -173,8 +172,7 @@ void SDV_CRYPTO_PROVIDER_LOAD_TC002(void)
     // Test if an error is reported when the path length exceeds the maximum length in Linux
     char *overpath = (char *)BSL_SAL_Calloc(1, PATH_EXCEED);
     ASSERT_TRUE(overpath != NULL);
-    ret = memset_s(overpath, PATH_EXCEED, 'a', PATH_EXCEED - 1);
-    ASSERT_EQ(ret, 0);
+    memset(overpath, 'a', PATH_EXCEED - 1);
     ret = CRYPT_EAL_ProviderSetLoadPath(libCtx, overpath);
     ASSERT_EQ(ret, CRYPT_INVALID_ARG);
     BSL_SAL_Free(overpath);

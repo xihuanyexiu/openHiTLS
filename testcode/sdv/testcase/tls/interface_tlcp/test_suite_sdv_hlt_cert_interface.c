@@ -27,7 +27,6 @@
 #include "hitls_cert.h"
 #include "hitls.h"
 #include "hitls_func.h"
-#include "securec.h"
 #include "cert_method.h"
 #include "cert_mgr.h"
 #include "cert_mgr_ctx.h"
@@ -150,9 +149,9 @@ int GetCertPathFrom(int eeCertType, char **rootCA, char **ca, char **ee, char **
 
 int NormalizePath(char* normalizedPath, const char* path) {
     int ret;
-    ret = sprintf_s(normalizedPath, CERT_PATH_LEN, "%s%s", DEFAULT_CERT_PATH, path);
+    ret = sprintf(normalizedPath, "%s%s", DEFAULT_CERT_PATH, path);
     if (ret <= 0) {
-        LOG_ERROR("sprintf_s Error");
+        LOG_ERROR("sprintf Error");
         return ERROR;
     }
     return SUCCESS;

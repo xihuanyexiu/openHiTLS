@@ -14,6 +14,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <pthread.h>
 #include <unistd.h>
 #include "logger.h"
@@ -22,7 +23,6 @@
 #include "control_channel.h"
 #include "channel_res.h"
 #include "handle_cmd.h"
-#include "securec.h"
 
 #define SUCCESS 0
 #define ERROR (-1)
@@ -46,10 +46,10 @@ void InitCmdIndex(void)
 static int WaitResult(CmdData *expectCmdData, int cmdIndex, const char *funcName)
 {
     int ret;
-    ret = sprintf_s(expectCmdData->id, sizeof(expectCmdData->id), "%d", cmdIndex);
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
-    ret = sprintf_s(expectCmdData->funcId, sizeof(expectCmdData->funcId), "%s", funcName);
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ret = sprintf(expectCmdData->id, "%d", cmdIndex);
+    ASSERT_RETURN(ret > 0, "sprintf Error");
+    ret = sprintf(expectCmdData->funcId, "%s", funcName);
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     // Receive the result.
     ret = WaitResultFromPeer(expectCmdData);
@@ -71,42 +71,42 @@ int HLT_RpcProviderTlsNewCtx(HLT_Process *peerProcess, TLS_VERSION tlsVersion, b
 
     srcProcess = GetProcess();
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data),
-        "%llu|%s|%d|%d|",
+    ret = sprintf(dataBuf.data,
+        "%lu|%s|%d|%d|",
         g_cmdIndex, __FUNCTION__, tlsVersion, isClient);
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
     offset += ret;
     if (providerCnt == 0 || providerNames == NULL || providerLibFmts == NULL) {
-        ret = sprintf_s(dataBuf.data + offset, sizeof(dataBuf.data) - offset, "|");
-        ASSERT_RETURN(ret > 0, "sprintf_s Error");
+        ret = sprintf(dataBuf.data + offset, "|");
+        ASSERT_RETURN(ret > 0, "sprintf Error");
         offset += ret;
     }
 
     for (int i = 0; i < providerCnt - 1; i++) {
-        ret = sprintf_s(dataBuf.data + offset, sizeof(dataBuf.data) - offset, "%s,%d:", providerNames[i],
+        ret = sprintf(dataBuf.data + offset, "%s,%d:", providerNames[i],
             providerLibFmts[i]);
-        ASSERT_RETURN(ret > 0, "sprintf_s Error");
+        ASSERT_RETURN(ret > 0, "sprintf Error");
         offset += ret;
     }
     if (providerCnt >= 1) {
-        ret = sprintf_s(dataBuf.data + offset, sizeof(dataBuf.data) - offset, "%s,%d|", providerNames[providerCnt - 1],
+        ret = sprintf(dataBuf.data + offset, "%s,%d|", providerNames[providerCnt - 1],
             providerLibFmts[providerCnt - 1]);
-        ASSERT_RETURN(ret > 0, "sprintf_s Error");
+        ASSERT_RETURN(ret > 0, "sprintf Error");
         offset += ret;
     }
     if (attrName != NULL && strlen(attrName) > 0) {
-        ret = sprintf_s(dataBuf.data + offset, sizeof(dataBuf.data) - offset, "%s|", attrName);
+        ret = sprintf(dataBuf.data + offset, "%s|", attrName);
     } else {
-        ret = sprintf_s(dataBuf.data + offset, sizeof(dataBuf.data) - offset, "|");
+        ret = sprintf(dataBuf.data + offset, "|");
     }
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
     offset += ret;
     if (providerPath != NULL && strlen(providerPath) > 0) {
-        ret = sprintf_s(dataBuf.data + offset, sizeof(dataBuf.data) - offset, "%s|", providerPath);
+        ret = sprintf(dataBuf.data + offset, "%s|", providerPath);
     } else {
-        ret = sprintf_s(dataBuf.data + offset, sizeof(dataBuf.data) - offset, "|");
+        ret = sprintf(dataBuf.data + offset, "|");
     }
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
     offset += ret;
 
     dataBuf.dataLen = strlen(dataBuf.data);
@@ -114,7 +114,7 @@ int HLT_RpcProviderTlsNewCtx(HLT_Process *peerProcess, TLS_VERSION tlsVersion, b
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -137,13 +137,13 @@ int HLT_RpcTlsNewCtx(HLT_Process *peerProcess, TLS_VERSION tlsVersion, bool isCl
 
     srcProcess = GetProcess();
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d|%d", g_cmdIndex, __FUNCTION__, tlsVersion, isClient);
+    ret = sprintf(dataBuf.data, "%lu|%s|%d|%d", g_cmdIndex, __FUNCTION__, tlsVersion, isClient);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -166,8 +166,8 @@ int HLT_RpcTlsSetCtx(HLT_Process *peerProcess, int ctxId, HLT_Ctx_Config *config
 
     srcProcess = GetProcess();
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data),
-    "%llu|%s|%d|"
+    ret = sprintf(dataBuf.data,
+    "%lu|%s|%d|"
     "%u|%u|%s|%s|"
     "%s|%s|%s|%d|"
     "%d|%d|%d|%s|"
@@ -198,7 +198,7 @@ int HLT_RpcTlsSetCtx(HLT_Process *peerProcess, int ctxId, HLT_Ctx_Config *config
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd,  peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -222,13 +222,13 @@ int HLT_RpcTlsNewSsl(HLT_Process *peerProcess, int ctxId)
     // Constructing Commands
     srcProcess = GetProcess();
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d", g_cmdIndex, __FUNCTION__, ctxId);
+    ret = sprintf(dataBuf.data, "%lu|%s|%d", g_cmdIndex, __FUNCTION__, ctxId);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd,  peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -251,14 +251,14 @@ int HLT_RpcTlsSetSsl(HLT_Process *peerProcess, int sslId, HLT_Ssl_Config *config
 
     srcProcess = GetProcess();
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d|%d|%d|%d",
+    ret = sprintf(dataBuf.data, "%lu|%s|%d|%d|%d|%d",
                     g_cmdIndex, __FUNCTION__, sslId, config->sockFd, config->connType, config->connPort);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd,  peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -280,13 +280,13 @@ int HLT_RpcTlsListen(HLT_Process *peerProcess, int sslId)
     ASSERT_RETURN(peerProcess->remoteFlag == 1, "Only Remote Process Support Call HLT_RpcTlsListen");
 
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
+    ret = sprintf(dataBuf.data, "%lu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
     dataBuf.dataLen = strlen(dataBuf.data);
     acceptId = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd,  peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -304,13 +304,13 @@ int HLT_RpcTlsAccept(HLT_Process *peerProcess, int sslId)
     ASSERT_RETURN(peerProcess->remoteFlag ==  1, "Only Remote Process Support Call HLT_RpcTlsAccept");
 
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
+    ret = sprintf(dataBuf.data, "%lu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
     dataBuf.dataLen = strlen(dataBuf.data);
     acceptId = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd,  peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -348,13 +348,13 @@ int HLT_RpcTlsConnect(HLT_Process *peerProcess, int sslId)
 
     srcProcess = GetProcess();
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
+    ret = sprintf(dataBuf.data, "%lu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd,  peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -376,13 +376,13 @@ int HLT_RpcTlsConnectUnBlock(HLT_Process *peerProcess, int sslId)
 
     srcProcess = GetProcess();
     pthread_mutex_lock(&g_cmdMutex);
-    int ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d", g_cmdIndex, "HLT_RpcTlsConnect", sslId);
+    int ret = sprintf(dataBuf.data, "%lu|%s|%d", g_cmdIndex, "HLT_RpcTlsConnect", sslId);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -413,13 +413,13 @@ int HLT_RpcTlsRead(HLT_Process *peerProcess, int sslId, uint8_t *data, uint32_t 
 
     srcProcess = GetProcess();
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d|%u", g_cmdIndex, __FUNCTION__, sslId, bufSize);
+    ret = sprintf(dataBuf.data, "%lu|%s|%d|%u", g_cmdIndex, __FUNCTION__, sslId, bufSize);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -432,8 +432,7 @@ int HLT_RpcTlsRead(HLT_Process *peerProcess, int sslId, uint8_t *data, uint32_t 
     ret = atoi(expectCmdData.paras[0]);
     if (ret == SUCCESS) {
         *readLen = atoi(expectCmdData.paras[1]);  // The first parameter indicates the read length.
-        memcpy_s(
-            data, bufSize, expectCmdData.paras[2], *readLen);  // The second parameter indicates the content to be read.
+        memcpy(data, expectCmdData.paras[2], *readLen);  // The second parameter indicates the content to be read.
     }
 
     return ret;
@@ -452,13 +451,13 @@ int HLT_RpcTlsReadUnBlock(HLT_Process *peerProcess, int sslId, uint8_t *data, ui
 
     srcProcess = GetProcess();
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d|%u", g_cmdIndex, "HLT_RpcTlsRead", sslId, bufSize);
+    ret = sprintf(dataBuf.data, "%lu|%s|%d|%u", g_cmdIndex, "HLT_RpcTlsRead", sslId, bufSize);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -468,6 +467,7 @@ int HLT_RpcTlsReadUnBlock(HLT_Process *peerProcess, int sslId, uint8_t *data, ui
 
 int HLT_RpcGetTlsReadResult(int cmdIndex, uint8_t *data, uint32_t bufSize, uint32_t *readLen)
 {
+    (void)bufSize;
     int ret;
     char *endPtr = NULL;
     CmdData expectCmdData = {0};
@@ -479,7 +479,7 @@ int HLT_RpcGetTlsReadResult(int cmdIndex, uint8_t *data, uint32_t bufSize, uint3
     if (ret == SUCCESS) {
         *readLen = (int)strtol(expectCmdData.paras[1], &endPtr, 0); // The first parameter indicates the read length.
         // The second parameter indicates the content to be read.
-        memcpy_s(data, bufSize, expectCmdData.paras[2], *readLen);
+        memcpy(data, expectCmdData.paras[2], *readLen);
     }
     return ret;
 }
@@ -496,14 +496,14 @@ int HLT_RpcTlsWrite(HLT_Process *peerProcess, int sslId, uint8_t *data, uint32_t
 
     srcProcess = GetProcess();
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d|%u|%s",
+    ret = sprintf(dataBuf.data, "%lu|%s|%d|%u|%s",
                     g_cmdIndex, __FUNCTION__, sslId, bufSize, data);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -525,14 +525,14 @@ int HLT_RpcTlsWriteUnBlock(HLT_Process *peerProcess, int sslId, uint8_t *data, u
 
     srcProcess = GetProcess();
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d|%u|%s",
+    ret = sprintf(dataBuf.data, "%lu|%s|%d|%u|%s",
                     g_cmdIndex, "HLT_RpcTlsWrite", sslId, bufSize, data);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -564,13 +564,13 @@ int HLT_RpcTlsRenegotiate(HLT_Process *peerProcess, int sslId)
     ASSERT_RETURN(peerProcess->remoteFlag == 1, "Only Remote Process Support Call HLT_RpcTlsRenegotiate");
 
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
+    ret = sprintf(dataBuf.data, "%lu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -594,13 +594,13 @@ int HLT_RpcTlsVerifyClientPostHandshake(HLT_Process *peerProcess, int sslId)
     ASSERT_RETURN(peerProcess->remoteFlag ==  1, "Only Remote Process Support Call RpcTlsVerifyClientPostHandshake");
 
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
+    ret = sprintf(dataBuf.data, "%lu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd,  peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -622,14 +622,14 @@ int HLT_RpcDataChannelConnect(HLT_Process *peerProcess, DataChannelParam *channe
 
     srcProcess = GetProcess();
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d|%d|%d", g_cmdIndex, __FUNCTION__,
+    ret = sprintf(dataBuf.data, "%lu|%s|%d|%d|%d", g_cmdIndex, __FUNCTION__,
                     channelParam->type, channelParam->port, channelParam->isBlock);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -651,13 +651,13 @@ int HLT_RpcDataChannelBind(HLT_Process *peerProcess, DataChannelParam *channelPa
     ASSERT_RETURN(peerProcess->remoteFlag ==  1, "Only Remote Process Support Call HLT_RpcDataChannelBind");
     srcProcess = GetProcess();
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d|%d|%d|%d", g_cmdIndex, __FUNCTION__,
+    ret = sprintf(dataBuf.data, "%lu|%s|%d|%d|%d|%d", g_cmdIndex, __FUNCTION__,
                     channelParam->type, channelParam->port, channelParam->isBlock, channelParam->bindFd);
     dataBuf.dataLen = strlen(dataBuf.data);
     bindId = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
     ret = ControlChannelWrite(srcProcess->controlChannelFd,  peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
 
@@ -679,14 +679,14 @@ int HLT_RpcDataChannelAccept(HLT_Process *peerProcess, DataChannelParam *channel
 
     srcProcess = GetProcess();
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d|%d|%d|%d", g_cmdIndex, __FUNCTION__,
+    ret = sprintf(dataBuf.data, "%lu|%s|%d|%d|%d|%d", g_cmdIndex, __FUNCTION__,
                     channelParam->type, channelParam->port, channelParam->isBlock, channelParam->bindFd);
     dataBuf.dataLen = strlen(dataBuf.data);
     acceptId = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -716,13 +716,13 @@ int HLT_RpcTlsRegCallback(HLT_Process *peerProcess, TlsCallbackType type)
 
     srcProcess = GetProcess();
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d", g_cmdIndex, __FUNCTION__, type);
+    ret = sprintf(dataBuf.data, "%lu|%s|%d", g_cmdIndex, __FUNCTION__, type);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -745,13 +745,13 @@ int HLT_RpcProcessExit(HLT_Process *peerProcess)
     ASSERT_RETURN(peerProcess->remoteFlag == 1, "Only Remote Process Support Call HLT_RpcProcessExit");
 
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d", g_cmdIndex, __FUNCTION__, peerProcess->connFd);
+    ret = sprintf(dataBuf.data, "%lu|%s|%d", g_cmdIndex, __FUNCTION__, peerProcess->connFd);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -776,13 +776,13 @@ int HLT_RpcTlsGetStatus(HLT_Process *peerProcess, int sslId)
     srcProcess = GetProcess();
 
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
+    ret = sprintf(dataBuf.data, "%lu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -807,13 +807,13 @@ int HLT_RpcTlsGetAlertFlag(HLT_Process *peerProcess, int sslId)
     srcProcess = GetProcess();
 
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
+    ret = sprintf(dataBuf.data, "%lu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -838,13 +838,13 @@ int HLT_RpcTlsGetAlertLevel(HLT_Process *peerProcess, int sslId)
     srcProcess = GetProcess();
 
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
+    ret = sprintf(dataBuf.data, "%lu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -869,13 +869,13 @@ int HLT_RpcTlsGetAlertDescription(HLT_Process *peerProcess, int sslId)
     srcProcess = GetProcess();
 
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
+    ret = sprintf(dataBuf.data, "%lu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -899,13 +899,13 @@ int HLT_RpcTlsClose(HLT_Process *peerProcess, int sslId)
     ASSERT_RETURN(peerProcess->remoteFlag == 1, "Only Remote Process Support Call HLT_RpcTlsClose");
 
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
+    ret = sprintf(dataBuf.data, "%lu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -928,13 +928,13 @@ int HLT_RpcFreeResFormSsl(HLT_Process *peerProcess, int sslId)
     ASSERT_RETURN(peerProcess->remoteFlag == 1, "Only Remote Process Support Call HLT_RpcFreeResFormSsl");
 
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
+    ret = sprintf(dataBuf.data, "%lu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -957,13 +957,13 @@ int HLT_RpcSctpClose(HLT_Process *peerProcess, int fd)
     ASSERT_RETURN(peerProcess->remoteFlag == 1, "Only Remote Process Support Call HLT_RpcSctpClose");
 
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d", g_cmdIndex, __FUNCTION__, fd);
+    ret = sprintf(dataBuf.data, "%lu|%s|%d", g_cmdIndex, __FUNCTION__, fd);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -983,14 +983,14 @@ int HLT_RpcCloseFd(HLT_Process *peerProcess, int fd, int linkType)
 
     ASSERT_RETURN(peerProcess->remoteFlag == 1, "Only Remote Process Support Call HLT_RpcCloseFd");
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d|%d", g_cmdIndex, __FUNCTION__, fd, linkType);
+    ret = sprintf(dataBuf.data, "%lu|%s|%d|%d", g_cmdIndex, __FUNCTION__, fd, linkType);
 
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -1010,14 +1010,14 @@ int HLT_RpcTlsSetMtu(HLT_Process *peerProcess, int sslId, uint16_t mtu)
 
     ASSERT_RETURN(peerProcess->remoteFlag == 1, "Only Remote Process Support Call HLT_RpcTlsSetMtu");
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d|%d", g_cmdIndex, __FUNCTION__, sslId, mtu);
+    ret = sprintf(dataBuf.data, "%lu|%s|%d|%d", g_cmdIndex, __FUNCTION__, sslId, mtu);
 
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
@@ -1041,13 +1041,13 @@ int HLT_RpcTlsGetErrorCode(HLT_Process *peerProcess, int sslId)
     srcProcess = GetProcess();
 
     pthread_mutex_lock(&g_cmdMutex);
-    ret = sprintf_s(dataBuf.data, sizeof(dataBuf.data), "%llu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
+    ret = sprintf(dataBuf.data, "%lu|%s|%d", g_cmdIndex, __FUNCTION__, sslId);
     dataBuf.dataLen = strlen(dataBuf.data);
     cmdIndex = g_cmdIndex;
     g_cmdIndex++;
     pthread_mutex_unlock(&g_cmdMutex);
 
-    ASSERT_RETURN(ret > 0, "sprintf_s Error");
+    ASSERT_RETURN(ret > 0, "sprintf Error");
 
     ret = ControlChannelWrite(srcProcess->controlChannelFd, peerProcess->srcDomainPath, &dataBuf);
     ASSERT_RETURN(ret == SUCCESS, "ControlChannelWrite Error");
