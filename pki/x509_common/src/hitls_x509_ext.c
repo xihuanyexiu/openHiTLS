@@ -1217,6 +1217,30 @@ static int32_t GetExtKeyUsage(HITLS_X509_Ext *ext, uint32_t *val, uint32_t valLe
     return HITLS_PKI_SUCCESS;
 }
 
+static int32_t GetExtBCons(HITLS_X509_Ext *ext, uint32_t *val, uint32_t valLen)
+{
+    if (val == NULL || valLen != sizeof(HITLS_X509_ExtBCons)) {
+        BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_INVALID_PARAM);
+        return HITLS_X509_ERR_INVALID_PARAM;
+    }
+    HITLS_X509_CertExt *certExt = (HITLS_X509_CertExt *)ext->extData;
+    if ((certExt->extFlags & HITLS_X509_EXT_FLAG_BCONS) == 0) {
+        BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_EXT_NO_BCONS);
+        return HITLS_X509_ERR_EXT_NO_BCONS;
+    }
+    HITLS_X509_ExtBCons *bCons = (HITLS_X509_ExtBCons *)val;
+    BslCid cid = BSL_CID_CE_BASICCONSTRAINTS;
+    HITLS_X509_ExtEntry *entry = BSL_LIST_Search(ext->extList, &cid, CmpExtByCid, NULL);
+    if (entry == NULL) {
+        BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_EXT_UNKNOWN_ERROR);
+        return HITLS_X509_ERR_EXT_UNKNOWN_ERROR;
+    }
+    bCons->isCa = certExt->isCa;
+    bCons->maxPathLen = certExt->maxPathLen;
+    bCons->critical = entry->critical;
+    return HITLS_PKI_SUCCESS;
+}
+
 static int32_t GetExtCtrl(HITLS_X509_Ext *ext, int32_t cmd, void *val, uint32_t valLen)
 {
     BSL_Buffer buff = {val, valLen};
@@ -1232,6 +1256,8 @@ static int32_t GetExtCtrl(HITLS_X509_Ext *ext, int32_t cmd, void *val, uint32_t 
                 (DecodeExtCb)X509_ParseCrlNumber);
         case HITLS_X509_EXT_GET_KUSAGE:
             return GetExtKeyUsage(ext, val, valLen);
+        case HITLS_X509_EXT_GET_BCONS:
+            return GetExtBCons(ext, val, valLen);
         default:
             BSL_ERR_PUSH_ERROR(HITLS_X509_ERR_INVALID_PARAM);
             return HITLS_X509_ERR_INVALID_PARAM;

@@ -1220,3 +1220,33 @@ EXIT:
     HITLS_X509_CertFree(cert);
 }
 /* END_CASE */
+
+/* BEGIN_CASE */
+void SDV_X509_CERT_GET_BCONS_TEST_TC001(int format, char *path, int critical, int isCa, int pathLen)
+{
+    TestMemInit();
+    HITLS_X509_Cert *cert = NULL;
+    ASSERT_EQ(HITLS_X509_CertParseFile(format, path, &cert), HITLS_PKI_SUCCESS);
+    HITLS_X509_ExtBCons bc = {0};
+    ASSERT_EQ(HITLS_X509_CertCtrl(cert, HITLS_X509_EXT_GET_BCONS, &bc, sizeof(HITLS_X509_ExtBCons)), HITLS_PKI_SUCCESS);
+    ASSERT_EQ(bc.isCa, isCa);
+    ASSERT_EQ(bc.maxPathLen, pathLen);
+    ASSERT_EQ(bc.critical, critical);
+EXIT:
+    HITLS_X509_CertFree(cert);
+}
+/* END_CASE */
+
+/* BEGIN_CASE */
+void SDV_X509_CERT_GET_BCONS_TEST_TC002(int format, char *path)
+{
+    TestMemInit();
+    HITLS_X509_Cert *cert = NULL;
+    ASSERT_EQ(HITLS_X509_CertParseFile(format, path, &cert), HITLS_PKI_SUCCESS);
+    HITLS_X509_ExtBCons bc = {0};
+    ASSERT_EQ(HITLS_X509_CertCtrl(cert, HITLS_X509_EXT_GET_BCONS, &bc, sizeof(HITLS_X509_ExtBCons)),
+        HITLS_X509_ERR_EXT_NO_BCONS);
+EXIT:
+    HITLS_X509_CertFree(cert);
+}
+/* END_CASE */
