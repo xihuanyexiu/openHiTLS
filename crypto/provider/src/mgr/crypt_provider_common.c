@@ -268,7 +268,7 @@ static int32_t AddProviderToList(CRYPT_EAL_LibCtx *libCtx, CRYPT_EAL_ProvMgrCtx 
 }
 
 int32_t CRYPT_EAL_AddNewProvMgrCtx(CRYPT_EAL_LibCtx *libCtx, const char *providerName, const char *providerPath,
-    CRYPT_EAL_ImplProviderInit init, BSL_Param *param, CRYPT_EAL_ProvMgrCtx **ctx)
+    CRYPT_EAL_ImplProviderInit init, void *handle, BSL_Param *param, CRYPT_EAL_ProvMgrCtx **ctx)
 {
     CRYPT_EAL_ProvMgrCtx *mgrCtx = (CRYPT_EAL_ProvMgrCtx *)BSL_SAL_Calloc(1, sizeof(CRYPT_EAL_ProvMgrCtx));
     if (mgrCtx == NULL) {
@@ -311,6 +311,7 @@ int32_t CRYPT_EAL_AddNewProvMgrCtx(CRYPT_EAL_LibCtx *libCtx, const char *provide
     if (ctx != NULL) {
         *ctx = mgrCtx;
     }
+    mgrCtx->handle = handle;
     return ret;
 }
 
@@ -322,7 +323,7 @@ int32_t CRYPT_EAL_InitPreDefinedProviders(void)
         return BSL_MALLOC_FAIL;
     }
     g_libCtx = libCtx;
-    int32_t ret = CRYPT_EAL_AddNewProvMgrCtx(libCtx, CRYPT_EAL_DEFAULT_PROVIDER, NULL, CRYPT_EAL_DefaultProvInit,
+    int32_t ret = CRYPT_EAL_AddNewProvMgrCtx(libCtx, CRYPT_EAL_DEFAULT_PROVIDER, NULL, CRYPT_EAL_DefaultProvInit, NULL,
         NULL, NULL);
     if (ret != CRYPT_SUCCESS) {
         BSL_LIST_FREE(libCtx->providers, NULL);
