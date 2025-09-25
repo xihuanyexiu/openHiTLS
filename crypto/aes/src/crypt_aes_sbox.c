@@ -1,17 +1,4 @@
-/*
- * This file is part of the openHiTLS project.
- *
- * openHiTLS is licensed under the Mulan PSL v2.
- * You can use this software according to the terms and conditions of the Mulan PSL v2.
- * You may obtain a copy of Mulan PSL v2 at:
- *
- *     http://license.coscl.org.cn/MulanPSL2
- *
- * THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
- * EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
- * MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
- * See the Mulan PSL v2 for more details.
- */
+
 #include "hitls_build.h"
 #if defined(HITLS_CRYPTO_AES) && !defined(HITLS_CRYPTO_AES_PRECALC_TABLES)
 
@@ -44,6 +31,7 @@ static const uint8_t AES_S[256] = {
     0x8cU, 0xa1U, 0x89U, 0x0dU, 0xbfU, 0xe6U, 0x42U, 0x68U, 0x41U, 0x99U, 0x2dU, 0x0fU, 0xb0U, 0x54U, 0xbbU, 0x16U
 };
 
+// S-box 替换的宏定义实现
 #define SEARCH_SBOX(t)                                                                                  \
     ((AES_S[((t) >> 24)] << 24) | (AES_S[((t) >> 16) & 0xFF] << 16) | (AES_S[((t) >> 8) & 0xFF] << 8) | \
         (AES_S[((t) >> 0) & 0xFF] << 0))
@@ -52,22 +40,31 @@ static const uint8_t AES_S[256] = {
     ((InvSubSbox(((t) >> 24)) << 24) | (InvSubSbox(((t) >> 16) & 0xFF) << 16) | (InvSubSbox(((t) >> 8) & 0xFF) << 8) | \
         (InvSubSbox(((t) >> 0) & 0xFF) << 0))
 
+//使用查表
 void SetAesKeyExpansionSbox(CRYPT_AES_Key *ctx, uint32_t keyLenBits, const uint8_t *key)
 {
     uint32_t *ekey = ctx->key;
     uint32_t keyLenByte = keyLenBits / (sizeof(uint32_t) * BYTE_BITS);
     uint32_t i = 0;
+    //把输入密钥看成 Nk 个 32-bit big-endian word，记为 W[0 … Nk-1]。
     for (i = 0; i < keyLenByte; ++i) {
+        //从一段 字节序列（big-endian） 里，取出 4 个字节并拼成一个 32-bit 无符号整数
         ekey[i] = GET_UINT32_BE(key, i * sizeof(uint32_t));
     }
 
     for (; i < 4 * (ctx->rounds + 1); ++i) {
         if ((i % keyLenByte) == 0) {
+            
+             //W[i] = W[i-Nk] ⊕ SubWord(RotWord(W[i-1])) ⊕ Rcon[i/Nk]
             ekey[i] = ekey[i - keyLenByte] ^ SEARCH_SBOX(ROTL32(ekey[i - 1], BYTE_BITS)) ^
                 RoundConstArray(i / keyLenByte - 1);
         } else if (keyLenByte > 6 && (i % keyLenByte) == 4) {
+
+            //W[i] = W[i-Nk] ⊕ SubWord(W[i-1])
             ekey[i] = ekey[i - keyLenByte] ^ SEARCH_SBOX(ekey[i - 1]);
         } else {
+
+            //W[i] = W[i-Nk] ⊕ W[i-1]
             ekey[i] = ekey[i - keyLenByte] ^ ekey[i - 1];
         }
     }
@@ -80,6 +77,7 @@ static void AesAddRoundKey(uint32_t *state, const uint32_t *round, int nr)
     }
 }
 
+//使用查表
 static void AesSubBytes(uint32_t *state)
 {
     for (int i = 0; i < 4; ++i) {
@@ -100,6 +98,7 @@ static void AesShiftRows(uint32_t *state)
     state[3] = (s[3] & 0xFF000000) | (s[0] & 0xFF0000) | (s[1] & 0xFF00) | (s[2] & 0xFF);
 }
 
+//“乘以 2”模 0x11B
 static uint8_t AesXtime(uint8_t x)
 {
     return ((x << 1) ^ (((x >> 7) & 1) * 0x1b));
@@ -118,11 +117,13 @@ static uint8_t AesXtimes(uint8_t x, int ts)
 
 static uint8_t AesMul(uint8_t x, uint8_t y)
 {
+    //x · y = x · (y0·2^0 + y1·2^1 + ... + y7·2^7)
     return ((((y >> 0) & 1) * AesXtimes(x, 0)) ^ (((y >> 1) & 1) * AesXtimes(x, 1)) ^
         (((y >> 2) & 1) * AesXtimes(x, 2)) ^ (((y >> 3) & 1) * AesXtimes(x, 3)) ^ (((y >> 4) & 1) * AesXtimes(x, 4)) ^
         (((y >> 5) & 1) * AesXtimes(x, 5)) ^ (((y >> 6) & 1) * AesXtimes(x, 6)) ^ (((y >> 7) & 1) * AesXtimes(x, 7)));
 }
 
+//没有用查表，正逆同一个
 static void AesMixColumns(uint32_t *state, bool isMixColumns)
 {
     uint8_t ts[16] = {0};
