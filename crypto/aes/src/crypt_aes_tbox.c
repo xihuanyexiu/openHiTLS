@@ -598,6 +598,7 @@ static const uint32_t TD3[256] = {
     0xcb84617bU, 0x32b670d5U, 0x6c5c7448U, 0xb85742d0U,
 };
 
+//解密轮密钥
 static void SetDecryptKeyTbox(CRYPT_AES_Key *ctx)
 {
     uint32_t i, j;
@@ -613,6 +614,7 @@ static void SetDecryptKeyTbox(CRYPT_AES_Key *ctx)
     }
 }
 
+//RotWord + SubWord + 异或轮常数
 static inline uint32_t AES_G(uint32_t w, uint32_t rcon)
 {
     uint32_t ret = 0;
